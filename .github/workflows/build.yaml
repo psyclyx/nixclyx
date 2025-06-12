@@ -41,6 +41,7 @@ jobs:
   build-darwin:
     needs: build-emacs-darwin
     strategy:
+      fail-fast: false
       matrix:
         host: [halo]
     uses: ./.github/workflows/build-steps.yaml
