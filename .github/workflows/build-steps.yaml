@@ -24,6 +24,8 @@ jobs:
       - uses: actions/checkout@v4
       - uses: wimpysworld/nothing-but-nix@main
         if: ${{ inputs.os == 'ubuntu-latest' }}
+        with:
+          hatchet-protocol: 'holster'
       - name: Install Nix
         uses: cachix/install-nix-action@v31
         with:
