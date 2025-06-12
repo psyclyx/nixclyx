@@ -16,7 +16,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        host: [ix, omen, sigil]
+        host: [ix, omen, sigil, tleilax]
     uses: ./.github/workflows/build-steps.yaml
     with:
       os: ubuntu-latest
