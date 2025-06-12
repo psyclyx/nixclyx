@@ -25,6 +25,7 @@ jobs:
 
       - name: Free space
         uses: wimpysworld/nothing-but-nix@main
+        if: ${{ matrix.os == 'ubuntu-latest' }}
         with:
           hatchet-protocol: 'holster'
 
