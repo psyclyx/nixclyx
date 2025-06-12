@@ -13,7 +13,6 @@ permissions:
 
 jobs:
   build-linux:
-    needs: build-emacs-linux
     strategy:
       fail-fast: false
       matrix:
@@ -25,7 +24,6 @@ jobs:
     secrets: inherit
 
   build-darwin:
-    needs: build-emacs-darwin
     strategy:
       fail-fast: false
       matrix:
