@@ -38,5 +38,5 @@ jobs:
 
       - name: Build
         run: nix run github:Mic92/nix-fast-build -- --no-nom --skip-cached --cachix-cache psyclyx
-          env:
-            CACHIX_AUTH_TOKEN: ${{ secrets.CACHIX_AUTH_TOKEN }}
+        env:
+          CACHIX_AUTH_TOKEN: ${{ secrets.CACHIX_AUTH_TOKEN }}
