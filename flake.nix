@@ -6,7 +6,7 @@
 
     # Main package repository
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
-    nixpkgs-master.url = "github:NixOS/nixpkgs/master";
+    #nixpkgs-master.url = "github:NixOS/nixpkgs/master";
     nixpkgs-stable.url = "github:NixOS/nixpkgs/nixos-25.05";
 
     # Nix user repository
@@ -96,7 +96,6 @@
     let
       inherit (inputs)
         nixpkgs
-        nixpkgs-master
         nur
         nix-darwin-emacs
         emacs-overlay
@@ -108,16 +107,6 @@
         nur.overlays.default
         nix-darwin-emacs.overlays.emacs
         emacs-overlay.overlays.default
-
-        (
-          final: prev:
-          let
-            system = prev.stdenv.hostPlatform.system;
-          in
-          {
-            tailscale = nixpkgs-master.legacyPackages.${system}.tailscale;
-          }
-        )
       ];
 
       mkDarwinConfiguration = import ./modules/platform/darwin { inherit inputs overlays; };
