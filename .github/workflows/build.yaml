@@ -12,13 +12,6 @@ permissions:
   id-token: write
 
 jobs:
-  build-emacs-linux:
-    uses: ./.github/workflows/build-steps.yaml
-    with:
-      os: ubuntu-latest
-      build-command: nix build .#emacs -L
-    secrets: inherit
-
   build-linux:
     needs: build-emacs-linux
     strategy:
@@ -29,13 +22,6 @@ jobs:
     with:
       os: ubuntu-latest
       build-command: nix build .#nixosConfigurations.${{ matrix.host }}.config.system.build.toplevel -L
-    secrets: inherit
-
-  build-emacs-darwin:
-    uses: ./.github/workflows/build-steps.yaml
-    with:
-      os: macos-latest
-      build-command: nix build .#emacs -L
     secrets: inherit
 
   build-darwin:
