@@ -20,7 +20,7 @@ jobs:
     uses: ./.github/workflows/build-steps.yaml
     with:
       os: ubuntu-latest
-      build-command: nix run github:Mic92/nix-fast-build -- --no-nom --flake .#nixosConfigurations.${{ matrix.host }}.config.system.build.toplevel
+      build-command: nix run github:Mic92/nix-fast-build -- --no-nom --skip-cached --flake .#nixosConfigurations.${{ matrix.host }}.config.system.build.toplevel
     secrets: inherit
 
   build-darwin:
@@ -31,5 +31,5 @@ jobs:
     uses: ./.github/workflows/build-steps.yaml
     with:
       os: macos-latest
-      build-command: nix run github:Mic92/nix-fast-build -- --no-nom --flake .#darwinConfigurations.${{ matrix.host }}.config.system.build.toplevel
+      build-command: nix run github:Mic92/nix-fast-build -- --no-nom --skip-cached --flake .#darwinConfigurations.${{ matrix.host }}.config.system.build.toplevel
     secrets: inherit
