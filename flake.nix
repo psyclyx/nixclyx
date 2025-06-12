@@ -119,36 +119,6 @@
           inherit system overlays;
           config.allowUnfree = true;
         };
-    in
-    {
-      devShells = lib.genAttrs [ "x86_64-linux" "aarch64-darwin" "x86_64-darwin" ] (
-        system:
-        let
-          pkgs = nixpkgs.legacyPackages.${system};
-        in
-        {
-          default = pkgs.mkShell {
-            packages = with pkgs; [
-              age
-              nixfmt-rfc-style
-              nixd
-              sops
-              ssh-to-age
-            ];
-          };
-        }
-      );
-
-      overlays.default = import ./pkgs;
-
-      darwinConfigurations = {
-        halo = mkDarwinConfiguration {
-          hostPlatform = "aarch64-darwin";
-          system = "aarch64-darwin";
-          hostName = "halo";
-          modules = [ ./hosts/halo ];
-        };
-      };
 
       nixosConfigurations = {
         omen = mkNixosConfiguration {
@@ -171,14 +141,47 @@
           hostName = "tleilax";
           modules = [ ./hosts/tleilax ];
         };
-        tleilax-iso = mkNixosConfiguration {
-          hostPlatform = "x86_64-linux";
-          hostName = "tleilax";
-          modules = [
-            ./modules/platform/nixos/iso.nix
-            ./hosts/tleilax
-          ];
+      };
+
+      darwinConfigurations = {
+        halo = mkDarwinConfiguration {
+          hostPlatform = "aarch64-darwin";
+          system = "aarch64-darwin";
+          hostName = "halo";
+          modules = [ ./hosts/halo ];
         };
       };
+    in
+    {
+      inherit darwinConfigurations nixosConfigurations;
+      checks = lib.genAttrs [ "x86_64-linux" "aarch64-darwin" ] (
+        system:
+        lib.mapAttrs' (name: config: (lib.nameValuePair "${name}" config.config.system.build.toplevel)) (
+          (lib.filterAttrs (_: config: config.pkgs.system == system)) (
+            nixosConfigurations // darwinConfigurations
+          )
+        )
+      );
+
+      devShells = lib.genAttrs [ "x86_64-linux" "aarch64-darwin" "x86_64-darwin" ] (
+        system:
+        let
+          pkgs = nixpkgs.legacyPackages.${system};
+        in
+        {
+          default = pkgs.mkShell {
+            packages = with pkgs; [
+              age
+              nixfmt-rfc-style
+              nixd
+              sops
+              ssh-to-age
+            ];
+          };
+        }
+      );
+
+      overlays.default = import ./pkgs;
+
     };
 }
