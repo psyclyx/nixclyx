@@ -30,10 +30,6 @@ jobs:
         uses: cachix/install-nix-action@v31
         with:
           github_access_token: ${{ secrets.GITHUB_TOKEN }}
-      - uses: DeterminateSystems/magic-nix-cache-action@main
-      - uses: cachix/cachix-action@v16
-        with:
-          name: ${{ vars.CACHIX_CACHE_NAME }}
-          authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
-          skipAddingSubstituter: true
       - run: ${{ inputs.build-command }}
+        env:
+          CACHIX_AUTH_TOKEN: ${{ secrets.CACHIX_AUTH_TOKEN }}
