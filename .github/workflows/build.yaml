@@ -12,24 +12,31 @@ permissions:
   id-token: write
 
 jobs:
-  build-linux:
+  nix-fast-build:
     strategy:
       fail-fast: false
       matrix:
-        host: [ix, omen, sigil, tleilax]
-    uses: ./.github/workflows/build-steps.yaml
-    with:
-      os: ubuntu-latest
-      build-command: nix run github:Mic92/nix-fast-build -- --no-nom --skip-cached --flake .#nixosConfigurations.${{ matrix.host }}.config.system.build.toplevel --cachix-cache psyclyx
-    secrets: inherit
+        os: [ubuntu-latest macos-latest]
+    environment: CI
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
-  build-darwin:
-    strategy:
-      fail-fast: false
-      matrix:
-        host: [halo]
-    uses: ./.github/workflows/build-steps.yaml
-    with:
-      os: macos-latest
-      build-command: nix run github:Mic92/nix-fast-build -- --no-nom --skip-cached --flake .#darwinConfigurations.${{ matrix.host }}.config.system.build.toplevel --cachix-cache psyclyx
-    secrets: inherit
+      - name: Free space
+        uses: wimpysworld/nothing-but-nix@main
+        with:
+          hatchet-protocol: 'holster'
+
+      - name: Install Nix
+        uses: cachix/install-nix-action@v31
+        with:
+          github_access_token: ${{ secrets.GITHUB_TOKEN }}
+          extra_nix_config: |
+            trusted-public-keys = nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs= psyclyx.cachix.org-1:UFwKXEDn3gLxIW9CeXGdFFUzCIjj8m6IdAQ7GA4XfCk=
+            substituters = https://nix-community.cachix.org https://psyclyx.cachix.org
+
+      - name: Build
+        run: nix run github:Mic92/nix-fast-build -- --no-nom --skip-cached --cachix-cache psyclyx
+          env:
+            CACHIX_AUTH_TOKEN: ${{ secrets.CACHIX_AUTH_TOKEN }}
