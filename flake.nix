@@ -5,8 +5,7 @@
     # ==== Core ====
 
     # Main package repository
-    #nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
-    nixpkgs.url = "github:NixOS/nixpkgs/3156024cc8366b3aa79210364db0005c16c0e2ae";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
     #nixpkgs-master.url = "github:NixOS/nixpkgs/master";
     nixpkgs-stable.url = "github:NixOS/nixpkgs/nixos-25.05";
 
