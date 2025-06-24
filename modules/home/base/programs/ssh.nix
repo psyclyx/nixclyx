@@ -20,23 +20,26 @@ in
           identityFile = "~/.ssh/id_alice157";
           hostname = "github.com";
         };
-        "psyclyx.github.com" = {
+        "codeberg.org" = {
           identityFile = "~/.ssh/id_psyclyx";
-          hostname = "github.com";
         };
         "gitlab.com" = {
           identityFile = "~/.ssh/id_psyclyx";
+        };
+        "psyclyx.github.com" = {
+          identityFile = "~/.ssh/id_psyclyx";
+          hostname = "github.com";
         };
         "psyclyx.xyz *.psyclyx.xyz" = {
           forwardAgent = true;
           identityFile = "~/.ssh/id_psyclyx";
         };
-        "tleilax.lan tleilax tleilax.local tleilax.psyclyx.xyz" = {
-          port = 17891;
+        "sigil.lan sigil sigil.local" = {
           forwardAgent = true;
           identityFile = "~/.ssh/id_psyclyx";
         };
-        "sigil.lan sigil sigil.local" = {
+        "tleilax.lan tleilax tleilax.local tleilax.psyclyx.xyz" = {
+          port = 17891;
           forwardAgent = true;
           identityFile = "~/.ssh/id_psyclyx";
         };
