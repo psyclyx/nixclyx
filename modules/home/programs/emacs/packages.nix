@@ -3,6 +3,7 @@
     epkgs: with epkgs; [
       # Emacs
       exec-path-from-shell
+      dirvish
       general
       no-littering
       undo-tree

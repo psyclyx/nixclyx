@@ -991,6 +991,10 @@ Better 1/2 character movements
     "ott" '(vterm :which-key "new terminal")
     "otv" '(vterm-other-window :which-key "terminal in split"))
 #+end_src
+** Dirvish
+#+begin_src emacs-lisp
+  (use-package dirvish)
+#+end_src
 ** IRC (=erc=)
 ;; IRC (ERC) configuration for Soju and Libera
 #+begin_src emacs-lisp
