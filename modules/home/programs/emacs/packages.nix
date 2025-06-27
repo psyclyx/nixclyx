@@ -123,6 +123,6 @@
       ## zig
       zls
     ]
-    ++ lib.optionals stdenv.isDarwin [ ]
+    ++ lib.optionals stdenv.isDarwin [ coreutils ]
     ++ lib.optionals stdenv.isLinux [ ];
 }
