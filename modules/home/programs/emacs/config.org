@@ -835,7 +835,7 @@ Better 1/2 character movements
     (with-eval-after-load 'apheleia
       (setf (alist-get 'nix-ts-mode apheleia-mode-alist) 'nixfmt)
       (setf (alist-get 'nixfmt apheleia-formatters)
-        '("nixfmt" "-"))))
+        '("nixfmt" "-s" "-"))))
 #+end_src
 ** Emacs Lisp
 #+begin_src emacs-lisp
