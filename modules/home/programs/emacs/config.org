@@ -825,6 +825,12 @@ Better 1/2 character movements
       "m" 'cider-macroexpand-1
       "M" 'cider-macroexpand-all))
 #+end_src
+** Common Lisp (=slime=)
+#+begin_src emacs-lisp
+  (use-package slime
+    :custom
+    (inferior-lisp-program "sbcl"))
+#+end_src
 ** Nix (=nix-ts-mode=)
 #+begin_src emacs-lisp
   (use-package nix-ts-mode
