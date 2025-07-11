@@ -1,5 +1,6 @@
 {
   imports = [
+    ./programs/adb.nix
     ./services/automount.nix
     ./services/gnome-keyring.nix
     ./services/greetd.nix

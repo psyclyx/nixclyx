@@ -11,7 +11,6 @@
     ../../modules/nixos/system/fonts.nix
     ../../modules/nixos/programs/sway.nix
 
-    ../../modules/nixos/programs/adb.nix
     ../../modules/nixos/programs/nix-ld.nix
     ../../modules/nixos/programs/zsh.nix
 
@@ -24,6 +23,12 @@
   services.resolved.enable = true;
 
   psyclyx = {
+    programs = {
+      adb = {
+        enable = true;
+      };
+    };
+
     services = {
       autoMount = {
         enable = true;

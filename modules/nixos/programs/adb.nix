@@ -1,8 +1,23 @@
-{ ... }:
+{ config, lib, ... }:
+let
+  cfg = config.psyclyx.programs.adb;
+in
 {
-  programs = {
-    adb = {
-      enable = true;
+  options = {
+    psyclyx = {
+      programs = {
+        adb = {
+          enable = lib.mkEnableOption "Enable ADB and associated udev rules/groups.";
+        };
+      };
+    };
+  };
+
+  config = lib.mkIf cfg.enable {
+    programs = {
+      adb = {
+        enable = true;
+      };
     };
   };
 }
