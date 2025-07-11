@@ -12,20 +12,23 @@
         "psyclyx.cachix.org-1:UFwKXEDn3gLxIW9CeXGdFFUzCIjj8m6IdAQ7GA4XfCk="
       ];
     };
-
     gc = {
       automatic = true;
       dates = "weekly";
       options = "--delete-older-than 14d";
     };
-
     optimise = {
       automatic = true;
       dates = [ "05:00" ];
     };
-
     extraOptions = ''
       experimental-features = nix-command flakes
     '';
+  };
+
+  programs = {
+    nix-ld = {
+      enable = true;
+    };
   };
 }

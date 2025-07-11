@@ -16,7 +16,6 @@ in
     ../../modules/nixos/system/home-manager.nix
 
     ../../modules/nixos/programs/zsh.nix
-    ../../modules/nixos/programs/nix-ld.nix
     ../../modules/nixos/services/fail2ban.nix
 
     ./users.nix
