@@ -16,6 +16,8 @@
     ../../modules/nixos/services/interception-tools.nix
 
     ../../modules/nixos/graphical
+    ../../modules/nixos/programs/sway.nix
+
     ../../modules/nixos/services/printing.nix
     ../../modules/nixos/programs/adb.nix
     ../../modules/nixos/programs/nix-ld.nix
