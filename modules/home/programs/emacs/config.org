@@ -133,8 +133,8 @@ set in a non-interactive shell.
   (use-package faces
     :custom
     (face-font-family-alternatives
-     (("Berkeley Mono" "Aporetic Sans Mono" "Noto Sans Mono" "SF Mono" "Menlo" "Monospace")
-      ("Aporetic Sans" "Noto Sans" "Noto Sans" "SF Pro" "Helvetica" "Arial"))))
+     '(("Berkeley Mono" "Aporetic Sans Mono" "Noto Sans Mono" "SF Mono" "Menlo" "Monospace")
+       ("Aporetic Sans" "Noto Sans" "Noto Sans" "SF Pro" "Helvetica" "Arial"))))
 
   (set-face-attribute 'default nil
                       :family "Berkeley Mono"
