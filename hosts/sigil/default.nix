@@ -32,10 +32,8 @@
       autoMount = {
         enable = true;
       };
-      desktop = {
-        greetd = {
-          enable = true;
-        };
+      greetd = {
+        enable = true;
       };
       home-assistant = {
         enable = true;

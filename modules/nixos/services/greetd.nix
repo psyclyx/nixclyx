@@ -5,17 +5,15 @@
   ...
 }:
 let
-  cfg = config.psyclyx.services.desktop.greetd;
+  cfg = config.psyclyx.services.greetd;
   tuigreet = "${pkgs.greetd.tuigreet}/bin/tuigreet";
 in
 {
   options = {
     psyclyx = {
       services = {
-        desktop = {
-          greetd = {
-            enable = lib.mkEnableOption "Enable greetd greeter.";
-          };
+        greetd = {
+          enable = lib.mkEnableOption "Enable greetd greeter.";
         };
       };
     };

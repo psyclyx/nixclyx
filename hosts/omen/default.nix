@@ -30,10 +30,8 @@
       autoMount = {
         enable = true;
       };
-      desktop = {
-        greetd = {
-          enable = true;
-        };
+      greetd = {
+        enable = true;
       };
       openssh = {
         enable = true;
