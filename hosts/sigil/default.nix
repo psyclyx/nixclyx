@@ -10,8 +10,6 @@
 
     ../../modules/nixos/system/virtualization.nix
 
-    ../../modules/nixos/services/devmon.nix
-    ../../modules/nixos/services/udisks2.nix
     ../../modules/nixos/services/interception-tools.nix
 
     ../../modules/nixos/services/greetd.nix
@@ -35,6 +33,9 @@
 
   psyclyx = {
     services = {
+      autoMount = {
+        enable = true;
+      };
       home-assistant = {
         enable = true;
       };
