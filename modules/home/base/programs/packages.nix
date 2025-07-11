@@ -14,7 +14,6 @@
     nodejs
 
     # lua
-    love-darwin-bin
     lua
     lua-language-server
 
