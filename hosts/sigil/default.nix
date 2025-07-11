@@ -17,7 +17,6 @@
     ./hardware.nix
     ./network.nix
     ./users.nix
-    ./secrets.nix
   ];
 
   programs.sway.extraOptions = [ "--unsupported-gpu" ];

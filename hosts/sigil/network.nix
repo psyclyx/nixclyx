@@ -25,19 +25,4 @@
     3000
     51103
   ];
-
-  # vpnNamespaces.wg-mvd = {
-  #   enable = true;
-  #   wireguardConfigFile = config.sops.secrets."wg-mullvad.conf".path;
-  #   openVPNPorts = [
-  #     {
-  #       port = 51103;
-  #       protocol = "both";
-  #     }
-  #     {
-  #       port = 6881;
-  #       protocol = "both";
-  #     }
-  #   ];
-  # };
 }
