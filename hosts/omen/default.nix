@@ -9,7 +9,6 @@
     ../../modules/nixos/system/home-manager.nix
 
     ../../modules/nixos/services/devmon.nix
-    ../../modules/nixos/services/fwupd.nix
     ../../modules/nixos/services/udisks2.nix
     ../../modules/nixos/services/interception-tools.nix
 
