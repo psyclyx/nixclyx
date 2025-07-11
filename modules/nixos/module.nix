@@ -5,5 +5,6 @@
     ./services/tailscale.nix
     ./system/console.nix
     ./system/locale.nix
+    ./system/sudo.nix
   ];
 }

@@ -14,7 +14,6 @@ in
     ../../modules/nixos/programs/nix-ld.nix
     ../../modules/nixos/programs/zsh.nix
     ../../modules/nixos/services/tailscale.nix
-    ../../modules/nixos/system/security.nix
     ../../modules/nixos/services/soju.nix
 
     ./boot.nix
@@ -33,7 +32,12 @@ in
     };
 
     system = {
-      console.enable = true;
+      console = {
+        enable = true;
+      };
+      sudo = {
+        enable = true;
+      };
     };
   };
 }

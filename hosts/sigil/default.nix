@@ -8,7 +8,6 @@
     ../../modules/nixos/module.nix
     ../../modules/nixos/system/home-manager.nix
 
-    ../../modules/nixos/system/security.nix
     ../../modules/nixos/system/virtualization.nix
 
     ../../modules/nixos/services/devmon.nix
@@ -37,8 +36,12 @@
 
   psyclyx = {
     services = {
-      home-assistant.enable = true;
-      openssh.enable = true;
+      home-assistant = {
+        enable = true;
+      };
+      openssh = {
+        enable = true;
+      };
       tailscale = {
         enable = true;
         exitNode = true;
@@ -46,7 +49,12 @@
     };
 
     system = {
-      console.enable = true;
+      console = {
+        enable = true;
+      };
+      sudo = {
+        enable = true;
+      };
     };
   };
 }

@@ -8,8 +8,6 @@
     ../../modules/nixos/module.nix
     ../../modules/nixos/system/home-manager.nix
 
-    ../../modules/nixos/system/security.nix
-
     ../../modules/nixos/services/devmon.nix
     ../../modules/nixos/services/fwupd.nix
     ../../modules/nixos/services/udisks2.nix

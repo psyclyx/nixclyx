@@ -15,7 +15,6 @@ in
     ../../modules/nixos/module.nix
     ../../modules/nixos/system/home-manager.nix
 
-    ../../modules/nixos/system/security.nix
     ../../modules/nixos/programs/zsh.nix
     ../../modules/nixos/programs/nix-ld.nix
     ../../modules/nixos/services/fail2ban.nix
@@ -38,7 +37,9 @@ in
     };
 
     services = {
-      openssh.enable = true;
+      openssh = {
+        enable = true;
+      };
       tailscale = {
         enable = true;
         exitNode = true;
@@ -46,7 +47,12 @@ in
     };
 
     system = {
-      console.enable = true;
+      console = {
+        enable = true;
+      };
+      sudo = {
+        enable = true;
+      };
     };
   };
 }
