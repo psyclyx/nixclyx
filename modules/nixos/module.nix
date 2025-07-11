@@ -1,5 +1,6 @@
 {
   imports = [
+    ./graphics/fonts.nix
     ./programs/adb.nix
     ./programs/steam.nix
     ./programs/sway.nix

@@ -8,8 +8,6 @@
     ../../modules/nixos/module.nix
     ../../modules/nixos/system/home-manager.nix
 
-    ../../modules/nixos/system/fonts.nix
-
     ./boot.nix
     ./filesystems.nix
     ./hardware.nix
@@ -18,6 +16,12 @@
   ];
 
   psyclyx = {
+    graphics = {
+      fonts = {
+        enable = true;
+      };
+    };
+
     programs = {
       steam = {
         enable = true;
