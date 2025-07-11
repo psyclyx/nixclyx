@@ -10,6 +10,14 @@ in
         openssh = {
           enable = lib.mkEnableOption "Enable OpenSSH.";
         };
+
+        agentAuth = {
+          enable = lib.mkOption {
+            type = lib.types.bool;
+            default = true;
+            description = "Respect SSH Agent authentication in PAM.";
+          };
+        };
       };
 
       networking = {
@@ -25,6 +33,14 @@ in
   };
 
   config = lib.mkIf cfg.enable {
+    security = {
+      pam = {
+        sshAgentAuth = {
+          enable = cfg.agentAuth;
+        };
+      };
+    };
+
     services = {
       openssh = {
         enable = true;
