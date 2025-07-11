@@ -112,13 +112,6 @@
       mkDarwinConfiguration = import ./modules/platform/darwin { inherit inputs overlays; };
       mkNixosConfiguration = import ./modules/platform/nixos { inherit inputs overlays; };
 
-      pkgsFor =
-        system:
-        import nixpkgs {
-          inherit system overlays;
-          config.allowUnfree = true;
-        };
-
       nixosConfigurations = {
         omen = mkNixosConfiguration {
           hostPlatform = "x86_64-linux";
@@ -179,8 +172,5 @@
           };
         }
       );
-
-      overlays.default = import ./pkgs;
-
     };
 }
