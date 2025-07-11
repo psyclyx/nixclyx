@@ -8,7 +8,6 @@
     ../../modules/nixos/module.nix
     ../../modules/nixos/system/home-manager.nix
 
-    ../../modules/nixos/system/locale.nix
     ../../modules/nixos/system/security.nix
 
     ../../modules/nixos/services/devmon.nix
