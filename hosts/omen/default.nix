@@ -14,10 +14,10 @@
     ../../modules/nixos/services/udisks2.nix
     ../../modules/nixos/services/interception-tools.nix
 
-    ../../modules/nixos/graphical
     ../../modules/nixos/services/greetd.nix
     ../../modules/nixos/services/gvfs.nix
     ../../modules/nixos/services/gnome-keyring.nix
+    ../../modules/nixos/system/fonts.nix
     ../../modules/nixos/programs/sway.nix
 
     ../../modules/nixos/laptop
