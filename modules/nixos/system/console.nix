@@ -7,7 +7,11 @@ in
     psyclyx = {
       system = {
         console = {
-          enable = lib.mkEnableOption "Set up the console.";
+          enable = lib.mkOption {
+            type = lib.types.bool;
+            default = true;
+            description = "Set up the console.";
+          };
         };
       };
     };

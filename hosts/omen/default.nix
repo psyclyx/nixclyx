@@ -39,9 +39,5 @@
       openssh.enable = true;
       tailscale.enable = true;
     };
-
-    system = {
-      console.enable = true;
-    };
   };
 }

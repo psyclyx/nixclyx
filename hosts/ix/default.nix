@@ -35,9 +35,6 @@ in
     };
 
     system = {
-      console = {
-        enable = true;
-      };
       sudo = {
         enable = true;
       };
