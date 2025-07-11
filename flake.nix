@@ -109,6 +109,10 @@
         emacs-overlay.overlays.default
       ];
 
+      pkgsFor = system: nixpkgs.legacyPackages.${system};
+
+      mkDevShell = import ./devshell.nix;
+
       mkDarwinConfiguration = import ./modules/platform/darwin { inherit inputs overlays; };
       mkNixosConfiguration = import ./modules/platform/nixos { inherit inputs overlays; };
 
@@ -155,22 +159,8 @@
         )
       );
 
-      devShells = lib.genAttrs [ "x86_64-linux" "aarch64-darwin" "x86_64-darwin" ] (
-        system:
-        let
-          pkgs = nixpkgs.legacyPackages.${system};
-        in
-        {
-          default = pkgs.mkShell {
-            packages = with pkgs; [
-              age
-              nixfmt-rfc-style
-              nixd
-              sops
-              ssh-to-age
-            ];
-          };
-        }
-      );
+      devShells = lib.genAttrs [ "x86_64-linux" "aarch64-darwin" "x86_64-darwin" ] (system: {
+        default = mkDevShell (pkgsFor system);
+      });
     };
 }
