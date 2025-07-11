@@ -9,15 +9,8 @@ inputs.nixpkgs.lib.nixosSystem {
   system = hostPlatform;
   modules = [
     { networking.hostName = hostName; }
-    {
-      nixpkgs = {
-        inherit overlays;
-        config = {
-          allowUnfree = true;
-          nvidia.acceptLicense = true;
-        };
-      };
-    }
+    { nixpkgs.overlays = overlays; }
+    ./nixpkgs.nix
   ] ++ modules;
 
   specialArgs = {
