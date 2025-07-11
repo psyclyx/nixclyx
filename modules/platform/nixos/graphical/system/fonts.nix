@@ -2,6 +2,7 @@
 {
   fonts = {
     packages = with pkgs; [
+      aporetic
       nerd-fonts.noto
       nerd-fonts.fira-code
       font-awesome
