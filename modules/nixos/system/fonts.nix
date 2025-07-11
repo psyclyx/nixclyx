@@ -4,13 +4,7 @@
     packages = with pkgs; [
       aporetic
       nerd-fonts.noto
-      nerd-fonts.fira-code
-      font-awesome
-      lato
       liberation_ttf
-      open-sans
-      roboto
-      ubuntu_font_family
       twitter-color-emoji
     ];
 
