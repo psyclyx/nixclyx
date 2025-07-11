@@ -8,8 +8,6 @@
     ../../modules/nixos/module.nix
     ../../modules/nixos/system/home-manager.nix
 
-    ../../modules/nixos/services/interception-tools.nix
-
     ../../modules/nixos/services/greetd.nix
     ../../modules/nixos/services/gvfs.nix
     ../../modules/nixos/services/gnome-keyring.nix
