@@ -9,7 +9,6 @@
     ../../modules/nixos/system/home-manager.nix
 
     ../../modules/nixos/system/fonts.nix
-    ../../modules/nixos/programs/sway.nix
 
     ./boot.nix
     ./filesystems.nix
@@ -21,6 +20,9 @@
   psyclyx = {
     programs = {
       steam = {
+        enable = true;
+      };
+      sway = {
         enable = true;
       };
     };

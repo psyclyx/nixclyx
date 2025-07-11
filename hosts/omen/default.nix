@@ -9,7 +9,6 @@
     ../../modules/nixos/system/home-manager.nix
 
     ../../modules/nixos/system/fonts.nix
-    ../../modules/nixos/programs/sway.nix
 
     ./boot.nix
     ./filesystems.nix
@@ -20,6 +19,12 @@
   services.resolved.enable = true;
 
   psyclyx = {
+    programs = {
+      sway = {
+        enable = true;
+      };
+    };
+
     services = {
       autoMount = {
         enable = true;

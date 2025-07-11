@@ -2,6 +2,7 @@
   imports = [
     ./programs/adb.nix
     ./programs/steam.nix
+    ./programs/sway.nix
     ./programs/zsh.nix
     ./services/automount.nix
     ./services/gnome-keyring.nix
