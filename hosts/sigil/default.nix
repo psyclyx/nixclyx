@@ -3,7 +3,7 @@
   system.stateVersion = "24.05";
   time.timeZone = "America/Los_Angeles";
   imports = [
-    ../../modules/nixos/tailscale.nix
+    ../../modules/nixos/services/tailscale.nix
     ../../modules/nixos/services/openssh.nix
     ../../modules/nixos/system/console.nix
     ../../modules/nixos/system/home-manager.nix

@@ -30,8 +30,6 @@ in
     # Don't wait for tailscale interface to come online during boot
     systemd.network.wait-online.ignoredInterfaces = [ tsCfg.interfaceName ];
 
-    # Configure tailscale as an exit node?
-    # TODO: this might be too broad?
     networking.firewall.trustedInterfaces = [ tsCfg.interfaceName ];
 
     # This supposedly mitigates some issues

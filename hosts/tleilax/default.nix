@@ -17,7 +17,7 @@ in
     ../../modules/nixos/system/security.nix
     ../../modules/nixos/programs/zsh.nix
     ../../modules/nixos/programs/nix-ld.nix
-    ../../modules/nixos/tailscale.nix
+    ../../modules/nixos/services/tailscale.nix
     ../../modules/nixos/services/fail2ban.nix
 
     ./users.nix

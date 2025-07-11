@@ -9,7 +9,7 @@ in
   imports = [
     ../../modules/nixos/programs/nix-ld.nix
     ../../modules/nixos/programs/zsh.nix
-    ../../modules/nixos/tailscale.nix
+    ../../modules/nixos/services/tailscale.nix
     ../../modules/nixos/services/openssh.nix
     ../../modules/nixos/system/console.nix
     ../../modules/nixos/system/home-manager.nix
