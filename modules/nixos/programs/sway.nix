@@ -2,6 +2,21 @@
 {
   environment.systemPackages = [ pkgs.dbus ];
 
+  # Wiki claims this improves performance:
+  # https://nixos.wiki/wiki/Sway#Inferior_performance_compared_to_other_distributions
+  security = {
+    pam = {
+      loginLimits = [
+        {
+          domain = "@users";
+          item = "rtprio";
+          type = "-";
+          value = 1;
+        }
+      ];
+    };
+  };
+
   programs = {
     sway = {
       enable = true;
