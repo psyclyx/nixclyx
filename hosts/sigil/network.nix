@@ -5,10 +5,6 @@
   ...
 }:
 {
-  psyclyx.network.tailscale = {
-    enable = true;
-    exitNode = true;
-  };
   services.resolved.enable = true;
   networking.useNetworkd = true;
   networking.networkmanager.enable = true;

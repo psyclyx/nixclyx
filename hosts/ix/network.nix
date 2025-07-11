@@ -1,10 +1,5 @@
 { pkgs, ... }:
 {
-  psyclyx.network.tailscale = {
-    enable = true;
-    exitNode = true;
-  };
-
   networking.firewall.allowedTCPPorts = [ 22 ];
   networking.useNetworkd = true;
   services.resolved.enable = true;

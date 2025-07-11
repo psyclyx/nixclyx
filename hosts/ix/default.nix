@@ -8,6 +8,7 @@ in
   time.timeZone = "America/Los_Angeles";
   imports = [
     ../../modules/nixos/nixpkgs.nix
+    ../../modules/nixos/module.nix
 
     ../../modules/nixos/programs/nix-ld.nix
     ../../modules/nixos/programs/zsh.nix
@@ -25,4 +26,13 @@ in
     ./network.nix
     ./users.nix
   ];
+
+  psyclyx = {
+    services = {
+      tailscale = {
+        enable = true;
+        exitNode = true;
+      };
+    };
+  };
 }

@@ -4,9 +4,6 @@ let
   prefix4 = "199.255.18.171";
 in
 {
-  psyclyx.network.tailscale.enable = true;
-  psyclyx.network.tailscale.exitNode = true;
-
   networking = {
     useNetworkd = true;
     useDHCP = false;

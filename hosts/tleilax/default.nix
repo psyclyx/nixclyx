@@ -12,6 +12,7 @@ in
   time.timeZone = "America/Los_Angeles";
   imports = [
     ../../modules/nixos/nixpkgs.nix
+    ../../modules/nixos/module.nix
 
     ../../modules/nixos/services/openssh.nix
     ../../modules/nixos/system/console.nix
@@ -20,7 +21,6 @@ in
     ../../modules/nixos/system/security.nix
     ../../modules/nixos/programs/zsh.nix
     ../../modules/nixos/programs/nix-ld.nix
-    ../../modules/nixos/services/tailscale.nix
     ../../modules/nixos/services/fail2ban.nix
 
     ./users.nix
@@ -30,6 +30,16 @@ in
     ./nginx.nix
     ./metrics.nix
   ];
+
   services.openssh.ports = [ 17891 ];
   boot.loader.systemd-boot.enable = true;
+
+  psyclyx = {
+    services = {
+      tailscale = {
+        enable = true;
+        exitNode = true;
+      };
+    };
+  };
 }

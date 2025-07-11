@@ -5,6 +5,7 @@
   time.timeZone = "America/Los_Angeles";
   imports = [
     ../../modules/nixos/nixpkgs.nix
+    ../../modules/nixos/module.nix
 
     ../../modules/nixos/services/openssh.nix
     ../../modules/nixos/system/console.nix
@@ -37,11 +38,10 @@
   ];
 
   services.resolved.enable = true;
-  networking.useDHCP = true;
-  networking.interfaces.tailscale0.useDHCP = false;
-  services.tailscale = {
-    enable = true;
+
+  psyclyx = {
+    services = {
+      tailscale.enable = true;
+    };
   };
-  networking.firewall.allowedUDPPorts = [ 41641 ];
-  environment.systemPackages = [ pkgs.tailscale ];
 }

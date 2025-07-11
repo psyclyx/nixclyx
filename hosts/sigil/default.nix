@@ -7,7 +7,6 @@
     ../../modules/nixos/nixpkgs.nix
     ../../modules/nixos/module.nix
 
-    ../../modules/nixos/services/tailscale.nix
     ../../modules/nixos/services/openssh.nix
     ../../modules/nixos/system/console.nix
     ../../modules/nixos/system/home-manager.nix
@@ -42,6 +41,10 @@
   psyclyx = {
     services = {
       home-assistant.enable = true;
+      tailscale = {
+        enable = true;
+        exitNode = true;
+      };
     };
   };
 }

@@ -5,24 +5,24 @@
   ...
 }:
 let
-  psyclyxTsCfg = config.psyclyx.network.tailscale;
+  cfg = config.psyclyx.services.tailscale;
   tsCfg = config.services.tailscale;
 in
 {
   options = {
-    psyclyx.network.tailscale = {
+    psyclyx.services.tailscale = {
       enable = lib.mkEnableOption "Enable tailscale service and related settings";
       exitNode = lib.mkEnableOption "Configure tailscale client as an exit node";
     };
   };
 
-  config = lib.mkIf psyclyxTsCfg.enable {
+  config = lib.mkIf cfg.enable {
     services.tailscale = {
       enable = true;
       openFirewall = true;
       port = 41641;
       interfaceName = "ts0";
-      useRoutingFeatures = if psyclyxTsCfg.exitNode then "both" else "client";
+      useRoutingFeatures = if cfg.exitNode then "both" else "client";
     };
 
     environment.systemPackages = [ pkgs.tailscale ];
