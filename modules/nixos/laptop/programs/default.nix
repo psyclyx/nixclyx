@@ -1,4 +1,0 @@
-{ ... }:
-{
-  imports = [ ./light.nix ];
-}
