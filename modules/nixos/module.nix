@@ -5,6 +5,7 @@
     ./services/greetd.nix
     ./services/home-assistant.nix
     ./services/openssh.nix
+    ./services/printing.nix
     ./services/tailscale.nix
     ./system/console.nix
     ./system/locale.nix

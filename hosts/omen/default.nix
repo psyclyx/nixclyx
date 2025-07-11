@@ -11,7 +11,6 @@
     ../../modules/nixos/system/fonts.nix
     ../../modules/nixos/programs/sway.nix
 
-    ../../modules/nixos/services/printing.nix
     ../../modules/nixos/programs/adb.nix
     ../../modules/nixos/programs/nix-ld.nix
     ../../modules/nixos/programs/zsh.nix
@@ -36,6 +35,9 @@
         enable = true;
       };
       openssh = {
+        enable = true;
+      };
+      printing = {
         enable = true;
       };
       tailscale = {
