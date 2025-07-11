@@ -11,7 +11,6 @@
     ../../modules/nixos/system/fonts.nix
     ../../modules/nixos/programs/sway.nix
 
-    ../../modules/nixos/programs/steam.nix
     ../../modules/nixos/programs/zsh.nix
 
     ./boot.nix
@@ -22,6 +21,12 @@
   ];
 
   psyclyx = {
+    programs = {
+      steam = {
+        enable = true;
+      };
+    };
+
     services = {
       autoMount = {
         enable = true;
