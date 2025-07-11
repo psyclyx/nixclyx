@@ -9,7 +9,6 @@
     ../../modules/nixos/system/home-manager.nix
 
     ../../modules/nixos/services/greetd.nix
-    ../../modules/nixos/services/gvfs.nix
     ../../modules/nixos/services/gnome-keyring.nix
     ../../modules/nixos/system/fonts.nix
     ../../modules/nixos/programs/sway.nix
