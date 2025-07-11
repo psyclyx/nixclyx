@@ -27,6 +27,8 @@
     ../../modules/nixos/programs/steam.nix
     ../../modules/nixos/programs/zsh.nix
 
+    ../../modules/nixos/services/home-assistant.nix
+
     ./boot.nix
     ./filesystems.nix
     ./hardware.nix
@@ -36,20 +38,4 @@
 
   virtualisation.docker.enable = true;
 
-  services.home-assistant = {
-    enable = true;
-    extraComponents = [
-      # Components required to complete the onboarding
-      "esphome"
-      "met"
-      "radio_browser"
-      "zha"
-      "ios"
-    ];
-    config = {
-      # Includes dependencies for a basic setup
-      # https://www.home-assistant.io/integrations/default_config/
-      default_config = { };
-    };
-  };
 }
