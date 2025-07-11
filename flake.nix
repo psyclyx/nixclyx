@@ -110,21 +110,21 @@
       mkNixosConfiguration = import ./modules/nixos { inherit inputs overlays; };
 
       nixosConfigurations = {
-        omen = mkNixosConfiguration {
+        ix = mkNixosConfiguration {
+          modules = [ ./hosts/ix ];
           system = "x86_64-linux";
+        };
+        omen = mkNixosConfiguration {
           modules = [ ./hosts/omen ];
+          system = "x86_64-linux";
         };
         sigil = mkNixosConfiguration {
-          system = "x86_64-linux";
           modules = [ ./hosts/sigil ];
-        };
-        ix = mkNixosConfiguration {
           system = "x86_64-linux";
-          modules = [ ./hosts/ix ];
         };
         tleilax = mkNixosConfiguration {
-          system = "x86_64-linux";
           modules = [ ./hosts/tleilax ];
+          system = "x86_64-linux";
         };
       };
 
