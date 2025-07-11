@@ -8,6 +8,8 @@
     ./services/tailscale.nix
     ./system/console.nix
     ./system/locale.nix
+    ./system/nix.nix
     ./system/sudo.nix
+    ./system/virtualization.nix
   ];
 }

@@ -8,8 +8,6 @@
     ../../modules/nixos/module.nix
     ../../modules/nixos/system/home-manager.nix
 
-    ../../modules/nixos/system/virtualization.nix
-
     ../../modules/nixos/system/fonts.nix
     ../../modules/nixos/programs/sway.nix
 
@@ -51,6 +49,9 @@
 
     system = {
       sudo = {
+        enable = true;
+      };
+      virtualization = {
         enable = true;
       };
     };
