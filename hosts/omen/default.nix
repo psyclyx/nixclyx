@@ -8,7 +8,6 @@
     ../../modules/nixos/module.nix
     ../../modules/nixos/system/home-manager.nix
 
-    ../../modules/nixos/services/greetd.nix
     ../../modules/nixos/services/gnome-keyring.nix
     ../../modules/nixos/system/fonts.nix
     ../../modules/nixos/programs/sway.nix
@@ -30,6 +29,11 @@
     services = {
       autoMount = {
         enable = true;
+      };
+      desktop = {
+        greetd = {
+          enable = true;
+        };
       };
       openssh = {
         enable = true;
