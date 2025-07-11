@@ -8,6 +8,7 @@ let
 in
 {
   system.stateVersion = "24.05";
+  networking.hostName = "tleilax";
   time.timeZone = "America/Los_Angeles";
   imports = [
     ../../modules/nixos/services/openssh.nix
@@ -27,8 +28,6 @@ in
     ./nginx.nix
     ./metrics.nix
   ];
-
   services.openssh.ports = [ 17891 ];
   boot.loader.systemd-boot.enable = true;
-
 }

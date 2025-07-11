@@ -1,6 +1,7 @@
 { inputs, ... }:
 {
   system.stateVersion = "24.05";
+  networking.hostName = "sigil";
   time.timeZone = "America/Los_Angeles";
   imports = [
     ../../modules/nixos/services/tailscale.nix

@@ -1,6 +1,7 @@
 { pkgs, ... }:
 {
   system.stateVersion = "24.05";
+  networking.hostName = "omen";
   time.timeZone = "America/Los_Angeles";
   imports = [
     ../../modules/nixos/services/openssh.nix

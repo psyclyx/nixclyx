@@ -111,23 +111,19 @@
 
       nixosConfigurations = {
         omen = mkNixosConfiguration {
-          hostPlatform = "x86_64-linux";
-          hostName = "omen";
+          system = "x86_64-linux";
           modules = [ ./hosts/omen ];
         };
         sigil = mkNixosConfiguration {
-          hostPlatform = "x86_64-linux";
-          hostName = "sigil";
+          system = "x86_64-linux";
           modules = [ ./hosts/sigil ];
         };
         ix = mkNixosConfiguration {
-          hostPlatform = "x86_64-linux";
-          hostName = "ix";
+          system = "x86_64-linux";
           modules = [ ./hosts/ix ];
         };
         tleilax = mkNixosConfiguration {
-          hostPlatform = "x86_64-linux";
-          hostName = "tleilax";
+          system = "x86_64-linux";
           modules = [ ./hosts/tleilax ];
         };
       };

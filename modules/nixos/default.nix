@@ -1,14 +1,12 @@
 { inputs, overlays }:
 {
-  hostName,
-  hostPlatform,
+  system,
   modules ? [ ],
   ...
 }@args:
 inputs.nixpkgs.lib.nixosSystem {
-  system = hostPlatform;
+  inherit system;
   modules = [
-    { networking.hostName = hostName; }
     { nixpkgs.overlays = overlays; }
     ./nixpkgs.nix
   ] ++ modules;

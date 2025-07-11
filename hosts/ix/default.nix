@@ -4,8 +4,8 @@ let
 in
 {
   system.stateVersion = "24.05";
+  networking.hostName = "ix";
   time.timeZone = "America/Los_Angeles";
-
   imports = [
     ../../modules/nixos/programs/nix-ld.nix
     ../../modules/nixos/programs/zsh.nix
