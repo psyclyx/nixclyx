@@ -23,12 +23,6 @@
   services.resolved.enable = true;
 
   psyclyx = {
-    programs = {
-      adb = {
-        enable = true;
-      };
-    };
-
     services = {
       autoMount = {
         enable = true;

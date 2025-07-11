@@ -23,12 +23,6 @@
   ];
 
   psyclyx = {
-    programs = {
-      adb = {
-        enable = true;
-      };
-    };
-
     services = {
       autoMount = {
         enable = true;
