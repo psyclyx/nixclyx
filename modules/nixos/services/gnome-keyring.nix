@@ -1,9 +1,24 @@
-{ ... }:
+{ config, lib, ... }:
+let
+  cfg = config.psyclyx.services.gnome-keyring;
+in
 {
-  services = {
-    gnome = {
-      gnome-keyring = {
-        enable = true;
+  options = {
+    psyclyx = {
+      services = {
+        gnome-keyring = {
+          enable = lib.mkEnableOption "Enable gnome-keyring.";
+        };
+      };
+    };
+  };
+
+  config = lib.mkIf cfg.enable {
+    services = {
+      gnome = {
+        gnome-keyring = {
+          enable = true;
+        };
       };
     };
   };
