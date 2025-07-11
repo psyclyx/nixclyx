@@ -1,6 +1,6 @@
 { config, lib, ... }:
 let
-  cfg = lib.psyclyx.system.sudo;
+  cfg = config.psyclyx.system.sudo;
 in
 {
   options = {
@@ -21,8 +21,8 @@ in
   config = lib.mkIf cfg.enable {
     security = {
       sudo = {
-        extraConfig = lib.mkIf ''
-          Defaults        timestamp_timeout=${cfg.timestampTimeout}
+        extraConfig = ''
+          Defaults        timestamp_timeout=${builtins.toString cfg.timestampTimeout}
         '';
       };
     };
