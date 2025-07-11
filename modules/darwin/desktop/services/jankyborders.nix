@@ -17,12 +17,5 @@ in
     inactive_color = theme.wm.unfocused.border;
 
     width = 2.0;
-    #blur_radius = 4.0;
-    #style = "round";
-    #order = "below";
-
-    #hidpi = false;
-
-    #background_color = "";
   };
 }
