@@ -19,9 +19,9 @@ in
   config = lib.mkIf psyclyxTsCfg.enable {
     services.tailscale = {
       enable = true;
-      openFirewall = lib.mkDefault true;
-      port = lib.mkDefault 41641;
-      interfaceName = lib.mkDefault "ts0";
+      openFirewall = true;
+      port = 41641;
+      interfaceName = "ts0";
       useRoutingFeatures = if psyclyxTsCfg.exitNode then "both" else "client";
     };
 
