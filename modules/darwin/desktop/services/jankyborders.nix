@@ -1,6 +1,6 @@
 { lib, pkgs, ... }:
 let
-  colors = import ../../../../home/themes/angel.nix { inherit lib; };
+  colors = import ../../../home/themes/angel.nix { inherit lib; };
   theme =
     with colors.colorUtils;
     mkTheme [

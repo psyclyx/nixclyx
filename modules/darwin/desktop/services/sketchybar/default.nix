@@ -5,7 +5,7 @@
   ...
 }:
 let
-  colors = import ../../../../../home/themes/angel.nix { inherit lib; };
+  colors = import ../../../../home/themes/angel.nix { inherit lib; };
   themeEnv =
     with colors.colorUtils;
     mkThemeEnv [
