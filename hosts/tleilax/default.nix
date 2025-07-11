@@ -10,7 +10,7 @@ in
   system.stateVersion = "24.05";
   time.timeZone = "America/Los_Angeles";
   imports = [
-    ../../modules/nixos/base
+    ../../modules/nixos/services/openssh.nix
     ../../modules/nixos/system/console.nix
     ../../modules/nixos/system/home-manager.nix
     ../../modules/nixos/system/locale.nix

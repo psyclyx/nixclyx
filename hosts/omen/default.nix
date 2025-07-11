@@ -3,12 +3,17 @@
   system.stateVersion = "24.05";
   time.timeZone = "America/Los_Angeles";
   imports = [
-    ../../modules/nixos/base
+    ../../modules/nixos/services/openssh.nix
     ../../modules/nixos/system/console.nix
     ../../modules/nixos/system/home-manager.nix
     ../../modules/nixos/system/locale.nix
     ../../modules/nixos/system/security.nix
-    ../../modules/nixos/physical
+
+    ../../modules/nixos/services/devmon.nix
+    ../../modules/nixos/services/fwupd.nix
+    ../../modules/nixos/services/udisks2.nix
+    ../../modules/nixos/services/interception-tools.nix
+
     ../../modules/nixos/graphical
     ../../modules/nixos/laptop
     ../../modules/nixos/services/printing.nix
