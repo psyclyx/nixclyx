@@ -5,6 +5,7 @@
   time.timeZone = "America/Los_Angeles";
   imports = [
     ../../modules/nixos/nixpkgs.nix
+    ../../modules/nixos/module.nix
 
     ../../modules/nixos/services/tailscale.nix
     ../../modules/nixos/services/openssh.nix
@@ -31,12 +32,16 @@
     ../../modules/nixos/programs/steam.nix
     ../../modules/nixos/programs/zsh.nix
 
-    ../../modules/nixos/services/home-assistant.nix
-
     ./boot.nix
     ./filesystems.nix
     ./hardware.nix
     ./network.nix
     ./users.nix
   ];
+
+  psyclyx = {
+    services = {
+      home-assistant.enable = true;
+    };
+  };
 }
