@@ -13,7 +13,6 @@ in
     ../../modules/nixos/programs/nix-ld.nix
     ../../modules/nixos/programs/zsh.nix
     ../../modules/nixos/services/tailscale.nix
-    ../../modules/nixos/system/console.nix
     ../../modules/nixos/system/home-manager.nix
     ../../modules/nixos/system/locale.nix
     ../../modules/nixos/system/security.nix
@@ -28,11 +27,14 @@ in
 
   psyclyx = {
     services = {
-      openssh.enable = true;
       tailscale = {
         enable = true;
         exitNode = true;
       };
+    };
+
+    system = {
+      console.enable = true;
     };
   };
 }

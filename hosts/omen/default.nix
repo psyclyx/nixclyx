@@ -7,7 +7,6 @@
     ../../modules/nixos/nixpkgs.nix
     ../../modules/nixos/module.nix
 
-    ../../modules/nixos/system/console.nix
     ../../modules/nixos/system/home-manager.nix
     ../../modules/nixos/system/locale.nix
     ../../modules/nixos/system/security.nix
@@ -42,6 +41,10 @@
     services = {
       openssh.enable = true;
       tailscale.enable = true;
+    };
+
+    system = {
+      console.enable = true;
     };
   };
 }

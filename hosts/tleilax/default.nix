@@ -14,7 +14,6 @@ in
     ../../modules/nixos/nixpkgs.nix
     ../../modules/nixos/module.nix
 
-    ../../modules/nixos/system/console.nix
     ../../modules/nixos/system/home-manager.nix
     ../../modules/nixos/system/locale.nix
     ../../modules/nixos/system/security.nix
@@ -45,6 +44,10 @@ in
         enable = true;
         exitNode = true;
       };
+    };
+
+    system = {
+      console.enable = true;
     };
   };
 }
