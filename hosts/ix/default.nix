@@ -7,6 +7,7 @@ in
   time.timeZone = "America/Los_Angeles";
 
   imports = [
+    ../../modules/nixos/programs/nix-ld.nix
     ../../modules/nixos/programs/zsh.nix
     ../../modules/nixos/tailscale.nix
     ../../modules/nixos/base

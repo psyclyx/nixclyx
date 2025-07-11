@@ -12,6 +12,7 @@ in
   imports = [
     ../../modules/nixos/base
     ../../modules/nixos/programs/zsh.nix
+    ../../modules/nixos/programs/nix-ld.nix
     ../../modules/nixos/tailscale.nix
     ../../modules/nixos/services/fail2ban.nix
 

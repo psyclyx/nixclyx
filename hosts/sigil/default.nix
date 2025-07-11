@@ -9,6 +9,7 @@
     ../../modules/nixos/graphical
     ../../modules/nixos/services/printing.nix
     ../../modules/nixos/programs/adb.nix
+    ../../modules/nixos/programs/nix-ld.nix
     ../../modules/nixos/programs/steam.nix
     ../../modules/nixos/programs/zsh.nix
 

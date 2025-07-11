@@ -3,6 +3,5 @@
   imports = [
     ./system
     ./services
-    ./programs
   ];
 }
