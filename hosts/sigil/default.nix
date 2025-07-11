@@ -11,8 +11,6 @@
     ../../modules/nixos/system/fonts.nix
     ../../modules/nixos/programs/sway.nix
 
-    ../../modules/nixos/programs/zsh.nix
-
     ./boot.nix
     ./filesystems.nix
     ./hardware.nix

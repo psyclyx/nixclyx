@@ -11,7 +11,6 @@ in
     ../../modules/nixos/module.nix
     ../../modules/nixos/system/home-manager.nix
 
-    ../../modules/nixos/programs/zsh.nix
     ../../modules/nixos/services/tailscale.nix
     ../../modules/nixos/services/soju.nix
 
