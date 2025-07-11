@@ -94,25 +94,18 @@
   outputs =
     inputs:
     let
-      inherit (inputs)
-        nixpkgs
-        nur
-        nix-darwin-emacs
-        emacs-overlay
-        ;
-      inherit (nixpkgs) lib;
+      inherit (inputs.nixpkgs) lib;
 
-      overlays = [
+      overlays = with inputs; [
         (import ./pkgs)
         nur.overlays.default
         nix-darwin-emacs.overlays.emacs
         emacs-overlay.overlays.default
       ];
 
-      pkgsFor = system: nixpkgs.legacyPackages.${system};
+      pkgsFor = system: inputs.nixpkgs.legacyPackages.${system};
 
       mkDevShell = import ./devshell.nix;
-
       mkDarwinConfiguration = import ./modules/platform/darwin { inherit inputs overlays; };
       mkNixosConfiguration = import ./modules/platform/nixos { inherit inputs overlays; };
 
