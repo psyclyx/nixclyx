@@ -10,11 +10,12 @@ in
   system.stateVersion = "24.05";
   time.timeZone = "America/Los_Angeles";
   imports = [
-    ../../modules/platform/nixos/base
-    ../../modules/platform/nixos/programs/zsh.nix
-    ../../modules/platform/nixos/tailscale.nix
+    ../../modules/nixos/base
+    ../../modules/nixos/programs/zsh.nix
+    ../../modules/nixos/tailscale.nix
+    ../../modules/nixos/services/fail2ban.nix
+
     ./users.nix
-    ../../modules/platform/nixos/services/fail2ban.nix
     ./network.nix
     ./hardware.nix
     ./filesystems.nix

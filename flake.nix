@@ -106,8 +106,8 @@
       pkgsFor = system: inputs.nixpkgs.legacyPackages.${system};
 
       mkDevShell = import ./devshell.nix;
-      mkDarwinConfiguration = import ./modules/platform/darwin { inherit inputs overlays; };
-      mkNixosConfiguration = import ./modules/platform/nixos { inherit inputs overlays; };
+      mkDarwinConfiguration = import ./modules/darwin { inherit inputs overlays; };
+      mkNixosConfiguration = import ./modules/nixos { inherit inputs overlays; };
 
       nixosConfigurations = {
         omen = mkNixosConfiguration {
