@@ -5,17 +5,17 @@
   modules ? [ ],
   ...
 }@args:
-let
-  inherit (inputs) nixpkgs;
-in
-nixpkgs.lib.nixosSystem {
+inputs.nixpkgs.lib.nixosSystem {
+  system = hostPlatform;
   modules = [
+    { networking.hostName = hostName; }
     {
-      networking.hostName = hostName;
       nixpkgs = {
-        inherit overlays hostPlatform;
-        config.allowUnfree = true;
-        config.nvidia.acceptLicense = true;
+        inherit overlays;
+        config = {
+          allowUnfree = true;
+          nvidia.acceptLicense = true;
+        };
       };
     }
   ] ++ modules;
