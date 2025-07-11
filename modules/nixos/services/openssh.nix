@@ -9,13 +9,12 @@ in
       services = {
         openssh = {
           enable = lib.mkEnableOption "Enable OpenSSH.";
-        };
-
-        agentAuth = {
-          enable = lib.mkOption {
-            type = lib.types.bool;
-            default = true;
-            description = "Respect SSH Agent authentication in PAM.";
+          agentAuth = {
+            enable = lib.mkOption {
+              type = lib.types.bool;
+              default = true;
+              description = "Respect SSH Agent authentication in PAM.";
+            };
           };
         };
       };
@@ -36,7 +35,7 @@ in
     security = {
       pam = {
         sshAgentAuth = {
-          enable = cfg.agentAuth;
+          enable = cfg.agentAuth.enable;
         };
       };
     };
