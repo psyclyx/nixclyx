@@ -34,8 +34,6 @@
     ./users.nix
   ];
 
-  programs.sway.extraOptions = [ "--unsupported-gpu" ];
-
   virtualisation.docker.enable = true;
 
   services.home-assistant = {

@@ -1,18 +1,18 @@
 { pkgs, ... }:
 {
   environment.systemPackages = [ pkgs.dbus ];
+
   programs = {
     sway = {
       enable = true;
       wrapperFeatures = {
         gtk = true;
       };
-
       extraPackages = [
         pkgs.wl-clipboard
         pkgs.wtype
       ];
-
+      extraOptions = [ "--unsupported-gpu" ];
       extraSessionCommands = ''
         export SDL_VIDEODRIVER=wayland
         export QT_QPA_PLATFORM=wayland
