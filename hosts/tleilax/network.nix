@@ -74,9 +74,7 @@ in
             "${prefix4}/32"
             "${prefix6}10/120"
           ];
-          gateway = [
-            "${prefix6}1"
-          ];
+          gateway = [ "${prefix6}1" ];
           routes = [
             {
               Destination = "::/0";

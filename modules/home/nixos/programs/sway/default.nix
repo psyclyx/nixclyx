@@ -30,9 +30,7 @@ in
         ];
       };
 
-      bars = [
-        { command = "${pkgs.waybar}/bin/waybar"; }
-      ];
+      bars = [ { command = "${pkgs.waybar}/bin/waybar"; } ];
 
       defaultWorkspace = "workspace number 1";
 

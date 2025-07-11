@@ -22,9 +22,7 @@ in
     #./services/rtorrent.nix
   ];
 
-  programs.sway.extraOptions = [
-    "--unsupported-gpu"
-  ];
+  programs.sway.extraOptions = [ "--unsupported-gpu" ];
 
   virtualisation.docker.enable = true;
 

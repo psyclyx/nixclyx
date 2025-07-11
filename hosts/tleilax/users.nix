@@ -1,8 +1,4 @@
-{
-  pkgs,
-  lib,
-  ...
-}:
+{ pkgs, lib, ... }:
 let
   mkHome = import ../../modules/home;
 in
@@ -30,7 +26,10 @@ in
   home-manager.users.psyc = mkHome {
     name = "psyc";
     email = "me@psyclyx.xyz";
-    home.packages = with pkgs; [ clojure screen ];
+    home.packages = with pkgs; [
+      clojure
+      screen
+    ];
     modules = [
       ../../modules/home/base
       { services.syncthing.enable = lib.mkForce false; }

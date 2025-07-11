@@ -24,5 +24,4 @@ in
   services.openssh.ports = [ 17891 ];
   boot.loader.systemd-boot.enable = true;
 
-
 }

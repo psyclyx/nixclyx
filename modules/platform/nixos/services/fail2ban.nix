@@ -1,11 +1,9 @@
-{...}:
+{ ... }:
 {
   services.fail2ban = {
     enable = true;
     maxretry = 5;
-    ignoreIP = [
-      "100.64.0.0/10"
-    ];
+    ignoreIP = [ "100.64.0.0/10" ];
     bantime = "1h";
     bantime-increment = {
       enable = true;

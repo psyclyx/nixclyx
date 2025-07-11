@@ -1,8 +1,4 @@
-{
-  pkgs,
-  lib,
-  ...
-}:
+{ pkgs, lib, ... }:
 let
   mkHome = import ../../modules/home;
 in

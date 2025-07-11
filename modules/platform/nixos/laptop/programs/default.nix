@@ -1,6 +1,4 @@
 { ... }:
 {
-  imports = [
-    ./light.nix
-  ];
+  imports = [ ./light.nix ];
 }

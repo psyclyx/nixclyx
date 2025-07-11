@@ -1,7 +1,4 @@
-{
-  inputs,
-  overlays,
-}:
+{ inputs, overlays }:
 {
   hostName,
   hostPlatform,

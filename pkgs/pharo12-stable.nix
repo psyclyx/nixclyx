@@ -16,11 +16,7 @@ let
     in
     fetchzip {
       url = "https://files.pharo.org/get-files/120/pharo-vm-${arch}-stable.zip";
-      sha256 =
-        {
-          "Darwin-arm64" = "sha256-IsynTLOySc6NXjeslLxIW9PfipTZXpHsbVzWCcfTz0k=";
-        }
-        .${arch};
+      sha256 = { "Darwin-arm64" = "sha256-IsynTLOySc6NXjeslLxIW9PfipTZXpHsbVzWCcfTz0k="; }.${arch};
     };
 in
 stdenv.mkDerivation {

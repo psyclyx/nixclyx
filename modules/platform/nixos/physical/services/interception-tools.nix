@@ -1,8 +1,4 @@
-{
-  lib,
-  pkgs,
-  ...
-}:
+{ lib, pkgs, ... }:
 {
   services = {
     interception-tools = {

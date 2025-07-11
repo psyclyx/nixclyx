@@ -1,11 +1,7 @@
 { pkgs, lib, ... }:
 let
   colors = import ../themes/angel.nix { inherit lib; };
-  theme =
-    with colors.colorUtils;
-    mkTheme [
-      transform.withHash
-    ];
+  theme = with colors.colorUtils; mkTheme [ transform.withHash ];
 in
 {
   programs = {

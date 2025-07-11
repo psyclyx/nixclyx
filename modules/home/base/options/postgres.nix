@@ -4,35 +4,35 @@
   pkgs,
   ...
 }:
-with lib; let
+with lib;
+let
   cfg = config.services.postgresql;
 
   postgresql =
-    if cfg.extraPlugins == []
-    then cfg.package
-    else cfg.package.withPackages (_: cfg.extraPlugins);
+    if cfg.extraPlugins == [ ] then cfg.package else cfg.package.withPackages (_: cfg.extraPlugins);
 
-  toStr = value:
-    if true == value
-    then "yes"
-    else if false == value
-    then "no"
-    else if isString value
-    then "'${lib.replaceStrings ["'"] ["''"] value}'"
-    else toString value;
+  toStr =
+    value:
+    if true == value then
+      "yes"
+    else if false == value then
+      "no"
+    else if isString value then
+      "'${lib.replaceStrings [ "'" ] [ "''" ] value}'"
+    else
+      toString value;
 
   # The main PostgreSQL configuration file.
-  configFile =
-    pkgs.writeText "postgresql.conf"
-    (concatStringsSep "\n" (mapAttrsToList (n: v: "${n} = ${toStr v}") cfg.settings));
+  configFile = pkgs.writeText "postgresql.conf" (
+    concatStringsSep "\n" (mapAttrsToList (n: v: "${n} = ${toStr v}") cfg.settings)
+  );
 
   # Convert ensureClauses to SQL options for CREATE USER
-  clausesToSql = clauses:
-    concatStringsSep " " (mapAttrsToList (name: value:
-      if value == true
-      then name
-      else "${name} ${toStr value}")
-    clauses);
+  clausesToSql =
+    clauses:
+    concatStringsSep " " (
+      mapAttrsToList (name: value: if value == true then name else "${name} ${toStr value}") clauses
+    );
 
   # Create script to create users and assign permissions
   initScript = pkgs.writeShellScript "postgresql-init" ''
@@ -54,38 +54,32 @@ with lib; let
     ln -sf ${pkgs.writeText "pg_ident.conf" cfg.identMap} ${cfg.dataDir}/pg_ident.conf
   '';
 
-  setupScript = let
-    createDatabases =
-      concatMapStrings (database: ''
+  setupScript =
+    let
+      createDatabases = concatMapStrings (database: ''
         if ! echo "SELECT 1 FROM pg_database WHERE datname = '${database}'" |  PGPORT="$PGPORT" ${postgresql}/bin/psql -U ${cfg.superUser} -d postgres -t | grep -q 1; then
           echo "CREATE DATABASE ${database};" | PGPORT="$PGPORT" ${postgresql}/bin/psql -U ${cfg.superUser} -d postgres
         fi
-      '')
-      cfg.ensureDatabases;
+      '') cfg.ensureDatabases;
 
-    createUsers =
-      concatMapStrings (
-        user: let
-          userOptions =
-            if user.ensureClauses != {}
-            then "WITH ${clausesToSql user.ensureClauses}"
-            else "";
-          passwordOption =
-            if user.password != null
-            then "PASSWORD '${user.password}'"
-            else "";
-        in ''
+      createUsers = concatMapStrings (
+        user:
+        let
+          userOptions = if user.ensureClauses != { } then "WITH ${clausesToSql user.ensureClauses}" else "";
+          passwordOption = if user.password != null then "PASSWORD '${user.password}'" else "";
+        in
+        ''
           if ! echo "SELECT 1 FROM pg_roles WHERE rolname = '${user.name}'" | PGPORT="$PGPORT" ${postgresql}/bin/psql -U ${cfg.superUser} -d postgres -t | grep -q 1; then
             echo "CREATE USER ${user.name} ${userOptions} ${passwordOption};" | PGPORT="$PGPORT" ${postgresql}/bin/psql -U ${cfg.superUser} -d postgres
           fi
-          ${concatStringsSep "\n" (mapAttrsToList (database: permission: ''
+          ${concatStringsSep "\n" (
+            mapAttrsToList (database: permission: ''
               echo "GRANT ${permission} ON ${database} TO ${user.name};" | PGPORT="$PGPORT" ${postgresql}/bin/psql -U ${cfg.superUser} -d postgres
-            '')
-            user.ensurePermissions)}
+            '') user.ensurePermissions
+          )}
         ''
-      )
-      cfg.ensureUsers;
-  in
+      ) cfg.ensureUsers;
+    in
     pkgs.writeShellScript "postgresql-setup" ''
       set -e
 
@@ -127,7 +121,8 @@ with lib; let
       # Mark setup as complete
       touch "$SETUP_MARKER"
     '';
-in {
+in
+{
   options.services.postgresql = {
     enable = mkEnableOption "PostgreSQL Server";
 
@@ -167,8 +162,11 @@ in {
 
     initdbArgs = mkOption {
       type = with types; listOf str;
-      default = [];
-      example = ["--data-checksums" "--allow-group-access"];
+      default = [ ];
+      example = [
+        "--data-checksums"
+        "--allow-group-access"
+      ];
       description = "Additional arguments passed to `initdb` during data dir initialization.";
     };
 
@@ -180,52 +178,57 @@ in {
 
     ensureDatabases = mkOption {
       type = types.listOf types.str;
-      default = [];
-      example = ["myapp" "myotherapp"];
+      default = [ ];
+      example = [
+        "myapp"
+        "myotherapp"
+      ];
       description = "Ensures that the specified databases exist.";
     };
 
     ensureUsers = mkOption {
-      type = types.listOf (types.submodule {
-        options = {
-          name = mkOption {
-            type = types.str;
-            description = "Name of the user to ensure.";
-          };
+      type = types.listOf (
+        types.submodule {
+          options = {
+            name = mkOption {
+              type = types.str;
+              description = "Name of the user to ensure.";
+            };
 
-          password = mkOption {
-            type = types.nullOr types.str;
-            default = null;
-            description = "Password for the user (leave as null for no password).";
-          };
+            password = mkOption {
+              type = types.nullOr types.str;
+              default = null;
+              description = "Password for the user (leave as null for no password).";
+            };
 
-          ensurePermissions = mkOption {
-            type = types.attrsOf types.str;
-            default = {};
-            description = "Permissions to ensure for the user.";
-            example = literalExpression ''
-              {
-                "DATABASE myapp" = "ALL PRIVILEGES";
-                "ALL TABLES IN SCHEMA public" = "ALL PRIVILEGES";
-              }
-            '';
-          };
+            ensurePermissions = mkOption {
+              type = types.attrsOf types.str;
+              default = { };
+              description = "Permissions to ensure for the user.";
+              example = literalExpression ''
+                {
+                  "DATABASE myapp" = "ALL PRIVILEGES";
+                  "ALL TABLES IN SCHEMA public" = "ALL PRIVILEGES";
+                }
+              '';
+            };
 
-          ensureClauses = mkOption {
-            type = types.attrsOf types.anything;
-            default = {};
-            description = "Additional clauses for CREATE USER.";
-            example = literalExpression ''
-              {
-                superuser = true;
-                createdb = true;
-                login = true;
-              }
-            '';
+            ensureClauses = mkOption {
+              type = types.attrsOf types.anything;
+              default = { };
+              description = "Additional clauses for CREATE USER.";
+              example = literalExpression ''
+                {
+                  superuser = true;
+                  createdb = true;
+                  login = true;
+                }
+              '';
+            };
           };
-        };
-      });
-      default = [];
+        }
+      );
+      default = [ ];
       description = "Ensures that the specified users exist with the defined permissions.";
     };
 
@@ -237,14 +240,21 @@ in {
 
     extraPlugins = mkOption {
       type = types.listOf types.path;
-      default = [];
+      default = [ ];
       example = literalExpression "with pkgs.postgresql_17.pkgs; [ postgis pg_repack ]";
       description = "List of PostgreSQL plugins.";
     };
 
     settings = mkOption {
-      type = with types; attrsOf (oneOf [bool float int str]);
-      default = {};
+      type =
+        with types;
+        attrsOf (oneOf [
+          bool
+          float
+          int
+          str
+        ]);
+      default = { };
       description = "PostgreSQL configuration settings.";
     };
 
@@ -261,10 +271,7 @@ in {
       ident_file = "${cfg.dataDir}/pg_ident.conf";
       log_destination = "stderr";
       log_line_prefix = "[%p] ";
-      listen_addresses =
-        if cfg.enableTCPIP
-        then "*"
-        else "localhost";
+      listen_addresses = if cfg.enableTCPIP then "*" else "localhost";
       port = cfg.port;
     };
 
@@ -273,7 +280,7 @@ in {
       postgresql = {
         Unit = {
           Description = "PostgreSQL Server";
-          After = ["network.target"];
+          After = [ "network.target" ];
         };
         Service = {
           Type = "simple";
@@ -281,29 +288,29 @@ in {
           ExecStart = "${postgresql}/bin/postgres -D ${cfg.dataDir}";
           ExecStop = "${postgresql}/bin/pg_ctl stop -D ${cfg.dataDir} -m fast";
           Restart = "on-failure";
-          Environment = [
-            "PGDATA=${cfg.dataDir}"
-          ];
+          Environment = [ "PGDATA=${cfg.dataDir}" ];
         };
         Install = {
-          WantedBy = ["default.target"];
+          WantedBy = [ "default.target" ];
         };
       };
-      postgresql-setup = mkIf (cfg.ensureDatabases != [] || cfg.ensureUsers != [] || cfg.initialScript != null) {
-        Unit = {
-          Description = "PostgreSQL Database Setup";
-          After = ["postgresql.service"];
-          Requires = ["postgresql.service"];
-        };
-        Service = {
-          Type = "oneshot";
-          ExecStart = "${setupScript}";
-          RemainAfterExit = true;
-        };
-        Install = {
-          WantedBy = ["default.target"];
-        };
-      };
+      postgresql-setup =
+        mkIf (cfg.ensureDatabases != [ ] || cfg.ensureUsers != [ ] || cfg.initialScript != null)
+          {
+            Unit = {
+              Description = "PostgreSQL Database Setup";
+              After = [ "postgresql.service" ];
+              Requires = [ "postgresql.service" ];
+            };
+            Service = {
+              Type = "oneshot";
+              ExecStart = "${setupScript}";
+              RemainAfterExit = true;
+            };
+            Install = {
+              WantedBy = [ "default.target" ];
+            };
+          };
     };
 
     launchd.agents = mkIf pkgs.stdenv.isDarwin {
@@ -326,19 +333,21 @@ in {
         };
       };
 
-      postgresql-setup = mkIf (cfg.ensureDatabases != [] || cfg.ensureUsers != [] || cfg.initialScript != null) {
-        enable = true;
-        config = {
-          Label = "org.postgresql.setup";
-          ProgramArguments = ["${setupScript}"];
-          RunAtLoad = true;
-          StandardErrorPath = "${cfg.dataDir}/../postgres-setup.log";
-          StandardOutPath = "${cfg.dataDir}/../postgres-setup.log";
-          EnvironmentVariables = {
-            PGDATA = cfg.dataDir;
+      postgresql-setup =
+        mkIf (cfg.ensureDatabases != [ ] || cfg.ensureUsers != [ ] || cfg.initialScript != null)
+          {
+            enable = true;
+            config = {
+              Label = "org.postgresql.setup";
+              ProgramArguments = [ "${setupScript}" ];
+              RunAtLoad = true;
+              StandardErrorPath = "${cfg.dataDir}/../postgres-setup.log";
+              StandardOutPath = "${cfg.dataDir}/../postgres-setup.log";
+              EnvironmentVariables = {
+                PGDATA = cfg.dataDir;
+              };
+            };
           };
-        };
-      };
     };
   };
 }

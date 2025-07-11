@@ -1,8 +1,4 @@
-{
-  pkgs,
-  lib,
-  ...
-}:
+{ pkgs, lib, ... }:
 let
   isDarwin = pkgs.stdenv.hostPlatform.isDarwin;
 in

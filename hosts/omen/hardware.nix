@@ -1,7 +1,5 @@
 { inputs, ... }:
 {
-  imports = [
-    inputs.nixos-hardware.nixosModules.lenovo-thinkpad-x1-6th-gen
-  ];
+  imports = [ inputs.nixos-hardware.nixosModules.lenovo-thinkpad-x1-6th-gen ];
   hardware.enableRedistributableFirmware = true;
 }

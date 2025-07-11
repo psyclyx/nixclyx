@@ -1,8 +1,4 @@
-{
-  config,
-  lib,
-  ...
-}:
+{ config, lib, ... }:
 {
   programs.git = {
     enable = lib.mkDefault true;

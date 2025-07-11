@@ -1,8 +1,4 @@
-{
-  lib,
-  pkgs,
-  ...
-}:
+{ lib, pkgs, ... }:
 let
   colors = import ../../../../home/themes/angel.nix { inherit lib; };
   theme =
