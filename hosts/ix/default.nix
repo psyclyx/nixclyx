@@ -11,6 +11,10 @@ in
     ../../modules/nixos/programs/zsh.nix
     ../../modules/nixos/tailscale.nix
     ../../modules/nixos/base
+    ../../modules/nixos/system/console.nix
+    ../../modules/nixos/system/home-manager.nix
+    ../../modules/nixos/system/locale.nix
+    ../../modules/nixos/system/security.nix
     ../../modules/nixos/services/soju.nix
 
     ./boot.nix

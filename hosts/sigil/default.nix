@@ -5,6 +5,10 @@
   imports = [
     ../../modules/nixos/tailscale.nix
     ../../modules/nixos/base
+    ../../modules/nixos/system/console.nix
+    ../../modules/nixos/system/home-manager.nix
+    ../../modules/nixos/system/locale.nix
+    ../../modules/nixos/system/security.nix
     ../../modules/nixos/physical
     ../../modules/nixos/graphical
     ../../modules/nixos/services/printing.nix
