@@ -4,6 +4,8 @@
   networking.hostName = "omen";
   time.timeZone = "America/Los_Angeles";
   imports = [
+    ../../modules/nixos/nixpkgs.nix
+
     ../../modules/nixos/services/openssh.nix
     ../../modules/nixos/system/console.nix
     ../../modules/nixos/system/home-manager.nix

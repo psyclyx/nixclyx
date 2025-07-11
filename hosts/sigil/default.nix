@@ -4,6 +4,8 @@
   networking.hostName = "sigil";
   time.timeZone = "America/Los_Angeles";
   imports = [
+    ../../modules/nixos/nixpkgs.nix
+
     ../../modules/nixos/services/tailscale.nix
     ../../modules/nixos/services/openssh.nix
     ../../modules/nixos/system/console.nix

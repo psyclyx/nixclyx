@@ -5,13 +5,8 @@
   ...
 }@args:
 inputs.nixpkgs.lib.nixosSystem {
-  inherit system;
-  modules = [
-    { nixpkgs.overlays = overlays; }
-    ./nixpkgs.nix
-  ] ++ modules;
-
+  inherit system modules;
   specialArgs = {
-    inherit inputs;
+    inherit inputs overlays;
   } // args;
 }

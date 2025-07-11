@@ -7,6 +7,8 @@ in
   networking.hostName = "ix";
   time.timeZone = "America/Los_Angeles";
   imports = [
+    ../../modules/nixos/nixpkgs.nix
+
     ../../modules/nixos/programs/nix-ld.nix
     ../../modules/nixos/programs/zsh.nix
     ../../modules/nixos/services/tailscale.nix
