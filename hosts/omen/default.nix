@@ -9,6 +9,7 @@
     ../../modules/platform/nixos/laptop
     ../../modules/platform/nixos/services/printing.nix
     ../../modules/platform/nixos/programs/adb.nix
+    ../../modules/platform/nixos/programs/zsh.nix
 
     ./boot.nix
     ./filesystems.nix

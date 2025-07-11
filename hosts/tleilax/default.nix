@@ -11,6 +11,7 @@ in
   time.timeZone = "America/Los_Angeles";
   imports = [
     ../../modules/platform/nixos/base
+    ../../modules/platform/nixos/programs/zsh.nix
     ../../modules/platform/nixos/tailscale.nix
     ./users.nix
     ../../modules/platform/nixos/services/fail2ban.nix
