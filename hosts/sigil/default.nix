@@ -1,6 +1,4 @@
 { inputs, ... }:
-let
-in
 {
   system.stateVersion = "24.05";
   time.timeZone = "America/Los_Angeles";
@@ -19,7 +17,6 @@ in
     ./network.nix
     ./users.nix
     ./secrets.nix
-    #./services/rtorrent.nix
   ];
 
   programs.sway.extraOptions = [ "--unsupported-gpu" ];
