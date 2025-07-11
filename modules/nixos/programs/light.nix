@@ -1,8 +1,0 @@
-{ ... }:
-{
-  programs = {
-    light = {
-      enable = true;
-    };
-  };
-}

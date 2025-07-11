@@ -13,8 +13,6 @@
     ../../modules/nixos/system/fonts.nix
     ../../modules/nixos/programs/sway.nix
 
-    ../../modules/nixos/programs/light.nix
-
     ../../modules/nixos/services/printing.nix
     ../../modules/nixos/programs/adb.nix
     ../../modules/nixos/programs/nix-ld.nix
