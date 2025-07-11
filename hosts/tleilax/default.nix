@@ -14,7 +14,6 @@ in
     ../../modules/nixos/nixpkgs.nix
     ../../modules/nixos/module.nix
 
-    ../../modules/nixos/services/openssh.nix
     ../../modules/nixos/system/console.nix
     ../../modules/nixos/system/home-manager.nix
     ../../modules/nixos/system/locale.nix
@@ -31,11 +30,17 @@ in
     ./metrics.nix
   ];
 
-  services.openssh.ports = [ 17891 ];
   boot.loader.systemd-boot.enable = true;
 
   psyclyx = {
+    networking = {
+      ports = {
+        ssh = [ 17891 ];
+      };
+    };
+
     services = {
+      openssh.enable = true;
       tailscale = {
         enable = true;
         exitNode = true;

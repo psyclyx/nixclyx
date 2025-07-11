@@ -7,7 +7,6 @@
     ../../modules/nixos/nixpkgs.nix
     ../../modules/nixos/module.nix
 
-    ../../modules/nixos/services/openssh.nix
     ../../modules/nixos/system/console.nix
     ../../modules/nixos/system/home-manager.nix
     ../../modules/nixos/system/locale.nix
@@ -41,6 +40,7 @@
 
   psyclyx = {
     services = {
+      openssh.enable = true;
       tailscale.enable = true;
     };
   };
