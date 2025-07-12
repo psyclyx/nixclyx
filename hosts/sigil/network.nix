@@ -5,20 +5,40 @@
   ...
 }:
 {
-  services.resolved.enable = true;
-  networking.useNetworkd = true;
-  networking.networkmanager.enable = true;
-  networking.useDHCP = false;
-  networking.interfaces.enp6s0.useDHCP = true;
-  networking.firewall.allowedTCPPorts = [
-    8123
-    3000
-    51103
-  ];
-  networking.firewall.allowedUDPPorts = [
-    51820
-    6881
-    3000
-    51103
-  ];
+  networking = {
+    useNetworkd = true;
+  };
+  systemd = {
+    network = {
+      enable = true;
+      config = {
+        networkConfig = {
+          ManageForeignRoutingPolicyRules = false;
+          ManageForeignRoutes = false;
+        };
+      };
+      wait-online = {
+        anyInterface = true;
+      };
+      networks = {
+        "40-enp6s0" = {
+          matchConfig = {
+            Name = "enp6s0";
+          };
+          linkConfig = {
+            RequiredForOnline = "routable";
+          };
+          dns = [
+            "1.1.1.1"
+            "2606:4700:4700::1111"
+            "8.8.8.8"
+          ];
+          networkConfig = {
+            DHCP = "ipv4";
+            IPv6AcceptRA = false;
+          };
+        };
+      };
+    };
+  };
 }
