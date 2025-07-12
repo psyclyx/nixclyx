@@ -16,7 +16,7 @@ in
     package = pkgs.rofi-wayland;
     extraConfig = {
       case-sensitive = false;
-      display-drun = "Apps: ";
+      display-drun = "drun: ";
       modi = [
         "drun"
         # "filebrowser"
@@ -71,7 +71,6 @@ in
         };
 
         "#mainbox" = {
-          border = mkLiteral "1px";
           border-color = mkLiteral "@ac";
           children = mkLiteral "[ inputbar, listview ]";
           padding = mkLiteral "10px";
