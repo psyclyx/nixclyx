@@ -144,19 +144,19 @@
         };
       };
 
-      homeConfigurations = lib.genAttrs [ "x86_64-linux" "aarch64-darwin" ] (
+      homeConfigurations = lib.genAttrs [ "x86_64-linux" ] (
         system:
         let
           pkgs = pkgsFor system;
           inherit (inputs.home-manager.lib) homeManagerModule;
         in
         {
-          psyc = homeManagerModule {
+          nixos-desktop = homeManagerModule {
             inherit pkgs;
             modules =  [
               inputs.sops-nix.homeManagerModules.sops
               ./modules/home/module.nix
-              ./configs/home/psyc.nix
+              ./configs/home/nixos-desktop.nix
             ];
           };
         }
