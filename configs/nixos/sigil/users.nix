@@ -1,6 +1,6 @@
 { pkgs, lib, ... }:
 let
-  mkHome = import ../../modules/home;
+  mkHome = import ../../../modules/home;
 in
 {
   nix.settings.trusted-users = [ "psyc" ];
@@ -35,14 +35,14 @@ in
           lib.concatMapStrings (n: "{icon${toString n}}") (lib.range 0 31)
         }";
       }
-      ../../modules/home/base
-      ../../modules/home/secrets
-      ../../modules/home/nixos
-      ../../modules/home/xdg.nix
-      ../../modules/home/programs/emacs
-      ../../modules/home/programs/alacritty.nix
-      ../../modules/home/programs/zsh.nix
-      ../../modules/home/programs/signal.nix
+      ../../../modules/home/base
+      ../../../modules/home/secrets
+      ../../../modules/home/nixos
+      ../../../modules/home/xdg.nix
+      ../../../modules/home/programs/emacs
+      ../../../modules/home/programs/alacritty.nix
+      ../../../modules/home/programs/zsh.nix
+      ../../../modules/home/programs/signal.nix
     ];
   };
 }

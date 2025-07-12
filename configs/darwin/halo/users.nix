@@ -2,7 +2,7 @@
 let
   userName = "psyc";
   userHome = "/Users/psyc";
-  mkHome = import ../../modules/home;
+  mkHome = import ../../../modules/home;
 in
 {
   nix.settings.trusted-users = [
@@ -22,14 +22,14 @@ in
     name = userName;
     email = "me@psyclyx.xyz";
     modules = [
-      ../../modules/home/base
-      ../../modules/home/secrets
-      ../../modules/home/programs/emacs
-      ../../modules/home/programs/kitty.nix
-      ../../modules/home/programs/alacritty.nix
-      ../../modules/home/programs/signal.nix
-      ../../modules/home/programs/zsh.nix
-      ../../modules/home/services/postgres.nix
+      ../../../modules/home/base
+      ../../../modules/home/secrets
+      ../../../modules/home/programs/emacs
+      ../../../modules/home/programs/kitty.nix
+      ../../../modules/home/programs/alacritty.nix
+      ../../../modules/home/programs/signal.nix
+      ../../../modules/home/programs/zsh.nix
+      ../../../modules/home/services/postgres.nix
     ];
   };
 

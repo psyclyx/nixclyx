@@ -6,9 +6,9 @@
   imports = [
     inputs.disko.nixosModules.disko
 
-    ../../modules/nixos/nixpkgs.nix
-    ../../modules/nixos/module.nix
-    ../../modules/nixos/system/home-manager.nix
+    ../../../modules/nixos/nixpkgs.nix
+    ../../../modules/nixos/module.nix
+    ../../../modules/nixos/system/home-manager.nix
 
     ./boot.nix
     ./filesystems.nix

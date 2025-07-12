@@ -11,11 +11,11 @@ in
   networking.hostName = "tleilax";
   time.timeZone = "America/Los_Angeles";
   imports = [
-    ../../modules/nixos/nixpkgs.nix
-    ../../modules/nixos/module.nix
-    ../../modules/nixos/system/home-manager.nix
+    ../../../modules/nixos/nixpkgs.nix
+    ../../../modules/nixos/module.nix
+    ../../../modules/nixos/system/home-manager.nix
 
-    ../../modules/nixos/services/fail2ban.nix
+    ../../../modules/nixos/services/fail2ban.nix
 
     ./users.nix
     ./network.nix

@@ -7,12 +7,11 @@ in
   networking.hostName = "ix";
   time.timeZone = "America/Los_Angeles";
   imports = [
-    ../../modules/nixos/nixpkgs.nix
-    ../../modules/nixos/module.nix
-    ../../modules/nixos/system/home-manager.nix
+    ../../../modules/nixos/nixpkgs.nix
+    ../../../modules/nixos/module.nix
+    ../../../modules/nixos/system/home-manager.nix
 
-    ../../modules/nixos/services/tailscale.nix
-    ../../modules/nixos/services/soju.nix
+    ../../../modules/nixos/services/soju.nix
 
     ./boot.nix
     ./filesystems.nix

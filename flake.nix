@@ -111,19 +111,19 @@
 
       nixosConfigurations = {
         ix = mkNixosConfiguration {
-          modules = [ ./hosts/ix ];
+          modules = [ ./configs/nixos/ix ];
           system = "x86_64-linux";
         };
         omen = mkNixosConfiguration {
-          modules = [ ./hosts/omen ];
+          modules = [ ./configs/nixos/omen ];
           system = "x86_64-linux";
         };
         sigil = mkNixosConfiguration {
-          modules = [ ./hosts/sigil ];
+          modules = [ ./configs/nixos/sigil ];
           system = "x86_64-linux";
         };
         tleilax = mkNixosConfiguration {
-          modules = [ ./hosts/tleilax ];
+          modules = [ ./configs/nixos/tleilax ];
           system = "x86_64-linux";
         };
       };
@@ -133,7 +133,7 @@
           hostPlatform = "aarch64-darwin";
           system = "aarch64-darwin";
           hostName = "halo";
-          modules = [ ./hosts/halo ];
+          modules = [ ./configs/darwin/halo ];
         };
       };
     in

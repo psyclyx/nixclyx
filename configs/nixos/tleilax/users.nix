@@ -1,6 +1,6 @@
-{ pkgs, ... }:
+{ pkgs, lib, ... }:
 let
-  mkHome = import ../../modules/home;
+  mkHome = import ../../../modules/home;
 in
 {
   nix.settings.trusted-users = [ "psyc" ];
@@ -13,6 +13,7 @@ in
         isNormalUser = true;
         extraGroups = [
           "wheel"
+          "networkmanager"
           "builders"
         ];
         openssh.authorizedKeys.keys = [
@@ -21,13 +22,20 @@ in
       };
     };
   };
+
   home-manager.users.psyc = mkHome {
     name = "psyc";
     email = "me@psyclyx.xyz";
+    home.packages = with pkgs; [
+      clojure
+      screen
+    ];
     modules = [
-      ../../modules/home/base
-      ../../modules/home/programs/zsh.nix
-      ../../modules/home/xdg.nix
+      ../../../modules/home/base
+      ../../../modules/home/programs/zsh.nix
+      { services.syncthing.enable = lib.mkForce false; }
+      ../../../modules/home/xdg.nix
+      ../../../modules/home/programs/emacs
     ];
   };
 }
