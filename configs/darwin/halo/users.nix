@@ -30,10 +30,18 @@ in
       ../../../modules/home/programs/signal.nix
       ../../../modules/home/programs/zsh.nix
       ../../../modules/home/services/postgres.nix
+      {
+        psyclyx = {
+          programs = {
+            alacritty = {
+              enable = true;
+            };
+          };
+        };
+      }
     ];
   };
 
   system.primaryUser = userName;
-
   nix-homebrew.user = userName;
 }

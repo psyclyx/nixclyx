@@ -9,6 +9,9 @@
       email = "me@psyclyx.xyz";
     };
     programs = {
+      alacritty = {
+        enable = true;
+      };
       git = {
         enable = true;
       };

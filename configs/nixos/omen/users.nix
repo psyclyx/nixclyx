@@ -37,6 +37,15 @@ in
       ../../../modules/home/programs/alacritty.nix
       ../../../modules/home/programs/signal.nix
       ../../../modules/home/programs/zsh.nix
+      {
+        psyclyx = {
+          programs = {
+            alacritty = {
+              enable = true;
+            };
+          };
+        };
+      }
     ];
   };
 }
