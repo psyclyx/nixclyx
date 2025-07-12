@@ -1,14 +1,31 @@
-{ ... }:
+{ config, lib, ... }:
+let
+  cfg = config.psyclyx.programs.kitty;
+in
 {
-  programs.kitty = {
-    enable = true;
-    settings = {
-      enable_audio_bell = false;
+  options = {
+    psyclyx = {
+      programs = {
+        kitty = {
+          enable = "Configure kitty.";
+        };
+      };
     };
-    themeFile = "Doom_One";
-    font = {
-      size = 14;
-      name = "Aporetic Sans Mono";
+  };
+
+  config = lib.mkIf cfg.enable {
+    programs = {
+      kitty = {
+        enable = true;
+        settings = {
+          enable_audio_bell = false;
+        };
+        themeFile = "Doom_One";
+        font = {
+          size = 14;
+          name = "Aporetic Sans Mono";
+        };
+      };
     };
   };
 }
