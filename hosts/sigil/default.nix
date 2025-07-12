@@ -1,6 +1,6 @@
 { inputs, ... }:
 {
-  system.stateVersion = "24.11";
+  system.stateVersion = "25.05";
   networking.hostName = "sigil";
   time.timeZone = "America/Los_Angeles";
   imports = [
