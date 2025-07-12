@@ -103,7 +103,14 @@
         emacs-overlay.overlays.default
       ];
 
-      pkgsFor = system: inputs.nixpkgs.legacyPackages.${system};
+      pkgsFor =
+        system:
+        (import inputs.nixpkgs {
+          inherit system;
+          config = {
+            allowUnfree = true;
+          };
+        });
 
       mkDevShell = import ./devshell.nix;
       mkDarwinConfiguration = import ./modules/darwin { inherit inputs overlays; };
@@ -136,6 +143,24 @@
           modules = [ ./configs/darwin/halo ];
         };
       };
+
+      homeConfigurations = lib.genAttrs [ "x86_64-linux" "aarch64-darwin" ] (
+        system:
+        let
+          pkgs = pkgsFor system;
+          inherit (inputs.home-manager.lib) homeManagerModule;
+        in
+        {
+          psyc = homeManagerModule {
+            inherit pkgs;
+            modules =  [
+              inputs.sops-nix.homeManagerModules.sops
+              ./modules/home/module.nix
+              ./configs/home/psyc.nix
+            ];
+          };
+        }
+      );
     in
     {
       inherit darwinConfigurations nixosConfigurations;
