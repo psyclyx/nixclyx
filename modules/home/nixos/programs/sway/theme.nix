@@ -40,12 +40,8 @@ in
       };
 
       fonts = {
-        names = [ "NotoMono Nerd Font" ];
-        size = 12.0;
-      };
-
-      gaps = {
-        inner = 2;
+        names = [ "Aporetic Sans" ];
+        size = 14.0;
       };
 
       window = {

@@ -22,14 +22,16 @@ in
     fonts = {
       packages = with pkgs; [
         aporetic
-        nerd-fonts.noto
+        font-awesome
         liberation_ttf
+        nerd-fonts.noto
+        ubuntu_font_family
         twitter-color-emoji
       ];
       fontconfig = {
         useEmbeddedBitmaps = true;
         defaultFonts = {
-          monospace = [ "Aporetic Serif Mono" ];
+          monospace = [ "Aporetic Sans Mono" ];
           serif = [ "Aporetic Serif" ];
           sansSerif = [ "Aporetic Sans" ];
           emoji = [ "Twitter Color Emoji" ];

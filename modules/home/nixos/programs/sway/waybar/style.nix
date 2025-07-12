@@ -15,7 +15,7 @@ in
       }
 
       window#waybar {
-          font-family: NotoMono Nerd Font Propo;
+          font-family: "Aporetic Sans", "Font Awesome";
           color: ${c.fg-dark};
           background-color: ${c.bg-alt};
       }

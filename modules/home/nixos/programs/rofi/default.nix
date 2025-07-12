@@ -12,7 +12,7 @@ in
 
   programs.rofi = {
     enable = true;
-    font = "NotoMono Nerd Font 12";
+    font = "Aporetic Sans 16";
     package = pkgs.rofi-wayland;
     extraConfig = {
       case-sensitive = false;
