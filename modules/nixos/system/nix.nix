@@ -31,4 +31,10 @@
       enable = true;
     };
   };
+
+  system = {
+    rebuild = {
+      enableNg = true;
+    };
+  };
 }
