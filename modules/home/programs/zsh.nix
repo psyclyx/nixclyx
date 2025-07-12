@@ -27,7 +27,6 @@ let
       "git"
       "completion"
       "syntax-highlighting"
-      "history-substring-search"
       "autosuggestions"
       "prompt"
     ];
