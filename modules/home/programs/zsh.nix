@@ -1,6 +1,5 @@
-{ pkgs, lib, ... }:
+{ config, lib, ... }:
 let
-  isDarwin = pkgs.stdenv.hostPlatform.isDarwin;
   direnv = {
     enable = true;
     silent = true;
@@ -58,8 +57,27 @@ let
   shell = {
     enableZshIntegration = true;
   };
+  cfg = config.psyclyx.programs.zsh;
 in
 {
-  home = { inherit shell; };
-  programs = { inherit direnv fzf zoxide zsh; };
+  options = {
+    psyclyx = {
+      programs = {
+        zsh = {
+          enable = lib.mkEnableOption "Configure zsh.";
+        };
+      };
+    };
+  };
+  config = lib.mkIf cfg.enable {
+    home = { inherit shell; };
+    programs = {
+      inherit
+        direnv
+        fzf
+        zoxide
+        zsh
+        ;
+    };
+  };
 }

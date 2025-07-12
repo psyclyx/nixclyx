@@ -28,6 +28,15 @@ in
       ../../../modules/home/base
       ../../../modules/home/programs/zsh.nix
       ../../../modules/home/xdg.nix
+      {
+        psyclyx = {
+          programs = {
+            zsh = {
+              enable = true;
+            };
+          };
+        };
+      }
     ];
   };
 }

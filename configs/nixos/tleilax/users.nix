@@ -36,6 +36,15 @@ in
       { services.syncthing.enable = lib.mkForce false; }
       ../../../modules/home/xdg.nix
       ../../../modules/home/programs/emacs
+      {
+        psyclyx = {
+          programs = {
+            zsh = {
+              enable = true;
+            };
+          };
+        };
+      }
     ];
   };
 }
