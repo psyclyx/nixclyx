@@ -3,7 +3,7 @@ let
   inherit (inputs) disko;
 in
 {
-  system.stateVersion = "24.05";
+  system.stateVersion = "24.11";
   networking.hostName = "ix";
   time.timeZone = "America/Los_Angeles";
   imports = [

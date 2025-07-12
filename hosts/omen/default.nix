@@ -1,6 +1,6 @@
 { pkgs, ... }:
 {
-  system.stateVersion = "24.05";
+  system.stateVersion = "24.11";
   networking.hostName = "omen";
   time.timeZone = "America/Los_Angeles";
   imports = [

@@ -7,7 +7,7 @@
 let
 in
 {
-  system.stateVersion = "24.05";
+  system.stateVersion = "24.11";
   networking.hostName = "tleilax";
   time.timeZone = "America/Los_Angeles";
   imports = [
