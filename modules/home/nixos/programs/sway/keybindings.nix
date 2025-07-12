@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ config, pkgs, ... }:
 let
   mod = "Mod4";
 
@@ -11,7 +11,7 @@ let
   pactl = "${pkgs.pulseaudio}/bin/pactl";
   rofi = "${pkgs.rofi}/bin/rofi";
   bemoji = "${pkgs.bemoji}/bin/bemoji";
-  kitty = "${pkgs.kitty}/bin/kitty";
+  term = "${config.programs.alacritty.package}/bin/alacritty";
 in
 {
   wayland.windowManager.sway = {
@@ -49,7 +49,7 @@ in
         "${mod}+d" = "exec ${rofi} -show drun";
         "${mod}+g" = "exec ${rofi} -show filebrowser";
         "${mod}+m" = "exec ${bemoji} -t";
-        "${mod}+Return" = "exec ${kitty} --single-instance -d ~";
+        "${mod}+Return" = "exec ${term}";
         "${mod}+Shift+e" = "exec ~/bin/rofi-session";
         "${mod}+Shift+c" = "reload";
 
