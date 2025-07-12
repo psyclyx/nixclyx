@@ -2,8 +2,8 @@
 {
   programs.git = {
     enable = lib.mkDefault true;
-    userName = lib.mkDefault config.my.user.name;
-    userEmail = lib.mkDefault config.my.user.email;
+    userName = lib.mkDefault config.psyclyx.user.name;
+    userEmail = lib.mkDefault config.psyclyx.user.email;
     iniContent = lib.mkMerge [
       {
         "pull" = {

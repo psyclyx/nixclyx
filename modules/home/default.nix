@@ -10,6 +10,6 @@
 
   imports = [
     ./config.nix
-    { my.user = { inherit name email; }; }
+    { psyclyx.user = { inherit name email; }; }
   ] ++ modules;
 }
