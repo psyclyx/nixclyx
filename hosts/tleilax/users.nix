@@ -32,6 +32,7 @@ in
     ];
     modules = [
       ../../modules/home/base
+      ../../modules/home/programs/zsh.nix
       { services.syncthing.enable = lib.mkForce false; }
       ../../modules/home/xdg.nix
       ../../modules/home/programs/emacs

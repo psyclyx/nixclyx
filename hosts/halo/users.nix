@@ -28,6 +28,7 @@ in
       ../../modules/home/programs/kitty.nix
       ../../modules/home/programs/alacritty.nix
       ../../modules/home/programs/signal.nix
+      ../../modules/home/programs/zsh.nix
       ../../modules/home/services/postgres.nix
     ];
   };

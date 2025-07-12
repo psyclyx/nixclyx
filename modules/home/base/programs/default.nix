@@ -6,6 +6,5 @@
     ./packages.nix
     ./ssh.nix
     ./tmux
-    ./zsh
   ];
 }
