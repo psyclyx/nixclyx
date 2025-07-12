@@ -10,7 +10,7 @@ in
       mainBar = {
         layer = "bottom";
         position = "top";
-        height = 20;
+        height = 28;
         margin = "0px 0px";
         padding = "0px 0px";
         modules-left = [

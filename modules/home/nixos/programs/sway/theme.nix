@@ -45,7 +45,7 @@ in
       };
 
       window = {
-        border = 1;
+        border = 2;
       };
     };
 
@@ -53,7 +53,7 @@ in
       output * scale 1
       output * bg ${c.bg} solid_color
       titlebar_border_thickness 0
-      titlebar_padding 2 2
+      titlebar_padding 4 0
     '';
   };
 }
