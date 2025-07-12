@@ -148,12 +148,12 @@
         system:
         let
           pkgs = pkgsFor system;
-          inherit (inputs.home-manager.lib) homeManagerModule;
+          inherit (inputs.home-manager.lib) homeManagerConfiguration;
         in
         {
-          nixos-desktop = homeManagerModule {
+          nixos-desktop = homeManagerConfiguration {
             inherit pkgs;
-            modules =  [
+            modules = [
               inputs.sops-nix.homeManagerModules.sops
               ./modules/home/module.nix
               ./configs/home/nixos-desktop.nix
@@ -163,7 +163,7 @@
       );
     in
     {
-      inherit darwinConfigurations nixosConfigurations;
+      inherit darwinConfigurations nixosConfigurations homeConfigurations;
       checks = lib.genAttrs [ "x86_64-linux" "aarch64-darwin" ] (
         system:
         lib.mapAttrs' (name: config: (lib.nameValuePair "${name}" config.config.system.build.toplevel)) (
