@@ -4,6 +4,10 @@
   };
 
   psyclyx = {
+    user = {
+      name = "psyc";
+      email = "me@psyclyx.xyz";
+    };
     programs = {
       git = {
         enable = true;
