@@ -1,6 +1,5 @@
 {
   imports = [
-    ./graphics/fonts.nix
     ./programs/adb.nix
     ./programs/steam.nix
     ./programs/sway.nix
@@ -13,6 +12,7 @@
     ./services/printing.nix
     ./services/tailscale.nix
     ./system/console.nix
+    ./system/fonts.nix
     ./system/locale.nix
     ./system/nix.nix
     ./system/sudo.nix

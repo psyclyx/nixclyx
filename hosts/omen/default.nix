@@ -17,12 +17,6 @@
   services.resolved.enable = true;
 
   psyclyx = {
-    graphics = {
-      fonts = {
-        enable = true;
-      };
-    };
-
     programs = {
       sway = {
         enable = true;
@@ -51,6 +45,9 @@
     };
 
     system = {
+      fonts = {
+        enable = true;
+      };
       sudo = {
         enable = true;
       };

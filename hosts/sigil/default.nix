@@ -16,12 +16,6 @@
   ];
 
   psyclyx = {
-    graphics = {
-      fonts = {
-        enable = true;
-      };
-    };
-
     programs = {
       steam = {
         enable = true;
@@ -57,6 +51,9 @@
     };
 
     system = {
+      fonts = {
+        enable = true;
+      };
       sudo = {
         enable = true;
       };

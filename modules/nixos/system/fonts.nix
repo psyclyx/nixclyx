@@ -5,12 +5,12 @@
   ...
 }:
 let
-  cfg = config.psyclyx.graphics.fonts;
+  cfg = config.psyclyx.system.fonts;
 in
 {
   options = {
     psyclyx = {
-      graphics = {
+      system = {
         fonts = {
           enable = lib.mkEnableOption "Configure fonts.";
         };
@@ -26,12 +26,12 @@ in
         liberation_ttf
         twitter-color-emoji
       ];
-
       fontconfig = {
+        useEmbeddedBitmaps = true;
         defaultFonts = {
-          monospace = [ "NotoMono Nerd Font" ];
-          serif = [ "NotoSerif Nerd Font" ];
-          sansSerif = [ "NotoSans Nerd Font" ];
+          monospace = [ "Aporetic Serif Mono" ];
+          serif = [ "Aporetic Serif" ];
+          sansSerif = [ "Aporetic Sans" ];
           emoji = [ "Twitter Color Emoji" ];
         };
       };
