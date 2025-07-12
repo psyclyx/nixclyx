@@ -2,9 +2,9 @@
 {
   programs.kitty = {
     enable = true;
-
-    shellIntegration.mode = "no-rc";
-
+    settings = {
+      enable_audio_bell = false;
+    };
     themeFile = "Doom_One";
     font = {
       size = 14;
