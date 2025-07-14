@@ -1,0 +1,82 @@
+configuration {
+  font: "Aporetic Sans 16";
+  modes: [ "drun", "run" ];
+  show-icons: true;
+  display-drun: "drun: ";
+  timeout {
+    action: "kb-cancel";
+    delay: 1000;
+  }
+  filebrowser {
+    directories-first: true;
+    sorting-method: "name";
+  }
+}
+
+* {
+  ac: rgba (72, 137, 147, 100% );
+  background-color: transparent;
+  bg: rgba (70, 80, 111, 100% );
+  fg: rgba (252, 241, 223, 100% );
+}
+
+element {
+  background-color: @bg;
+  padding: 3px;
+  text-color: @fg;
+}
+
+element selected {
+  background-color: @ac;
+  border-color: @ac;
+  border: 1px;
+  text-color: @fg;
+}
+
+element-icon {
+  size: 16px;
+  text-color: @fg;
+}
+
+element-text {
+  padding: 3px;
+  text-color: @fg;
+}
+
+entry {
+  blink: true;
+  text-color: @fg;
+}
+
+inputbar {
+  padding: 3px;
+  children: ["prompt", "entry"];
+  text-color: @fg;
+}
+
+listview {
+  cycle: true;
+  dynamic: true;
+  columns: 1;
+  lines: 8;
+}
+
+mainbox {
+  padding: 10px;
+  border-color: @ac;
+  children: ["inputbar", "listview"];
+}
+
+prompt {
+  text-color: @fg;
+}
+
+textbox-prompt-colon {
+  text-color: @fg;
+}
+
+window {
+  width: 30%;
+  background-color: @bg;
+  location: center;
+}

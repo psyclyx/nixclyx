@@ -96,8 +96,14 @@
     let
       inherit (inputs.nixpkgs) lib;
 
+      psyclyxOverlay = final: prev: {
+        psyclyx = {
+          rofi = prev.callPackage ./pkgs/rofi {};
+        };
+      };
+
       overlays = with inputs; [
-        (import ./pkgs)
+        psyclyxOverlay
         nur.overlays.default
         nix-darwin-emacs.overlays.emacs
         emacs-overlay.overlays.default
@@ -106,11 +112,21 @@
       pkgsFor =
         system:
         (import inputs.nixpkgs {
-          inherit system;
+          inherit system overlays;
           config = {
             allowUnfree = true;
           };
         });
+
+      packages = {
+        "x86_64-linux" =
+          let
+            pkgs = pkgsFor "x86_64-linux";
+          in
+          {
+            rofi = pkgs.psyclyx.rofi;
+          };
+      };
 
       mkDevShell = import ./devshell.nix;
       mkDarwinConfiguration = import ./modules/darwin { inherit inputs overlays; };
@@ -163,7 +179,13 @@
       );
     in
     {
-      inherit darwinConfigurations nixosConfigurations homeConfigurations;
+      inherit
+        packages
+        darwinConfigurations
+        nixosConfigurations
+        homeConfigurations
+        ;
+
       checks = lib.genAttrs [ "x86_64-linux" "aarch64-darwin" ] (
         system:
         lib.mapAttrs' (name: config: (lib.nameValuePair "${name}" config.config.system.build.toplevel)) (
