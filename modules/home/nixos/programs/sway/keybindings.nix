@@ -10,7 +10,6 @@ let
   light = "${pkgs.light}/bin/light";
   pactl = "${pkgs.pulseaudio}/bin/pactl";
   rofi = "${pkgs.psyclyx.rofi}/bin/rofi";
-  bemoji = "${pkgs.bemoji}/bin/bemoji";
   term = "${config.programs.alacritty.package}/bin/alacritty";
 in
 {
@@ -48,7 +47,6 @@ in
 
         "${mod}+d" = "exec ${rofi} -show drun";
         "${mod}+g" = "exec ${rofi} -show filebrowser";
-        "${mod}+m" = "exec ${bemoji} -t";
         "${mod}+Return" = "exec ${term}";
         "${mod}+Shift+e" = "exec ~/bin/rofi-session";
         "${mod}+Shift+c" = "reload";
