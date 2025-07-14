@@ -3,8 +3,7 @@
   inputs,
   pkgs,
   ...
-}:
-{
+}: {
   networking = {
     useNetworkd = true;
   };
