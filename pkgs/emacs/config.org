@@ -2,12 +2,165 @@
 #+AUTHOR: psyclyx
 #+PROPERTY: header-args :tangle yes
 
+Draws *heavily* from doomemacs.
+
+* Startup
+** Lexical binding
+#+begin_src emacs-lisp :comments no
+  ;;; -*- lexical-binding: t -*-
+#+end_src
+
+** Configure GC
 #+begin_src emacs-lisp
-  (use-package zenburn-theme
-    :ensure t
-    :config
-    (setq zenburn-use-variable-pitch t
-          zenburn-scale-org-headlines t
-          zenburn-scale-outline-headings t)
-    (load-theme 'zenburn t))
+  ;; startup
+  (defvar my/gc-cons-threshold-high most-positive-fixnum)
+  (defvar my/gc-cons-threshold (* 96 1024 1024))
+
+  (defun my/disable-gc ()
+    (setq gc-cons-threshold my/gc-cons-threshold-high))
+
+
+  (defun my/enable-gc ()
+    (setq gc-cons-threshold my/gc-cons-threshold))
+
+  (my/disable-gc)
+
+  (let ((file-name-handler-alist-cache file-name-handler-alist))
+    (setq file-name-handler-alist nil)
+    (add-hook 'emacs-startup-hook
+              #'(lambda ()
+                  (my/enable-gc)
+                  (setq file-name-handler-alist file-name-handler-alist-cache))))
+
+  (add-hook 'minibuffer-setup-hook #'my/disable-gc)
+  (add-hook 'minibuffer-exit-hook #'my/enable-gc)
+
+  (defun my/completion-in-region-disable-gc ()
+    (if completion-in-region-mode
+        (progn
+          (my/disable-gc))
+      (my/enable-gc)))
+
+  (add-hook 'focus-out-hook #'garbage-collect)
+#+end_src
+
+
+* Editor
+** File handling
+*** Symlinks
+#+begin_src emacs-lisp
+  (setq find-file-visit-truename t
+        vc-follow-symlinks t)
+#+end_src
+*** Suppress same file warnings
+#+begin_src emacs-lisp
+  (setq find-file-suppress-same-file-warnings t)
+#+end_src
+*** Disable lockfiles/backups
+#+begin_src emacs-lisp
+  (setq create-lockfiles nil
+        make-backup-files nil)
+#+end_src
+*** Create missing directories
+#+begin_src emacs-lisp
+  (defun my/create-missing-directories-h ()
+    "Automatically create missing directories when creating new files."
+    (unless (file-remote-p buffer-file-name)
+      (let ((parent-directory (file-name-directory buffer-file-name)))
+        (and (not (file-directory-p parent-directory))
+             (y-or-n-p (format "Directory `%s' does not exist! Create it?"
+                               parent-directory))
+             (progn (make-directory parent-directory 'parents)
+                    t)))))
+
+  (add-hook 'find-file-not-found-functions #'my/create-missing-directories-h)
+#+end_src
+*** Guess mode on save
+#+begin_src emacs-lisp
+  (defun my/guess-mode-h ()
+    "Guess major mode when saving a file in `fundamental-mode'.
+
+  Likely, something has changed since the buffer was opened. e.g. A shebang line
+  or file path may exist now."
+    (when (eq major-mode 'fundamental-mode)
+      (let ((buffer (or (buffer-base-buffer) (current-buffer))))
+        (and (buffer-file-name buffer)
+             (eq buffer (window-buffer (selected-window)))
+             (set-auto-mode)
+             (not (eq major-mode 'fundamental-mode))))))
+
+  (add-hook 'after-save-hook #'my/guess-mode-h)
+#+end_src
+** Formatting
+*** Indentation
+#+begin_src emacs-lisp
+  (setq-default indent-tabs-mode nil
+                tab-width 4)
+#+end_src
+
+#+begin_src emacs-lisp
+  (setq-default tab-always-indent nil)
+#+end_src
+
+#+begin_src emacs-lisp
+  (setq tabify-regexp "^\t* [ \t]+")
+#+end_src
+*** Wrapping
+#+begin_src emacs-lisp
+  (setq-default truncate-lines t
+                truncate-partial-width-windows nil)
+#+end_src
+
+#+begin_src emacs-lisp
+  (setq-default word-wrap t)
+#+end_src
+
+#+begin_src emacs-lisp
+  (add-hook 'text-mode-hook #'visual-line-mode)
+#+end_src
+*** Sentences
+#+begin_src emacs-lisp
+  (setq sentence-end-double-space nil)
+#+end_src
+*** Fill column
+#+begin_src emacs-lisp
+  (setq-default fill-column 80)
+#+end_src
+*** EOF newlines
+#+begin_src emacs-lisp
+  (setq require-final-newline t)
+#+end_src
+** Behavior
+*** kill-ring
+#+begin_src emacs-lisp
+  (setq kill-do-not-save-duplicates t)
+#+end_src
+* Built-in packages
+** recentf
+#+begin_src emacs-lisp
+  (use-package recentf
+    :custom
+    (recentf-max-saved-items 512)
+    :init
+    (recentf-mode 1))
+#+end_src
+
+** Savehist
+#+begin_src emacs-lisp
+  (use-package savehist
+    :init
+    (savehist-mode))
+#+end_src
+
+* Server
+#+begin_src emacs-lisp
+  (defun my/maybe-start-server ()
+    (unless (server-running-p)
+      (message "Starting server")
+      (server-start)))
+
+  (use-package server
+    :demand t
+    :hook (after-init . my/maybe-start-server)
+    :if (display-graphic-p))
 #+end_src
