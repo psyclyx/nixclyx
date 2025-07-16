@@ -640,3 +640,44 @@ Better 1/2 character movements
              (evil-snipe-enable-highlight)
              (evil-snipe-enable-incremental-highlight)))))
 #+end_src
+
+*** evil-nerd-commenter
+#+begin_src emacs-lisp
+  (use-package evil-nerd-commenter
+    :ensure t
+    :commands (evilnc-comment-operator
+               evilnc-inner-comment
+               evilnc-outer-commenter)
+    :general ([remap comment-line] #'evilnc-comment-or-uncomment-lines))
+#+end_src
+
+*** evil-surround
+#+begin_src emacs-lisp
+  (use-package evil-surround
+    :ensure t
+    :commands (global-evil-surround-mode
+               evil-surround-edit
+               evil-Surround-edit
+               evil-surround-region)
+    :config (global-evil-surround-mode 1))
+#+end_src
+
+*** evil-textobj-anyblock
+#+begin_src emacs-lisp
+  (use-package evil-textobj-anyblock
+    :ensure t
+    :defer t
+    :config
+    (setq evil-textobj-anyblock-blocks
+          '(("(" . ")")
+            ("{" . "}")
+            ("\\[" . "\\]")
+            ("<" . ">"))))
+#+end_src
+
+*** exato
+#+begin_src emacs-lisp
+  (use-package exato
+    :ensure t
+    :commands evil-outer-xml-attr evil-inner-xml-attr)
+#+end_src
