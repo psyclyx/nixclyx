@@ -43,6 +43,10 @@
       openssh = {
         enable = true;
       };
+      locate = {
+        enable = true;
+        users = [ "psyc" ];
+      };
       printing = {
         enable = true;
       };
