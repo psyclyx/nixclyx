@@ -6,5 +6,6 @@
     ./programs/kitty.nix
     ./programs/waybar
     ./programs/zsh.nix
+    ./xdg.nix
   ];
 }

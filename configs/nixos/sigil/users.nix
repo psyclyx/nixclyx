@@ -31,7 +31,6 @@ in
       ../../../modules/home/base
       ../../../modules/home/secrets
       ../../../modules/home/nixos
-      ../../../modules/home/xdg.nix
       ../../../modules/home/programs/emacs
       ../../../modules/home/programs/signal.nix
     ];
@@ -57,6 +56,9 @@ in
       user = {
         name = "psyclyx";
         email = "me@psyclyx.xyz";
+      };
+      xdg = {
+        enable = true;
       };
     };
   };
