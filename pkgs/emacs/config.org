@@ -543,3 +543,100 @@ A less intrusive `delete-trailing-whitespaces' on save
     :if (display-graphic-p)
     :hook (after-init . solaire-global-mode))
 #+end_src
+
+* Evil
+#+begin_src emacs-lisp
+  ;; Set these defaults before `evil'; use `defvar' so they can be changed prior
+  ;; to loading.
+  (defvar evil-want-keybinding nil)
+  (defvar evil-want-C-g-bindings t)
+  (defvar evil-want-C-i-jump t)
+  (defvar evil-want-C-u-scroll t)  ; moved the universal arg to <leader> u
+  (defvar evil-want-C-u-delete t)
+  (defvar evil-want-C-w-delete t)
+  (defvar evil-want-Y-yank-to-eol t)
+  (defvar evil-want-abbrev-expand-on-insert-exit nil)
+  (defvar evil-respect-visual-line-mode nil)
+
+  (use-package evil
+    :ensure t
+    :demand t
+    :after zenburn-theme
+    :hook after-init
+    :preface
+    (setq evil-ex-search-vim-style-regexp t
+          evil-ex-visual-char-range t
+          evil-mode-line-format 'nil
+          evil-symbol-word-search t
+          evil-default-cursor 'my/evil-default-cursor-fn
+          evil-normal-state-cursor 'box
+          evil-emacs-state-cursor  '(box my/evil-emacs-cursor-fn)
+          evil-insert-state-cursor 'bar
+          evil-visual-state-cursor 'hollow
+          evil-ex-interactive-search-highlight 'selected-window
+          evil-kbd-macro-suppress-motion-error t)
+
+    :config
+    (evil-select-search-module 'evil-search-module 'evil-search)
+    (defun my/evil-update-cursor-color-h ()
+      (put 'cursor 'evil-emacs-color  (face-foreground 'warning))
+      (put 'cursor 'evil-normal-color (face-background 'cursor)))
+    (my/evil-update-cursor-color-h)
+    (defun +evil-default-cursor-fn ()
+      (evil-set-cursor-color (get 'cursor 'evil-normal-color)))
+    (defun +evil-emacs-cursor-fn ()
+      (evil-set-cursor-color (get 'cursor 'evil-emacs-color)))
+    (defun my/disable-ex-highlights-h ()
+      "Disable ex search buffer highlights."
+      (when (or (evil-ex-hl-active-p 'evil-ex-search)
+                (bound-and-true-p anzu--state))
+        (evil-ex-nohighlight)
+        t))
+    (add-hook 'my/escape-hook #'my/disable-ex-highlights-h)
+    (defun my/interactive-escape ()
+      (interactive)
+      (call-interactively #'my/escape))
+    (advice-add #'evil-force-normal-state :after #'+evil-escape-a))
+#+end_src
+*** =evil-collection=
+#+begin_src emacs-lisp
+  (use-package evil-collection
+    :ensure t
+    :after evil
+    :config
+    (evil-collection-init))
+#+end_src
+*** =evil-snipe=
+Better 1/2 character movements
+#+begin_src emacs-lisp
+  (use-package evil-snipe
+    :ensure t
+    :after evil
+    :config
+    (evil-snipe-mode +1)
+    (evil-snipe-override-mode +1)
+    :custom
+    (evil-snipe-scope 'buffer)        ; Search in whole buffer instead of just line
+    (evil-snipe-repeat-scope 'buffer) ; Same for repeat
+    (evil-snipe-smart-case t)         ; Smart case sensitivity
+    )
+#+end_src
+*** =evil-easymotion=
+#+begin_src emacs-lisp
+  (use-package evil-easymotion
+    :ensure t
+    :after (evil-snipe)
+    :config
+    (general-define-key
+     :states '(motion)
+     :prefix "C-;"
+     :prefix-map 'evilem-map)
+    (general-define-key
+     :keymaps 'evil-snipe-parent-transient-map
+     "C-;" (evilem-create
+            'evil-snipe-repeat
+            :bind
+            ((evil-snipe-scope 'buffer)
+             (evil-snipe-enable-highlight)
+             (evil-snipe-enable-incremental-highlight)))))
+#+end_src
