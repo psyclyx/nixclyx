@@ -535,3 +535,11 @@ A less intrusive `delete-trailing-whitespaces' on save
   (setq use-short-answers t)
   (define-key y-or-n-p-map " " nil)
 #+end_src
+
+** Solaire-mode
+#+begin_src emacs-lisp
+  (use-package solaire-mode
+    :ensure t
+    :if (display-graphic-p)
+    :hook (after-init . solaire-global-mode))
+#+end_src
