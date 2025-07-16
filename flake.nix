@@ -123,7 +123,7 @@
           };
       };
 
-      mkDevShell = import ./devshell.nix;
+      mkDevShell = import ./shell.nix;
       mkDarwinConfiguration = import ./modules/darwin { inherit inputs overlays; };
       mkNixosConfiguration = import ./modules/nixos { inherit inputs overlays; };
 
@@ -191,7 +191,7 @@
       );
 
       devShells = lib.genAttrs [ "x86_64-linux" "aarch64-darwin" "x86_64-darwin" ] (system: {
-        default = mkDevShell (pkgsFor system);
+        default = mkDevShell {pkgs = pkgsFor system;};
       });
     };
 }
