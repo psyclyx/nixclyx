@@ -1,7 +1,5 @@
 { pkgs, ... }:
 {
-  home.packages = [ pkgs.kdePackages.kate ];
-
   xdg = {
     userDirs = {
       enable = true;
@@ -22,8 +20,6 @@
 
     mimeApps =
       let
-        # hack: should be emacsclient
-        kate = "kate.desktop";
         firefox = "firefox.desktop";
       in
       {
@@ -37,8 +33,8 @@
           "application/x-extension-xhtml" = [ firefox ];
           "application/xhtml+xml" = [ firefox ];
           "text/html" = [ firefox ];
-          "text/markdown" = [ kate ];
-          "text/plain" = [ kate ];
+          "text/markdown" = [ ];
+          "text/plain" = [ ];
           "x-scheme-handler/ftp" = [ firefox ];
           "x-scheme-handler/http" = [ firefox ];
           "x-scheme-handler/https" = [ firefox ];
@@ -55,8 +51,8 @@
           "application/x-extension-xhtml" = [ firefox ];
           "application/xhtml+xml" = [ firefox ];
           "text/html" = [ firefox ];
-          "text/markdown" = [ kate ];
-          "text/plain" = [ kate ];
+          "text/markdown" = [ ];
+          "text/plain" = [ ];
           "x-scheme-handler/ftp" = [ firefox ];
           "x-scheme-handler/http" = [ firefox ];
           "x-scheme-handler/https" = [ firefox ];
