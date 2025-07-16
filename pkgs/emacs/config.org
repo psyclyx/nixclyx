@@ -325,8 +325,6 @@ A less intrusive `delete-trailing-whitespaces' on save
 
   (defvar my/leader-map (make-sparse-keymap))
 #+end_src
-
-
 ** Universal escape
 #+begin_src emacs-lisp
   (defvar my/escape-hook nil
@@ -403,3 +401,29 @@ A less intrusive `delete-trailing-whitespaces' on save
   (setq visible-bell nil
         ring-bell-function 'my/flash-modeline)
 #+end_src
+** Scroll
+#+begin_src emacs-lisp
+  (setq hscroll-margin 2
+        hscroll-step 1
+        scroll-conservatively 10
+        scroll-margin 0
+        scroll-preserve-screen-position t
+        auto-window-vscroll nil
+        mouse-wheel-scroll-amount '(2 ((shift) . hscroll))
+        mouse-wheel-scroll-amount-horizontal 2)
+#+end_src
+** Fonts
+*** Fallbacks
+#+begin_src emacs-lisp
+  (defconst my/emoji-fallback-font-families
+    '("Apple Color Emoji"
+      "Segoe UI Emoji"
+      "Noto Color Emoji"
+      "Noto Emoji"))
+
+  (defconst my/symbol-fallback-font-families
+    '("Segoe UI Symbol"
+      "Apple Symbols"))
+#+end_src
+
+***
