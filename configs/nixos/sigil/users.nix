@@ -33,7 +33,10 @@ in
     ];
     home = {
       stateVersion = "25.05";
-      packages = with pkgs; [ signal-desktop-bin ];
+      packages = with pkgs; [
+        firefox-bin
+        signal-desktop-bin
+      ];
     };
     psyclyx = {
       programs = {
