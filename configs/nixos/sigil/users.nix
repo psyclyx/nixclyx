@@ -45,6 +45,9 @@ in
         git = {
           enable = true;
         };
+        ssh = {
+          enable = true;
+        };
         waybar = {
           enable = true;
           cores = 32;
