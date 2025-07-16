@@ -348,7 +348,7 @@ A less intrusive `delete-trailing-whitespaces' on save
 * Bindings
 #+begin_src emacs-lisp
   (defvar my/leader-key "SPC")
-  (defvar my/leader-alt-key "M-SPACE")
+  (defvar my/leader-alt-key "M-SPC")
   (defvar my/leader-key-states '(normal visual motion))
   (defvar my/leader-alt-key-states '(emacs insert))
   (defvar my/localleader-key "SPC m")
@@ -392,20 +392,21 @@ A less intrusive `delete-trailing-whitespaces' on save
 #+begin_src emacs-lisp
   (use-package general
     :ensure t
+    :demand t
     :config
-    (general-auto-unbind-keys)
+    )
+  (general-auto-unbind-keys)
     (general-create-definer my-leader-def
       :states '(normal visual motion emacs insert)
       :major-modes t
       :prefix my/leader-key
-      :non-normal-prefix my/leader-alt-key
-      :non-normal-prefix "C-SPC")
+      :non-normal-prefix my/leader-alt-key)
 
     (general-create-definer my-local-leader-def
       :states '(normal visual motion emacs insert)
       :major-modes t
       :prefix my/localleader-key
-      :non-normal-prefix my/localleader-alt-key))
+      :non-normal-prefix my/localleader-alt-key)
 #+end_src
 ** Which-key
 #+begin_src emacs-lisp
@@ -535,13 +536,6 @@ A less intrusive `delete-trailing-whitespaces' on save
   (define-key y-or-n-p-map " " nil)
 #+end_src
 
-** Solaire-mode
-#+begin_src emacs-lisp
-  (use-package solaire-mode
-    :ensure t
-    :if (display-graphic-p)
-    :hook (after-init . solaire-global-mode))
-#+end_src
 
 * Evil
 #+begin_src emacs-lisp
@@ -565,11 +559,11 @@ A less intrusive `delete-trailing-whitespaces' on save
     :preface
     (setq evil-ex-search-vim-style-regexp t
           evil-ex-visual-char-range t
-          evil-mode-line-format 'nil
+          ;evil-mode-line-format 'nil
           evil-symbol-word-search t
-          evil-default-cursor 'my/evil-default-cursor-fn
+          ;evil-default-cursor 'my/evil-default-cursor-fn
           evil-normal-state-cursor 'box
-          evil-emacs-state-cursor  '(box my/evil-emacs-cursor-fn)
+          evil-emacs-state-cursor  'box
           evil-insert-state-cursor 'bar
           evil-visual-state-cursor 'hollow
           evil-ex-interactive-search-highlight 'selected-window
@@ -595,7 +589,7 @@ A less intrusive `delete-trailing-whitespaces' on save
     (defun my/interactive-escape ()
       (interactive)
       (call-interactively #'my/escape))
-    (advice-add #'evil-force-normal-state :after #'+evil-escape-a))
+    (advice-add #'evil-force-normal-state :after #'my/interactive-escape))
 #+end_src
 *** =evil-collection=
 #+begin_src emacs-lisp
@@ -885,7 +879,7 @@ Better 1/2 character movements
 #+end_src
 
 ** Marginalia
-#+begin_src emacs-lisp
+#+begin_sc emacs-lisp
   (use-package marginalia
     :ensure t
     :init
@@ -895,4 +889,73 @@ Better 1/2 character movements
     :config
     (add-to-list 'marginalia-prompt-categories '("\\<face\\>" . face))
     (add-to-list 'marginalia-prompt-categories '("\\<var\\>" . variable)))
+#+end_sc
+
+* Projectile
+#+begin_src emacs-lisp
+  (use-package projectile
+    :ensure t
+    :after (general)
+    :init
+    (projectile-mode +1)
+
+    :custom
+    (projectile-enable-caching t)
+    (projectile-globally-ignored-directories
+     '(".git" ".log" "tmp" "dist" "*node_modules" ".direnv" "*target" "*.lsp" "*.clj-kondo"))
+
+    :config
+    (add-to-list 'projectile-project-root-files "package.json")
+    (add-to-list 'projectile-project-root-files "flake.nix")
+    (add-to-list 'projectile-project-root-files "shadow-cljs.edn")
+    (add-to-list 'projectile-project-root-files "project.clj")
+    (add-to-list 'projectile-project-root-files "deps.edn"))
+
+    (my-leader-def
+      :infix "p"
+      "a" 'projectile-add-known-project
+      "p" 'projectile-switch-project
+      "f" 'projectile-find-file
+      "d" 'projectile-find-dir
+      "b" 'projectile-switch-to-buffer
+      "k" 'projectile-kill-buffers
+      "t" 'projectile-run-vterm
+      "c" 'projectile-compile-project
+      "!" 'projectile-run-shell-command-in-root
+      "&" 'projectile-run-async-shell-command-in-root)
+#+end_src
+
+* Magit
+#+begin_src emacs-lisp
+  (use-package magit
+    :ensure t
+    :after (general)
+    :custom
+    (magit-display-buffer-function #'magit-display-buffer-fullframe-status-v1)
+    (magit-bury-buffer-function #'magit-restore-window-configuration)
+    (magit-save-repository-buffers 'dontask)
+    (magit-no-confirm '(stage-all-changes unstage-all-changes))
+
+    :config
+    (setq magit-repository-directories
+          (mapcar (lambda (dir)
+                    (cons dir 1))
+                  projectile-known-projects))
+
+    (my-leader-def
+      :infix "g"
+      "g" 'magit-status
+      "b" 'magit-blame
+      "c" 'magit-commit
+      "C" 'magit-clone
+      "f" 'magit-file-dispatch
+      "l" 'magit-log-buffer-file
+      "L" 'magit-log-current
+      "s" 'magit-stage-file
+      "S" 'magit-stage-modified
+      "u" 'magit-unstage-file
+      "p" 'magit-push
+      "P" 'magit-pull
+      "x" 'magit-reset-quickly
+      "/" 'magit-dispatch))
 #+end_src
