@@ -9,6 +9,7 @@
     ./programs/sway
     ./programs/waybar
     ./programs/zsh.nix
+    ./secrets
     ./xdg.nix
   ];
 }

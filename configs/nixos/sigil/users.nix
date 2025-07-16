@@ -1,7 +1,9 @@
-{ pkgs, lib, ... }:
-let
-  mkHome = import ../../../modules/home;
-in
+{
+  pkgs,
+  lib,
+  inputs,
+  ...
+}:
 {
   nix.settings.trusted-users = [ "psyc" ];
   users = {
@@ -26,8 +28,8 @@ in
   };
   home-manager.users.psyc = {
     imports = [
+      inputs.sops-nix.homeManagerModules.sops
       ../../../modules/home/module.nix
-      ../../../modules/home/secrets
       ../../../modules/home/programs/emacs
     ];
     home = {
@@ -61,6 +63,9 @@ in
         zsh = {
           enable = true;
         };
+      };
+      secrets = {
+        enable = true;
       };
       user = {
         name = "psyclyx";

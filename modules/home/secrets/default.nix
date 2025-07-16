@@ -1,32 +1,41 @@
 {
-  inputs,
-  pkgs,
   config,
+  lib,
+  pkgs,
   ...
 }:
 let
   configHome = config.xdg.configHome;
   home = config.home.homeDirectory;
   isDarwin = pkgs.stdenv.hostPlatform.isDarwin;
+  cfg = config.psyclyx.secrets;
 in
 {
-  imports = [ inputs.sops-nix.homeManagerModules.sops ];
-  sops = {
-    age.keyFile =
-      if isDarwin then
-        "${home}/Library/Application Support/sops/age/keys.txt"
-      else
-        "${configHome}/sops/age/keys.txt";
-    secrets = {
-      ".ssh/id_psyclyx" = {
-        sopsFile = ./ssh/psyclyx.json;
-        key = "private_key";
-        path = "${home}/.ssh/id_psyclyx";
+  options = {
+    psyclyx = {
+      secrets = {
+        enable = lib.mkEnableOption "Runtime secret decryption";
       };
-      ".ssh/id_alice157" = {
-        sopsFile = ./ssh/alice157.json;
-        key = "private_key";
-        path = "${home}/.ssh/id_alice157";
+    };
+  };
+  config = lib.mkIf cfg.enable {
+    sops = {
+      age.keyFile =
+        if isDarwin then
+          "${home}/Library/Application Support/sops/age/keys.txt"
+        else
+          "${configHome}/sops/age/keys.txt";
+      secrets = {
+        ".ssh/id_psyclyx" = {
+          sopsFile = ./ssh/psyclyx.json;
+          key = "private_key";
+          path = "${home}/.ssh/id_psyclyx";
+        };
+        ".ssh/id_alice157" = {
+          sopsFile = ./ssh/alice157.json;
+          key = "private_key";
+          path = "${home}/.ssh/id_alice157";
+        };
       };
     };
   };
