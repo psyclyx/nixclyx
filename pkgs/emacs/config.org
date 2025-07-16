@@ -392,3 +392,14 @@ A less intrusive `delete-trailing-whitespaces' on save
     (which-key-add-key-based-replacements my/leader-key "<leader>")
     (which-key-add-key-based-replacements my/localleader-key "<localleader>"))
 #+end_src
+
+* UI
+** Visual-bell
+#+begin_src emacs-lisp
+  (defun my/flash-modeline ()
+    (invert-face 'mode-line)
+    (run-with-timer 0.1 nil 'invert-face 'mode-line))
+
+  (setq visible-bell nil
+        ring-bell-function 'my/flash-modeline)
+#+end_src
