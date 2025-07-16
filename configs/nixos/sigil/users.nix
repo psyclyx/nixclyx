@@ -49,6 +49,9 @@ in
         ssh = {
           enable = true;
         };
+        sway = {
+          enable = true;
+        };
         waybar = {
           enable = true;
           cores = 32;
