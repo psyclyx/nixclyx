@@ -8,6 +8,10 @@ in
       programs = {
         adb = {
           enable = lib.mkEnableOption "Enable ADB and associated udev rules/groups.";
+          users = lib.mkOption {
+            type = lib.types.listOf lib.types.str;
+            description = "Users to add to the adbusers group.";
+          };
         };
       };
     };
@@ -17,6 +21,13 @@ in
     programs = {
       adb = {
         enable = true;
+      };
+    };
+    users = {
+      groups = {
+        adbusers = {
+          members = cfg.users;
+        };
       };
     };
   };
