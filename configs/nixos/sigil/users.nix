@@ -15,7 +15,6 @@ in
           "wheel"
           "video"
           "networkmanager"
-          "adbusers"
           "builders"
           "docker"
         ];
