@@ -28,7 +28,6 @@ in
   home-manager.users.psyc = {
     imports = [
       ../../../modules/home/module.nix
-      ../../../modules/home/base
       ../../../modules/home/secrets
       ../../../modules/home/nixos
       ../../../modules/home/programs/emacs

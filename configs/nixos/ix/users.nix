@@ -25,7 +25,6 @@ in
     name = "psyc";
     email = "me@psyclyx.xyz";
     modules = [
-      ../../../modules/home/base
       ../../../modules/home/programs/zsh.nix
       ../../../modules/home/xdg.nix
       {
