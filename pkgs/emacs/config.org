@@ -426,13 +426,11 @@ A less intrusive `delete-trailing-whitespaces' on save
 * UI
 ** Simplify UI
 #+begin_src emacs-lisp
-  (menu-bar-mode -1)
-  (tool-bar-mode -1)
-  (scroll-bar-mode -1)
-  (tooltip-mode -1)
-  (setq inhibit-startup-screen t
-        inhibit-startup-message t
-        inhibit-splash-screen t)
+    (menu-bar-mode -1)
+    (tool-bar-mode -1)
+    (scroll-bar-mode -1)
+    (tooltip-mode -1)
+    (setq initial-buffer-choice t)
 #+end_src
 ** Visual-bell
 #+begin_src emacs-lisp
