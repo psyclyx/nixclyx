@@ -393,6 +393,7 @@ A less intrusive `delete-trailing-whitespaces' on save
   (use-package general
     :ensure t
     :config
+    (general-auto-unbind-keys)
     (general-create-definer my-leader-def
       :states '(normal visual motion emacs insert)
       :major-modes t
@@ -655,11 +656,13 @@ Better 1/2 character movements
 #+begin_src emacs-lisp
   (use-package evil-surround
     :ensure t
+    :after evil
     :commands (global-evil-surround-mode
                evil-surround-edit
                evil-Surround-edit
                evil-surround-region)
-    :config (global-evil-surround-mode 1))
+    :config
+    (global-evil-surround-mode 1))
 #+end_src
 
 *** evil-textobj-anyblock
@@ -680,4 +683,174 @@ Better 1/2 character movements
   (use-package exato
     :ensure t
     :commands evil-outer-xml-attr evil-inner-xml-attr)
+#+end_src
+
+* Completion
+** Corfu
+#+begin_src emacs-lisp
+  (use-package corfu
+    :ensure t
+    :custom
+    (corfu-cycle t)
+    (corfu-auto t)
+    (corfu-auto-delay 0.24)
+    (corfu-auto-prefix 2)
+    (corfu-preselect 'prompt)
+    (corfu-quit-at-boundary t)
+    (corfu-count 16)
+    (corfu-max-width 120)
+    (corfu-on-exact-match nil)
+    (corfu-quit-at-boundary 'separator)
+    (corfu-quit-no-match corfu-quit-at-boundary)
+    (tab-always-indent 'complete)
+    (global-corfu-modes '((not erc-mode
+                               help-mode
+                               vterm-mode)
+                          t))
+    (global-corfu-minibuffer t)
+
+    :init
+    (global-corfu-mode)
+
+    :config
+    (add-to-list 'completion-category-overrides `(lsp-capf (styles ,@completion-styles)))
+
+    (add-hook 'evil-insert-state-exit-hook #'corfu-quit)
+    (general-def
+      :keymaps 'corfu-map
+      "SPC" 'corfu-insert-separator
+      "TAB" 'corfu-next
+      "S-TAB" 'corfu-previous))
+
+  (use-package corfu-popupinfo
+    :after corfu
+    :hook (corfu-mode . corfu-popupinfo-mode)
+    :custom
+    (corfu-popupinfo-delay '(0.2 . 0.2)))
+#+end_src
+** Cape
+#+begin_src emacs-lisp
+  (use-package cape
+    :ensure t
+    :init
+    (general-def "C-c p" 'cape-prefix-map)
+    (add-hook 'completion-at-point-functions #'cape-dabbrev)
+    (add-hook 'completion-at-point-functions #'cape-keyword)
+    (add-hook 'completion-at-point-functions #'cape-file)
+
+    (advice-add #'comint-completion-at-point :around #'cape-wrap-nonexclusive)
+    (advice-add #'eglot-completion-at-point :around #'cape-wrap-nonexclusive)
+    (advice-add #'pcomplete-completions-at-point :around #'cape-wrap-nonexclusive))
+#+end_src
+** Vertico
+#+begin_src emacs-lisp
+  (use-package vertico
+    :ensure t
+    :demand t
+    :custom
+    (vertico-cycle t)
+    (vertico-count 20)
+    (vertico-resize t)
+
+    :config
+    (vertico-mode)
+    (general-def
+      :keymaps 'vertico-map
+      "M-j" 'next-line
+      "M-k" 'previous-line
+      "M-h" 'backward-paragraph
+      "M-l" 'forward-paragraph)
+
+    ;; Prompt indicator for `completing-read-multiple'.
+    (when (< emacs-major-version 31)
+      (advice-add #'completing-read-multiple :filter-args
+                  (lambda (args)
+                    (cons (format "[CRM%s] %s"
+                                  (string-replace "[ \t]*" "" crm-separator)
+                                  (car args))
+                          (cdr args))))))
+
+  (require 'vertico-buffer)
+  (require 'vertico-grid)
+  (require 'vertico-directory)
+  (require 'vertico-reverse)
+  (require 'vertico-repeat)
+  (require 'vertico-multiform)
+
+  (add-hook 'rfn-esm-update-handlers #'vertico-directory-tidy)
+
+  (general-def
+    :keymaps '(vertico-map vertico-mulltiform-map)
+    "RET" 'vertico-directory-enter
+    "DEL" 'vertico-directory-delete-char
+    "M-DEL" 'vertico-directory-delete-word)
+
+  (setq vertico-buffer-display-action '(display-buffer-use-least-recent-window)
+        vertico-multiform-categories '((embark-keybinding grid)))
+
+  (vertico-multiform-mode)
+
+  (add-hook 'minibuffer-setup-hook #'vertico-repeat-save)
+
+  (general-def
+    :states '(normal insert visual motion)
+    "C-M-;" 'vertico-repeat)
+#+end_src
+** Consult
+#+begin_src emacs-lisp
+   (use-package consult
+     :ensure t
+     :after vertico
+
+     :preface
+     (general-def
+       [remap bookmark-jump]                 #'consult-bookmark
+       [remap evil-show-marks]               #'consult-mark
+       [remap evil-show-registers]           #'consult-register
+       [remap goto-line]                     #'consult-goto-line
+       [remap imenu]                         #'consult-imenu
+       [remap Info-search]                   #'consult-info
+       [remap list-dir]                      #'consult-dir
+       [remap locate]                        #'consult-locate
+       [remap load-theme]                    #'consult-theme
+       [remap recentf-open-files]            #'consult-recent-file
+       [remap switch-to-buffer]              #'consult-buffer
+       [remap switch-to-buffer-other-window] #'consult-buffer-other-window
+       [remap switch-to-buffer-other-frame]  #'consult-buffer-other-frame
+       [remap yank-pop]                      #'consult-yank-pop)
+       :init
+       (advice-add #'register-preview :override #'consult-register-window)
+       (setq register-preview-delay 0.5)
+
+       (setq xref-show-xrefs-function #'consult-xref
+             xref-show-definitions-function #'consult-xref)
+
+       :config
+       (consult-customize
+        consult-theme :preview-key '(:debounce 0.1 any)
+        consult-ripgrep consult-git-grep consult-grep consult-man
+        consult-bookmark consult-recent-file consult-xref
+        consult--source-bookmark consult--source-file-register
+        consult--source-recent-file consult--source-project-recent-file
+        :preview-key '(:debounce 0.3 any))
+
+       (setq consult-narrow-key "<"
+             consult-line-numbers-width t
+             consult-async-min-input 2
+             consult-async-refresh-delay  0.15
+             consult-async-input-throttle 0.2
+             consult-async-input-debounce 0.1)
+
+       (setq evil-jumps-cross-buffers nil)
+       (evil-set-command-property 'consult-line :jump t)
+       (general-def
+         :keymaps 'vertico-map
+         "C-x C-d" #'consult-dir
+         "C-x C-j" #'consult-dir-jump-file)
+
+       (consult-customize
+        consult-ripgrep consult-git-grep consult-grep
+        consult-bookmark consult-recent-file
+        consult--source-recent-file consult--source-project-recent-file consult--source-bookmark
+        :preview-key "C-SPC"))
 #+end_src
