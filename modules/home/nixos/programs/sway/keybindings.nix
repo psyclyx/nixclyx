@@ -48,7 +48,7 @@ in
         "${mod}+d" = "exec ${rofi} -show drun";
         "${mod}+g" = "exec ${rofi} -show filebrowser";
         "${mod}+Return" = "exec ${term}";
-        "${mod}+Shift+e" = "exec ~/bin/rofi-session";
+        "${mod}+Shift+e" = "exec ${rofi} -show session -modi \"session:${pkgs.lib.getExe pkgs.psyclyx.rofi-session}\"";
         "${mod}+Shift+c" = "reload";
 
         "${mod}+r" = "mode resize";

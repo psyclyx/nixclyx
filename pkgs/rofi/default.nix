@@ -1,7 +1,7 @@
 {
   rofi-wayland-unwrapped,
   symlinkJoin,
-  makeWrapper
+  makeWrapper,
 }:
 symlinkJoin {
   name = "rofi";

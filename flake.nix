@@ -96,14 +96,8 @@
     let
       inherit (inputs.nixpkgs) lib;
 
-      psyclyxOverlay = final: prev: {
-        psyclyx = {
-          rofi = prev.callPackage ./pkgs/rofi {};
-        };
-      };
-
       overlays = with inputs; [
-        psyclyxOverlay
+        (import ./overlay.nix)
         nur.overlays.default
         nix-darwin-emacs.overlays.emacs
         emacs-overlay.overlays.default
@@ -125,6 +119,7 @@
           in
           {
             rofi = pkgs.psyclyx.rofi;
+            rofi-session = pkgs.psyclyx.rofi-session;
           };
       };
 
