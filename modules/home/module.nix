@@ -7,13 +7,6 @@
     ./programs/ssh.nix
     ./programs/waybar
     ./programs/zsh.nix
-    ./tools/clojure.nix
-    ./tools/javascript.nix
-    ./tools/misc.nix
-    ./tools/nix.nix
-    ./tools/python.nix
-    ./tools/rust.nix
-    ./tools/zig.nix
     ./xdg.nix
   ];
 }

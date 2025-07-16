@@ -55,14 +55,6 @@ in
           enable = true;
         };
       };
-      tools = {
-        clojure = {
-          enable = true;
-        };
-        misc = {
-          enable = true;
-        };
-      };
       user = {
         name = "psyclyx";
         email = "me@psyclyx.xyz";
