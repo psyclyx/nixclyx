@@ -796,6 +796,38 @@ Better 1/2 character movements
     :states '(normal insert visual motion)
     "C-M-;" 'vertico-repeat)
 #+end_src
+** Orderless
+#+begin_src emacs-lisp
+  (use-package orderless
+    :ensure t
+    :config
+    (defun my/vertico--company-capf--candidates-a (fn &rest args)
+      "Highlight company matches correctly, and try default completion styles before
+  orderless."
+      (let ((orderless-match-faces [completions-common-part])
+            (completion-styles '(basic partial-completion orderless)))
+        (apply fn args)))
+    (advice-add 'company-capf--candidates :around #'my/vertico--company-capf--candidates-a)
+
+    (setq orderless-affix-dispatch-alist
+          '((?! . orderless-without-literal)
+            (?& . orderless-annotation)
+            (?% . char-fold-to-regexp)
+            (?` . orderless-initialism)
+            (?= . orderless-literal)
+            (?^ . orderless-literal-prefix)
+            (?~ . orderless-flex)))
+
+    (setq completion-styles '(orderless basic)
+          completion-category-defaults nil
+          ;; note that despite override in the name orderless can still be used in
+          ;; find-file etc.
+          completion-category-overrides '((file (styles orderless partial-completion)))
+          orderless-component-separator #'orderless-escapable-split-on-space)
+    ;; ...otherwise find-file gets different highlighting than other commands
+    (set-face-attribute 'completions-first-difference nil :inherit nil))
+
+#+end_src
 ** Consult
 #+begin_src emacs-lisp
    (use-package consult
