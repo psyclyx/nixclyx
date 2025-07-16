@@ -43,6 +43,9 @@ in
         alacritty = {
           enable = true;
         };
+        git = {
+          enable = true;
+        };
         waybar = {
           enable = true;
           cores = 32;
