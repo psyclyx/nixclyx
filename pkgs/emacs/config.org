@@ -296,3 +296,19 @@ Draws *heavily* from doomemacs.
     (add-hook 'evil-replace-state-entry-hook
               #'my/disable-smartparens-mode-maybe-h))
 #+end_src
+
+* ws-butler
+A less intrusive `delete-trailing-whitespaces' on save
+#+begin_src emacs-lisp
+  (use-package ws-butler
+    :ensure t
+    :hook (after-init . ws-butler-global-mode)
+    :config
+    (setq ws-butler-global-exempt-modes
+          (append ws-butler-global-exempt-modes
+                  '(special-mode
+                    comint-mode
+                    term-mode
+                    eshell-mode
+                    diff-mode))))
+#+end_src
