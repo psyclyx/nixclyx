@@ -824,7 +824,6 @@ Better 1/2 character movements
           orderless-component-separator #'orderless-escapable-split-on-space)
     ;; ...otherwise find-file gets different highlighting than other commands
     (set-face-attribute 'completions-first-difference nil :inherit nil))
-
 #+end_src
 ** Consult
 #+begin_src emacs-lisp
@@ -883,4 +882,17 @@ Better 1/2 character movements
         consult-bookmark consult-recent-file
         consult--source-recent-file consult--source-project-recent-file consult--source-bookmark
         :preview-key "C-SPC"))
+#+end_src
+
+** Marginalia
+#+begin_src emacs-lisp
+  (use-package marginalia
+    :ensure t
+    :init
+    (marginalia-mode)
+    :custom
+    (marginalia-max-relative-age 0)
+    :config
+    (add-to-list 'marginalia-prompt-categories '("\\<face\\>" . face))
+    (add-to-list 'marginalia-prompt-categories '("\\<var\\>" . variable)))
 #+end_src
