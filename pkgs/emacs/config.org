@@ -170,6 +170,7 @@ Draws *heavily* from doomemacs.
 ** recentf
 #+begin_src emacs-lisp
   (use-package recentf
+    :commands recentf-open-files
     :custom
     (recentf-max-saved-items 512)
     :init
@@ -347,14 +348,6 @@ A less intrusive `delete-trailing-whitespaces' on save
 
 * Bindings
 #+begin_src emacs-lisp
-  (defvar my/leader-key "SPC")
-  (defvar my/leader-alt-key "M-SPC")
-  (defvar my/leader-key-states '(normal visual motion))
-  (defvar my/leader-alt-key-states '(emacs insert))
-  (defvar my/localleader-key "SPC m")
-  (defvar my/localleader-alt-key "M-SPC m")
-
-  (defvar my/leader-map (make-sparse-keymap))
 #+end_src
 ** Universal escape
 #+begin_src emacs-lisp
@@ -394,19 +387,8 @@ A less intrusive `delete-trailing-whitespaces' on save
     :ensure t
     :demand t
     :config
-    )
-  (general-auto-unbind-keys)
-    (general-create-definer my-leader-def
-      :states '(normal visual motion emacs insert)
-      :major-modes t
-      :prefix my/leader-key
-      :non-normal-prefix my/leader-alt-key)
-
-    (general-create-definer my-local-leader-def
-      :states '(normal visual motion emacs insert)
-      :major-modes t
-      :prefix my/localleader-key
-      :non-normal-prefix my/localleader-alt-key)
+    (general-evil-setup)
+    (general-auto-unbind-keys))
 #+end_src
 ** Which-key
 #+begin_src emacs-lisp
@@ -535,12 +517,8 @@ A less intrusive `delete-trailing-whitespaces' on save
   (setq use-short-answers t)
   (define-key y-or-n-p-map " " nil)
 #+end_src
-
-
 * Evil
 #+begin_src emacs-lisp
-  ;; Set these defaults before `evil'; use `defvar' so they can be changed prior
-  ;; to loading.
   (defvar evil-want-keybinding nil)
   (defvar evil-want-C-g-bindings t)
   (defvar evil-want-C-i-jump t)
@@ -550,7 +528,7 @@ A less intrusive `delete-trailing-whitespaces' on save
   (defvar evil-want-Y-yank-to-eol t)
   (defvar evil-want-abbrev-expand-on-insert-exit nil)
   (defvar evil-respect-visual-line-mode nil)
-
+  
   (use-package evil
     :ensure t
     :demand t
@@ -720,6 +698,36 @@ Better 1/2 character movements
     :custom
     (corfu-popupinfo-delay '(0.2 . 0.2)))
 #+end_src
+
+#+begin_src emacs-lisp
+  (defun my/corfu--dabbrev-or-last (&optional arg)
+    "Trigger corfu popup and select the first candidate.
+
+  Intended to mimic `evil-complete-previous', unless the popup is already open."
+    (interactive "p")
+    (if corfu--candidates
+        (corfu-previous arg)
+      (require 'cape)
+      (let ((cape-dabbrev-check-other-buffers
+             (bound-and-true-p evil-complete-all-buffers)))
+        (cape-dabbrev t)
+        (when (> corfu--total 0)
+          (corfu--goto (- corfu--total (or arg 1)))))))
+
+(defun my/corfu--dabbrev-or-next (&optional arg)
+  "Trigger corfu popup and select the first candidate.
+
+Intended to mimic `evil-complete-next', unless the popup is already open."
+  (interactive "p")
+  (if corfu--candidates
+      (corfu-next arg)
+    (require 'cape)
+    (let ((cape-dabbrev-check-other-buffers
+           (bound-and-true-p evil-complete-all-buffers)))
+      (cape-dabbrev t)
+      (when (> corfu--total 0)
+        (corfu--goto (or arg 0))))))
+#+end_src
 ** Cape
 #+begin_src emacs-lisp
   (use-package cape
@@ -787,6 +795,12 @@ Better 1/2 character movements
   (general-def
     :states '(normal insert visual motion)
     "C-M-;" 'vertico-repeat)
+
+  (advice-add #'ffap-menu-ask :around
+              (lambda (&rest args)
+                (cl-letf (((symbol-function #'minibuffer-completion-help)
+                           #'ignore))
+                  (apply args))))
 #+end_src
 ** Orderless
 #+begin_src emacs-lisp
@@ -910,19 +924,6 @@ Better 1/2 character movements
     (add-to-list 'projectile-project-root-files "shadow-cljs.edn")
     (add-to-list 'projectile-project-root-files "project.clj")
     (add-to-list 'projectile-project-root-files "deps.edn"))
-
-    (my-leader-def
-      :infix "p"
-      "a" 'projectile-add-known-project
-      "p" 'projectile-switch-project
-      "f" 'projectile-find-file
-      "d" 'projectile-find-dir
-      "b" 'projectile-switch-to-buffer
-      "k" 'projectile-kill-buffers
-      "t" 'projectile-run-vterm
-      "c" 'projectile-compile-project
-      "!" 'projectile-run-shell-command-in-root
-      "&" 'projectile-run-async-shell-command-in-root)
 #+end_src
 
 * Magit
@@ -940,22 +941,118 @@ Better 1/2 character movements
     (setq magit-repository-directories
           (mapcar (lambda (dir)
                     (cons dir 1))
-                  projectile-known-projects))
+                  projectile-known-projects)))
+#+end_src
 
-    (my-leader-def
-      :infix "g"
-      "g" 'magit-status
-      "b" 'magit-blame
-      "c" 'magit-commit
-      "C" 'magit-clone
-      "f" 'magit-file-dispatch
-      "l" 'magit-log-buffer-file
-      "L" 'magit-log-current
-      "s" 'magit-stage-file
-      "S" 'magit-stage-modified
-      "u" 'magit-unstage-file
-      "p" 'magit-push
-      "P" 'magit-pull
-      "x" 'magit-reset-quickly
-      "/" 'magit-dispatch))
+* Keys
+#+begin_src emacs-lisp
+  (defvar my/leader-key "SPC")
+  (defvar my/leader-alt-key "M-SPC")
+  (defvar my/leader-key-states '(normal visual motion))
+  (defvar my/leader-alt-key-states '(emacs insert))
+  (defvar my/localleader-key "SPC m")
+  (defvar my/localleader-alt-key "M-SPC m")
+#+end_src
+
+#+begin_src emacs-lisp
+  (defvar my/leader-map (make-sparse-keymap))
+  (defvar my/localleader-map (make-sparse-keymap))
+#+end_src
+
+#+begin_src emacs-lisp
+          (define-prefix-command 'my/leader 'my/leader-map)
+          (let ((map general-override-mode-map))
+            (evil-define-key* my/leader-key-states map (kbd my/leader-key) 'my/leader)
+            (evil-define-key* my/leader-alt-key-states map (kbd my/leader-alt-key) 'my/leader)
+            (general-override-mode +1))
+
+          (general-define-key
+           :prefix-command 'my/file-prefix
+           "f" '("Find file" . find-file)
+           "d" '("Find directory". dired)
+           "l" '("Locate files" . locate)
+           "r" '("Recent files" . recentf-open-files))
+
+          (general-define-key
+           :prefix-command 'my/search-prefix
+           "s" '("Search buffer" . consult-line)
+           "L" '("Jump to link" . ffap-menu)
+           "p" '("Search project" . consult-ripgrep))
+
+          (general-define-key
+           :prefix-command 'my/buffer-prefix
+           "," '("Switch buffer" . switch-to-buffer)
+           "d" '("Kill current buffer" . kill-current-buffer)
+           "i" '("ibuffer" . ibuffer)
+           "l" '("Switch to last buffer" . evil-switch-to-windows-last-buffer)
+           "m" '("Set bookmark" . bookmark-set)
+           "d" '("Delete bookmark" . bookmark-delete)
+           "r" '("Revert buffer" . revert-buffer))
+
+          (general-define-key
+           :states nil
+           :keymaps 'my/leader-map
+           "'" '("Repeat last search" . vertico-repeat)
+           "u" '("Universal argument" . universal-argument)
+           ";" '("Eval expression" . pp-eval-expression)
+           ":" '("M-x" . execute-extended-command)
+           "," '("Switch buffer" . switch-to-buffer)
+           "." '("Find file" . find-file)
+           "SPC" '("Find file in project" . projectile-find-file)
+           "RET" '("Jump to bookmark" . bookmark-jump)
+           "h" (cons "help" help-map)
+           "w" (cons "window" evil-window-map )
+           "b" '("buffer" . my/buffer-prefix)
+           "f" '("file" . my/file-prefix)
+           "s" '("search" . my/search-prefix))
+#+end_src
+
+#+begin_src emacs-lisp
+  (general-define-key
+   :keymaps 'corfu-mode-map
+   :states '(insert)
+   "C-@" 'completion-at-point
+   "C-SPC" 'completion-at-point
+   "C-n" 'my/corfu--dabbrev-or-next
+   "C-p" 'my/corfu--dabbrev-or-last)
+  (general-define-key
+   :keymaps 'corfu-mode-map
+   :states '(normal)
+   "C-SPC" (lambda () (interactive)
+             (call-interactively #'evil-insert-state)
+             (call-interactively #'completion-at-point)))
+  (general-define-key
+   :keymaps 'corfu-mode-map
+   :states '(visual)
+   "C-SPC" (lambda () (interactive)
+             (call-interactively #'evil-change-state)
+             (call-interactively #'completion-at-point)))
+  (general-define-key
+   :keymaps 'corfu-map
+   :states '(insert)
+   "C-SPC" 'corfu-insert-separator)
+  (general-define-key
+   :keymaps 'corfu-map
+   "C-k" 'corfu-previous
+   "C-j" 'corfu-next
+   "C-u" (lambda () (interactive)
+           (let (curfu-cycle)
+             (funcall-interactively #'corfu-next (- corfu-count))))
+   "C-d" (lambda () (interactive)
+           (let (curfu-cycle)
+             (funcall-interactively #'corfu-next corfu-count))))
+
+  (general-define-key
+   :keymaps 'corfu-popupinfo-map
+   "C-h" 'corfu-popupinfo-toggle
+   "C-S-k" #'corfu-popupinfo-scroll-down
+   "C-S-j" #'corfu-popupinfo-scroll-up
+   "C-<up>" #'corfu-popupinfo-scroll-down
+   "C-<down>" #'corfu-popupinfo-scroll-up
+   "C-S-p" #'corfu-popupinfo-scroll-down
+   "C-S-n" #'corfu-popupinfo-scroll-up
+   "C-S-u" (lambda () (interactive)
+             (corfu-popupinfo-scroll-down nil corfu-popupinfo-min-height))
+   "C-S-d" (lambda () (interactive)
+             (corfu-popupinfo-scroll-up nil corfu-popupinfo-min-height)))
 #+end_src
