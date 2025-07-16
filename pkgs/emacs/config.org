@@ -152,7 +152,7 @@ Draws *heavily* from doomemacs.
     (savehist-mode))
 #+end_src
 
-* Server
+** Server
 #+begin_src emacs-lisp
   (defun my/maybe-start-server ()
     (unless (server-running-p)
@@ -165,14 +165,15 @@ Draws *heavily* from doomemacs.
     :if (display-graphic-p))
 #+end_src
 
-* Tramp
+** Tramp
 #+begin_src emacs-lisp
   (use-package tramp
     :custom
     (remote-file-name-inhibit-cache 60))
 #+end_src
 
-* Better jumper
+* External packages
+** Better jumper
 #+begin_src emacs-lisp
   (use-package better-jumper
     :ensure t
@@ -234,7 +235,7 @@ Draws *heavily* from doomemacs.
     (advice-add #'imenu :around #'my/set-jump-a))
 #+end_src
 
-* Smartparens
+** Smartparens
 #+begin_src emacs-lisp
   (use-package smartparens
     :ensure t
@@ -297,7 +298,7 @@ Draws *heavily* from doomemacs.
               #'my/disable-smartparens-mode-maybe-h))
 #+end_src
 
-* ws-butler
+** ws-butler
 A less intrusive `delete-trailing-whitespaces' on save
 #+begin_src emacs-lisp
   (use-package ws-butler
@@ -311,4 +312,60 @@ A less intrusive `delete-trailing-whitespaces' on save
                     term-mode
                     eshell-mode
                     diff-mode))))
+#+end_src
+
+* Bindings
+#+begin_src emacs-lisp
+  (defvar my/leader-key "SPC")
+  (defvar my/leader-alt-key "M-SPACE")
+  (defvar my/leader-key-states '(normal visual motion))
+  (defvar my/leader-alt-key-states '(emacs insert))
+  (defvar my/localleader-key "SPC m")
+  (defvar my/localleader-alt-key "M-SPC m")
+
+  (defvar my/leader-map (make-sparse-keymap))
+#+end_src
+
+
+** Universal escape
+#+begin_src emacs-lisp
+  (defvar my/escape-hook nil
+    "A hook run when C-g is pressed (or ESC in normal mode, for evil users).
+
+  More specifically, when `my/escape' is pressed. If any hook returns non-nil,
+  all hooks after it are ignored.")
+
+  (defun my/escape (&optional interactive)
+    "Run `my/escape-hook'."
+    (interactive (list 'interactive))
+    (let ((inhibit-quit t))
+      (cond ((minibuffer-window-active-p (minibuffer-window))
+             ;; quit the minibuffer if open.
+             (when interactive
+               (setq this-command 'abort-recursive-edit))
+             (abort-recursive-edit))
+            ;; Run all escape hooks. If any returns non-nil, then stop there.
+            ((run-hook-with-args-until-success 'my/escape-hook))
+            ;; don't abort macros
+            ((or defining-kbd-macro executing-kbd-macro) nil)
+            ;; Back to the default
+            ((unwind-protect (keyboard-quit)
+               (when interactive
+                 (setq this-command 'keyboard-quit)))))))
+
+  (global-set-key [remap keyboard-quit] #'my/escape)
+
+  (with-eval-after-load 'eldoc
+    (eldoc-add-command 'my/escape))
+#+end_src
+
+** General.el
+#+begin_src emacs-lisp
+  (use-package general
+    :ensure t
+    :demand t
+    :hook (after-init . general-auto-unbind-keys))
+
+  (defalias 'define-key! #'general-def)
+  (defalias 'undefine-key! #'general-unbind)
 #+end_src
