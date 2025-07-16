@@ -39,6 +39,9 @@ in
       ];
     };
     psyclyx = {
+      gtk = {
+        enable = true;
+      };
       programs = {
         alacritty = {
           enable = true;

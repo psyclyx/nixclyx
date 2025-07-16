@@ -1,6 +1,7 @@
 {
   imports = [
     ./config.nix
+    ./gtk.nix
     ./programs/alacritty.nix
     ./programs/git.nix
     ./programs/kitty.nix
