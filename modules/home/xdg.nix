@@ -1,5 +1,7 @@
-{ ... }:
+{ pkgs, ... }:
 {
+  home.packages = [ pkgs.kdePackages.kate ];
+
   xdg = {
     userDirs = {
       enable = true;
@@ -20,9 +22,9 @@
 
     mimeApps =
       let
-        nvim = "nvim.desktop";
+        # hack: should be emacsclient
+        kate = "kate.desktop";
         firefox = "firefox.desktop";
-        obsidian = "obsidian.desktop";
       in
       {
         enable = true;
@@ -35,11 +37,8 @@
           "application/x-extension-xhtml" = [ firefox ];
           "application/xhtml+xml" = [ firefox ];
           "text/html" = [ firefox ];
-          "text/markdown" = [
-            nvim
-            obsidian
-          ];
-          "text/plain" = [ nvim ];
+          "text/markdown" = [ kate ];
+          "text/plain" = [ kate ];
           "x-scheme-handler/ftp" = [ firefox ];
           "x-scheme-handler/http" = [ firefox ];
           "x-scheme-handler/https" = [ firefox ];
@@ -56,11 +55,8 @@
           "application/x-extension-xhtml" = [ firefox ];
           "application/xhtml+xml" = [ firefox ];
           "text/html" = [ firefox ];
-          "text/markdown" = [
-            nvim
-            obsidian
-          ];
-          "text/plain" = [ nvim ];
+          "text/markdown" = [ kate ];
+          "text/plain" = [ kate ];
           "x-scheme-handler/ftp" = [ firefox ];
           "x-scheme-handler/http" = [ firefox ];
           "x-scheme-handler/https" = [ firefox ];
