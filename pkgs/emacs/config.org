@@ -363,9 +363,32 @@ A less intrusive `delete-trailing-whitespaces' on save
 #+begin_src emacs-lisp
   (use-package general
     :ensure t
-    :demand t
-    :hook (after-init . general-auto-unbind-keys))
+    :config
+    (general-create-definer my-leader-def
+      :states '(normal visual motion emacs insert)
+      :major-modes t
+      :prefix my/leader-key
+      :non-normal-prefix my/leader-alt-key
+      :non-normal-prefix "C-SPC")
 
-  (defalias 'define-key! #'general-def)
-  (defalias 'undefine-key! #'general-unbind)
+    (general-create-definer my-local-leader-def
+      :states '(normal visual motion emacs insert)
+      :major-modes t
+      :prefix my/localleader-key
+      :non-normal-prefix my/localleader-alt-key))
+#+end_src
+** Which-key
+#+begin_src emacs-lisp
+  (use-package which-key
+    :hook (after-init . which-key-mode)
+    :custom
+    (which-key-sort-order #'which-key-key-order-alpha)
+    (which-key-sort-uppercase-first nil)
+    (which-key-add-column-padding 1)
+    (which-key-max-display-columns nil)
+    (which-key-min-display-lines 6)
+    (which-key-side-window-slot -10)
+    :config
+    (which-key-add-key-based-replacements my/leader-key "<leader>")
+    (which-key-add-key-based-replacements my/localleader-key "<localleader>"))
 #+end_src
