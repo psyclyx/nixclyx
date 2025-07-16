@@ -1,6 +1,6 @@
 { ... }:
 let
-  c = import ../../../colors.nix;
+  c = import ../../nixos/colors.nix;
 in
 {
   programs.waybar = {

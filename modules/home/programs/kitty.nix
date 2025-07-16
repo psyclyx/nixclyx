@@ -7,7 +7,7 @@ in
     psyclyx = {
       programs = {
         kitty = {
-          enable = "Configure kitty.";
+          enable = lib.mkEnableOption "Configure kitty.";
         };
       };
     };
