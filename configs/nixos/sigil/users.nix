@@ -28,7 +28,6 @@ in
     imports = [
       ../../../modules/home/module.nix
       ../../../modules/home/secrets
-      ../../../modules/home/nixos
       ../../../modules/home/programs/emacs
     ];
     home = {

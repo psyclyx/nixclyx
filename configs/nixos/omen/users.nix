@@ -30,7 +30,6 @@ in
     email = "me@psyclyx.xyz";
     modules = [
       ../../../modules/home/secrets
-      ../../../modules/home/nixos
       ../../../modules/home/xdg.nix
       ../../../modules/home/programs/emacs
       ../../../modules/home/programs/alacritty.nix
