@@ -2,8 +2,9 @@
 let
   emacs = pkgs.emacsWithPackagesFromUsePackage {
     config = ./config.org;
+    defaultInitFile = true;
+    alwaysTangle = true;
     package = pkgs.emacs-unstable-pgtk;
-    extraEmacsPackages = epkgs: with pkgs; [];
   };
 in
 emacs
