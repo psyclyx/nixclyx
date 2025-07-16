@@ -118,6 +118,7 @@
             pkgs = pkgsFor "x86_64-linux";
           in
           {
+            emacs = pkgs.psyclyx.emacs;
             rofi = pkgs.psyclyx.rofi;
             rofi-session = pkgs.psyclyx.rofi-session;
           };
@@ -191,7 +192,7 @@
       );
 
       devShells = lib.genAttrs [ "x86_64-linux" "aarch64-darwin" "x86_64-darwin" ] (system: {
-        default = mkDevShell {pkgs = pkgsFor system;};
+        default = mkDevShell { pkgs = pkgsFor system; };
       });
     };
 }
