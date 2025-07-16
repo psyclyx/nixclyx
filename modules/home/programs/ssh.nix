@@ -58,5 +58,10 @@ in
         };
       };
     };
+    services = lib.mkIf pkgs.stdenv.isLinux {
+      ssh-agent = {
+        enable = true;
+      };
+    };
   };
 }

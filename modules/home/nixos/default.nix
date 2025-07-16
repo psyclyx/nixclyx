@@ -2,6 +2,5 @@
 {
   imports = [
     ./gtk.nix
-    ./services
   ];
 }
