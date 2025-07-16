@@ -25,10 +25,8 @@ in
     };
   };
 
-  home-manager.users.psyc = mkHome {
-    name = "psyc";
-    email = "me@psyclyx.xyz";
-    modules = [
+  home-manager.users.psyc = {
+    imports = [
       ../../../modules/home/module.nix
       ../../../modules/home/base
       ../../../modules/home/secrets
@@ -36,22 +34,27 @@ in
       ../../../modules/home/xdg.nix
       ../../../modules/home/programs/emacs
       ../../../modules/home/programs/signal.nix
-      {
-        psyclyx = {
-          programs = {
-            alacritty = {
-              enable = true;
-            };
-            waybar = {
-              enable = true;
-              cores = 32;
-            };
-            zsh = {
-              enable = true;
-            };
-          };
-        };
-      }
     ];
+    home = {
+      stateVersion = "25.05";
+    };
+    psyclyx = {
+      programs = {
+        alacritty = {
+          enable = true;
+        };
+        waybar = {
+          enable = true;
+          cores = 32;
+        };
+        zsh = {
+          enable = true;
+        };
+      };
+      user = {
+        name = "psyclyx";
+        email = "me@psyclyx.xyz";
+      };
+    };
   };
 }
