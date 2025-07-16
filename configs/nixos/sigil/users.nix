@@ -24,17 +24,16 @@ in
       };
     };
   };
-
   home-manager.users.psyc = {
     imports = [
       ../../../modules/home/module.nix
       ../../../modules/home/secrets
       ../../../modules/home/nixos
       ../../../modules/home/programs/emacs
-      ../../../modules/home/programs/signal.nix
     ];
     home = {
       stateVersion = "25.05";
+      packages = with pkgs; [ signal-desktop-bin ];
     };
     psyclyx = {
       programs = {

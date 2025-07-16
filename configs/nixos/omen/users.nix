@@ -34,7 +34,6 @@ in
       ../../../modules/home/xdg.nix
       ../../../modules/home/programs/emacs
       ../../../modules/home/programs/alacritty.nix
-      ../../../modules/home/programs/signal.nix
       ../../../modules/home/programs/zsh.nix
       {
         psyclyx = {
