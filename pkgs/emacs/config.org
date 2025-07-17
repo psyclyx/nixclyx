@@ -636,7 +636,6 @@ Better 1/2 character movements
     (corfu-quit-at-boundary 'separator)
     (corfu-quit-no-match corfu-quit-at-boundary)
     (tab-always-indent 'complete)
-    (global-corfu-minibuffer t)
     :config
     (global-corfu-mode)
     (add-to-list 'completion-category-overrides `(lsp-capf (styles ,@completion-styles)))
@@ -653,7 +652,18 @@ Better 1/2 character movements
                              (insert-char ?\\)))
             (t (call-interactively #'corfu-insert-separator))))
 
-    (add-to-list 'corfu-continue-commands #'my/corfu--smart-sep-toggle-escape))
+    (add-to-list 'corfu-continue-commands #'my/corfu--smart-sep-toggle-escape)
+
+    (defun my/corfu--other-completion-active-p ()
+      (or (bound-and-true-p vertico--input)
+          (where-is-internal 'minibuffer-complete (list (current-local-map)))))
+
+    (defun my/corfu--enable-in-minibuffer-p ()
+      (and (where-is-internal #'completion-at-point
+                              (list (current-local-map)))
+           (not (my/corfu--other-completion-active-p))))
+
+    (setq global-corfu-minibuffer #'my/corfu--enable-in-minibuffer-p))
 
   (use-package corfu-popupinfo
     :after corfu
