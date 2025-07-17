@@ -42,6 +42,130 @@ Draws *heavily* from doomemacs.
   (add-hook 'focus-out-hook #'garbage-collect)
 #+end_src
 
+* UI
+** Simplify
+#+begin_src emacs-lisp
+  (menu-bar-mode -1)
+  (tool-bar-mode -1)
+  (scroll-bar-mode -1)
+  (tooltip-mode -1)
+  (setq initial-buffer-choice t)
+#+end_src
+** Visual bell
+#+begin_src emacs-lisp
+  (defun my/flash-modeline ()
+    (invert-face 'mode-line)
+    (run-with-timer 0.1 nil 'invert-face 'mode-line))
+
+  (setq visible-bell nil
+        ring-bell-function 'my/flash-modeline)
+#+end_src
+** Scroll
+#+begin_src emacs-lisp
+  (setq hscroll-margin 2
+        hscroll-step 1
+        scroll-conservatively 10
+        scroll-margin 0
+        scroll-preserve-screen-position t
+        auto-window-vscroll nil
+        mouse-wheel-scroll-amount '(2 ((shift) . hscroll))
+        mouse-wheel-scroll-amount-horizontal 2)
+#+end_src
+** Cursor
+#+begin_src emacs-lisp
+  (blink-cursor-mode -1)
+  (setq blink-matching-paren nil)
+#+end_src
+
+#+begin_src emacs-lisp
+  (setq x-stretch-cursor nil)
+#+end_src
+** Fringes
+#+begin_src emacs-lisp
+  (setq indicate-buffer-boundaries nil
+        indicate-empty-lines nil)
+#+end_src
+** Windows/Frames
+#+begin_src emacs-lisp
+  (setq frame-title-format '("%b – Emacs")
+        icon-title-format frame-title-format)
+#+end_src
+
+#+begin_src emacs-lisp
+  (setq frame-resize-pixelwise t
+        window-resize-pixelwise t)
+#+end_src
+
+#+begin_src emacs-lisp
+  (setq window-divider-default-places t
+        window-divider-default-bottom-width 1
+        window-divider-default-right-width 1)
+
+  (when (display-graphic-p)
+    (add-hook 'after-init #'window-divider-mode))
+#+end_src
+** Splits
+#+begin_src emacs-lisp
+(setq split-width-threshold 160
+      split-height-threshold nil)
+#+end_src
+** Tooltips
+#+begin_src emacs-lisp
+(when (bound-and-true-p tooltip-mode)
+  (tooltip-mode -1))
+#+end_src
+** Theme
+#+begin_src emacs-lisp
+  (use-package zenburn-theme
+    :ensure t
+    :after faces
+    :custom
+    (zenburn-use-variable-pitch t)
+    (zenburn-scale-org-headlines t)
+    (zenburn-scale-outline-headings t)
+    :init
+    (load-theme 'zenburn t))
+#+end_src
+** Fonts
+#+begin_src emacs-lisp
+  (use-package faces
+    :demand t
+    :custom
+    (face-font-family-alternatives
+     '(("Berkeley Mono" "Aporetic Sans Mono" "Noto Sans Mono" "SF Mono" "Menlo" "Monospace")
+       ("Aporetic Sans" "Noto Sans" "Noto Sans" "SF Pro" "Helvetica" "Arial")))
+    :config
+    (set-face-attribute 'default nil
+                        :family "Berkeley Mono"
+                        :height 180
+                        :weight 'extra-light
+                        :width 'condensed)
+
+    (set-face-attribute 'fixed-pitch nil
+                        :family "Berkeley Mono")
+
+    (set-face-attribute 'variable-pitch nil
+                        :family "Aporetic Sans"))
+#+end_src
+** Icons
+#+begin_src emacs-lisp
+    (use-package nerd-icons
+      :ensure t)
+
+    (use-package nerd-icons-corfu
+      :ensure t
+      :after (corfu nerd-icons)
+      :config
+      (add-to-list 'corfu-margin-formatters #'nerd-icons-corfu-formatter))
+
+    (use-package nerd-icons-completion
+      :ensure t
+      :defer t
+      :after (vertico marginalia)
+      :config
+      (nerd-icons-completion-mode)
+      (add-hook 'marginalia-mode-hook #'nerd-icons-completion-marginalia-setup))
+#+end_src
 * Editor
 ** File handling
 *** Symlinks
@@ -255,10 +379,6 @@ Draws *heavily* from doomemacs.
     (recentf-max-saved-items 512))
 #+end_src
 
-**** Don't save duplicates
-#+begin_src emacs-lisp
-  (setq kill-do-not-save-duplicates t)
-#+end_src
 *** savehist
 #+begin_src emacs-lisp
   (use-package savehist
@@ -352,123 +472,9 @@ Draws *heavily* from doomemacs.
   (setq use-short-answers t)
   (define-key y-or-n-p-map " " nil)
 #+end_src
-* UI
-** Simplify UI
+*** Kill ring
 #+begin_src emacs-lisp
-  (menu-bar-mode -1)
-  (tool-bar-mode -1)
-  (scroll-bar-mode -1)
-  (tooltip-mode -1)
-  (setq initial-buffer-choice t)
-#+end_src
-** Visual bell
-#+begin_src emacs-lisp
-  (defun my/flash-modeline ()
-    (invert-face 'mode-line)
-    (run-with-timer 0.1 nil 'invert-face 'mode-line))
-
-  (setq visible-bell nil
-        ring-bell-function 'my/flash-modeline)
-#+end_src
-** Scroll
-#+begin_src emacs-lisp
-  (setq hscroll-margin 2
-        hscroll-step 1
-        scroll-conservatively 10
-        scroll-margin 0
-        scroll-preserve-screen-position t
-        auto-window-vscroll nil
-        mouse-wheel-scroll-amount '(2 ((shift) . hscroll))
-        mouse-wheel-scroll-amount-horizontal 2)
-#+end_src
-** Cursor
-#+begin_src emacs-lisp
-  (blink-cursor-mode -1)
-  (setq blink-matching-paren nil)
-  (setq x-stretch-cursor nil)
-#+end_src
-** Fringes
-#+begin_src emacs-lisp
-  (setq indicate-buffer-boundaries nil
-        indicate-empty-lines nil)
-#+end_src
-** Windows/Frames
-#+begin_src emacs-lisp
-  (setq frame-title-format '("%b – Emacs")
-        icon-title-format frame-title-format
-        frame-resize-pixelwise t
-        window-resize-pixelwise t)
-#+end_src
-
-#+begin_src emacs-lisp
-  (setq window-divider-default-places t
-        window-divider-default-bottom-width 1
-        window-divider-default-right-width 1)
-
-  (when (display-graphic-p)
-    (add-hook 'after-init #'window-divider-mode))
-#+end_src
-
-#+begin_src emacs-lisp
-(setq split-width-threshold 160
-      split-height-threshold nil)
-#+end_src
-** Tooltips
-#+begin_src emacs-lisp
-(when (bound-and-true-p tooltip-mode)
-  (tooltip-mode -1))
-#+end_src
-** Theme
-#+begin_src emacs-lisp
-  (use-package zenburn-theme
-    :ensure t
-    :after faces
-    :custom
-    (zenburn-use-variable-pitch t)
-    (zenburn-scale-org-headlines t)
-    (zenburn-scale-outline-headings t)
-    :init
-    (load-theme 'zenburn t))
-#+end_src
-** Fonts
-#+begin_src emacs-lisp
-  (use-package faces
-    :demand t
-    :custom
-    (face-font-family-alternatives
-     '(("Berkeley Mono" "Aporetic Sans Mono" "Noto Sans Mono" "SF Mono" "Menlo" "Monospace")
-       ("Aporetic Sans" "Noto Sans" "Noto Sans" "SF Pro" "Helvetica" "Arial")))
-    :config
-    (set-face-attribute 'default nil
-                        :family "Berkeley Mono"
-                        :height 180
-                        :weight 'extra-light
-                        :width 'condensed)
-
-    (set-face-attribute 'fixed-pitch nil
-                        :family "Berkeley Mono")
-
-    (set-face-attribute 'variable-pitch nil
-                        :family "Aporetic Sans"))
-#+end_src
-** Icons
-#+begin_src emacs-lisp
-  (use-package nerd-icons
-    :ensure t)
-
-  (use-package nerd-icons-corfu
-    :ensure t
-    :after (corfu nerd-icons)
-    :config
-    (add-to-list 'corfu-margin-formatters #'nerd-icons-corfu-formatter))
-
-  (use-package nerd-icons-completion
-    :ensure t
-    :defer t
-    :after (nerd-icons)
-    :config
-    (nerd-icons-completion-mode)
-    (add-hook 'marginalia-mode-hook #'nerd-icons-completion-marginalia-setup))
+  (setq kill-do-not-save-duplicates t)
 #+end_src
 * Evil
 ** Base
@@ -833,26 +839,6 @@ Intended to mimic `evil-complete-next', unless the popup is already open."
     (add-to-list 'marginalia-prompt-categories '("\\<face\\>" . face))
     (add-to-list 'marginalia-prompt-categories '("\\<var\\>" . variable)))
 #+end_src
-* Projectile
-#+begin_src emacs-lisp
-  (use-package projectile
-    :ensure t
-    :custom
-    (projectile-enable-caching t)
-    (projectile-globally-ignored-directories
-     '(".git" ".log" "tmp" "dist" "*node_modules" ".direnv" "*target" "*.lsp" "*.clj-kondo"))
-
-    :config
-    (add-to-list 'projectile-project-root-files "package.json")
-    (add-to-list 'projectile-project-root-files "flake.nix")
-    (add-to-list 'projectile-project-root-files "shadow-cljs.edn")
-    (add-to-list 'projectile-project-root-files "project.clj")
-    (add-to-list 'projectile-project-root-files "deps.edn")
-
-    (projectile-mode +1))
-
-#+end_src
-
 * Magit
 #+begin_src emacs-lisp
   (use-package magit
