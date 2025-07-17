@@ -22,11 +22,13 @@ in
     fonts = {
       packages = with pkgs; [
         aporetic
+        dejavu_fonts
         font-awesome
         liberation_ttf
         nerd-fonts.noto
-        ubuntu_font_family
+        nerd-fonts.symbols-only
         twitter-color-emoji
+        ubuntu_font_family
       ];
       fontconfig = {
         useEmbeddedBitmaps = true;
