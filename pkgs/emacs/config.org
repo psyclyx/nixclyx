@@ -42,6 +42,22 @@ Draws *heavily* from doomemacs.
   (add-hook 'focus-out-hook #'garbage-collect)
 #+end_src
 
+* Lib
+These in particular were just taken verbatim from doom.
+#+begin_src emacs-lisp
+  (defun my/delete-backward-word (arg)
+    "Like `backward-kill-word', but doesn't affect the kill-ring."
+    (interactive "p")
+    (let ((kill-ring nil) (kill-ring-yank-pointer nil))
+      (ignore-errors (backward-kill-word arg))))
+
+  (defmacro cmd! (&rest body)
+    "Returns (lambda () (interactive) ,@body)
+  A factory for quickly producing interaction commands, particularly for keybinds
+  or aliases."
+    (declare (doc-string 1))
+    `(lambda (&rest _) (interactive) ,@body))
+#+end_src
 * UI
 ** Simplify
 #+begin_src emacs-lisp
