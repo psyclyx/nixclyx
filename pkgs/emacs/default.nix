@@ -31,7 +31,6 @@ let
       smartparens
       vertico
       ws-butler
-      zenburn-theme
     ]
   );
   defaultInitFileName = "default.el";
