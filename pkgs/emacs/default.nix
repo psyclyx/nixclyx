@@ -7,6 +7,7 @@ let
     epkgs: with epkgs; [
       better-jumper
       cape
+      centaur-tabs
       consult
       corfu
       direnv

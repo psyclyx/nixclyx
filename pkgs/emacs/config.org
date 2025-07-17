@@ -60,6 +60,19 @@ These in particular were just taken verbatim from doom.
 
   (defun my/add-hooks (symbols fn)
     (mapc (lambda (sym) (add-hook sym fn)) symbols))
+
+  (defun my/dired-buffer-p (buf)
+    "Returns non-nil if BUF is a dired buffer."
+    (provided-mode-derived-p (buffer-local-value 'major-mode buf)
+                             'dired-mode))
+
+  (defun my/special-buffer-p (buf)
+    "Returns non-nil if BUF's name starts and ends with an *."
+    (char-equal ?* (aref (buffer-name buf) 0)))
+
+  (defun my/temp-buffer-p (buf)
+    "Returns non-nil if BUF is temporary."
+    (char-equal ?\s (aref (buffer-name buf) 0)))
 #+end_src
 * UI
 ** Simplify
@@ -945,6 +958,49 @@ Intended to mimic `evil-complete-next', unless the popup is already open."
     (define-fringe-bitmap 'git-gutter-fr:deleted [224] nil nil '(center repeated))
     (global-git-gutter-mode))
 #+end_src
+* Tabs
+#+begin_src emacs-lisp
+  (evil-define-command my/tab-next-or-goto (index)
+    "Switch to the next tab, or to INDEXth tab if a count is given."
+    (interactive "<c>")
+    (if index
+        (centaur-tabs-select-visible-nth-tab index)
+      (centaur-tabs-forward)))
+
+  (evil-define-command my/tab-previous-or-goto (index)
+    "Switch to the previous tab, or to INDEXth tab if a count is given."
+    (interactive "<c>")
+    (if index
+        (centaur-tabs-select-visible-nth-tab index)
+      (centaur-tabs-backward)))
+
+  (use-package! centaur-tabs
+    :defer t
+    :init
+    (setq centaur-tabs-set-icons t
+          centaur-tabs-gray-out-icons 'buffer
+          centaur-tabs-set-bar 'left
+          centaur-tabs-set-modified-marker t
+          centaur-tabs-close-button "✕"
+          centaur-tabs-modified-marker "•"
+          centaur-tabs-icon-type 'nerd-icons
+          centaur-tabs-cycle-scope 'tabs)
+
+    (if (daemonp)
+        (add-hook 'server-after-make-frame-hook #'centaur-tabs-mode)
+      (add-hook 'after-init #'centaur-tabs-mode))
+
+    :config
+    (defun my/tabs-buffer-list ()
+      (seq-filter (lambda (b)
+                    (when (buffer-live-p b)
+                      (or (eq (current-buffer) b)
+                          (not (my/temp-buffer-p b)))))
+                  (if (bound-and-true-p persp-mode)
+                      (persp-buffer-list)
+                    (buffer-list))))
+    (setq centaur-tabs-buffer-list-function #'my/tabs-buffer-list))
+#+end_src
 * Bindings
 ** Config
 #+begin_src emacs-lisp
@@ -1096,6 +1152,13 @@ Intended to mimic `evil-complete-next', unless the popup is already open."
       :keymaps 'read-expression-map
        "C-j" #'next-line-or-history-element
        "C-k" #'previous-line-or-history-element)
+#+end_src
+*** Tabs
+#+begin_src emacs-lisp
+  (general-define-key
+   :states 'normal
+   "gt" #'my/tab-next-or-goto
+   "gT" #'my/tab-previous-or-goto)
 #+end_src
 *** Leader
 **** Prefixes
