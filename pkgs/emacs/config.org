@@ -347,9 +347,10 @@ These in particular were just taken verbatim from doom.
 *** recentf
 #+begin_src emacs-lisp
   (use-package recentf
-    :commands recentf-open-files
     :custom
-    (recentf-max-saved-items 512))
+    (recentf-max-saved-items 512)
+    :init
+    (recentf-mode))
 #+end_src
 
 *** savehist
