@@ -57,6 +57,9 @@ These in particular were just taken verbatim from doom.
   or aliases."
     (declare (doc-string 1))
     `(lambda (&rest _) (interactive) ,@body))
+
+  (defun my/add-hooks (symbols fn)
+    (mapc (lambda (sym) (add-hook sym fn)) symbols))
 #+end_src
 * UI
 ** Simplify
@@ -605,35 +608,39 @@ Better 1/2 character movements
     :ensure t
     :defer 0.1
     :custom
-    (corfu-cycle t)
     (corfu-auto t)
     (corfu-auto-delay 0.24)
     (corfu-auto-prefix 2)
+    (global-corfu-modes '((not erc-mode
+                               help-mode
+                               vterm-mode)
+                          t))
+    (corfu-cycle t)
     (corfu-preselect 'prompt)
-    (corfu-quit-at-boundary t)
     (corfu-count 16)
     (corfu-max-width 120)
     (corfu-on-exact-match nil)
     (corfu-quit-at-boundary 'separator)
     (corfu-quit-no-match corfu-quit-at-boundary)
     (tab-always-indent 'complete)
-    (global-corfu-modes '((not erc-mode
-                               help-mode
-                               vterm-mode)
-                          t))
     (global-corfu-minibuffer t)
-
-
     :config
     (global-corfu-mode)
     (add-to-list 'completion-category-overrides `(lsp-capf (styles ,@completion-styles)))
-
     (add-hook 'evil-insert-state-exit-hook #'corfu-quit)
-    (general-def
-      :keymaps 'corfu-map
-      "SPC" 'corfu-insert-separator
-      "TAB" 'corfu-next
-      "S-TAB" 'corfu-previous))
+
+    (defun my/corfu--smart-sep-toggle-escape ()
+      "Insert `corfu-separator' or toggle escape if it's already there."
+      (interactive)
+      (cond ((and (char-equal (char-before) corfu-separator)
+                  (char-equal (char-before (1- (point))) ?\\))
+             (save-excursion (delete-char -2)))
+            ((char-equal (char-before) corfu-separator)
+             (save-excursion (backward-char 1)
+                             (insert-char ?\\)))
+            (t (call-interactively #'corfu-insert-separator))))
+
+    (add-to-list 'corfu-continue-commands #'my/corfu--smart-sep-toggle-escape))
 
   (use-package corfu-popupinfo
     :after corfu
@@ -673,17 +680,44 @@ Intended to mimic `evil-complete-next', unless the popup is already open."
 #+end_src
 ** Cape
 #+begin_src emacs-lisp
-  (use-package cape
-    :ensure t
-    :init
-    (general-def "C-c p" 'cape-prefix-map)
-    (add-hook 'completion-at-point-functions #'cape-dabbrev)
-    (add-hook 'completion-at-point-functions #'cape-keyword)
-    (add-hook 'completion-at-point-functions #'cape-file)
+    (defvar my/corfu-buffer-scanning-size-limit (* 1 1024 1024))
 
-    (advice-add #'comint-completion-at-point :around #'cape-wrap-nonexclusive)
-    (advice-add #'eglot-completion-at-point :around #'cape-wrap-nonexclusive)
-    (advice-add #'pcomplete-completions-at-point :around #'cape-wrap-nonexclusive))
+    (use-package cape
+      :ensure t
+      :after (dabbrev)
+      :custom
+      (cape-dabbrev-check-other-buffers t)
+      :init
+      (defun my/corfu-add-cape-file-h ()
+        (add-hook 'completion-at-point-functions #'cape-file -10 t))
+      (add-hook 'prog-mode-hook #'my/corfu-add-cape-file-h)
+
+      (defun my/corfu-add-cape-elisp-block-h ()
+        (add-hook 'completion-at-point-functions #'cape-elisp-block 0 t))
+      (my/add-hooks '(org-mode-hook markdown-mode-hook) #'my/corfu-add-cape-elisp-block-h)
+
+      (defun my/corfu-add-cape-dabbrev-h ()
+        (add-hook 'completion-at-point-functions #'cape-dabbrev 20 t))
+      (my/add-hooks '(prog-mode-hook
+                      text-mode-hook
+                      conf-mode-hook
+                      comint-mode-hook
+                      minibuffer-setup-hook
+                      eshell-mode-hook)
+                    #'my/corfu-add-cape-dabbrev-h)
+
+      (defun my/corfu-dabbrev-friend-buffer-p (other-buffer)
+        (< (buffer-size other-buffer) +corfu-buffer-scanning-size-limit))
+
+      (setq dabbrev-friend-buffer-function #'my/corfu-dabbrev-friend-buffer-p
+            dabbrev-ignored-buffer-regexps
+            '("\\` "
+              "\\(?:\\(?:[EG]?\\|GR\\)TAGS\\|e?tags\\|GPATH\\)\\(<[0-9]+>\\)?")
+            dabbrev-upcase-means-case-search t)
+
+      (advice-add #'comint-completion-at-point :around #'cape-wrap-nonexclusive)
+      (advice-add #'eglot-completion-at-point :around #'cape-wrap-nonexclusive)
+      (advice-add #'pcomplete-completions-at-point :around #'cape-wrap-nonexclusive))
 #+end_src
 ** Vertico
 #+begin_src emacs-lisp
@@ -936,17 +970,23 @@ Intended to mimic `evil-complete-next', unless the popup is already open."
   (general-define-key
    :keymaps 'corfu-map
    :states '(insert)
-   "C-SPC" 'corfu-insert-separator)
+   "C-SPC" #'my/corfu--smart-sep-toggle-escape
+   [backspace] #'corfu-reset)
+
   (general-define-key
    :keymaps 'corfu-map
-   "C-k" 'corfu-previous
+   "TAB" #'corfu-next
    "C-j" 'corfu-next
+   "S-TAB" #'corfu-previous
+   [backtab] #'corfu-previous
+   "C-k" 'corfu-previous
    "C-u" (lambda () (interactive)
            (let (curfu-cycle)
              (funcall-interactively #'corfu-next (- corfu-count))))
    "C-d" (lambda () (interactive)
            (let (curfu-cycle)
              (funcall-interactively #'corfu-next corfu-count))))
+
 #+end_src
 **** corfu-popupinfo
 #+begin_src emacs-lisp
