@@ -803,12 +803,32 @@ Intended to mimic `evil-complete-next', unless the popup is already open."
 #+end_src
 ** Orderless
 #+begin_src emacs-lisp
+  (defun my/vertico--orderless-dispatch (pattern _index _total)
+    (let ((len (length pattern))
+          (alist orderless-affix-dispatch-alist))
+      (when (> len 0)
+        (cond
+         ;; Ignore single dispatcher character
+         ((and (= len 1) (alist-get (aref pattern 0) alist)) #'ignore)
+         ;; Prefix
+         ((when-let ((style (alist-get (aref pattern 0) alist))
+                     ((not (char-equal (aref pattern (max (1- len) 1)) ?\\))))
+            (cons style (substring pattern 1))))
+         ;; Suffix
+         ((when-let ((style (alist-get (aref pattern (1- len)) alist))
+                     ((not (char-equal (aref pattern (max 0 (- len 2))) ?\\))))
+            (cons style (substring pattern 0 -1))))))))
+
+
+  (defun my/vertico--orderless-disambiguation-dispatch (pattern _index _total)
+    (when (char-equal (aref pattern (1- (length pattern))) ?$)
+      `(orderless-regexp . ,(concat (substring pattern 0 -1) "[\x200000-\x300000]*$"))))
+
+
   (use-package orderless
     :ensure t
     :config
     (defun my/vertico--company-capf--candidates-a (fn &rest args)
-      "Highlight company matches correctly, and try default completion styles before
-  orderless."
       (let ((orderless-match-faces [completions-common-part])
             (completion-styles '(basic partial-completion orderless)))
         (apply fn args)))
@@ -821,7 +841,10 @@ Intended to mimic `evil-complete-next', unless the popup is already open."
             (?` . orderless-initialism)
             (?= . orderless-literal)
             (?^ . orderless-literal-prefix)
-            (?~ . orderless-flex)))
+            (?~ . orderless-flex))
+          orderless-style-dispatchers
+          '(my/vertico--orderless-dispatch
+            my/vertico--orderless-disambiguation-dispatch))
 
     (setq completion-styles '(orderless basic)
           completion-category-defaults nil
