@@ -960,21 +960,7 @@ Intended to mimic `evil-complete-next', unless the popup is already open."
 #+end_src
 * Tabs
 #+begin_src emacs-lisp
-  (evil-define-command my/tab-next-or-goto (index)
-    "Switch to the next tab, or to INDEXth tab if a count is given."
-    (interactive "<c>")
-    (if index
-        (centaur-tabs-select-visible-nth-tab index)
-      (centaur-tabs-forward)))
-
-  (evil-define-command my/tab-previous-or-goto (index)
-    "Switch to the previous tab, or to INDEXth tab if a count is given."
-    (interactive "<c>")
-    (if index
-        (centaur-tabs-select-visible-nth-tab index)
-      (centaur-tabs-backward)))
-
-  (use-package! centaur-tabs
+  (use-package centaur-tabs
     :defer t
     :init
     (setq centaur-tabs-set-icons t
@@ -985,10 +971,9 @@ Intended to mimic `evil-complete-next', unless the popup is already open."
           centaur-tabs-modified-marker "•"
           centaur-tabs-icon-type 'nerd-icons
           centaur-tabs-cycle-scope 'tabs)
-
     (if (daemonp)
         (add-hook 'server-after-make-frame-hook #'centaur-tabs-mode)
-      (add-hook 'after-init #'centaur-tabs-mode))
+      (add-hook 'after-init-hook #'centaur-tabs-mode))
 
     :config
     (defun my/tabs-buffer-list ()
@@ -999,7 +984,22 @@ Intended to mimic `evil-complete-next', unless the popup is already open."
                   (if (bound-and-true-p persp-mode)
                       (persp-buffer-list)
                     (buffer-list))))
-    (setq centaur-tabs-buffer-list-function #'my/tabs-buffer-list))
+    (setq centaur-tabs-buffer-list-function #'my/tabs-buffer-list)
+
+    (require 'evil)
+    (evil-define-command my/tab-next-or-goto (index)
+      "Switch to the next tab, or to INDEXth tab if a count is given."
+      (interactive "<c>")
+      (if index
+          (centaur-tabs-select-visible-nth-tab index)
+        (centaur-tabs-forward)))
+
+    (evil-define-command my/tab-previous-or-goto (index)
+      "Switch to the previous tab, or to INDEXth tab if a count is given."
+      (interactive "<c>")
+      (if index
+          (centaur-tabs-select-visible-nth-tab index)
+        (centaur-tabs-backward))))
 #+end_src
 * Bindings
 ** Config
@@ -1023,11 +1023,11 @@ Intended to mimic `evil-complete-next', unless the popup is already open."
 #+begin_src emacs-lisp
   (use-package general
     :ensure t
+    :demand t
     :after (evil)
     :config
     (general-evil-setup))
 #+end_src
-
 ** Leaders
 #+begin_src emacs-lisp
   (defvar my/leader-map (make-sparse-keymap))
@@ -1080,7 +1080,7 @@ Intended to mimic `evil-complete-next', unless the popup is already open."
    :keymaps 'corfu-map
    :states '(insert)
    "C-SPC" #'my/corfu--smart-sep-toggle-escape
-   [backspace] #'corfu-reset)
+   "DEL" #'corfu-reset)
 
   (general-define-key
    :keymaps 'corfu-map
@@ -1127,7 +1127,13 @@ Intended to mimic `evil-complete-next', unless the popup is already open."
    "C-j" #'next-complete-history-element
    "C-k" #'previous-complete-history-element)
 #+end_src
-*** magit
+*** Version control
+#+begin_src emacs-lisp
+  (general-define-key
+   :states 'motion
+   "]d" #'git-gutter:next-hunk
+   "[d" #'git-gutter:previous-hunk)
+#+end_src
 *** Minibuffer
 #+begin_src emacs-lisp
     (general-define-key
