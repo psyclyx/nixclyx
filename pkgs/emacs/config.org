@@ -1056,7 +1056,7 @@ Intended to mimic `evil-complete-next', unless the popup is already open."
    "i" (cons "ibuffer" #'ibuffer)
    "l" (cons "Switch to last buffer" #'evil-switch-to-windows-last-buffer)
    "m" (cons "Set bookmark" #'bookmark-set)
-   "d" (cons "Delete bookmark" #'bookmark-delete)
+   "M" (cons "Delete bookmark" #'bookmark-delete)
    "r" (cons "Revert buffer" #'revert-buffer))
 #+end_src
 ***** File
