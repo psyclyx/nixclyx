@@ -9,7 +9,6 @@ Draws *heavily* from doomemacs.
 #+begin_src emacs-lisp :comments no
   ;;; -*- lexical-binding: t -*-
 #+end_src
-
 ** Configure GC
 #+begin_src emacs-lisp
   ;; startup
@@ -18,7 +17,6 @@ Draws *heavily* from doomemacs.
 
   (defun my/disable-gc ()
     (setq gc-cons-threshold my/gc-cons-threshold-high))
-
 
   (defun my/enable-gc ()
     (setq gc-cons-threshold my/gc-cons-threshold))
@@ -43,7 +41,6 @@ Draws *heavily* from doomemacs.
 
   (add-hook 'focus-out-hook #'garbage-collect)
 #+end_src
-
 
 * Editor
 ** File handling
@@ -91,17 +88,22 @@ Draws *heavily* from doomemacs.
 
   (add-hook 'after-save-hook #'my/guess-mode-h)
 #+end_src
-** Formatting
+*** Tramp
+#+begin_src emacs-lisp
+  (use-package tramp
+    :defer t
+    :custom
+    (remote-file-name-inhibit-cache 60))
+#+end_src
+** Formatting/Display
 *** Indentation
 #+begin_src emacs-lisp
   (setq-default indent-tabs-mode nil
                 tab-width 4)
 #+end_src
-
 #+begin_src emacs-lisp
   (setq-default tab-always-indent nil)
 #+end_src
-
 #+begin_src emacs-lisp
   (setq tabify-regexp "^\t* [ \t]+")
 #+end_src
@@ -130,33 +132,36 @@ Draws *heavily* from doomemacs.
 #+begin_src emacs-lisp
   (setq require-final-newline t)
 #+end_src
-** Behavior
-*** kill-ring
-#+begin_src emacs-lisp
-  (setq kill-do-not-save-duplicates t)
-#+end_src
-* Matching parens
-#+begin_src emacs-lisp
-(use-package paren
-  :hook (doom-first-buffer . show-paren-mode)
-  :config
-  (setq show-paren-delay 0.1
-        show-paren-highlight-openparen t
-        show-paren-when-point-inside-paren t
-        show-paren-when-point-in-periphery t))
-#+end_src
-* Whitespace
+*** Whitespace
+**** Emacs
 #+begin_src emacs-lisp
 (setq whitespace-line-column nil
       whitespace-style
       '(face indentation tabs tab-mark spaces space-mark newline newline-mark
         trailing lines-tail))
 #+end_src
-* Image
+**** ws-butler
+#+begin_src emacs-lisp
+  (use-package ws-butler
+    :ensure t
+    :hook ((prog-mode text-mode) . ws-butler-mode))
+#+end_src
+
+*** Highlight matching parens
+#+begin_src emacs-lisp
+(use-package paren
+  :hook ((text-mode prog-mode) . show-paren-mode)
+  :config
+  (setq show-paren-delay 0.1
+        show-paren-highlight-openparen t
+        show-paren-when-point-inside-paren t
+        show-paren-when-point-in-periphery t))
+#+end_src
+*** Image
 #+begin_src emacs-lisp
   (setq image-animate-loop t)
 #+end_src
-* Line numbers
+*** Line numbers
 #+begin_src emacs-lisp
   (setq-default display-line-numbers-width 3
                 display-line-numbers-widen t
@@ -166,50 +171,11 @@ Draws *heavily* from doomemacs.
   (add-hook 'text-mode-hook #'display-line-numbers-mode)
   (add-hook 'conf-mode-hook #'display-line-numbers-mode)
 #+end_src
-* Built-in packages
-** recentf
-#+begin_src emacs-lisp
-  (use-package recentf
-    :commands recentf-open-files
-    :custom
-    (recentf-max-saved-items 512)
-    :init
-    (recentf-mode 1))
-#+end_src
-
-** Savehist
-#+begin_src emacs-lisp
-  (use-package savehist
-    :init
-    (savehist-mode))
-#+end_src
-
-** Server
-#+begin_src emacs-lisp
-  (defun my/maybe-start-server ()
-    (unless (server-running-p)
-      (message "Starting server")
-      (server-start)))
-
-  (use-package server
-    :demand t
-    :hook (after-init . my/maybe-start-server)
-    :if (display-graphic-p))
-#+end_src
-
-** Tramp
-#+begin_src emacs-lisp
-  (use-package tramp
-    :custom
-    (remote-file-name-inhibit-cache 60))
-#+end_src
-
-* External packages
-** Better jumper
+** Behavior
+*** better-jumper
 #+begin_src emacs-lisp
   (use-package better-jumper
     :ensure t
-    :hook (after-init . better-jumper-mode)
     :commands my/set-jump-a my/set-jump-maybe-a my/set-jump-h
     :preface
     ;; REVIEW Suppress byte-compiler warning spawning a *Compile-Log* buffer at
@@ -224,6 +190,7 @@ Draws *heavily* from doomemacs.
     (global-set-key [remap xref-go-back] #'better-jumper-jump-backward)
     (global-set-key [remap xref-go-forward] #'better-jumper-jump-forward)
     :config
+    (better-jumper-mode)
     (defun my/set-jump-a (fn &rest args)
       "Set a jump point and ensure fn doesn't set any new jump points."
       (better-jumper-set-jump (if (markerp (car args)) (car args)))
@@ -255,19 +222,50 @@ Draws *heavily* from doomemacs.
         (better-jumper-set-jump))
       nil)
 
-    ;; Creates a jump point before killing a buffer. This allows you to undo
-    ;; killing a buffer easily (only works with file buffers though; it's not
-    ;; possible to resurrect special buffers).
-    ;;
-    ;; I'm not advising `kill-buffer' because I only want this to affect
-    ;; interactively killed buffers.
     (add-hook 'kill-buffer-hook #'my/set-jump-h)
-
-    ;; Create a jump point before jumping with imenu.
     (advice-add #'imenu :around #'my/set-jump-a))
 #+end_src
 
-** Smartparens
+*** =direnv= & =envrc=
+#+begin_src emacs-lisp
+  (use-package direnv
+    :ensure t
+    :hook prog-mode)
+
+  (use-package envrc
+    :ensure t
+    :hook prog-mode)
+#+end_src
+
+*** kill-ring
+*** Minibuffer
+#+begin_src emacs-lisp
+  (setq enable-recursive-minibuffers t)
+  (setq echo-keystrokes 0.02)
+#+end_src
+#+begin_src emacs-lisp
+  (setq minibuffer-prompt-properties '(read-only t intangible t cursor-intangible t face minibuffer-prompt))
+  (add-hook 'minibuffer-setup-hook #'cursor-intangible-mode)
+#+end_src
+*** recentf
+#+begin_src emacs-lisp
+  (use-package recentf
+    :commands recentf-open-files
+    :custom
+    (recentf-max-saved-items 512))
+#+end_src
+
+**** Don't save duplicates
+#+begin_src emacs-lisp
+  (setq kill-do-not-save-duplicates t)
+#+end_src
+*** savehist
+#+begin_src emacs-lisp
+  (use-package savehist
+    :hook after-init)
+#+end_src
+
+*** smartparens
 #+begin_src emacs-lisp
   (use-package smartparens
     :ensure t
@@ -330,92 +328,40 @@ Draws *heavily* from doomemacs.
               #'my/disable-smartparens-mode-maybe-h))
 #+end_src
 
-** ws-butler
-A less intrusive `delete-trailing-whitespaces' on save
+*** which-key
 #+begin_src emacs-lisp
-  (use-package ws-butler
-    :ensure t
-    :hook (after-init . ws-butler-global-mode)
-    :config
-    (setq ws-butler-global-exempt-modes
-          (append ws-butler-global-exempt-modes
-                  '(special-mode
-                    comint-mode
-                    term-mode
-                    eshell-mode
-                    diff-mode))))
+    (use-package which-key
+      :hook (after-init . which-key-mode)
+      :custom
+      (which-key-sort-order #'which-key-key-order-alpha)
+      (which-key-sort-uppercase-first nil)
+      (which-key-add-column-padding 1)
+      (which-key-max-display-columns nil)
+      (which-key-min-display-lines 6)
+      (which-key-side-window-slot -10)
+      (which-key-idle-delay 0.3)
+      (which-key-idle-secondary-delay 0.1)
+
+      :config
+      (which-key-add-key-based-replacements my/leader-key "<leader>")
+      (which-key-add-key-based-replacements my/localleader-key "<localleader>"))
 #+end_src
 
-* Bindings
+*** Yes/No prompts
 #+begin_src emacs-lisp
+  (setq use-short-answers t)
+  (define-key y-or-n-p-map " " nil)
 #+end_src
-** Universal escape
-#+begin_src emacs-lisp
-  (defvar my/escape-hook nil
-    "A hook run when C-g is pressed (or ESC in normal mode, for evil users).
-
-  More specifically, when `my/escape' is pressed. If any hook returns non-nil,
-  all hooks after it are ignored.")
-
-  (defun my/escape (&optional interactive)
-    "Run `my/escape-hook'."
-    (interactive (list 'interactive))
-    (let ((inhibit-quit t))
-      (cond ((minibuffer-window-active-p (minibuffer-window))
-             ;; quit the minibuffer if open.
-             (when interactive
-               (setq this-command 'abort-recursive-edit))
-             (abort-recursive-edit))
-            ;; Run all escape hooks. If any returns non-nil, then stop there.
-            ((run-hook-with-args-until-success 'my/escape-hook))
-            ;; don't abort macros
-            ((or defining-kbd-macro executing-kbd-macro) nil)
-            ;; Back to the default
-            ((unwind-protect (keyboard-quit)
-               (when interactive
-                 (setq this-command 'keyboard-quit)))))))
-
-  (global-set-key [remap keyboard-quit] #'my/escape)
-
-  (with-eval-after-load 'eldoc
-    (eldoc-add-command 'my/escape))
-#+end_src
-
-** General.el
-#+begin_src emacs-lisp
-  (use-package general
-    :ensure t
-    :demand t
-    :config
-    (general-evil-setup)
-    (general-auto-unbind-keys))
-#+end_src
-** Which-key
-#+begin_src emacs-lisp
-  (use-package which-key
-    :hook (after-init . which-key-mode)
-    :custom
-    (which-key-sort-order #'which-key-key-order-alpha)
-    (which-key-sort-uppercase-first nil)
-    (which-key-add-column-padding 1)
-    (which-key-max-display-columns nil)
-    (which-key-min-display-lines 6)
-    (which-key-side-window-slot -10)
-    :config
-    (which-key-add-key-based-replacements my/leader-key "<leader>")
-    (which-key-add-key-based-replacements my/localleader-key "<localleader>"))
-#+end_src
-
 * UI
 ** Simplify UI
 #+begin_src emacs-lisp
-    (menu-bar-mode -1)
-    (tool-bar-mode -1)
-    (scroll-bar-mode -1)
-    (tooltip-mode -1)
-    (setq initial-buffer-choice t)
+  (menu-bar-mode -1)
+  (tool-bar-mode -1)
+  (scroll-bar-mode -1)
+  (tooltip-mode -1)
+  (setq initial-buffer-choice t)
 #+end_src
-** Visual-bell
+** Visual bell
 #+begin_src emacs-lisp
   (defun my/flash-modeline ()
     (invert-face 'mode-line)
@@ -455,12 +401,6 @@ A less intrusive `delete-trailing-whitespaces' on save
 #+end_src
 
 #+begin_src emacs-lisp
-(setq use-dialog-box (featurep :system 'android)) ; Android dialogs are better UX
-(when (bound-and-true-p tooltip-mode)
-  (tooltip-mode -1))
-#+end_src
-
-#+begin_src emacs-lisp
   (setq window-divider-default-places t
         window-divider-default-bottom-width 1
         window-divider-default-right-width 1)
@@ -468,56 +408,51 @@ A less intrusive `delete-trailing-whitespaces' on save
   (when (display-graphic-p)
     (add-hook 'after-init #'window-divider-mode))
 #+end_src
-** Splits
+
 #+begin_src emacs-lisp
 (setq split-width-threshold 160
       split-height-threshold nil)
+#+end_src
+** Tooltips
+#+begin_src emacs-lisp
+(when (bound-and-true-p tooltip-mode)
+  (tooltip-mode -1))
 #+end_src
 ** Theme
 #+begin_src emacs-lisp
   (use-package zenburn-theme
     :ensure t
-    :config
-    (setq zenburn-use-variable-pitch t
-          zenburn-scale-org-headlines t
-          zenburn-scale-outline-headings t)
+    :after faces
+    :custom
+    (zenburn-use-variable-pitch t)
+    (zenburn-scale-org-headlines t)
+    (zenburn-scale-outline-headings t)
+    :init
     (load-theme 'zenburn t))
 #+end_src
 ** Fonts
 #+begin_src emacs-lisp
   (use-package faces
+    :demand t
     :custom
     (face-font-family-alternatives
      '(("Berkeley Mono" "Aporetic Sans Mono" "Noto Sans Mono" "SF Mono" "Menlo" "Monospace")
-       ("Aporetic Sans" "Noto Sans" "Noto Sans" "SF Pro" "Helvetica" "Arial"))))
+       ("Aporetic Sans" "Noto Sans" "Noto Sans" "SF Pro" "Helvetica" "Arial")))
+    :config
+    (set-face-attribute 'default nil
+                        :family "Berkeley Mono"
+                        :height 180
+                        :weight 'extra-light
+                        :width 'condensed)
 
-  (set-face-attribute 'default nil
-                      :family "Berkeley Mono"
-                      :height 180
-                      :weight 'extra-light
-                      :width 'condensed)
+    (set-face-attribute 'fixed-pitch nil
+                        :family "Berkeley Mono")
 
-  (set-face-attribute 'fixed-pitch nil
-                      :family "Berkeley Mono")
-
-  (set-face-attribute 'variable-pitch nil
-                      :family "Aporetic Sans")
-#+end_src
-** Minibuffer
-#+begin_src emacs-lisp
-  (setq enable-recursive-minibuffers t)
-  (setq echo-keystrokes 0.02)
-#+end_src
-#+begin_src emacs-lisp
-  (setq minibuffer-prompt-properties '(read-only t intangible t cursor-intangible t face minibuffer-prompt))
-  (add-hook 'minibuffer-setup-hook #'cursor-intangible-mode)
-#+end_src
-** Yes/No prompts
-#+begin_src emacs-lisp
-  (setq use-short-answers t)
-  (define-key y-or-n-p-map " " nil)
+    (set-face-attribute 'variable-pitch nil
+                        :family "Aporetic Sans"))
 #+end_src
 * Evil
+** Base
 #+begin_src emacs-lisp
   (defvar evil-want-keybinding nil)
   (defvar evil-want-C-g-bindings t)
@@ -528,18 +463,13 @@ A less intrusive `delete-trailing-whitespaces' on save
   (defvar evil-want-Y-yank-to-eol t)
   (defvar evil-want-abbrev-expand-on-insert-exit nil)
   (defvar evil-respect-visual-line-mode nil)
-  
   (use-package evil
     :ensure t
-    :demand t
-    :after zenburn-theme
-    :hook after-init
+    :defer 0.1
     :preface
     (setq evil-ex-search-vim-style-regexp t
           evil-ex-visual-char-range t
-          ;evil-mode-line-format 'nil
           evil-symbol-word-search t
-          ;evil-default-cursor 'my/evil-default-cursor-fn
           evil-normal-state-cursor 'box
           evil-emacs-state-cursor  'box
           evil-insert-state-cursor 'bar
@@ -548,28 +478,10 @@ A less intrusive `delete-trailing-whitespaces' on save
           evil-kbd-macro-suppress-motion-error t)
 
     :config
-    (evil-select-search-module 'evil-search-module 'evil-search)
-    (defun my/evil-update-cursor-color-h ()
-      (put 'cursor 'evil-emacs-color  (face-foreground 'warning))
-      (put 'cursor 'evil-normal-color (face-background 'cursor)))
-    (my/evil-update-cursor-color-h)
-    (defun +evil-default-cursor-fn ()
-      (evil-set-cursor-color (get 'cursor 'evil-normal-color)))
-    (defun +evil-emacs-cursor-fn ()
-      (evil-set-cursor-color (get 'cursor 'evil-emacs-color)))
-    (defun my/disable-ex-highlights-h ()
-      "Disable ex search buffer highlights."
-      (when (or (evil-ex-hl-active-p 'evil-ex-search)
-                (bound-and-true-p anzu--state))
-        (evil-ex-nohighlight)
-        t))
-    (add-hook 'my/escape-hook #'my/disable-ex-highlights-h)
-    (defun my/interactive-escape ()
-      (interactive)
-      (call-interactively #'my/escape))
-    (advice-add #'evil-force-normal-state :after #'my/interactive-escape))
+    (evil-mode 1)
+    (evil-select-search-module 'evil-search-module 'evil-search))
 #+end_src
-*** =evil-collection=
+** =evil-collection=
 #+begin_src emacs-lisp
   (use-package evil-collection
     :ensure t
@@ -577,12 +489,13 @@ A less intrusive `delete-trailing-whitespaces' on save
     :config
     (evil-collection-init))
 #+end_src
-*** =evil-snipe=
+** =evil-snipe=
 Better 1/2 character movements
 #+begin_src emacs-lisp
   (use-package evil-snipe
     :ensure t
     :after evil
+    :defer 0.1
     :config
     (evil-snipe-mode +1)
     (evil-snipe-override-mode +1)
@@ -592,7 +505,7 @@ Better 1/2 character movements
     (evil-snipe-smart-case t)         ; Smart case sensitivity
     )
 #+end_src
-*** =evil-easymotion=
+** =evil-easymotion=
 #+begin_src emacs-lisp
   (use-package evil-easymotion
     :ensure t
@@ -611,35 +524,32 @@ Better 1/2 character movements
              (evil-snipe-enable-highlight)
              (evil-snipe-enable-incremental-highlight)))))
 #+end_src
-
-*** evil-nerd-commenter
+** evil-nerd-commenter
 #+begin_src emacs-lisp
   (use-package evil-nerd-commenter
     :ensure t
+    :after evil
     :commands (evilnc-comment-operator
                evilnc-inner-comment
                evilnc-outer-commenter)
     :general ([remap comment-line] #'evilnc-comment-or-uncomment-lines))
 #+end_src
-
-*** evil-surround
+** evil-surround
 #+begin_src emacs-lisp
-  (use-package evil-surround
-    :ensure t
-    :after evil
-    :commands (global-evil-surround-mode
-               evil-surround-edit
-               evil-Surround-edit
-               evil-surround-region)
-    :config
-    (global-evil-surround-mode 1))
+    (use-package evil-surround
+      :ensure t
+      :hook ((prog-mode text-mode) . global-evil-surround-mode)
+      :commands (global-evil-surround-mode
+                 evil-surround-edit
+                 evil-Surround-edit
+                 evil-surround-region))
 #+end_src
 
-*** evil-textobj-anyblock
+** evil-textobj-anyblock
 #+begin_src emacs-lisp
   (use-package evil-textobj-anyblock
     :ensure t
-    :defer t
+    :after evil
     :config
     (setq evil-textobj-anyblock-blocks
           '(("(" . ")")
@@ -648,10 +558,11 @@ Better 1/2 character movements
             ("<" . ">"))))
 #+end_src
 
-*** exato
+** exato
 #+begin_src emacs-lisp
   (use-package exato
     :ensure t
+    :after evil
     :commands evil-outer-xml-attr evil-inner-xml-attr)
 #+end_src
 
@@ -660,6 +571,7 @@ Better 1/2 character movements
 #+begin_src emacs-lisp
   (use-package corfu
     :ensure t
+    :defer 0.1
     :custom
     (corfu-cycle t)
     (corfu-auto t)
@@ -679,10 +591,9 @@ Better 1/2 character movements
                           t))
     (global-corfu-minibuffer t)
 
-    :init
-    (global-corfu-mode)
 
     :config
+    (global-corfu-mode)
     (add-to-list 'completion-category-overrides `(lsp-capf (styles ,@completion-styles)))
 
     (add-hook 'evil-insert-state-exit-hook #'corfu-quit)
@@ -746,7 +657,6 @@ Intended to mimic `evil-complete-next', unless the popup is already open."
 #+begin_src emacs-lisp
   (use-package vertico
     :ensure t
-    :demand t
     :custom
     (vertico-cycle t)
     (vertico-count 20)
@@ -837,7 +747,7 @@ Intended to mimic `evil-complete-next', unless the popup is already open."
 #+begin_src emacs-lisp
    (use-package consult
      :ensure t
-     :after vertico
+     :after (evil vertico)
 
      :preface
      (general-def
@@ -893,7 +803,7 @@ Intended to mimic `evil-complete-next', unless the popup is already open."
 #+end_src
 
 ** Marginalia
-#+begin_sc emacs-lisp
+#+begin_src emacs-lisp
   (use-package marginalia
     :ensure t
     :init
@@ -903,16 +813,11 @@ Intended to mimic `evil-complete-next', unless the popup is already open."
     :config
     (add-to-list 'marginalia-prompt-categories '("\\<face\\>" . face))
     (add-to-list 'marginalia-prompt-categories '("\\<var\\>" . variable)))
-#+end_sc
-
+#+end_src
 * Projectile
 #+begin_src emacs-lisp
   (use-package projectile
     :ensure t
-    :after (general)
-    :init
-    (projectile-mode +1)
-
     :custom
     (projectile-enable-caching t)
     (projectile-globally-ignored-directories
@@ -923,28 +828,33 @@ Intended to mimic `evil-complete-next', unless the popup is already open."
     (add-to-list 'projectile-project-root-files "flake.nix")
     (add-to-list 'projectile-project-root-files "shadow-cljs.edn")
     (add-to-list 'projectile-project-root-files "project.clj")
-    (add-to-list 'projectile-project-root-files "deps.edn"))
+    (add-to-list 'projectile-project-root-files "deps.edn")
+
+    (projectile-mode +1))
+
 #+end_src
 
 * Magit
 #+begin_src emacs-lisp
   (use-package magit
     :ensure t
-    :after (general)
+    :commands (magit magit-dispatch)
     :custom
     (magit-display-buffer-function #'magit-display-buffer-fullframe-status-v1)
     (magit-bury-buffer-function #'magit-restore-window-configuration)
     (magit-save-repository-buffers 'dontask)
-    (magit-no-confirm '(stage-all-changes unstage-all-changes))
-
-    :config
-    (setq magit-repository-directories
-          (mapcar (lambda (dir)
-                    (cons dir 1))
-                  projectile-known-projects)))
+    (magit-no-confirm '(stage-all-changes unstage-all-changes)))
 #+end_src
 
 * Keys
+#+begin_src emacs-lisp
+  (use-package general
+    :ensure t
+    :after (evil)
+    :config
+    (general-evil-setup))
+#+end_src
+
 #+begin_src emacs-lisp
   (defvar my/leader-key "SPC")
   (defvar my/leader-alt-key "M-SPC")
@@ -960,51 +870,61 @@ Intended to mimic `evil-complete-next', unless the popup is already open."
 #+end_src
 
 #+begin_src emacs-lisp
-          (define-prefix-command 'my/leader 'my/leader-map)
-          (let ((map general-override-mode-map))
-            (evil-define-key* my/leader-key-states map (kbd my/leader-key) 'my/leader)
-            (evil-define-key* my/leader-alt-key-states map (kbd my/leader-alt-key) 'my/leader)
-            (general-override-mode +1))
+    (define-prefix-command 'my/leader 'my/leader-map)
 
-          (general-define-key
-           :prefix-command 'my/file-prefix
-           "f" '("Find file" . find-file)
-           "d" '("Find directory". dired)
-           "l" '("Locate files" . locate)
-           "r" '("Recent files" . recentf-open-files))
+    (general-define-key
+     :keymaps 'general-override-mode-map
+     :states my/leader-key-states
+     my/leader-key 'my/leader)
 
-          (general-define-key
-           :prefix-command 'my/search-prefix
-           "s" '("Search buffer" . consult-line)
-           "L" '("Jump to link" . ffap-menu)
-           "p" '("Search project" . consult-ripgrep))
+    (general-define-key
+     :keymaps 'general-override-mode-map
+     :states my/leader-alt-key-states
+     my/leader-alt-key 'my/leader)
 
-          (general-define-key
-           :prefix-command 'my/buffer-prefix
-           "," '("Switch buffer" . switch-to-buffer)
-           "d" '("Kill current buffer" . kill-current-buffer)
-           "i" '("ibuffer" . ibuffer)
-           "l" '("Switch to last buffer" . evil-switch-to-windows-last-buffer)
-           "m" '("Set bookmark" . bookmark-set)
-           "d" '("Delete bookmark" . bookmark-delete)
-           "r" '("Revert buffer" . revert-buffer))
+    (general-override-mode +1)
 
-          (general-define-key
-           :states nil
-           :keymaps 'my/leader-map
-           "'" '("Repeat last search" . vertico-repeat)
-           "u" '("Universal argument" . universal-argument)
-           ";" '("Eval expression" . pp-eval-expression)
-           ":" '("M-x" . execute-extended-command)
-           "," '("Switch buffer" . switch-to-buffer)
-           "." '("Find file" . find-file)
-           "SPC" '("Find file in project" . projectile-find-file)
-           "RET" '("Jump to bookmark" . bookmark-jump)
-           "h" (cons "help" help-map)
-           "w" (cons "window" evil-window-map )
-           "b" '("buffer" . my/buffer-prefix)
-           "f" '("file" . my/file-prefix)
-           "s" '("search" . my/search-prefix))
+    (general-define-key
+     :prefix-command 'my/file-prefix
+     "f" '("Find file" . find-file)
+     "d" '("Find directory". dired)
+     "l" '("Locate files" . locate)
+     "r" '("Recent files" . recentf-open-files))
+
+    (general-define-key
+     :prefix-command 'my/search-prefix
+     "s" '("Search buffer" . consult-line)
+     "L" '("Jump to link" . ffap-menu)
+     "p" '("Search project" . consult-ripgrep)
+     "i" '("imenu" . imenu))
+
+    (general-define-key
+     :prefix-command 'my/buffer-prefix
+     "," '("Switch buffer" . switch-to-buffer)
+     "d" '("Kill current buffer" . kill-current-buffer)
+     "i" '("ibuffer" . ibuffer)
+     "l" '("Switch to last buffer" . evil-switch-to-windows-last-buffer)
+     "m" '("Set bookmark" . bookmark-set)
+     "d" '("Delete bookmark" . bookmark-delete)
+     "r" '("Revert buffer" . revert-buffer))
+
+    (general-define-key
+     :states nil
+     :keymaps 'my/leader-map
+     "'" '("Repeat last search" . vertico-repeat)
+     "u" '("Universal argument" . universal-argument)
+     ";" '("Eval expression" . pp-eval-expression)
+     ":" '("M-x" . execute-extended-command)
+     "," '("Switch buffer" . switch-to-buffer)
+     "." '("Find file" . find-file)
+     "SPC" '("Find file in project" . projectile-find-file)
+     "RET" '("Jump to bookmark" . bookmark-jump)
+     "p" (cons "projectile" 'projectile-command-map)
+     "h" (cons "help" help-map)
+     "w" (cons "window" 'evil-window-map)
+     "b" '("buffer" . my/buffer-prefix)
+     "f" '("file" . my/file-prefix)
+     "s" '("search" . my/search-prefix))
 #+end_src
 
 #+begin_src emacs-lisp
@@ -1055,4 +975,17 @@ Intended to mimic `evil-complete-next', unless the popup is already open."
              (corfu-popupinfo-scroll-down nil corfu-popupinfo-min-height))
    "C-S-d" (lambda () (interactive)
              (corfu-popupinfo-scroll-up nil corfu-popupinfo-min-height)))
+#+end_src
+
+* Server
+#+begin_src emacs-lisp
+  (defun my/maybe-start-server ()
+    (require 'server)
+    (unless (server-running-p)
+      (message "Starting server")
+      (server-start)))
+
+  (use-package server
+    :hook (after-init . my/maybe-start-server)
+    :if (display-graphic-p))
 #+end_src

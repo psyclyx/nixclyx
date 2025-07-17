@@ -9,6 +9,8 @@ let
       cape
       consult
       corfu
+      direnv
+      envrc
       evil
       evil-collection
       evil-easymotion
