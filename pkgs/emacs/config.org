@@ -195,6 +195,8 @@ These in particular were just taken verbatim from doom.
 #+begin_src emacs-lisp
   (set-face-attribute 'mode-line nil :box
                       '(:line-width (8 . 8) :style flat-button))
+  (set-face-attribute 'mode-line-inactive nil :box
+                      '(:line-width (8 . 8) :style flat-button))
 #+end_src
 * Editor
 ** File handling
