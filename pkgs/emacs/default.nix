@@ -22,6 +22,9 @@ let
       general
       magit
       marginalia
+      nerd-icons
+      nerd-icons-completion
+      nerd-icons-corfu
       orderless
       projectile
       smartparens
