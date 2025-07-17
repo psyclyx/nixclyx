@@ -492,6 +492,7 @@ Better 1/2 character movements
      :states '(motion)
      :prefix "C-;"
      :prefix-map 'evilem-map)
+
     (general-define-key
      :keymaps 'evil-snipe-parent-transient-map
      "C-;" (evilem-create
@@ -857,7 +858,25 @@ Intended to mimic `evil-complete-next', unless the popup is already open."
     (magit-no-confirm '(stage-all-changes unstage-all-changes)))
 #+end_src
 
-* Keys
+* Bindings
+** Config
+#+begin_src emacs-lisp
+  (defvar my/leader-key "SPC")
+  (defvar my/leader-alt-key "M-SPC")
+  (defvar my/leader-key-states '(normal visual motion))
+  (defvar my/leader-alt-key-states '(emacs insert))
+  (defvar my/localleader-key "SPC m")
+  (defvar my/localleader-alt-key "M-SPC m")
+
+  (defvar my/default-minibuffer-maps
+    '(minibuffer-local-map
+      minibuffer-local-ns-map
+      minibuffer-local-completion-map
+      minibuffer-local-must-match-map
+      minibuffer-local-isearch-map
+      read-expression-map))
+#+end_src
+** Setup general
 #+begin_src emacs-lisp
   (use-package general
     :ensure t
@@ -866,78 +885,31 @@ Intended to mimic `evil-complete-next', unless the popup is already open."
     (general-evil-setup))
 #+end_src
 
-#+begin_src emacs-lisp
-  (defvar my/leader-key "SPC")
-  (defvar my/leader-alt-key "M-SPC")
-  (defvar my/leader-key-states '(normal visual motion))
-  (defvar my/leader-alt-key-states '(emacs insert))
-  (defvar my/localleader-key "SPC m")
-  (defvar my/localleader-alt-key "M-SPC m")
-#+end_src
-
+** Leaders
 #+begin_src emacs-lisp
   (defvar my/leader-map (make-sparse-keymap))
   (defvar my/localleader-map (make-sparse-keymap))
 #+end_src
 
 #+begin_src emacs-lisp
-    (define-prefix-command 'my/leader 'my/leader-map)
+  (general-define-key
+   :keymaps 'general-override-mode-map
+   :states my/leader-key-states
+   my/leader-key my/leader-map
+   my/localleader-key my/localleader-map)
 
-    (general-define-key
-     :keymaps 'general-override-mode-map
-     :states my/leader-key-states
-     my/leader-key 'my/leader)
+  (general-define-key
+   :keymaps 'general-override-mode-map
+   :states my/leader-alt-key-states
+   my/leader-alt-key my/leader-map
+   my/localleader-alt-key my/localleader-map)
 
-    (general-define-key
-     :keymaps 'general-override-mode-map
-     :states my/leader-alt-key-states
-     my/leader-alt-key 'my/leader)
-
-    (general-override-mode +1)
-
-    (general-define-key
-     :prefix-command 'my/file-prefix
-     "f" '("Find file" . find-file)
-     "d" '("Find directory". dired)
-     "l" '("Locate files" . locate)
-     "r" '("Recent files" . recentf-open-files))
-
-    (general-define-key
-     :prefix-command 'my/search-prefix
-     "s" '("Search buffer" . consult-line)
-     "L" '("Jump to link" . ffap-menu)
-     "p" '("Search project" . consult-ripgrep)
-     "i" '("imenu" . imenu))
-
-    (general-define-key
-     :prefix-command 'my/buffer-prefix
-     "," '("Switch buffer" . switch-to-buffer)
-     "d" '("Kill current buffer" . kill-current-buffer)
-     "i" '("ibuffer" . ibuffer)
-     "l" '("Switch to last buffer" . evil-switch-to-windows-last-buffer)
-     "m" '("Set bookmark" . bookmark-set)
-     "d" '("Delete bookmark" . bookmark-delete)
-     "r" '("Revert buffer" . revert-buffer))
-
-    (general-define-key
-     :states nil
-     :keymaps 'my/leader-map
-     "'" '("Repeat last search" . vertico-repeat)
-     "u" '("Universal argument" . universal-argument)
-     ";" '("Eval expression" . pp-eval-expression)
-     ":" '("M-x" . execute-extended-command)
-     "," '("Switch buffer" . switch-to-buffer)
-     "." '("Find file" . find-file)
-     "SPC" '("Find file in project" . projectile-find-file)
-     "RET" '("Jump to bookmark" . bookmark-jump)
-     "p" (cons "projectile" 'projectile-command-map)
-     "h" (cons "help" help-map)
-     "w" (cons "window" 'evil-window-map)
-     "b" '("buffer" . my/buffer-prefix)
-     "f" '("file" . my/file-prefix)
-     "s" '("search" . my/search-prefix))
+  (general-override-mode +1)
 #+end_src
 
+** Bindings
+*** Corfu
+**** corfu-mode-map
 #+begin_src emacs-lisp
   (general-define-key
    :keymaps 'corfu-mode-map
@@ -958,6 +930,9 @@ Intended to mimic `evil-complete-next', unless the popup is already open."
    "C-SPC" (lambda () (interactive)
              (call-interactively #'evil-change-state)
              (call-interactively #'completion-at-point)))
+#+end_src
+**** corfu-map
+#+begin_src emacs-lisp
   (general-define-key
    :keymaps 'corfu-map
    :states '(insert)
@@ -972,7 +947,9 @@ Intended to mimic `evil-complete-next', unless the popup is already open."
    "C-d" (lambda () (interactive)
            (let (curfu-cycle)
              (funcall-interactively #'corfu-next corfu-count))))
-
+#+end_src
+**** corfu-popupinfo
+#+begin_src emacs-lisp
   (general-define-key
    :keymaps 'corfu-popupinfo-map
    "C-h" 'corfu-popupinfo-toggle
@@ -987,7 +964,107 @@ Intended to mimic `evil-complete-next', unless the popup is already open."
    "C-S-d" (lambda () (interactive)
              (corfu-popupinfo-scroll-up nil corfu-popupinfo-min-height)))
 #+end_src
+*** evil-ex
+#+begin_src emacs-lisp
+  (general-define-key
+   :keymaps '(evil-ex-completion-map evil-ex-search-keymap)
+   "C-a" #'evil-beginning-of-line
+   "C-b" #'evil-backward-char
+   "C-f" #'evil-forward-char)
 
+  (general-define-key
+   :keymaps '(evil-ex-completion-map evil-ex-search-keymap)
+   :states '(insert)
+   "C-j" #'next-complete-history-element
+   "C-k" #'previous-complete-history-element)
+#+end_src
+*** Minibuffer
+#+begin_src emacs-lisp
+    (general-define-key
+     :keymaps my/default-minibuffer-maps
+       [escape] #'abort-recursive-edit
+       "C-a"    #'move-beginning-of-line
+       "C-r"    #'evil-paste-from-register
+       "C-u"    #'evil-delete-back-to-indentation
+       "C-v"    #'yank
+       "C-w"    #'my/delete-backward-word
+       "C-z"    (lambda () (interactive)
+                  (ignore-errors (call-interactively #'undo))))
+
+     (general-define-key
+      :keymaps my/default-minibuffer-maps
+       "C-j"    #'next-line
+       "C-k"    #'previous-line
+       "C-S-j"  #'scroll-up-command
+       "C-S-k"  #'scroll-down-command)
+
+     (general-define-key
+      :keymaps 'read-expression-map
+       "C-j" #'next-line-or-history-element
+       "C-k" #'previous-line-or-history-element)
+#+end_src
+*** Leader
+**** Prefixes
+***** Buffer
+#+begin_src emacs-lisp
+  (general-define-key
+   :prefix-map 'my/buffer-prefix-map
+   "b" (cons "Switch buffer" #'switch-to-buffer)
+   "d" (cons "Kill current buffer" #'kill-current-buffer)
+   "i" (cons "ibuffer" #'ibuffer)
+   "l" (cons "Switch to last buffer" #'evil-switch-to-windows-last-buffer)
+   "m" (cons "Set bookmark" #'bookmark-set)
+   "d" (cons "Delete bookmark" #'bookmark-delete)
+   "r" (cons "Revert buffer" #'revert-buffer))
+#+end_src
+***** File
+#+begin_src emacs-lisp
+  (general-define-key
+   :prefix-map 'my/file-prefix-map
+   "f" (cons "Find file" #'find-file)
+   "d" (cons "Find directory" #'dired)
+   "l" (cons "Locate files" #'locate)
+   "r" (cons "Recent files" #'recentf-open-files))
+#+end_src
+***** Help
+#+begin_src emacs-lisp
+   (general-define-key
+     :keymaps 'help-map
+     "C-h" "")
+#+end_src
+***** Search
+#+begin_src emacs-lisp
+  (general-define-key
+   :prefix-map 'my/search-prefix-map
+   "s" (cons "Search buffer" #'consult-line)
+   "L" (cons "Jump to link" #'ffap-menu)
+   "p" (cons "Search project" #'consult-ripgrep)
+   "i" (cons "imenu" #'imenu))
+#+end_src
+***** Add to leader map
+#+begin_src emacs-lisp
+  (general-define-key
+   :states nil
+   :keymaps 'my/leader-map
+   "b" (cons "buffer" my/buffer-prefix-map)
+   "f" (cons "file" my/file-prefix-map)
+   "h" (cons "help" help-map)
+   "s" (cons "search" my/search-prefix-map)
+   "w" (cons "window" #'evil-window-map))
+#+end_src
+**** Root
+#+begin_src emacs-lisp
+  (general-define-key
+   :states nil
+   :keymaps 'my/leader-map
+   "'" (cons "Repeat last search" #'vertico-repeat)
+   "u" (cons "Universal argument" #'universal-argument)
+   ";" (cons "Eval expression" #'pp-eval-expression)
+   ":" (cons "M-x" #'execute-extended-command)
+   "," (cons "Switch buffer" #'switch-to-buffer)
+   "." (cons "Find file" #'find-file)
+   "RET" (cons "Jump to bookmark" #'bookmark-jump))
+#+end_src
 * Server
 #+begin_src emacs-lisp
   (defun my/maybe-start-server ()
