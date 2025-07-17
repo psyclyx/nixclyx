@@ -20,6 +20,7 @@ let
       evil-textobj-anyblock
       exato
       general
+      git-gutter-fringe
       magit
       marginalia
       mood-line

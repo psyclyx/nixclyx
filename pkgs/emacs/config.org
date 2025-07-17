@@ -882,18 +882,25 @@ Intended to mimic `evil-complete-next', unless the popup is already open."
     (add-to-list 'marginalia-prompt-categories '("\\<face\\>" . face))
     (add-to-list 'marginalia-prompt-categories '("\\<var\\>" . variable)))
 #+end_src
-* Magit
+* Version control
 #+begin_src emacs-lisp
   (use-package magit
     :ensure t
-    :commands (magit magit-dispatch)
     :custom
     (magit-display-buffer-function #'magit-display-buffer-fullframe-status-v1)
     (magit-bury-buffer-function #'magit-restore-window-configuration)
     (magit-save-repository-buffers 'dontask)
     (magit-no-confirm '(stage-all-changes unstage-all-changes)))
 #+end_src
-
+#+begin_src emacs-lisp
+  (use-package git-gutter-fringe
+    :ensure t
+    :config
+    (define-fringe-bitmap 'git-gutter-fr:added [224] nil nil '(center repeated))
+    (define-fringe-bitmap 'git-gutter-fr:modified [224] nil nil '(center repeated))
+    (define-fringe-bitmap 'git-gutter-fr:deleted [128 192 224 240] nil nil 'bottom)
+    (global-git-gutter-mode))
+#+end_src
 * Bindings
 ** Config
 #+begin_src emacs-lisp
@@ -1020,6 +1027,7 @@ Intended to mimic `evil-complete-next', unless the popup is already open."
    "C-j" #'next-complete-history-element
    "C-k" #'previous-complete-history-element)
 #+end_src
+*** magit
 *** Minibuffer
 #+begin_src emacs-lisp
     (general-define-key
@@ -1083,6 +1091,43 @@ Intended to mimic `evil-complete-next', unless the popup is already open."
    "p" (cons "Search project" #'consult-ripgrep)
    "i" (cons "imenu" #'imenu))
 #+end_src
+***** Version control
+#+begin_src emacs-lisp
+  (general-define-key
+   :prefix-map 'my/vc-find-prefix-map
+   "f" (cons "Find file" #'magit-find-file)
+   "g" (cons "Find gitconfig file" #'magit-find-git-config-file)
+   "c" (cons "Find commit" #'magit-show-commit))
+
+  (general-define-key
+   :prefix-map 'my/vc-create-prefix-map
+   "r" (cons "Initialize repo" #'magit-init)
+   "R" (cons "Clone repo" #'magit-clone)
+   "c" (cons "Commit" #'magit-commit-create)
+   "f" (cons "Fixup" #'magit-commit-fixup))
+
+  (general-define-key
+   :prefix-map 'my/vc-prefix-map
+   "c" (cons "create" my/vc-create-prefix-map)
+   "f" (cons "find" my/vc-find-prefix-map)
+
+   "R" (cons "Git revert file" #'vc-revert)
+   "r" (cons "Git revert hunk" #'git-gutter:revert-hunk)
+   "s" (cons "Git stage hunk" #'git-gutter:stage-hunk)
+   "n" (cons "Jump to next hunk" #'git-gutter:next-hunk)
+   "p" (cons "Jump to next hunk" #'git-gutter:previous-hunk)
+   "/" (cons "Magit dispatch" #'magit-dispatch)
+   "." (cons "Magit file dispatch" #'magit-dispatch)
+   "g" (cons "Magit status" #'magit-status)
+   "G" (cons "Magit status here" #'magit-status)
+   "x" (cons "Magit file delete" #'magit-file-delete)
+   "B" (cons "Magit blame" #'magit-blame-addition)
+   "C" (cons "Magit clone" #'magit-clone)
+   "F" (cons "Magit fetch" #'magit-fetch)
+   "L" (cons "Magit buffer log" #'magit-log-buffer-file)
+   "S" (cons "Git stage file"  #'magit-stage-file)
+   "U" (cons "Git unstage file" #'magit-unstage-file))
+#+end_src
 ***** Add to leader map
 #+begin_src emacs-lisp
   (general-define-key
@@ -1092,6 +1137,7 @@ Intended to mimic `evil-complete-next', unless the popup is already open."
    "f" (cons "file" my/file-prefix-map)
    "h" (cons "help" help-map)
    "s" (cons "search" my/search-prefix-map)
+   "v" (cons "versioning" my/vc-prefix-map)
    "w" (cons "window" #'evil-window-map))
 #+end_src
 **** Root
