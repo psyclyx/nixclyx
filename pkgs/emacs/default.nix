@@ -22,11 +22,11 @@ let
       general
       magit
       marginalia
+      mood-line
       nerd-icons
       nerd-icons-completion
       nerd-icons-corfu
       orderless
-      projectile
       smartparens
       vertico
       ws-butler

@@ -118,7 +118,6 @@ Draws *heavily* from doomemacs.
 #+begin_src emacs-lisp
   (use-package zenburn-theme
     :ensure t
-    :after faces
     :custom
     (zenburn-use-variable-pitch t)
     (zenburn-scale-org-headlines t)
@@ -160,11 +159,23 @@ Draws *heavily* from doomemacs.
 
     (use-package nerd-icons-completion
       :ensure t
-      :defer t
-      :after (vertico marginalia)
       :config
       (nerd-icons-completion-mode)
       (add-hook 'marginalia-mode-hook #'nerd-icons-completion-marginalia-setup))
+#+end_src
+** Modeline
+#+begin_src emacs-lisp
+  (use-package mood-line
+    :ensure t
+    :custom
+    (mood-line-glyph-alist mood-line-glyphs-unicode)
+    (mood-line-format mood-line-format-default-extended)
+    :config
+    (mood-line-mode))
+#+end_src
+#+begin_src emacs-lisp
+  (set-face-attribute 'mode-line nil :box
+                      '(:line-width (8 . 8) :style flat-button))
 #+end_src
 * Editor
 ** File handling
