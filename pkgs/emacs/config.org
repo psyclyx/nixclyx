@@ -307,60 +307,6 @@ Draws *heavily* from doomemacs.
   (add-hook 'conf-mode-hook #'display-line-numbers-mode)
 #+end_src
 ** Behavior
-*** better-jumper
-#+begin_src emacs-lisp
-  (use-package better-jumper
-    :ensure t
-    :commands my/set-jump-a my/set-jump-maybe-a my/set-jump-h
-    :preface
-    ;; REVIEW Suppress byte-compiler warning spawning a *Compile-Log* buffer at
-    ;; startup. This can be removed once gilbertw1/better-jumper#2 is merged.
-    (defvar better-jumper-local-mode nil)
-    ;; REVIEW: Remove if/when gilbertw1/better-jumper#26 is addressed.
-    (defvaralias 'evil--jumps-jump-command 'evil--jumps-jumping-backward)
-    :init
-    (global-set-key [remap evil-jump-forward]  #'better-jumper-jump-forward)
-    (global-set-key [remap evil-jump-backward] #'better-jumper-jump-backward)
-    (global-set-key [remap xref-pop-marker-stack] #'better-jumper-jump-backward)
-    (global-set-key [remap xref-go-back] #'better-jumper-jump-backward)
-    (global-set-key [remap xref-go-forward] #'better-jumper-jump-forward)
-    :config
-    (better-jumper-mode)
-    (defun my/set-jump-a (fn &rest args)
-      "Set a jump point and ensure fn doesn't set any new jump points."
-      (better-jumper-set-jump (if (markerp (car args)) (car args)))
-      (let ((evil--jumps-jumping t)
-            (better-jumper--jumping t))
-        (apply fn args)))
-
-    (defun my/set-jump-maybe-a (fn &rest args)
-      "Set a jump point if fn actually moves the point."
-      (let ((origin (point-marker))
-            (result
-             (let* ((evil--jumps-jumping t)
-                    (better-jumper--jumping t))
-               (apply fn args)))
-            (dest (point-marker)))
-        (unless (equal origin dest)
-          (with-current-buffer (marker-buffer origin)
-            (better-jumper-set-jump
-             (if (markerp (car args))
-                 (car args)
-               origin))))
-        (set-marker origin nil)
-        (set-marker dest nil)
-        result))
-
-    (defun my/set-jump-h ()
-      "Run `better-jumper-set-jump' but return nil, for short-circuiting hooks."
-      (when (get-buffer-window)
-        (better-jumper-set-jump))
-      nil)
-
-    (add-hook 'kill-buffer-hook #'my/set-jump-h)
-    (advice-add #'imenu :around #'my/set-jump-a))
-#+end_src
-
 *** =direnv= & =envrc=
 #+begin_src emacs-lisp
   (use-package direnv
@@ -401,64 +347,42 @@ Draws *heavily* from doomemacs.
   (use-package smartparens
     :ensure t
     :hook (after-init . smartparens-global-mode)
-    :commands sp-pair sp-local-pair sp-with-modes sp-point-in-comment sp-point-in-string
+    :commands
+    sp-pair sp-local-pair sp-with-modes sp-point-in-comment sp-point-in-string
+
+    :custom
+    (sp-highlight-pair-overlay nil)
+    (sp-highlight-wrap-overlay nil)
+    (sp-highlight-wrap-tag-overlay nil)
+    (sp-show-pair-from-inside t)
+    (sp-cancel-autoskip-on-backward-movement nil)
+    (sp-max-prefix-length 25)
+    (sp-max-pair-length 4)
+
     :config
     (add-to-list 'sp-lisp-modes 'sly-mrepl-mode)
     (require 'smartparens-config)
-    (setq sp-highlight-pair-overlay nil
-          sp-highlight-wrap-overlay nil
-          sp-highlight-wrap-tag-overlay nil)
-    (with-eval-after-load 'evil
-      (setq sp-show-pair-from-inside t
-            sp-cancel-autoskip-on-backward-movement nil
-            sp-pair-overlay-keymap (make-sparse-keymap)))
-
-    (setq sp-max-prefix-length 25
-          sp-max-pair-length 4)
+    (setq sp-pair-overlay-keymap (make-sparse-keymap))
 
     ;; Silence some harmless but annoying echo-area spam
     (dolist (key '(:unmatched-expression :no-matching-tag))
       (setf (alist-get key sp-message-alist) nil))
 
-    (defun my/init-smartparens-in-eval-expression-h ()
-      "Enable `smartparens-mode' in the minibuffer for `eval-expression'.
-  This includes everything that calls `read--expression', e.g.
-  `edebug-eval-expression' Only enable it if
-  `smartparens-global-mode' is on."
-      (when smartparens-global-mode (smartparens-mode +1)))
+
 
     (add-hook 'eval-expression-minibuffer-setup-hook
-              #'my/init-smartparens-in-eval-expression-h)
+              (defun my/init-smartparens-in-eval-expression-h ()
+                (when smartparens-global-mode (smartparens-mode +1))))
 
-    (defun my/init-smartparens-in-minibuffer-maybe-h ()
-      "Enable `smartparens' for non-`eval-expression' commands.
-  Only enable `smartparens-mode' if `smartparens-global-mode' is
-  on."
-      (when (and smartparens-global-mode (memq this-command '(evil-ex)))
-        (smartparens-mode +1)))
+
     (add-hook 'minibuffer-setup-hook
-              #'my/init-smartparens-in-minibuffer-maybe-h)
+              (defun my/init-smartparens-in-minibuffer-maybe-h ()
+                (when (and smartparens-global-mode (memq this-command '(evil-ex)))
+                  (smartparens-mode +1))))
 
     (sp-local-pair '(minibuffer-mode minibuffer-inactive-mode) "'" nil :actions nil)
-    (sp-local-pair '(minibuffer-mode minibuffer-inactive-mode) "`" nil :actions nil)
-
-    (defvar my/buffer-smartparens-mode nil)
-
-    (defun my/enable-smartparens-mode-maybe-h ()
-      (when my/buffer-smartparens-mode
-        (turn-on-smartparens-mode)
-        (kill-local-variable 'doom-buffer-smartparens-mode)))
-    (add-hook 'evil-replace-state-exit-hook
-              #'my/enable-smartparens-mode-maybe-h)
-
-    (defun my/disable-smartparens-mode-maybe-h ()
-      (when smartparens-mode
-        (setq-local my/buffer-smartparens-mode t)
-        (turn-off-smartparens-mode)))
-    (add-hook 'evil-replace-state-entry-hook
-              #'my/disable-smartparens-mode-maybe-h))
+    (sp-local-pair '(minibuffer-mode minibuffer-inactive-mode) "`" nil :actions nil))
 #+end_src
-
 *** which-key
 #+begin_src emacs-lisp
     (use-package which-key
@@ -600,6 +524,60 @@ Better 1/2 character movements
     :ensure t
     :after evil
     :commands evil-outer-xml-attr evil-inner-xml-attr)
+#+end_src
+
+** better-jumper
+#+begin_src emacs-lisp
+  (use-package better-jumper
+    :ensure t
+    :commands my/set-jump-a my/set-jump-maybe-a my/set-jump-h
+    :preface
+    ;; REVIEW Suppress byte-compiler warning spawning a *Compile-Log* buffer at
+    ;; startup. This can be removed once gilbertw1/better-jumper#2 is merged.
+    (defvar better-jumper-local-mode nil)
+    ;; REVIEW: Remove if/when gilbertw1/better-jumper#26 is addressed.
+    (defvaralias 'evil--jumps-jump-command 'evil--jumps-jumping-backward)
+    :init
+    (global-set-key [remap evil-jump-forward]  #'better-jumper-jump-forward)
+    (global-set-key [remap evil-jump-backward] #'better-jumper-jump-backward)
+    (global-set-key [remap xref-pop-marker-stack] #'better-jumper-jump-backward)
+    (global-set-key [remap xref-go-back] #'better-jumper-jump-backward)
+    (global-set-key [remap xref-go-forward] #'better-jumper-jump-forward)
+    :config
+    (better-jumper-mode)
+    (defun my/set-jump-a (fn &rest args)
+      "Set a jump point and ensure fn doesn't set any new jump points."
+      (better-jumper-set-jump (if (markerp (car args)) (car args)))
+      (let ((evil--jumps-jumping t)
+            (better-jumper--jumping t))
+        (apply fn args)))
+
+    (defun my/set-jump-maybe-a (fn &rest args)
+      "Set a jump point if fn actually moves the point."
+      (let ((origin (point-marker))
+            (result
+             (let* ((evil--jumps-jumping t)
+                    (better-jumper--jumping t))
+               (apply fn args)))
+            (dest (point-marker)))
+        (unless (equal origin dest)
+          (with-current-buffer (marker-buffer origin)
+            (better-jumper-set-jump
+             (if (markerp (car args))
+                 (car args)
+               origin))))
+        (set-marker origin nil)
+        (set-marker dest nil)
+        result))
+
+    (defun my/set-jump-h ()
+      "Run `better-jumper-set-jump' but return nil, for short-circuiting hooks."
+      (when (get-buffer-window)
+        (better-jumper-set-jump))
+      nil)
+
+    (add-hook 'kill-buffer-hook #'my/set-jump-h)
+    (advice-add #'imenu :around #'my/set-jump-a))
 #+end_src
 
 * Completion
