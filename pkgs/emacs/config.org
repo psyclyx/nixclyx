@@ -1,6 +1,6 @@
 #+TITLE: Emacs configuration
 #+AUTHOR: psyclyx
-#+PROPERTY: header-args :tangle yes
+#+PROPERTY: header-args :tangle yes :results silent
 
 Draws *heavily* from doomemacs.
 
