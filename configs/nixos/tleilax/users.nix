@@ -1,7 +1,4 @@
-{ pkgs, lib, ... }:
-let
-  mkHome = import ../../../modules/home;
-in
+{ inputs, pkgs, ... }:
 {
   nix.settings.trusted-users = [ "psyc" ];
   users = {
@@ -13,7 +10,6 @@ in
         isNormalUser = true;
         extraGroups = [
           "wheel"
-          "networkmanager"
           "builders"
         ];
         openssh.authorizedKeys.keys = [
@@ -23,26 +19,16 @@ in
     };
   };
 
-  home-manager.users.psyc = mkHome {
-    name = "psyc";
-    email = "me@psyclyx.xyz";
-    home.packages = with pkgs; [
-      clojure
-      screen
-    ];
-    modules = [
-      ../../../modules/home/programs/zsh.nix
-      ../../../modules/home/xdg.nix
-      ../../../modules/home/programs/emacs
-      {
-        psyclyx = {
-          programs = {
-            zsh = {
-              enable = true;
-            };
-          };
-        };
-      }
-    ];
+  home-manager = {
+    users = {
+      psyc = {
+        imports = [
+          inputs.sops-nix.homeManagerModules.sops
+          inputs.self.homeManagerModules.default
+          ../../home/psyc.nix
+          ../../home/server.nix
+        ];
+      };
+    };
   };
 }

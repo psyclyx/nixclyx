@@ -1,7 +1,4 @@
 {
-  home = {
-    stateVersion = "25.05";
-  };
   psyclyx = {
     roles = {
       shell = true;
@@ -11,10 +8,6 @@
     };
     secrets = {
       enable = true;
-    };
-    user = {
-      name = "psyclyx";
-      email = "me@psyclyx.xyz";
     };
   };
 }

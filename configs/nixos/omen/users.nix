@@ -26,7 +26,8 @@
         imports = [
           inputs.sops-nix.homeManagerModules.sops
           inputs.self.homeManagerModules.default
-          ../../home/default.nix
+          ../../home/psyc.nix
+          ../../home/desktop.nix
         ];
         psyclyx = {
           programs = {
