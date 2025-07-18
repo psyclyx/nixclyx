@@ -20,28 +20,21 @@
     };
   };
 
-  home-manager.users.psyc = {
-    imports = [
-      inputs.sops-nix.homeManagerModules.sops
-      ../../../modules/home/module.nix
-      ../../../modules/home/programs/emacs
-    ];
-    home = {
-      stateVersion = "25.05";
-    };
-    psyclyx = {
-      roles = {
-        shell = true;
-        dev = true;
-        graphical = true;
-        sway = true;
-      };
-      secrets = {
-        enable = true;
-      };
-      user = {
-        name = "psyclyx";
-        email = "me@psyclyx.xyz";
+  home-manager = {
+    users = {
+      psyc = {
+        imports = [
+          inputs.sops-nix.homeManagerModules.sops
+          inputs.self.homeManagerModules.default
+          ../../home/default.nix
+        ];
+        psyclyx = {
+          programs = {
+            waybar = {
+              cores = 4;
+            };
+          };
+        };
       };
     };
   };

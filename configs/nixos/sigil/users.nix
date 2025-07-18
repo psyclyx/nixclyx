@@ -26,53 +26,21 @@
       };
     };
   };
-  home-manager.users.psyc = {
-    imports = [
-      inputs.sops-nix.homeManagerModules.sops
-      ../../../modules/home/module.nix
-      ../../../modules/home/programs/emacs
-    ];
-    home = {
-      stateVersion = "25.05";
-      packages = with pkgs; [
-        firefox-bin
-        signal-desktop-bin
-      ];
-    };
-    psyclyx = {
-      gtk = {
-        enable = true;
-      };
-      programs = {
-        alacritty = {
-          enable = true;
+  home-manager = {
+    users = {
+      psyc = {
+        imports = [
+          inputs.sops-nix.homeManagerModules.sops
+          inputs.self.homeManagerModules.default
+          ../../home/default.nix
+        ];
+        psyclyx = {
+          programs = {
+            waybar = {
+              cores = 32;
+            };
+          };
         };
-        git = {
-          enable = true;
-        };
-        ssh = {
-          enable = true;
-        };
-        sway = {
-          enable = true;
-        };
-        waybar = {
-          enable = true;
-          cores = 32;
-        };
-        zsh = {
-          enable = true;
-        };
-      };
-      secrets = {
-        enable = true;
-      };
-      user = {
-        name = "psyclyx";
-        email = "me@psyclyx.xyz";
-      };
-      xdg = {
-        enable = true;
       };
     };
   };
