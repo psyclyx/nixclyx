@@ -1,16 +1,10 @@
 {
-  config,
   pkgs,
   inputs,
   ...
 }:
 let
-  inherit (inputs)
-    nix-homebrew
-    homebrew-bundle
-    homebrew-core
-    homebrew-cask
-    ;
+  inherit (inputs) nix-homebrew;
   inherit (pkgs.stdenv) hostPlatform;
 in
 {
@@ -28,14 +22,6 @@ in
       autoUpdate = false;
       cleanup = "zap";
     };
-
-    taps = builtins.attrNames (
-      builtins.removeAttrs config.nix-homebrew.taps [
-        "homebrew/bundle"
-        "homebrew/core"
-        "homebrew/cask"
-      ]
-    );
   };
 
   nix-homebrew = {
@@ -43,10 +29,5 @@ in
     autoMigrate = true;
     enableRosetta = hostPlatform.isAarch64;
     mutableTaps = true;
-    taps = {
-      "homebrew/bundle" = homebrew-bundle;
-      "homebrew/core" = homebrew-core;
-      "homebrew/cask" = homebrew-cask;
-    };
   };
 }
