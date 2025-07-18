@@ -9,12 +9,6 @@
     #nixpkgs-master.url = "github:NixOS/nixpkgs/master";
     nixpkgs-stable.url = "github:NixOS/nixpkgs/nixos-25.05";
 
-    # Nix user repository
-    nur = {
-      url = "github:nix-community/NUR";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-
     # Simple NixOS modules for common hardware configurations
     nixos-hardware.url = "github:NixOS/nixos-hardware/master";
 
@@ -74,7 +68,6 @@
       overlay = import ./overlay.nix;
       overlays = with inputs; [
         overlay
-        nur.overlays.default
         nix-darwin-emacs.overlays.emacs
         emacs-overlay.overlays.default
       ];
