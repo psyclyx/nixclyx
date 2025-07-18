@@ -28,35 +28,13 @@
     ];
     home = {
       stateVersion = "25.05";
-      packages = with pkgs; [
-        firefox-bin
-        signal-desktop-bin
-      ];
     };
     psyclyx = {
-      gtk = {
-        enable = true;
-      };
-      programs = {
-        alacritty = {
-          enable = true;
-        };
-        git = {
-          enable = true;
-        };
-        ssh = {
-          enable = true;
-        };
-        sway = {
-          enable = true;
-        };
-        waybar = {
-          enable = true;
-          cores = 4;
-        };
-        zsh = {
-          enable = true;
-        };
+      roles = {
+        shell = true;
+        dev = true;
+        graphical = true;
+        sway = true;
       };
       secrets = {
         enable = true;
@@ -64,9 +42,6 @@
       user = {
         name = "psyclyx";
         email = "me@psyclyx.xyz";
-      };
-      xdg = {
-        enable = true;
       };
     };
   };
