@@ -1,7 +1,4 @@
-{ pkgs, ... }:
-let
-  mkHome = import ../../../modules/home;
-in
+{ inputs, pkgs, ... }:
 {
   nix.settings.trusted-users = [ "psyc" ];
   users = {
@@ -14,8 +11,6 @@ in
         extraGroups = [
           "wheel"
           "video"
-          "networkmanager"
-          "adbusers"
           "builders"
         ];
         openssh.authorizedKeys.keys = [
@@ -25,27 +20,54 @@ in
     };
   };
 
-  home-manager.users.psyc = mkHome {
-    name = "psyc";
-    email = "me@psyclyx.xyz";
-    modules = [
-      ../../../modules/home/secrets
-      ../../../modules/home/xdg.nix
+  home-manager.users.psyc = {
+    imports = [
+      inputs.sops-nix.homeManagerModules.sops
+      ../../../modules/home/module.nix
       ../../../modules/home/programs/emacs
-      ../../../modules/home/programs/alacritty.nix
-      ../../../modules/home/programs/zsh.nix
-      {
-        psyclyx = {
-          programs = {
-            alacritty = {
-              enable = true;
-            };
-            zsh = {
-              enable = true;
-            };
-          };
-        };
-      }
     ];
+    home = {
+      stateVersion = "25.05";
+      packages = with pkgs; [
+        firefox-bin
+        signal-desktop-bin
+      ];
+    };
+    psyclyx = {
+      gtk = {
+        enable = true;
+      };
+      programs = {
+        alacritty = {
+          enable = true;
+        };
+        git = {
+          enable = true;
+        };
+        ssh = {
+          enable = true;
+        };
+        sway = {
+          enable = true;
+        };
+        waybar = {
+          enable = true;
+          cores = 4;
+        };
+        zsh = {
+          enable = true;
+        };
+      };
+      secrets = {
+        enable = true;
+      };
+      user = {
+        name = "psyclyx";
+        email = "me@psyclyx.xyz";
+      };
+      xdg = {
+        enable = true;
+      };
+    };
   };
 }
