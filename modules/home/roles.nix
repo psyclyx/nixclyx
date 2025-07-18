@@ -7,6 +7,12 @@
 let
   cfg = config.psyclyx.roles;
   shell = {
+    home = {
+      packages = with pkgs; [
+        fd
+        ripgrep
+      ];
+    };
     psyclyx = {
       programs = {
         ssh = {
