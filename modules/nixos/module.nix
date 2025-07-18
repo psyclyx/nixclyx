@@ -8,6 +8,7 @@
     ./services/gnome-keyring.nix
     ./services/greetd.nix
     ./services/home-assistant.nix
+    ./services/kanata
     ./services/locate.nix
     ./services/openssh.nix
     ./services/printing.nix
