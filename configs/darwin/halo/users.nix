@@ -20,7 +20,7 @@ in
   home-manager = {
     users = {
       psyc = {
-        modules = [
+        imports = [
           inputs.sops-nix.homeManagerModules.sops
           inputs.self.homeManagerModules.default
           ../../home/psyc.nix
