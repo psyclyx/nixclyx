@@ -11,21 +11,10 @@
     ./boot.nix
     ./filesystems.nix
     ./hardware.nix
+    ./network.nix
     ./users.nix
   ];
 
-  services.resolved.enable = true;
-  networking = {
-    wireless = {
-      iwd = {
-        enable = true;
-        settings = {
-          IPv6.Enabled = true;
-          Settings.AutoConnect = true;
-        };
-      };
-    };
-  };
 
   services = {
     kanata = {
