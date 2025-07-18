@@ -95,14 +95,13 @@
     inputs:
     let
       inherit (inputs.nixpkgs) lib;
-
+      overlay = import ./overlay.nix;
       overlays = with inputs; [
-        (import ./overlay.nix)
+        overlay
         nur.overlays.default
         nix-darwin-emacs.overlays.emacs
         emacs-overlay.overlays.default
       ];
-
       pkgsFor =
         system:
         (import inputs.nixpkgs {
@@ -111,7 +110,6 @@
             allowUnfree = true;
           };
         });
-
       packages = {
         "x86_64-linux" =
           let
@@ -156,31 +154,17 @@
         };
       };
 
-      homeConfigurations = lib.genAttrs [ "x86_64-linux" ] (
-        system:
-        let
-          pkgs = pkgsFor system;
-          inherit (inputs.home-manager.lib) homeManagerConfiguration;
-        in
-        {
-          nixos-desktop = homeManagerConfiguration {
-            inherit pkgs;
-            modules = [
-              inputs.sops-nix.homeManagerModules.sops
-              ./modules/home/module.nix
-              ./configs/home/nixos-desktop.nix
-            ];
-          };
-        }
-      );
     in
     {
       inherit
         packages
         darwinConfigurations
         nixosConfigurations
-        homeConfigurations
         ;
+
+      homeManagerModules = {
+        default = import ./modules/home/module.nix;
+      };
 
       checks = lib.genAttrs [ "x86_64-linux" "aarch64-darwin" ] (
         system:
