@@ -17,12 +17,7 @@ in
   };
 
   config = lib.mkIf cfgEnabled {
-    assertions = [
-      lib.hm.assertions.assertPlatform
-      "psyclyx.roles.sway"
-      pkgs
-      lib.platforms.linux
-    ];
+    assertions = [ (lib.hm.assertions.assertPlatform "psyclyx.roles.sway" pkgs lib.platforms.linux) ];
 
     psyclyx = {
       programs = {
