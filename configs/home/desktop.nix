@@ -1,10 +1,11 @@
+{ pkgs, ... }:
 {
   psyclyx = {
     roles = {
       shell = true;
       dev = true;
       graphical = true;
-      sway = true;
+      sway = pkgs.stdenv.isLinux;
     };
     secrets = {
       enable = true;
