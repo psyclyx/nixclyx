@@ -13,7 +13,6 @@ in
           enable = lib.mkEnableOption "Enable Waybar";
           cores = lib.mkOption {
             type = lib.types.ints.positive;
-            default = 4;
             description = "CPU core count";
           };
         };
