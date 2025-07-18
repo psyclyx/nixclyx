@@ -1,8 +1,7 @@
-{ pkgs, ... }:
+{ inputs, pkgs, ... }:
 let
   userName = "psyc";
   userHome = "/Users/psyc";
-  mkHome = import ../../../modules/home;
 in
 {
   nix.settings.trusted-users = [
@@ -18,28 +17,17 @@ in
     shell = pkgs.zsh;
   };
 
-  home-manager.users.psyc = mkHome {
-    name = userName;
-    email = "me@psyclyx.xyz";
-    modules = [
-      ../../../modules/home/secrets
-      ../../../modules/home/programs/emacs
-      ../../../modules/home/programs/kitty.nix
-      ../../../modules/home/programs/alacritty.nix
-      ../../../modules/home/programs/zsh.nix
-      {
-        psyclyx = {
-          programs = {
-            alacritty = {
-              enable = true;
-            };
-            zsh = {
-              enable = true;
-            };
-          };
-        };
-      }
-    ];
+  home-manager = {
+    users = {
+      psyc = {
+        modules = [
+          inputs.sops-nix.homeManagerModules.sops
+          inputs.self.homeManagerModules.default
+          ../../home/psyc.nix
+          ../../home/desktop.nix
+        ];
+      };
+    };
   };
 
   system.primaryUser = userName;
