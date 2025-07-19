@@ -6,8 +6,6 @@
 
     # Main package repository
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
-    #nixpkgs-master.url = "github:NixOS/nixpkgs/master";
-    nixpkgs-stable.url = "github:NixOS/nixpkgs/nixos-25.05";
 
     # Simple NixOS modules for common hardware configurations
     nixos-hardware.url = "github:NixOS/nixos-hardware/master";
@@ -51,7 +49,7 @@
     emacs-overlay = {
       url = "github:nix-community/emacs-overlay";
       inputs.nixpkgs.follows = "nixpkgs";
-      inputs.nixpkgs-stable.follows = "nixpkgs-stable";
+      inputs.nixpkgs-stable.follows = "nixpkgs";
     };
 
     # Track newer versions of `emacs` on Darwin
