@@ -2,6 +2,10 @@
   description = "nixos/nix-darwin configurations";
 
   inputs = {
+    self = {
+      submodules = true;
+    };
+
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
 
     psyclyx-emacs = {
