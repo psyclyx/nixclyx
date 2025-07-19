@@ -66,34 +66,37 @@
     let
       inherit (inputs.nixpkgs) lib;
       overlay = import ./overlay.nix;
-      overlays = with inputs; [
+      overlays = [
         overlay
-        nix-darwin-emacs.overlays.emacs
-        emacs-overlay.overlays.default
+        inputs.nix-darwin-emacs.overlays.emacs
+        inputs.emacs-overlay.overlays.default
       ];
+
       pkgsFor =
         system:
         (import inputs.nixpkgs {
-          inherit system overlays;
+          inherit overlays system;
           config = {
             allowUnfree = true;
           };
         });
-      packages = {
-        "x86_64-linux" =
-          let
-            pkgs = pkgsFor "x86_64-linux";
-          in
-          {
-            emacs = pkgs.psyclyx.emacs;
-            rofi = pkgs.psyclyx.rofi;
-            rofi-session = pkgs.psyclyx.rofi-session;
-          };
-      };
+      systems = [
+        "x86_64-linux"
+        "aarch64-darwin"
+      ];
+      systemPkgs = lib.genAttrs systems pkgsFor;
+      mapSystemPkgs = f: (lib.mapAttrs (_: f) systemPkgs);
 
-      mkDevShell = import ./shell.nix;
       mkDarwinConfiguration = import ./modules/darwin { inherit inputs overlays; };
       mkNixosConfiguration = import ./modules/nixos { inherit inputs overlays; };
+    in
+    rec {
+      packages = mapSystemPkgs (pkgs: pkgs.psyclyx);
+      overlays.default = overlay;
+      devShells = mapSystemPkgs (pkgs: {
+        default = import ./shell.nix { inherit pkgs; };
+      });
+      homeManagerModules.default = ./modules/home/module.nix;
 
       nixosConfigurations = {
         ix = mkNixosConfiguration {
@@ -123,29 +126,14 @@
         };
       };
 
-    in
-    {
-      inherit
-        packages
-        darwinConfigurations
-        nixosConfigurations
-        ;
-
-      homeManagerModules = {
-        default = import ./modules/home/module.nix;
-      };
-
-      checks = lib.genAttrs [ "x86_64-linux" "aarch64-darwin" ] (
-        system:
-        lib.mapAttrs' (name: config: (lib.nameValuePair "${name}" config.config.system.build.toplevel)) (
-          (lib.filterAttrs (_: config: config.pkgs.system == system)) (
-            nixosConfigurations // darwinConfigurations
-          )
-        )
-      );
-
-      devShells = lib.genAttrs [ "x86_64-linux" "aarch64-darwin" "x86_64-darwin" ] (system: {
-        default = mkDevShell { pkgs = pkgsFor system; };
-      });
+      checks =
+        let
+          hostConfigs = nixosConfigurations // darwinConfigurations;
+          hasSystem = system: hostConfig: hostConfig.pkgs.system == system;
+          systemHostConfigs = system: (lib.filterAttrs (_: (hasSystem system)) hostConfigs);
+          topLevel = hostConfig: hostConfig.config.system.build.toplevel;
+          systemChecks = system: lib.mapAttrs (_: topLevel) (systemHostConfigs system);
+        in
+        lib.genAttrs systems systemChecks;
     };
 }
