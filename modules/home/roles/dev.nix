@@ -1,6 +1,7 @@
 {
   config,
   lib,
+  pkgs,
   ...
 }:
 let
@@ -16,6 +17,12 @@ in
   };
 
   config = lib.mkIf cfgEnabled {
+    home = {
+      packages = with pkgs; [
+        nixfmt-rfc-style
+        nixd
+      ];
+    };
     psyclyx = {
       programs = {
         git = {

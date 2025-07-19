@@ -4,6 +4,11 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
 
+    psyclyx-emacs = {
+      url = "path:./submodules/emacs";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     nixos-hardware.url = "github:NixOS/nixos-hardware/master";
 
     nix-darwin = {
@@ -29,29 +34,14 @@
     nix-homebrew = {
       url = "github:zhaofengli-wip/nix-homebrew";
     };
-
-    emacs-overlay = {
-      url = "github:nix-community/emacs-overlay";
-      inputs.nixpkgs.follows = "nixpkgs";
-      inputs.nixpkgs-stable.follows = "nixpkgs";
-    };
-
-    nix-darwin-emacs = {
-      url = "github:nix-giant/nix-darwin-emacs";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
   };
 
   outputs =
     inputs:
     let
       inherit (inputs.nixpkgs) lib;
-      overlay = import ./overlay.nix;
-      overlays = [
-        overlay
-        inputs.nix-darwin-emacs.overlays.emacs
-        inputs.emacs-overlay.overlays.default
-      ];
+      overlay = import ./overlay.nix inputs;
+      overlays = [ overlay ];
 
       pkgsFor =
         system:
