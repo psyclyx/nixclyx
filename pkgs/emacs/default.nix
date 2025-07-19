@@ -42,12 +42,4 @@ let
     mv config.el $out
   '';
 in
-(pkgs.emacsPackagesFor package).emacsWithPackages (
-  epkgs:
-  epkgs.trivialBuild {
-    pname = "default";
-    src = orgModeConfigFile;
-    version = "0.1.0";
-    packageRequires = packages epkgs;
-  }
-)
+(pkgs.emacsPackagesFor package).emacsWithPackages packages
