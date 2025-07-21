@@ -36,6 +36,19 @@ in
           key = "private_key";
           path = "${home}/.ssh/id_alice157";
         };
+        openrouter = {
+          sopsFile = ./tokens.json;
+          key = "openrouter";
+        };
+      };
+      templates = {
+        "${home}/.aider.conf.yml" = {
+          path = "${home}/.aider.conf.yml";
+          content = ''
+api-key:
+  - openrouter=${config.sops.placeholder.openrouter}
+        '';
+                                    };
       };
     };
   };

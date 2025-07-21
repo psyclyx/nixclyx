@@ -19,6 +19,7 @@ in
   config = lib.mkIf cfgEnabled {
     home = {
       packages = with pkgs; [
+        aider-chat-with-help
         zig
         zls
         nixfmt-rfc-style
