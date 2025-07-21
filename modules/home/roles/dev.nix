@@ -19,6 +19,8 @@ in
   config = lib.mkIf cfgEnabled {
     home = {
       packages = with pkgs; [
+        zig
+        zls
         nixfmt-rfc-style
         nixd
       ];

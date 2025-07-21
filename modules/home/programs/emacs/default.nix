@@ -10,13 +10,13 @@ lib.mkMerge [
     programs = {
       emacs = {
         enable = lib.mkDefault false;
-        package = lib.mkDefault pkgs.psyclyx.emacs.emacs;
+        package = lib.mkDefault pkgs.psyclyx.emacs;
       };
     };
 
     home = with inputs.psyclyx-emacs.files; lib.mkIf config.programs.emacs.enable {
       file.".config/emacs" = {
-        source = pkgs.psyclyx.emacs.config;
+        source = pkgs.psyclyx.emacsConfig;
         recursive = true;
       };
     };

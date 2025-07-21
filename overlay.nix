@@ -7,7 +7,8 @@ let
   };
   linux = {
     rofi = prev.callPackage ./pkgs/rofi { };
-    emacs = psyclyx-emacs.packages."${prev.system}".default;
+    emacs = psyclyx-emacs.packages."${prev.system}".emacs;
+    emacsConfig = psyclyx-emacs.packages."${prev.system}".emacsConfig;
     rofi-session = prev.callPackage ./pkgs/rofi-session.nix { };
   };
 in
