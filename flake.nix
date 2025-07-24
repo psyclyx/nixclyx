@@ -2,42 +2,30 @@
   description = "nixos/nix-darwin configurations";
 
   inputs = {
-    self = {
-      submodules = true;
-    };
-
+    self.submodules = true;
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
-
     psyclyx-emacs = {
       url = "path:./submodules/emacs";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-
     nixos-hardware.url = "github:NixOS/nixos-hardware/master";
-
     nix-darwin = {
       url = "github:LnL7/nix-darwin";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-
     home-manager = {
       url = "github:nix-community/home-manager";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-
     disko = {
       url = "github:nix-community/disko";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-
     sops-nix = {
       url = "github:Mic92/sops-nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-
-    nix-homebrew = {
-      url = "github:zhaofengli-wip/nix-homebrew";
-    };
+    nix-homebrew.url = "github:zhaofengli-wip/nix-homebrew";
   };
 
   outputs =
@@ -46,14 +34,11 @@
       inherit (inputs.nixpkgs) lib;
       overlay = import ./overlay.nix inputs;
       overlays = [ overlay ];
-
       pkgsFor =
         system:
         (import inputs.nixpkgs {
           inherit overlays system;
-          config = {
-            allowUnfree = true;
-          };
+          config.allowUnfree = true;
         });
       systems = [
         "x86_64-linux"
@@ -67,10 +52,13 @@
     in
     rec {
       packages = mapSystemPkgs (pkgs: pkgs.psyclyx);
+
       overlays.default = overlay;
+
       devShells = mapSystemPkgs (pkgs: {
         default = import ./shell.nix { inherit pkgs; };
       });
+
       homeManagerModules.default = ./modules/home/module.nix;
 
       nixosConfigurations = {
