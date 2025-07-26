@@ -13,7 +13,7 @@ let
 
   light = "${pkgs.light}/bin/light";
   pactl = "${pkgs.pulseaudio}/bin/pactl";
-  rofi = "${pkgs.psyclyx.rofi}/bin/rofi";
+  rofi = "${pkgs.rofi}/bin/rofi";
   term = "${config.programs.alacritty.package}/bin/alacritty";
 in
 {
