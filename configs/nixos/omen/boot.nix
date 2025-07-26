@@ -2,6 +2,7 @@
 {
   boot = {
     kernelPackages = pkgs.linuxPackages_latest;
+    binfmt.emulatedSystems = [ "aarch64-linux" ];
     initrd = {
       availableKernelModules = [
         "xhci_pci"
