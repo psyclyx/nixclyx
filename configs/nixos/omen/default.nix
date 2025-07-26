@@ -18,8 +18,27 @@
 
   stylix = {
     enable = true;
-    image = null;
+    image = ../../wallpapers/madoka-homura-2x.png;
+    fonts = {
+      serif = {
+        package = pkgs.nerd-fonts.noto;
+        name = "NotoSerif Nerd Font";
+      };
+      sansSerif = {
+        package = pkgs.nerd-fonts.noto;
+        name = "NotoSans Nerd Font";
+      };
+      monospace = {
+        package = pkgs.nerd-fonts.noto;
+        name = "Aporetic Sans Mono";
+      };
+      emoji = {
+        package = pkgs.noto-fonts-emoji;
+        name = "Noto Color Emoji";
+      };
+    };
   };
+
   psyclyx = {
     programs = {
       sway = {
