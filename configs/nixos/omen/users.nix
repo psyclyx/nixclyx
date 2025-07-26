@@ -26,9 +26,11 @@
         imports = [
           inputs.sops-nix.homeManagerModules.sops
           inputs.self.homeManagerModules.default
+          inputs.psyclyx-emacs.homeManagerModules.default
           ../../home/psyc.nix
           ../../home/desktop.nix
         ];
+        psyclyx-emacs.enable = true;
         psyclyx = {
           programs = {
             waybar = {
