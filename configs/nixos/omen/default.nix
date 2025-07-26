@@ -1,9 +1,10 @@
-{ pkgs, ... }:
+{ inputs, pkgs, ... }:
 {
   system.stateVersion = "25.05";
   networking.hostName = "omen";
   time.timeZone = "America/Los_Angeles";
   imports = [
+    inputs.stylix.nixosModules.stylix
     ../../../modules/nixos/nixpkgs.nix
     ../../../modules/nixos/module.nix
     ../../../modules/nixos/system/home-manager.nix
@@ -15,6 +16,10 @@
     ./users.nix
   ];
 
+  stylix = {
+    enable = true;
+    image = null;
+  };
   psyclyx = {
     programs = {
       sway = {

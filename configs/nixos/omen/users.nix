@@ -27,6 +27,7 @@
           inputs.sops-nix.homeManagerModules.sops
           inputs.self.homeManagerModules.default
           inputs.psyclyx-emacs.homeManagerModules.default
+          inputs.stylix.homeModules.stylix
           ../../home/psyc.nix
           ../../home/desktop.nix
         ];
