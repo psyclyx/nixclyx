@@ -8,7 +8,7 @@ let
   cfg = config.psyclyx.programs.sway;
 in
 {
-  imports = [ ./keybindings.nix ./theme.nix ];
+  imports = [ ./keybindings.nix ];
 
   options = {
     psyclyx = {
@@ -24,14 +24,12 @@ in
     wayland.windowManager.sway = {
       enable = true;
       package = null;
+      extraConfig = ''
+        output * scale 1
+        titlebar_border_thickness 0
+        titlebar_padding 4 4
+      '';
       config = {
-        assigns = {
-          "1" = [ { instance = "vscodium"; } ];
-          "2" = [ { app_id = "firefox"; } ];
-          "3" = [ { instance = "obsidian"; } ];
-          "4" = [ { instance = "signal"; } ];
-        };
-
         bars = [ { command = "${pkgs.waybar}/bin/waybar"; } ];
         defaultWorkspace = "workspace number 1";
         floating = {
@@ -47,6 +45,7 @@ in
           wrapping = "force";
           newWindow = "urgent";
         };
+        window.border = 2;
         workspaceAutoBackAndForth = true;
       };
     };
