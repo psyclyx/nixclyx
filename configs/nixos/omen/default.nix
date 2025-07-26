@@ -40,41 +40,19 @@
   };
 
   psyclyx = {
-    programs = {
-      sway = {
-        enable = true;
-      };
-    };
+    programs.sway.enable = true;
     services = {
-      autoMount = {
-        enable = true;
-      };
-      gnome-keyring = {
-        enable = true;
-      };
-      greetd = {
-        enable = true;
-      };
-      openssh = {
-        enable = true;
-      };
-      kanata = {
-        enable = true;
-      };
-      printing = {
-        enable = true;
-      };
-      tailscale = {
-        enable = true;
-      };
+      autoMount.enable = true;
+      gnome-keyring.enable = true;
+      greetd.enable = true;
+      openssh.enable = true;
+      kanata.enable = true;
+      printing.enable = true;
+      tailscale.enable = true;
     };
     system = {
-      fonts = {
-        enable = true;
-      };
-      sudo = {
-        enable = true;
-      };
+      fonts.enable = true;
+      sudo.enable = true;
     };
   };
 }
