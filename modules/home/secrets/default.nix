@@ -39,10 +39,12 @@ in
         openrouter = {
           sopsFile = ./tokens.json;
           key = "openrouter";
+          path = ".tokens/openrouter";
         };
         replicate = {
           sopsFile = ./tokens.json;
           key = "replicate";
+          path = ".tokens/replicate";
         };
       };
     };
