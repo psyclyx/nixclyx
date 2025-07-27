@@ -1,6 +1,5 @@
 { config, lib, ... }:
 let
-  c = import ../../nixos/colors.nix;
   cfg = config.psyclyx.programs.waybar;
 in
 {
@@ -28,7 +27,8 @@ in
           mainBar = {
             layer = "bottom";
             position = "top";
-            height = 28;
+            spacing = 16;
+            height = 32;
             margin = "0px 0px";
             padding = "0px 0px";
             modules-left = [
@@ -36,71 +36,47 @@ in
               "sway/scratchpad"
               "sway/mode"
             ];
+            modules-center = [
+              "clock"
+            ];
             modules-right = [
               "network"
               "backlight"
               "pulseaudio"
               "memory"
               "cpu"
-              "clock"
               "battery"
             ];
-
             "sway/workspaces" = {
               on-click = "activate";
               sort-by-number = true;
-              format = "{icon}";
-              format-icons = {
-                "1" = "1. code";
-                "2" = "2. web";
-                "3" = "3. notes";
-                "4" = "4. chat";
-                "5" = "5";
-                "6" = "6";
-                "7" = "7";
-                "8" = "8";
-                "9" = "9";
-                "10" = "0";
-              };
             };
             "sway/scratchpad" = {
               format-icons = [
                 ""
-                "󰼜"
+                "[scratch]"
               ];
             };
-
             "pulseaudio" = {
-              format = "{icon} {volume}%";
-              format-alt = "{icon} {volume}% {format_source}";
-              format-bluetooth = "{icon} {volume}%";
-              format-bluetooth-alt = "{icon} {volume}% {format_source}";
-              format-bluetooth-muted = " {volume}% {format_source}";
-              format-muted = " {volume}% {format_source}";
-              format-source = " {volume}%";
-              format-source-muted = " {volume}%";
-              format-icons = {
-                headphone = "";
-                default = [
-                  "󰕿"
-                  "󰖀"
-                  "󰕾"
-                ];
-              };
+              format = "VOL: {volume}%";
+              format-muted = "VOL: MUTE";
             };
+
             "network" =
               let
-                format_speed = "󰶡 {bandwidthDownBytes} 󰶣 {bandwidthUpBytes}";
+                format_speed = "{bandwidthDownBytes} / {bandwidthUpBytes}";
               in
               {
-                format-wifi = "󰖩 {signalStrength}% ${format_speed}";
+                format-wifi = "WIFI: {signalStrength}% ${format_speed}";
                 tooltip = "{essid} {ifname} {ipaddr}/{cidr}";
-                format-ethernet = "󰈁 ${format_speed}";
-                format-linked = "󰲚 {ifname} (No IP) ${format_speed}";
-                format-disconnected = "";
+                format-ethernet = "ETH: ${format_speed}";
+                format-linked = "NET: {ifname} (No IP) ${format_speed}";
+                format-disconnected = "NET: NONE";
+                interval = 3;
               };
+
             "backlight" = {
-              format = "{icon} {percent}%";
+              format = "BLT: {percent}%";
               format-icons = [
                 "󰹐"
                 "󱩎"
@@ -116,72 +92,21 @@ in
               ];
             };
             "clock" = {
-              interval = 60;
+              interval = 15;
               tooltip = false;
-              format = "󰥔 {:%I:%M %m/%d/%y}";
+              format = "{:%I:%M %m/%d/%y}";
             };
-            "cpu" =
-              let
-                cpuIcon = "";
-                iconN = n: "{icon${toString n}}";
-                coreIcons = lib.concatMapStrings iconN (lib.range 0 (cfg.cores - 1));
-              in
-              {
-                interval = 4;
-                format = "${cpuIcon} ${coreIcons}";
-                format-icons = [
-                  "<span color='${c.blue2}'>▁</span>"
-                  "<span color='${c.blue3}'>▂</span>"
-                  "<span color='${c.slate1}'>▃</span>"
-                  "<span color='${c.slate2}'>▄</span>"
-                  "<span color='${c.slate3}'>▅</span>"
-                  "<span color='${c.red2}'>▆</span>"
-                  "<span color='${c.red3}'>▇</span>"
-                  "<span color='${c.red4}'>█</span>"
-                ];
-                tooltip = false;
-              };
+            "cpu" = {
+              interval = 4;
+              format = "CPU: {}%";
+            };
             "memory" = {
               interval = 4;
-              format = " {icon}";
-              tooltip = "{used:0.1f}G / {total:0.1f}G";
-              format-icons = [
-                "<span color='${c.blue2}'>▏</span>"
-                "<span color='${c.blue3}'>▎</span>"
-                "<span color='${c.slate1}'>▍</span>"
-                "<span color='${c.slate2}'>▌</span>"
-                "<span color='${c.slate3}'>▋</span>"
-                "<span color='${c.red2}'>▊</span>"
-                "<span color='${c.red3}'>▉</span>"
-                "<span color='${c.red4}'>█</span>"
-              ];
+              format = "MEM: {}%";
             };
             "battery" = {
-              states = {
-                good = 100;
-                normal = 80;
-                warning = 30;
-                critical = 10;
-              };
-              interval = 15;
-              tooltip = "{time}";
-              format = "{icon} {capacity}% ";
-              format-alt = "{icon} {capacity}% {time}";
-              format-charging = "󱐥 {capacity}% {time}";
-              format-plugged = "󰚥 {capacity}%";
-              format-icons = [
-                "󰂎"
-                "󰁺"
-                "󰁻"
-                "󰁼"
-                "󰁽"
-                "󰁾"
-                "󰁿"
-                "󰂀"
-                "󰂁"
-                "󰂂"
-                "󰁹"
-              ];
+              interval = 4;
+              format = "BAT: {capacity}%";
             };
           };
         };
