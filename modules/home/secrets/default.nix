@@ -40,14 +40,6 @@ in
           sopsFile = ./tokens.json;
           key = "openrouter";
         };
-      };
-      templates = {
-        "${home}/.aider.conf.yml" = {
-          path = "${home}/.aider.conf.yml";
-          content = ''
-api-key:
-  - openrouter=${config.sops.placeholder.openrouter}
-        '';
                                     };
       };
     };
