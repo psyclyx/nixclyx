@@ -40,7 +40,10 @@ in
           sopsFile = ./tokens.json;
           key = "openrouter";
         };
-                                    };
+        replicate = {
+          sopsFile = ./tokens.json;
+          key = "replicate";
+        };
       };
     };
   };
