@@ -7,7 +7,7 @@
     ./programs/kitty.nix
     ./programs/ssh.nix
     ./programs/sway
-    ./programs/waybar
+    ./programs/waybar.nix
     ./programs/zsh.nix
     ./roles/dev.nix
     ./roles/graphical.nix

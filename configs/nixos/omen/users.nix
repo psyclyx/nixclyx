@@ -33,11 +33,6 @@
         psyclyx-emacs.enable = true;
         psyclyx = {
           gtk.enable = false;
-          programs = {
-            waybar = {
-              cores = 4;
-            };
-          };
         };
       };
     };

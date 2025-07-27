@@ -36,13 +36,6 @@
           ../../home/desktop.nix
         ];
         psyclyx-emacs.enable = true;
-        psyclyx = {
-          programs = {
-            waybar = {
-              cores = 32;
-            };
-          };
-        };
       };
     };
   };
