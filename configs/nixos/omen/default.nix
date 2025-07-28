@@ -41,7 +41,7 @@
         name = "NotoSans Nerd Font";
       };
       monospace = {
-        package = pkgs.nerd-fonts.noto;
+        package = pkgs.aporetic;
         name = "Aporetic Sans Mono";
       };
       emoji = {
