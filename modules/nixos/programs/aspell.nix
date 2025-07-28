@@ -10,7 +10,7 @@ in
 {
   options.psyclyx.programs.aspell.enable = lib.mkEnableOption "aspell + english dicts";
   config.environment.packages = lib.mkIf cfg.enable [
-    (aspellWithDicts (
+    (pkgs.aspellWithDicts (
       dicts: with dicts; [
         en
         en-computers
