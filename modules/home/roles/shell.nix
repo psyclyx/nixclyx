@@ -19,8 +19,16 @@ in
   config = lib.mkIf cfgEnabled {
     home = {
       packages = with pkgs; [
+        curl
+        dtach
         fd
+        htop
+        killall
+        jq
+        rclone
         ripgrep
+        tree
+        wget
       ];
     };
 
