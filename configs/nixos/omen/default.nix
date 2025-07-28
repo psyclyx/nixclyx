@@ -52,7 +52,10 @@
   };
 
   psyclyx = {
-    programs.sway.enable = true;
+    programs = {
+      aspell.enable = true;
+      sway.enable = true;
+    };
     services = {
       autoMount.enable = true;
       gnome-keyring.enable = true;

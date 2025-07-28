@@ -1,0 +1,21 @@
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
+let
+  cfg = config.psyclyx.programs.aspell;
+in
+{
+  options.psyclyx.programs.aspell.enable = lib.mkEnableOption "aspell + english dicts";
+  config.environment.packages = lib.mkIf cfg.enable [
+    (aspellWithDicts (
+      dicts: with dicts; [
+        en
+        en-computers
+        en-science
+      ]
+    ))
+  ];
+}

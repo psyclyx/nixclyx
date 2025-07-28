@@ -1,6 +1,7 @@
 {
   imports = [
     ./programs/adb.nix
+    ./programs/aspell.nix
     ./programs/steam.nix
     ./programs/sway.nix
     ./programs/zsh.nix
