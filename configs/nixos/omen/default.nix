@@ -63,6 +63,10 @@
       autoMount.enable = true;
       gnome-keyring.enable = true;
       greetd.enable = true;
+      locate = {
+        enable = true;
+        users = [ "psyc" ];
+      };
       openssh.enable = true;
       kanata.enable = true;
       printing.enable = true;
