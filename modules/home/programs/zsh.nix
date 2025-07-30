@@ -46,7 +46,7 @@ let
   };
   zsh = {
     enable = true;
-    dotDir = ".config/zsh";
+    dotDir = "${config.xdg.configHome}/zsh";
     enableVteIntegration = true;
     shellAliases = {
       ns = "nix search nixpkgs";
