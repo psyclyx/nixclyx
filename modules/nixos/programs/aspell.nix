@@ -9,13 +9,16 @@ let
 in
 {
   options.psyclyx.programs.aspell.enable = lib.mkEnableOption "aspell + english dicts";
-  config.environment.systemPackages = lib.mkIf cfg.enable [
-    (pkgs.aspellWithDicts (
-      dicts: with dicts; [
-        en
-        en-computers
-        en-science
-      ]
-    ))
-  ];
+  config.environment = lib.mkIf cfg.enable {
+    wordlist.enable = true;
+    systemPackages = [
+      (pkgs.aspellWithDicts (
+        dicts: with dicts; [
+          en
+          en-computers
+          en-science
+        ]
+      ))
+    ];
+  };
 }
