@@ -3,6 +3,7 @@
     ./config.nix
     ./gtk.nix
     ./programs/alacritty.nix
+    ./programs/emacs.nix
     ./programs/git.nix
     ./programs/kitty.nix
     ./programs/ssh.nix

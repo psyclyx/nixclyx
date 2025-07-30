@@ -24,15 +24,13 @@
     users = {
       psyc = {
         imports = [
-          inputs.sops-nix.homeManagerModules.sops
-          inputs.self.homeManagerModules.default
-          inputs.psyclyx-emacs.homeManagerModules.default
+          ../../home/imports.nix
           ../../home/psyc.nix
           ../../home/desktop.nix
         ];
-        psyclyx-emacs.enable = true;
         psyclyx = {
           gtk.enable = false;
+          programs.emacs.enable = true;
         };
       };
     };
