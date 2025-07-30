@@ -27,6 +27,7 @@ in
     # Wiki claims this improves performance:
     # https://nixos.wiki/wiki/Sway#Inferior_performance_compared_to_other_distributions
     security = {
+      rtkit.enable = true;
       pam = {
         loginLimits = [
           {
