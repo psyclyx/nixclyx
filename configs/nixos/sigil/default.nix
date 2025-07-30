@@ -5,6 +5,8 @@
   time.timeZone = "America/Los_Angeles";
   imports = [
     inputs.disko.nixosModules.disko
+    inputs.chaotic.nixosModules.default
+    inputs.stylix.nixosModules.stylix
 
     ../../../modules/nixos/nixpkgs.nix
     ../../../modules/nixos/module.nix
@@ -15,10 +17,14 @@
     ./hardware.nix
     ./network.nix
     ./users.nix
+    ../../stylix.nix
   ];
+
+  chaotic.nyx.cache.enable = false;
 
   psyclyx = {
     programs = {
+      aspell.enable = true;
       steam = {
         enable = true;
       };
