@@ -5,7 +5,6 @@
   time.timeZone = "America/Los_Angeles";
   imports = [
     inputs.disko.nixosModules.disko
-    inputs.chaotic.nixosModules.default
     inputs.stylix.nixosModules.stylix
 
     ../../../modules/nixos/nixpkgs.nix
@@ -19,8 +18,6 @@
     ./users.nix
     ../../stylix.nix
   ];
-
-  chaotic.nyx.cache.enable = false;
 
   psyclyx = {
     hardware.glasgow = {

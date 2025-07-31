@@ -4,7 +4,6 @@
   networking.hostName = "omen";
   time.timeZone = "America/Los_Angeles";
   imports = [
-    inputs.chaotic.nixosModules.default
     inputs.stylix.nixosModules.stylix
     ../../../modules/nixos/nixpkgs.nix
     ../../../modules/nixos/module.nix
@@ -17,8 +16,6 @@
     ./users.nix
     ../../stylix.nix
   ];
-
-  chaotic.nyx.cache.enable = false;
 
   psyclyx = {
     programs = {

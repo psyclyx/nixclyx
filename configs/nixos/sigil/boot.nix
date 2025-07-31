@@ -1,7 +1,7 @@
-{ pkgs, ... }:
+{ inputs, pkgs, ... }:
 {
   boot = {
-    kernelPackages = pkgs.linuxPackages_cachyos;
+    kernelPackages = inputs.chaotic.unrestrictedPackages."${pkgs.system}".linuxPackages_cachyos;
     binfmt.emulatedSystems = [ "aarch64-linux" ];
     plymouth.enable = true;
 
