@@ -36,6 +36,11 @@ in
           key = "private_key";
           path = "${home}/.ssh/id_alice157";
         };
+        github = {
+          sopsFile = ./tokens.json;
+          key = "github";
+          path = ".tokens/github";
+        };
         openrouter = {
           sopsFile = ./tokens.json;
           key = "openrouter";
