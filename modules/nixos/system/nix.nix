@@ -1,6 +1,7 @@
-{ inputs, ... }:
+{ inputs, pkgs, ... }:
 {
   nix = {
+    package = pkgs.lix;
     registry.nixpkgs.flake = inputs.nixpkgs;
     settings = {
       http-connections = 128;

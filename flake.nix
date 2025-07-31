@@ -2,12 +2,8 @@
   description = "nixos/nix-darwin configurations";
 
   inputs = {
-    self.submodules = true;
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
-    psyclyx-emacs = {
-      url = "path:./submodules/emacs";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
+    psyclyx-emacs.url = "git+file:submodules/emacs";
     nixos-hardware.url = "github:NixOS/nixos-hardware/master";
     chaotic.url = "github:chaotic-cx/nyx/nyxpkgs-unstable";
     nix-darwin = {
@@ -15,17 +11,11 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     home-manager = {
-      url = "github:nix-community/home-manager";
+      url = "github:nix-community/home-manager/reenable-gcroot-maintenance";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    disko = {
-      url = "github:nix-community/disko";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-    sops-nix = {
-      url = "github:Mic92/sops-nix";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
+    disko.url = "github:nix-community/disko";
+    sops-nix.url = "github:Mic92/sops-nix";
     nix-homebrew.url = "github:zhaofengli-wip/nix-homebrew";
     stylix = {
       url = "github:danth/stylix";
