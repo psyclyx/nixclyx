@@ -1,5 +1,6 @@
 {
   imports = [
+    ./hardware/glasgow.nix
     ./programs/adb.nix
     ./programs/aspell.nix
     ./programs/steam.nix
