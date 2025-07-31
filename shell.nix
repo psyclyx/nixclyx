@@ -1,5 +1,5 @@
 {
-  pkgs ? import <nixpkgs> { overlays = [(import ./overlay.nix)]; },
+  pkgs ? import <nixpkgs> { overlays = [ (import ./overlay.nix) ]; },
 }:
 pkgs.mkShell {
   packages = with pkgs; [
@@ -8,5 +8,6 @@ pkgs.mkShell {
     nixd
     sops
     ssh-to-age
+    yq
   ];
 }
