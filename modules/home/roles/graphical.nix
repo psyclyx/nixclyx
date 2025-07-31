@@ -10,6 +10,7 @@ let
   linux = {
     home = {
       packages = with pkgs; [
+        psyclyx.upscale-image
         firefox-bin
         signal-desktop-bin
       ];

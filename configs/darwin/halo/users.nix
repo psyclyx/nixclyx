@@ -17,18 +17,7 @@ in
     shell = pkgs.zsh;
   };
 
-  home-manager = {
-    users = {
-      psyc = {
-        imports = [
-          inputs.sops-nix.homeManagerModules.sops
-          inputs.self.homeManagerModules.default
-          ../../home/psyc.nix
-          ../../home/desktop.nix
-        ];
-      };
-    };
-  };
+  home-manager.users.psyc = (import ../../home/psyc.nix).darwinDesktop;
 
   system.primaryUser = userName;
   nix-homebrew.user = userName;

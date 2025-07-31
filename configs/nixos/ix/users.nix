@@ -1,4 +1,4 @@
-{inputs, pkgs, ... }:
+{ inputs, pkgs, ... }:
 {
   nix.settings.trusted-users = [ "psyc" ];
   users = {
@@ -18,16 +18,5 @@
       };
     };
   };
-  home-manager = {
-    users = {
-      psyc = {
-        imports = [
-          inputs.sops-nix.homeManagerModules.sops
-          inputs.self.homeManagerModules.default
-          ../../home/psyc.nix
-          ../../home/server.nix
-        ];
-      };
-    };
-  };
+  home-manager.users.psyc = (import ../../home/psyc.nix).nixosServer;
 }

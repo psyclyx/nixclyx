@@ -1,5 +1,8 @@
+{ inputs, ... }:
 {
   imports = [
+    inputs.sops-nix.homeManagerModules.sops
+    inputs.psyclyx-emacs.homeManagerModules.default
     ./config.nix
     ./gtk.nix
     ./programs/alacritty.nix

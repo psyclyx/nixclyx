@@ -1,7 +1,0 @@
-{
-  psyclyx = {
-    roles = {
-      shell = true;
-    };
-  };
-}

@@ -25,19 +25,5 @@
       };
     };
   };
-  home-manager = {
-    users = {
-      psyc = {
-        imports = [
-          ../../home/imports.nix
-          ../../home/psyc.nix
-          ../../home/desktop.nix
-        ];
-        psyclyx = {
-          gtk.enable = false;
-          programs.emacs.enable = true;
-        };
-      };
-    };
-  };
+  home-manager.users.psyc = (import ../../home/psyc.nix).nixosDesktop;
 }
