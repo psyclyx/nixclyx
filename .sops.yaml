@@ -1,6 +1,11 @@
+keys:
+  - &user_psyc_omen age1w3pyz967m7hq3x483q5pp32xq7ujmkmlleywcud5ffkkl2hkp9aqcyfgc5
+  - &user_psyc_sigil age185hx9ylpljvdh6g436xx9nn0f90j6e8ggxaju7uj8rhwds5xs59sfwrucc
+  - &user_psyc_halo age12rcxxtxtxdtpw9tze5ecyuj0krkkcvu7m85v4gslfgge8xdth5fqjkpsq0
+  - &user_psyc_ampere age1nsnv2zdx3ww7gyvy0l2vql9quggewtuc3r849pzpjeddxk8l4yxs4ha8y0
 creation_rules:
-  - age: >-
-      age1w3pyz967m7hq3x483q5pp32xq7ujmkmlleywcud5ffkkl2hkp9aqcyfgc5,
-      age12rcxxtxtxdtpw9tze5ecyuj0krkkcvu7m85v4gslfgge8xdth5fqjkpsq0,
-      age185hx9ylpljvdh6g436xx9nn0f90j6e8ggxaju7uj8rhwds5xs59sfwrucc,
-      age1nsnv2zdx3ww7gyvy0l2vql9quggewtuc3r849pzpjeddxk8l4yxs4ha8y0
+  - age:
+      - *user_psyc_omen
+      - *user_psyc_sigil
+      - *user_psyc_halo
+      - *user_psyc_ampere
