@@ -8,21 +8,9 @@ let
   cfg = config.psyclyx.programs.sway;
 in
 {
-  options = {
-    psyclyx = {
-      programs = {
-        sway = {
-          enable = lib.mkEnableOption "Enable sway wm.";
-        };
-      };
-    };
-  };
-
+  options.psyclyx.programs.sway.enable = lib.mkEnableOption "swayfx wm";
   config = lib.mkIf cfg.enable {
-
-    environment = {
-      systemPackages = [ pkgs.dbus ];
-    };
+    environment.systemPackages = with pkgs; [ dbus ];
 
     # Wiki claims this improves performance:
     # https://nixos.wiki/wiki/Sway#Inferior_performance_compared_to_other_distributions
@@ -46,6 +34,7 @@ in
       };
       sway = {
         enable = true;
+        package = pkgs.swayfx;
         wrapperFeatures = {
           gtk = true;
         };
