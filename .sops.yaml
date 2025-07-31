@@ -3,8 +3,17 @@ keys:
   - &user_psyc_sigil age185hx9ylpljvdh6g436xx9nn0f90j6e8ggxaju7uj8rhwds5xs59sfwrucc
   - &user_psyc_halo age12rcxxtxtxdtpw9tze5ecyuj0krkkcvu7m85v4gslfgge8xdth5fqjkpsq0
   - &user_psyc_ampere age1nsnv2zdx3ww7gyvy0l2vql9quggewtuc3r849pzpjeddxk8l4yxs4ha8y0
+
+  - &identity_psyc ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEwUKqMso49edYpzalH/BFfNlwmLDmcUaT00USWiMoFO
+
+  - &host_sigil ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAbHze1tBCrbATRGjJ20wJv+0vIt5xjxktf4Ff7Iqn1Q
+  - &host_tleilax ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAUf36czTwC7xnoUvqMy0aINJA2iZAgfKz2tTDpZWalP
+  - &host_omen ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPqXaiTW4eA5F3fI5WSN2Hy37jFCVFg+lXWR+7Bwvjd5
+
 creation_rules:
-  - age:
+  - path_regex: .*
+    key_groups:
+    - age:
       - *user_psyc_omen
       - *user_psyc_sigil
       - *user_psyc_halo
