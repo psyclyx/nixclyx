@@ -17,7 +17,7 @@ in
   };
   config = lib.mkIf cfg.enable {
     hardware.glasgow.enable = true;
-    users.groups.plugdev.users = cfg.users;
+    users.groups.plugdev.members = cfg.users;
     environment.systemPackages = with pkgs; [ glasgow ];
   };
 }

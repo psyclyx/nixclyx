@@ -23,6 +23,10 @@
   chaotic.nyx.cache.enable = false;
 
   psyclyx = {
+    hardware.glasgow = {
+      enable = true;
+      users = [ "psyc" ];
+    };
     programs = {
       aspell.enable = true;
       steam = {
