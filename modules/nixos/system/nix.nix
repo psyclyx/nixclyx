@@ -1,6 +1,7 @@
-{ ... }:
+{ inputs, ... }:
 {
   nix = {
+    registry.nixpkgs.flake = inputs.nixpkgs;
     settings = {
       http-connections = 128;
       connect-timeout = 5;
