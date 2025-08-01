@@ -30,6 +30,7 @@ in
         git = {
           enable = lib.mkDefault true;
         };
+        emacs.enable = lib.mkDefault true;
       };
     };
   };
