@@ -4,7 +4,6 @@
     inputs.sops-nix.homeManagerModules.sops
     inputs.psyclyx-emacs.homeManagerModules.default
     ./config.nix
-    ./gtk.nix
     ./programs/alacritty.nix
     ./programs/emacs.nix
     ./programs/git.nix
