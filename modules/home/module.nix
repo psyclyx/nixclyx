@@ -15,7 +15,6 @@
     ./roles/dev.nix
     ./roles/graphical.nix
     ./roles/shell.nix
-    ./roles/sway.nix
     ./secrets
     ./xdg.nix
   ];
