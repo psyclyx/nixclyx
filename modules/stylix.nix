@@ -44,7 +44,8 @@ in
     {
       stylix = {
         enable = true;
-        inherit image base16Scheme;
+        inherit image;
+        base16Scheme = lib.mkIf (base16Scheme != null) base16Scheme;
         autoEnable = cfg.enable;
         opacity = {
           applications = 0.9;
