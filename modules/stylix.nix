@@ -48,10 +48,10 @@ in
         base16Scheme = lib.mkIf (base16Scheme != null) base16Scheme;
         autoEnable = cfg.enable;
         opacity = {
-          applications = 0.9;
-          desktop = 0.8;
-          terminal = 0.9;
-          popups = 0.8;
+          applications = 0.97;
+          desktop = 0.9;
+          terminal = 0.97;
+          popups = 1.0;
         };
         fonts = {
           sizes = {
