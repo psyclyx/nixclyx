@@ -20,8 +20,6 @@ in
     ./network.nix
     ./users.nix
   ];
-  stylix.enable = true;
-  stylix.image = ../../wallpapers/madoka-homura-2x.png;
 
   psyclyx = {
     services = {

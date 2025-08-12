@@ -16,7 +16,6 @@
     ./hardware.nix
     ./network.nix
     ./users.nix
-    ../../stylix.nix
   ];
 
   psyclyx = {
@@ -73,6 +72,10 @@
       virtualization = {
         enable = true;
       };
+    };
+
+    stylix = {
+      enable = true;
     };
   };
 }

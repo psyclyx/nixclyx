@@ -1,9 +1,4 @@
-{
-  pkgs,
-  lib,
-  inputs,
-  ...
-}:
+{ pkgs, ... }:
 {
   nix.settings.trusted-users = [ "psyc" ];
   users = {
@@ -25,5 +20,12 @@
       };
     };
   };
-  home-manager.users.psyc = (import ../../home/psyc.nix).nixosDesktop;
+
+  home-manager.users.psyc = {
+    imports = [ ../../home/psyc.nix ];
+    psyclyx.configs.psyc = {
+      enable = true;
+      secrets = true;
+    };
+  };
 }

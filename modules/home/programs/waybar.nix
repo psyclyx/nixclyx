@@ -1,7 +1,7 @@
 { config, lib, ... }:
 let
   cfg = config.psyclyx.programs.waybar;
-  opacity = "${config.stylix.opacity.desktop}";
+  opacity = builtins.toString config.stylix.opacity.desktop;
 in
 {
   options.psyclyx.programs.waybar.enable = lib.mkEnableOption "waybar config";

@@ -14,7 +14,6 @@
     ./hardware.nix
     ./network.nix
     ./users.nix
-    ../../stylix.nix
   ];
 
   psyclyx = {

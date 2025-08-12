@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
+
+# TODO: check that the base16 colors look good.
+
 set -x
 
 bar=(
@@ -6,22 +9,20 @@ bar=(
   position=top
   padding_left=16
   padding_right=16
-  #y_offset="${Y_OFFSET}"
-  color="${THEME_BACKGROUND}"
+
+  color="${}"
   sticky=off
   blur_radius=2
 )
 
 default=(
   icon.font="Berkeley Mono:ExtraLight:12.0"
-  icon.color="${THEME_FOREGROUND}"
-  icon.highlight_color="${THEME_BORDER_ACTIVE}"
+  icon.color="${BASE01}"
+  icon.highlight_color="${BASE05}"
 
   label.font="Berkeley Mono:Thin:18.0"
-  label.color="${THEME_FOREGROUND}"
-  label.highlight_color="${THEME_BORDER_ACTIVE}"
-
-  #background.border_width=0
+  label.color="${BASE04}"
+  label.highlight_color="${BASE05}"
 
   background.padding_left=4
   background.padding_right=4
@@ -39,9 +40,9 @@ sketchybar \
 
 
 workspace=(
-  label.color="${THEME_WM_UNFOCUSED_TEXT}"
-  label.highlight_color="${THEME_WM_FOCUSED_TEXT}"
-  label.background.color="${THEME_WM_FOCUSED_BACKGROUND}"
+  label.color="${BASE04}"
+  label.highlight_color="${BASE05}"
+  label.background.color="${BASE02}"
   label.background.drawing="off"
   padding_left=6
   padding_right=6
@@ -88,8 +89,8 @@ sketchybar \
 sketchybar \
   --add item mode left \
   --set mode \
-  background.color="${THEME_TERMINAL_RED}" \
-  label.color="${THEME_FOREGROUND}" \
+  background.color="${BASE08}" \
+  label.color="${BASE04}" \
   label.drawing=off \
   drawing=off
 

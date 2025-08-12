@@ -5,19 +5,16 @@
   ...
 }:
 let
-  colors = import ../../../../home/themes/angel.nix { inherit lib; };
-  themeEnv =
-    with colors.colorUtils;
-    mkThemeEnv [
-      (transform.withAlpha 1.0)
-      transform.withOx
-    ];
-  transparentTheme =
-    with colors.colorUtils;
-    mkTheme [
-      (transform.withAlpha 0.3)
-      transform.withOx
-    ];
+  padHex = s: if lib.stringLength s == 1 then "0${s}" else s;
+  mkThemeEnv =
+    colors:
+    lib.listToAttrs (
+      lib.lists.imap0 (i: rgb: {
+        name = "BASE${padHex (builtins.toString i)}";
+        value = "#FF${rgb}";
+      }) colors
+    );
+  themeEnv = lib.debug.traceVal mkThemeEnv config.lib.stylix.colors.toList;
 
   aerospacePlugin = pkgs.writeShellApplication rec {
     name = "aerospace_plugin";
@@ -26,9 +23,7 @@ let
       aerospace
       sketchybar
     ];
-
     runtimeInputs = derivationArgs.buildInputs;
-    runtimeEnv = themeEnv;
   };
 
   appNamePlugin = pkgs.writeShellApplication rec {
@@ -44,7 +39,6 @@ let
       aerospace
       sketchybar
     ];
-
     runtimeInputs = derivationArgs.buildInputs;
   };
 
@@ -75,12 +69,8 @@ let
         clockPlugin
         batteryPlugin
       ];
-
     runtimeInputs = derivationArgs.buildInputs;
-    runtimeEnv = themeEnv // {
-      "BAR_BACKGROUND" = transparentTheme.background;
-      "Y_OFFSET" = config.psyclyx.sketchybar.yOffset;
-    };
+    runtimeEnv = themeEnv;
   };
 in
 {

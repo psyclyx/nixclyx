@@ -26,9 +26,6 @@ in
     ./metrics.nix
   ];
 
-  stylix.enable = true;
-  stylix.image = ../../wallpapers/madoka-homura-2x.png;
-
   boot.loader.systemd-boot.enable = true;
 
   psyclyx = {

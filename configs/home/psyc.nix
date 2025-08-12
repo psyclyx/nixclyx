@@ -1,57 +1,24 @@
+{ config, lib, ... }:
 let
-  base = {
-    home = {
-      stateVersion = "25.05";
-    };
-    psyclyx = {
-      user = {
-        name = "psyclyx";
-        email = "me@psyclyx.xyz";
-      };
-    };
-  };
+  cfg = config.psyclyx.configs.psyc;
 in
 {
-  nixosServer = {
-    imports = [
-      base
-      { psyclyx.roles.shell = true; }
-    ];
+  options.psyclyx.configs.psyc = {
+    enable = lib.mkEnableOption "psyc hm preset";
+    secrets = lib.mkEnableOption "secrets";
+    server = lib.mkEnableOption "server";
   };
-
-  nixosDesktop = {
-    imports = [
-      base
-      {
-        psyclyx = {
-          gtk.enable = false;
-          programs.emacs.enable = true;
-          roles = {
-            shell = true;
-            dev = true;
-            graphical = true;
-            sway = true;
-          };
-          secrets.enable = true;
-        };
-      }
-    ];
-  };
-
-  darwinDesktop = {
-    imports = [
-      base
-      {
-        psyclyx = {
-          programs.emacs.enable = true;
-          roles = {
-            shell = true;
-            dev = true;
-            graphical = true;
-          };
-          secrets.enable = true;
-        };
-      }
-    ];
+  config = lib.mkIf cfg.enable {
+    home.stateVersion = "25.05";
+    psyclyx = {
+      user.name = "psyclyx";
+      user.email = "me@psyclyx.xyz";
+      roles = rec {
+        shell = true;
+        dev = !cfg.server;
+        graphical = !cfg.server;
+      };
+      secrets.enable = cfg.secrets;
+    };
   };
 }

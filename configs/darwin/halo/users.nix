@@ -17,8 +17,14 @@ in
     shell = pkgs.zsh;
   };
 
-  home-manager.users.psyc = (import ../../home/psyc.nix).darwinDesktop;
-
   system.primaryUser = userName;
   nix-homebrew.user = userName;
+
+  home-manager.users.psyc = {
+    imports = [ ../../home/psyc.nix ];
+    psyclyx.configs.psyc = {
+      enable = true;
+      secrets = true;
+    };
+  };
 }
