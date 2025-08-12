@@ -76,6 +76,8 @@
 
     stylix = {
       enable = true;
+      baseFontSize = 16;
+      image = ../../wallpapers/madoka-homura-2x.png;
     };
   };
 }
