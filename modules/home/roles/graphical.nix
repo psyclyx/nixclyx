@@ -5,36 +5,19 @@
   ...
 }:
 let
-  common = {
-    home.packages = with pkgs; [
-      psyclyx.upscale-image
-    ];
-  };
-
-  linux =
-    { lib, pkgs, ... }:
-    {
-      config = lib.mkIf pkgs.stdenv.isLinux {
-      };
-    };
-
-  darwin =
-    { lib, pkgs, ... }:
-    {
-      config = lib.mkIf pkgs.stdenv.isDarwin {
-        psyclyx.programs.kitty.enable = lib.mkDefault true;
-      };
-    };
-
   cfgEnabled = config.psyclyx.roles.graphical;
 in
 {
   options.psyclyx.roles.graphical = lib.mkEnableOption "graphical session programs/config";
 
   config = lib.mkIf cfgEnabled (
-
     lib.mkMerge [
-      { home.packages = with pkgs; [ psyclyx.upscale-image ]; }
+      {
+        home.packages = with pkgs; [
+          psyclyx.upscale-image
+          psyclyx.print256colors
+        ];
+      }
       (lib.mkIf pkgs.stdenv.isLinux {
         home.packages = with pkgs; [
           firefox-bin
