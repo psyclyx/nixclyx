@@ -41,16 +41,16 @@ in
             };
             focusedInactive = {
               background = base01;
-              border = base02;
-              childBorder = base02;
-              indicator = base01;
+              border = base05;
+              childBorder = base05;
+              indicator = base05;
               text = base05;
             };
             unfocused = {
               background = base00;
-              border = base00;
-              childBorder = base00;
-              indicator = base00;
+              border = base04;
+              childBorder = base04;
+              indicator = base04;
               text = base04;
             };
             urgent = {
