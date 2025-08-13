@@ -1,4 +1,4 @@
-{ inputs, ... }:
+{ inputs, pkgs, ... }:
 {
   system.stateVersion = "25.05";
   networking.hostName = "sigil";
@@ -78,6 +78,7 @@
       enable = true;
       baseFontSize = 16;
       image = ../../wallpapers/madoka-homura-2x.png;
+      base16Scheme = "${pkgs.base16-schemes}/share/themes/catppuccin-macchiato.yaml";
     };
   };
 }
