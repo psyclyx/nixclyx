@@ -1,6 +1,6 @@
 {
   imports = [
-    ../stylix.nix
+    ../stylix
     ./hardware/glasgow.nix
     ./programs/adb.nix
     ./programs/aspell.nix
