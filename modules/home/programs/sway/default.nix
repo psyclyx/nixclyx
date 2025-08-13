@@ -25,7 +25,6 @@ in
       enable = true;
       package = null;
       extraConfig = ''
-        output * scale 1
         titlebar_border_thickness 0
         titlebar_padding 4 4
       '';
@@ -47,6 +46,9 @@ in
         };
         window.border = 2;
         workspaceAutoBackAndForth = true;
+        output = {
+          "*".scale = "1";
+        };
       };
     };
   };
