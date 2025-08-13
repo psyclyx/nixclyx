@@ -24,6 +24,10 @@ in
       '';
       config = {
         bars = [ { command = "${pkgs.waybar}/bin/waybar"; } ];
+        gaps = {
+          outer = 4;
+          inner = 8;
+        };
         defaultWorkspace = "workspace number 1";
         floating = {
           criteria = [
