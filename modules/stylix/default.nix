@@ -6,6 +6,17 @@
 }:
 let
   cfg = config.psyclyx.stylix;
+  generate =
+    name: image: style:
+    let
+      yaml = pkgs.runCommand name { } ''
+        ${lib.getExe pkgs.flavours} generate "${style}" "${image}" --stdout > $out
+      '';
+    in
+    {
+      inherit yaml;
+      use-ifd = "always";
+    };
 in
 {
   # Nonstandard `enable` behavior:
@@ -20,8 +31,13 @@ in
       default = null;
       description = "path to wallpaper";
     };
+    dark = lib.mkOption {
+      type = lib.types.nullOr lib.types.bool;
+      default = false;
+      description = "If the generated palette is for a dark theme. Has no effect if base16Scheme is set.";
+    };
     base16Scheme = lib.mkOption {
-      type = lib.types.nullOr lib.types.path;
+      type = lib.types.nullOr lib.types.anything;
       default = null;
       description = "path to base16 theme";
     };
@@ -38,8 +54,10 @@ in
       haveImage = cfg.image != null;
       haveScheme = cfg.base16Scheme != null;
       image = if haveImage then cfg.image else fallbackImage;
-      base16Scheme =
-        if haveScheme then cfg.base16Scheme else (if haveImage then null else fallbackScheme);
+      generatedScheme = generate "psyclyx-stylix.yaml" image (if cfg.dark then "dark" else "light");
+      base16Scheme = lib.debug.traceVal (
+        if haveScheme then cfg.base16Scheme else (if haveImage then generatedScheme else fallbackScheme)
+      );
     in
     {
       stylix = {
