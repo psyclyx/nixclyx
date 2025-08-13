@@ -41,7 +41,10 @@ in
         focus = {
           newWindow = "smart";
         };
-        window.border = 2;
+        window = {
+          titlebar = false;
+          border = 4;
+        };
         workspaceAutoBackAndForth = true;
         output = {
           "*".scale = "1";
