@@ -10,14 +10,8 @@ in
 {
   imports = [ ./keybindings.nix ];
 
-  options = {
-    psyclyx = {
-      programs = {
-        sway = {
-          enable = lib.mkEnableOption "Sway config";
-        };
-      };
-    };
+  options.psyclyx.programs.sway = {
+    enable = lib.mkEnableOption "Sway config";
   };
 
   config = lib.mkIf cfg.enable {
