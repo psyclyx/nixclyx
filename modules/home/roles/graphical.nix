@@ -16,6 +16,7 @@ in
         home.packages = with pkgs; [
           psyclyx.upscale-image
           psyclyx.print256colors
+          fastfetch
         ];
       }
       (lib.mkIf pkgs.stdenv.isLinux {
