@@ -28,6 +28,39 @@ in
           outer = 4;
           inner = 8;
         };
+        colors =
+          with config.lib.stylix.colors.withHashtag;
+          lib.mkForce {
+            background = base01;
+            focused = {
+              background = base02;
+              border = base07;
+              childBorder = base07;
+              indicator = base02;
+              text = base07;
+            };
+            focusedInactive = {
+              background = base01;
+              border = base02;
+              childBorder = base02;
+              indicator = base01;
+              text = base05;
+            };
+            unfocused = {
+              background = base00;
+              border = base00;
+              childBorder = base00;
+              indicator = base00;
+              text = base04;
+            };
+            urgent = {
+              background = base02;
+              border = base02;
+              childBorder = base02;
+              indicator = base02;
+              text = base07;
+            };
+          };
         defaultWorkspace = "workspace number 1";
         floating = {
           criteria = [
