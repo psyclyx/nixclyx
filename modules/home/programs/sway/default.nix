@@ -39,8 +39,7 @@ in
           ];
         };
         focus = {
-          wrapping = "force";
-          newWindow = "urgent";
+          newWindow = "smart";
         };
         window.border = 2;
         workspaceAutoBackAndForth = true;
