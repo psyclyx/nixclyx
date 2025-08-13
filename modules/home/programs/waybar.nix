@@ -21,6 +21,8 @@ in
             window#waybar {
                 background: alpha(@base01, ${opacity});
                 color: @base04;
+                padding: 0;
+                margin: 0;
             }
 
             tooltip {
@@ -60,7 +62,6 @@ in
       settings = {
         mainBar = {
           position = "top";
-          height = 24;
           spacing = 16;
 
           modules-left = [
@@ -85,7 +86,7 @@ in
           };
           "network" = {
             format-wifi = "WIFI: {ifname} {ipaddr}/{cidr} {signalStrength}%";
-            format-ethernet = "ETH: {ifname} {ipaddr/cider}";
+            format-ethernet = "ETH: {ifname} {ipaddr}/{cidr}";
             format-linked = "NET: {ifname} (No IP)";
             format-disconnected = "NET: NONE";
             interval = 10;
