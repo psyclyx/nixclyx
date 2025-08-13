@@ -28,7 +28,7 @@ in
             }
 
             tooltip label {
-                color: @base04;
+                color: @base05;
             }
 
             #workspaces button {
