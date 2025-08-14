@@ -19,12 +19,39 @@ in
       enable = true;
       package = null;
       extraConfig = ''
+        blur enable
+        blur_xray disable
+        blur_radius 6
+        blur_noise 0.2
+        #blur_contrast 1
+        blur_passes 1
+
+        corner_radius 6
+
+        default_dim_inactive 0.1
+
+        shadows enable
+        shadows_on_csd enable
+        shadow_blur_radius 6
+        shadow_offset 4 8
+        shadow_color #${config.lib.stylix.colors.base01}AA
+        shadow_inactive_color #${config.lib.stylix.colors.base00}7F
+
+        layer_effects "waybar" {
+          blur enable
+          blur_xray enable
+          shadows enable
+          corner_radius 4
+        }
+
         titlebar_border_thickness 0
+        titlebar_separator disable
         titlebar_padding 4 4
       '';
       config = {
         bars = [ { command = "${pkgs.waybar}/bin/waybar"; } ];
         gaps = {
+          smartBorders = "on";
           outer = 4;
           inner = 8;
         };
@@ -41,17 +68,17 @@ in
             };
             focusedInactive = {
               background = base01;
-              border = base05;
-              childBorder = base05;
-              indicator = base05;
-              text = base05;
-            };
-            unfocused = {
-              background = base00;
               border = base04;
               childBorder = base04;
               indicator = base04;
               text = base04;
+            };
+            unfocused = {
+              background = base00;
+              border = base03;
+              childBorder = base03;
+              indicator = base03;
+              text = base03;
             };
             urgent = {
               background = base02;
