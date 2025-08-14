@@ -100,7 +100,6 @@
       "https://psyclyx.cachix.org?priority=0"
       "https://nix-community.cachix.org?priority=1"
       "https://chaotic-nyx.cachix.org?priority=2"
-      "https://nixos-raspberrypi.cachix.org?priority=3"
     ];
     extra-trusted-public-keys = [
       "psyclyx.cachix.org-1:UFwKXEDn3gLxIW9CeXGdFFUzCIjj8m6IdAQ7GA4XfCk="
