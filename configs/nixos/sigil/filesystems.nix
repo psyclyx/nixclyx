@@ -21,6 +21,11 @@
                   type = "filesystem";
                   format = "vfat";
                   mountpoint = "/boot";
+                  mountOptions = [
+                    "fmask=0077"
+                    "dmask=0077"
+                    "defaults"
+                  ];
                 };
               };
               swap = {
