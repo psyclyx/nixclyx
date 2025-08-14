@@ -18,6 +18,11 @@
     ./users.nix
   ];
 
+  environment.systemPackages = with pkgs; [
+    imagemagick
+    ffmpeg
+  ];
+
   psyclyx = {
     hardware.glasgow = {
       enable = true;
