@@ -55,9 +55,8 @@ in
       haveScheme = cfg.base16Scheme != null;
       image = if haveImage then cfg.image else fallbackImage;
       generatedScheme = generate "psyclyx-stylix.yaml" image (if cfg.dark then "dark" else "light");
-      base16Scheme = lib.debug.traceVal (
-        if haveScheme then cfg.base16Scheme else (if haveImage then generatedScheme else fallbackScheme)
-      );
+      base16Scheme =
+        if haveScheme then cfg.base16Scheme else (if haveImage then generatedScheme else fallbackScheme);
     in
     {
       stylix = {
