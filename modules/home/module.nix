@@ -6,6 +6,7 @@
     ./config.nix
     ./programs/alacritty.nix
     ./programs/emacs.nix
+    ./programs/fastfetch
     ./programs/git.nix
     ./programs/kitty.nix
     ./programs/ssh.nix
