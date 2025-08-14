@@ -27,8 +27,8 @@ in
     };
     gc = {
       automatic = true;
-      dates = "weekly";
-      options = "--delete-older-than 14d";
+      dates = [ "05:00" ];
+      options = "--delete-older-than 3d";
     };
     optimise = {
       automatic = true;
