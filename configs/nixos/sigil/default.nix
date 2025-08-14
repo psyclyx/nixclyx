@@ -82,8 +82,8 @@
     stylix = {
       enable = true;
       baseFontSize = 16;
-      image = ../../wallpapers/madoka-homura-2x.png;
-      base16Scheme = "${pkgs.base16-schemes}/share/themes/catppuccin-macchiato.yaml";
+      image = ../../wallpapers/4x-ppmm-mami.jpg;
+      dark = true;
     };
   };
 }
