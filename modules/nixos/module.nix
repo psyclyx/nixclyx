@@ -14,6 +14,7 @@
     ./services/home-assistant.nix
     ./services/kanata
     ./services/locate.nix
+    ./services/openrgb.nix
     ./services/openssh.nix
     ./services/printing.nix
     ./services/tailscale.nix

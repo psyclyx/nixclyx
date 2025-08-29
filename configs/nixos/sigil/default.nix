@@ -54,6 +54,7 @@
       home-assistant = {
         enable = true;
       };
+      openrgb.enable = true;
       openssh = {
         enable = true;
       };
