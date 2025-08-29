@@ -3,7 +3,8 @@
   inputs,
   pkgs,
   ...
-}: {
+}:
+{
   networking = {
     useNetworkd = true;
   };
@@ -20,9 +21,9 @@
         anyInterface = true;
       };
       networks = {
-        "40-enp6s0" = {
+        "40-enp5s0" = {
           matchConfig = {
-            Name = "enp6s0";
+            Name = "enp5s0";
           };
           linkConfig = {
             RequiredForOnline = "routable";
