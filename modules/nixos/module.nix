@@ -8,6 +8,7 @@
     ./programs/sway.nix
     ./programs/zsh.nix
     ./services/automount.nix
+    ./services/fwupd.nix
     ./services/gnome-keyring.nix
     ./services/greetd.nix
     ./services/home-assistant.nix

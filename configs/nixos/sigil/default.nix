@@ -42,6 +42,7 @@
       autoMount = {
         enable = true;
       };
+      fwupd.enable = true;
       gnome-keyring = {
         enable = true;
       };
