@@ -1,7 +1,7 @@
-{ inputs, pkgs, ... }:
+{ pkgs, ... }:
 {
   boot = {
-    kernelPackages = inputs.chaotic.unrestrictedPackages."${pkgs.system}".linuxPackages_cachyos;
+    kernelPackages = pkgs.linuxPackages_zen;
     binfmt.emulatedSystems = [ "aarch64-linux" ];
     initrd = {
       verbose = false;
