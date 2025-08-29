@@ -17,6 +17,7 @@
     ./roles/graphical.nix
     ./roles/shell.nix
     ./secrets
+    ./services/mako.nix
     ./xdg.nix
   ];
 }
