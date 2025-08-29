@@ -25,7 +25,9 @@
 
   psyclyx = {
     hardware.glasgow = {
-      enable = true;
+      # 28-08-2025 workaround build failure
+      enable = false;
+      # enable = true;
       users = [ "psyc" ];
     };
     programs = {
