@@ -14,10 +14,15 @@
   };
   hardware.nvidia = {
     nvidiaSettings = true;
-    package = config.boot.kernelPackages.nvidiaPackages.latest;
-    powerManagement.enable = false;
+    package = config.boot.kernelPackages.nvidiaPackages.beta;
+    powerManagement.enable = true;
     powerManagement.finegrained = false;
     open = true;
     modesetting.enable = true;
+  };
+  systemd.services."systemd-suspend" = {
+    serviceConfig = {
+      Environment = ''"SYSTEMD_SLEEP_FREEZE_USER_SESSIONS=false"'';
+    };
   };
 }
