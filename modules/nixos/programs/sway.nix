@@ -38,9 +38,10 @@ in
         wrapperFeatures = {
           gtk = true;
         };
-        extraPackages = [
-          pkgs.wl-clipboard
-          pkgs.wtype
+        extraPackages = with pkgs; [
+          wev
+          wl-clipboard
+          wtype
         ];
         extraOptions = [ "--unsupported-gpu" ];
         extraSessionCommands = ''

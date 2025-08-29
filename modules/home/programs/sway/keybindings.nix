@@ -5,105 +5,155 @@
   ...
 }:
 let
-  mod = "Mod4";
-  left = "h";
-  down = "j";
-  up = "k";
-  right = "l";
+  inherit (lib) getExe getExe' concatMapAttrs;
 
-  light = "${pkgs.light}/bin/light";
-  pactl = "${pkgs.pulseaudio}/bin/pactl";
-  rofi = "${pkgs.rofi}/bin/rofi";
-  term = "${config.programs.alacritty.package}/bin/alacritty";
+  # Applications
+  menus = import ./menus.nix { inherit config pkgs lib; };
+
+  launcher = "fuzzel";
+  power-menu = getExe menus.power-menu;
+  screenshot-menu = getExe menus.screenshot-menu;
+
+  browser = "firefox";
+  terminal = "alacritty";
+  editor = "emacsclient";
+  editorAlt = "emacs";
+
+  backlightUp = "light -U 10";
+  backlightDown = "light -D 10";
+  volumeUp = "pactl set-sink-volume '@DEFAULT_SINK@' '+5%'";
+  volumeDown = "pactl set-sink-volume '@DEFAULT_SINK@' '-5%'";
+  volumeMute = "pactl set-sink-mute '@DEFAULT_SINK@' toggle";
+
+  # Keys
+  leaderKey = "Super";
+  directionKeys = {
+    left = "h";
+    down = "j";
+    up = "k";
+    right = "l";
+  };
+  moveKey = "Shift";
+  fineKey = "Ctrl";
+  coarseKey = "Super";
+  resizeModeKey = "r";
+  exitModeKey = "Escape";
+  workspaceKeys = lib.listToAttrs (
+    lib.imap1 (i: key: {
+      name = "workspace number ${builtins.toString i}";
+      value = builtins.toString key;
+    }) (lib.range 1 9 ++ [ 0 ])
+  );
+
+  # Configuration
+  steps = {
+    fine = "1 ppt or 10px";
+    default = "5 ppt or 50px";
+    coarse = "25 ppt or 250px";
+  };
+
+  resizeKeys = with directionKeys; {
+    "shrink width" = left;
+    "grow height" = down;
+    "shrink height" = up;
+    "grow width" = right;
+  };
+
+  # Binds
+  directionBinds = concatMapAttrs (direction: key: {
+    "${leaderKey}+${key}" = "focus ${direction}";
+    "${leaderKey}+${moveKey}+${key}" = "move ${direction} ${steps.default}";
+  }) directionKeys;
+
+  workspaceBinds = lib.concatMapAttrs (workspace: key: {
+    "${leaderKey}+${key}" = workspace;
+    "${leaderKey}+${moveKey}+${key}" = "move container to ${workspace}";
+  }) workspaceKeys;
+
+  layoutBinds = {
+    "${leaderKey}+semicolon" = "focus mode_toggle";
+    "${leaderKey}+Shift+semicolon" = "floating toggle";
+
+    "${leaderKey}+n" = "focus parent";
+    "${leaderKey}+Shift+n" = "focus child";
+
+    "${leaderKey}+comma" = "layout toggle stacking tabbed";
+    "${leaderKey}+Shift+comma" = "layout toggle split";
+
+    "${leaderKey}+period" = "splitt";
+    "${leaderKey}+Shift+period" = "split none";
+
+    "${leaderKey}+slash" = "fullscreen toggle";
+  };
+
+  modeBinds = {
+    "${leaderKey}+${resizeModeKey}" = "mode resize";
+  };
+
+  applicationBinds = {
+    "${leaderKey}+Return" = "exec ${launcher}";
+    "${leaderKey}+x" = "exec ${power-menu}";
+
+    "${leaderKey}+s" = "exec ${screenshot-menu}";
+
+    "${leaderKey}+u" = "exec ${browser}";
+    "${leaderKey}+i" = "exec ${terminal}";
+    "${leaderKey}+o" = "exec ${editor} -cn -a ''";
+    "${leaderKey}+Shift+o" = "exec ${editorAlt}";
+  };
+
+  backlightBinds = {
+    "XF86MonBrightnessUp" = "exec ${backlightUp}";
+    "XF86MonBrightnessDown" = "exec ${backlightDown}";
+  };
+
+  mediaBinds = {
+    "XF86AudioRaiseVolume" = "exec ${volumeUp}";
+    "XF86AudioLowerVolume" = "exec ${volumeDown}";
+    "XF86AudioMute" = "exec ${volumeMute}";
+  };
+
+  controlBinds = {
+    "${leaderKey}+Shift+q" = "kill";
+    "${leaderKey}+Shift+c" = "reload";
+  };
+
+  ## Resize mode
+  resizeBinds = lib.concatMapAttrs (
+    direction: key: with steps; {
+      "${fineKey}+${key}" = "resize ${direction} ${fine}";
+      "${key}" = "resize ${direction} ${default}";
+      "${coarseKey}+${key}" = "resize ${direction} ${coarse}";
+    }
+  ) resizeKeys;
+
+  moveBinds = lib.concatMapAttrs (
+    direction: key: with steps; {
+      "${moveKey}+${fineKey}+${key}" = "move ${direction} ${fine}";
+      "${moveKey}+${key}" = "move ${direction} ${default}";
+      "${moveKey}+${coarseKey}+${key}" = "move ${direction} ${coarse}";
+    }
+  ) directionKeys;
+
+  # Merged keybindings
+  keybindings =
+    directionBinds
+    // workspaceBinds
+    // layoutBinds
+    // modeBinds
+    // applicationBinds
+    // backlightBinds
+    // mediaBinds
+    // controlBinds;
+
+  resizeModeKeybindings = resizeBinds // moveBinds // { "${exitModeKey}" = "mode default"; };
+
+  modes = {
+    resize = resizeModeKeybindings;
+  };
 in
 {
-  wayland = {
-    windowManager = {
-      sway = {
-        config = {
-          keybindings = {
-            "XF86MonBrightnessDown" = "exec ${light} -U 10";
-            "XF86MonBrightnessUp" = "exec ${light} -A 10";
-
-            "XF86AudioRaiseVolume" = "exec '${pactl} set-sink-volume @DEFAULT_SINK@ +5%'";
-            "XF86AudioLowerVolume" = "exec '${pactl} set-sink-volume @DEFAULT_SINK@ -5%'";
-            "XF86AudioMute" = "exec '${pactl} set-sink-mute @DEFAULT_SINK@ toggle'";
-
-            "${mod}+${left}" = "focus left";
-            "${mod}+${down}" = "focus down";
-            "${mod}+${up}" = "focus up";
-            "${mod}+${right}" = "focus right";
-
-            "${mod}+Shift+${left}" = "move left";
-            "${mod}+Shift+${down}" = "move down";
-            "${mod}+Shift+${up}" = "move up";
-            "${mod}+Shift+${right}" = "move right";
-
-            "${mod}+b" = "splith";
-            "${mod}+v" = "splitv";
-            "${mod}+f" = "fullscreen toggle";
-            "${mod}+u" = "focus parent";
-            "${mod}+Shift+a" = "focus child";
-
-            "${mod}+Shift+space" = "floating toggle";
-            "${mod}+space" = "focus mode_toggle";
-
-            "${mod}+Shift+q" = "kill";
-
-            "${mod}+d" = "exec ${rofi} -show drun";
-            "${mod}+g" = "exec ${rofi} -show filebrowser";
-            "${mod}+Return" = "exec ${term}";
-            "${mod}+Shift+e" =
-              "exec ${rofi} -show session -modi \"session:${pkgs.lib.getExe pkgs.psyclyx.rofi-session}\"";
-            "${mod}+Shift+c" = "reload";
-
-            "${mod}+r" = "mode resize";
-
-            "${mod}+1" = "workspace number 1";
-            "${mod}+2" = "workspace number 2";
-            "${mod}+3" = "workspace number 3";
-            "${mod}+4" = "workspace number 4";
-            "${mod}+5" = "workspace number 5";
-            "${mod}+6" = "workspace number 6";
-            "${mod}+7" = "workspace number 7";
-            "${mod}+8" = "workspace number 8";
-            "${mod}+9" = "workspace number 9";
-            "${mod}+0" = "workspace number 10";
-
-            "${mod}+slash" = "layout toggle split";
-            "${mod}+comma" = "layout toggle stacking tabbed";
-
-            "${mod}+Shift+1" = "move container to workspace number 1";
-            "${mod}+Shift+2" = "move container to workspace number 2";
-            "${mod}+Shift+3" = "move container to workspace number 3";
-            "${mod}+Shift+4" = "move container to workspace number 4";
-            "${mod}+Shift+5" = "move container to workspace number 5";
-            "${mod}+Shift+6" = "move container to workspace number 6";
-            "${mod}+Shift+7" = "move container to workspace number 7";
-            "${mod}+Shift+8" = "move container to workspace number 8";
-            "${mod}+Shift+9" = "move container to workspace number 9";
-            "${mod}+Shift+0" = "move container to workspace number 0";
-
-            "${mod}+Shift+minus" = "move scratchpad";
-            "${mod}+minus" = "scratchpad show";
-          };
-
-          modes = {
-            resize = {
-              Escape = "mode default";
-              Return = "mode default";
-              "${left}" = "resize shrink width 10 px or 10 ppt";
-              "${down}" = "resize grow height 10 px or 10 ppt";
-              "${up}" = "resize shrink height 10 px or 10 ppt";
-              "${right}" = "resize grow width 10 px or 10 ppt";
-              "Shift+${left}" = "resize shrink width 20 px or 20 ppt";
-              "Shift+${down}" = "resize grow height 20 px or 20 ppt";
-              "Shift+${up}" = "resize shrink height 20 px or 20 ppt";
-              "Shift+${right}" = "resize grow width 20 px or 20 ppt";
-            };
-          };
-        };
-      };
-    };
+  wayland.windowManager.sway.config = {
+    inherit keybindings modes;
   };
 }

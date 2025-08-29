@@ -8,27 +8,45 @@ let
   cfg = config.psyclyx.programs.sway;
 in
 {
-  imports = [ ./keybindings.nix ];
+  imports = [
+    ./keybindings.nix
+    ./swaylock.nix
+  ];
 
   options.psyclyx.programs.sway = {
     enable = lib.mkEnableOption "Sway config";
   };
 
   config = lib.mkIf cfg.enable {
+    home.packages = with pkgs; [
+      grim
+      slurp
+    ];
+
+    psyclyx = {
+      programs = {
+        alacritty.enable = lib.mkDefault true;
+        fuzzel.enable = lib.mkDefault true;
+      };
+      services = {
+        mako.enable = lib.mkDefault true;
+      };
+    };
     wayland.windowManager.sway = {
       enable = true;
       package = null;
       extraConfig = ''
         blur enable
         blur_xray disable
-        blur_radius 6
+        blur_radius 4
         blur_noise 0.2
-        #blur_contrast 1
+        blur_contrast 1.1
+        blur_brightness 1
         blur_passes 1
 
         corner_radius 6
 
-        default_dim_inactive 0.1
+        default_dim_inactive 0.15
 
         shadows enable
         shadows_on_csd enable
