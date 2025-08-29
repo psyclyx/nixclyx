@@ -44,6 +44,13 @@ in
           corner_radius 4
         }
 
+        layer_effects "fuzzel" {
+          blur enable
+          blur_xray disable
+          blur_ignore_transparent true
+          corner_radius 4
+        }
+
         titlebar_border_thickness 0
         titlebar_separator disable
         titlebar_padding 4 4
