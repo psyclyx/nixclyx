@@ -24,11 +24,14 @@
   ];
 
   psyclyx = {
-    hardware.glasgow = {
-      # 28-08-2025 workaround build failure
-      enable = false;
-      # enable = true;
-      users = [ "psyc" ];
+    hardware = {
+      glasgow = {
+        # 28-08-2025 workaround build failure
+        enable = false;
+        # enable = true;
+        users = [ "psyc" ];
+      };
+      qmk.enable = true;
     };
     programs = {
       aspell.enable = true;

@@ -2,6 +2,7 @@
   imports = [
     ../stylix
     ./hardware/glasgow.nix
+    ./hardware/qmk.nix
     ./programs/adb.nix
     ./programs/aspell.nix
     ./programs/steam.nix
