@@ -22,12 +22,16 @@ in
     programs = {
       ssh = {
         enable = true;
-        compression = true;
-        addKeysToAgent = "yes";
+        enableDefaultConfig = false;
         extraOptionOverrides = {
           "UpdateHostKeys" = "no";
-        } // lib.optionalAttrs isDarwin { "useKeychain" = "yes"; };
+        }
+        // lib.optionalAttrs isDarwin { "useKeychain" = "yes"; };
         matchBlocks = {
+          "*" = {
+            compression = true;
+            addKeysToAgent = "yes";
+          };
           "alice157.github.com" = {
             identityFile = "~/.ssh/id_alice157";
             hostname = "github.com";
