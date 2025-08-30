@@ -18,9 +18,9 @@ in
       settings = {
         actions = true;
         anchor = "top-right";
-        borderRadius = 6;
-        borderSize = 4;
-        defaultTimeout = 10000;
+        border-radius = 6;
+        border-size = 4;
+        default-timeout = 10000;
       };
     };
   };
