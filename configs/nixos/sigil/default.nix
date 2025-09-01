@@ -19,8 +19,9 @@
   ];
 
   environment.systemPackages = with pkgs; [
-    imagemagick
     ffmpeg
+    osu-lazer-bin
+    imagemagick
   ];
 
   psyclyx = {
@@ -35,57 +36,32 @@
     };
     programs = {
       aspell.enable = true;
-      steam = {
-        enable = true;
-      };
-      sway = {
-        enable = true;
-      };
+      steam.enable = true;
+      sway.enable = true;
     };
-
     services = {
-      autoMount = {
-        enable = true;
-      };
+      autoMount.enable = true;
       fwupd.enable = true;
-      gnome-keyring = {
-        enable = true;
-      };
-      greetd = {
-        enable = true;
-      };
-      home-assistant = {
-        enable = true;
-      };
+      gnome-keyring.enable = true;
+      greetd.enable = true;
+      home-assistant.enable = true;
       openrgb.enable = true;
-      openssh = {
-        enable = true;
-      };
+      openssh.enable = true;
       locate = {
         enable = true;
         users = [ "psyc" ];
       };
-      printing = {
-        enable = true;
-      };
+      printing.enable = true;
       tailscale = {
         enable = true;
         exitNode = true;
       };
     };
-
     system = {
-      fonts = {
-        enable = true;
-      };
-      sudo = {
-        enable = true;
-      };
-      virtualization = {
-        enable = true;
-      };
+      fonts.enable = true;
+      sudo.enable = true;
+      virtualization.enable = true;
     };
-
     stylix = {
       enable = true;
       baseFontSize = 16;
