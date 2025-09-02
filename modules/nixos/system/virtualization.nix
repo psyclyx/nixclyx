@@ -4,20 +4,12 @@ let
 in
 {
   options = {
-    psyclyx = {
-      system = {
-        virtualization = {
-          enable = lib.mkEnableOption "Enable virtualization.";
-        };
-      };
+    psyclyx.system.virtualization = {
+      enable = lib.mkEnableOption "Enable virtualization.";
     };
   };
+
   config = lib.mkIf cfg.enable {
-    # NixOS option uses british spelling
-    virtualisation = {
-      docker = {
-        enable = true;
-      };
-    };
+    virtualisation.docker.enable = true;
   };
 }
