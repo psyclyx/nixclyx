@@ -17,8 +17,9 @@ in
   config = lib.mkIf cfg.enable {
     environment.systemPackages = with pkgs; [
       binutils
-      htop
       ethtool
+      htop
+      lm_sensors
       pciutils
     ];
     psyclyx = {
