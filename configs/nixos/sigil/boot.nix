@@ -2,7 +2,6 @@
 {
   boot = {
     kernelPackages = pkgs.linuxPackages_zen;
-    binfmt.emulatedSystems = [ "aarch64-linux" ];
     plymouth.enable = true;
 
     initrd = {
