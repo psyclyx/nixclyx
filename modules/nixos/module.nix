@@ -23,6 +23,7 @@
     ./system/fonts.nix
     ./system/locale.nix
     ./system/nix.nix
+    ./system/nixpkgs.nix
     ./system/sudo.nix
     ./system/virtualization.nix
   ];

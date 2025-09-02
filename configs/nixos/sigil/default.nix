@@ -7,7 +7,6 @@
     inputs.disko.nixosModules.disko
     inputs.stylix.nixosModules.stylix
 
-    ../../../modules/nixos/nixpkgs.nix
     ../../../modules/nixos/module.nix
     ../../../modules/nixos/system/home-manager.nix
 
