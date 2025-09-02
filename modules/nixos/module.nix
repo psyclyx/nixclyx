@@ -23,7 +23,6 @@
     ./services/openssh.nix
     ./services/printing.nix
     ./services/tailscale.nix
-    ./system/console.nix
     ./system/fonts.nix
     ./system/home-manager.nix
     ./system/locale.nix
