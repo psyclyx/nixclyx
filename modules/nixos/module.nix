@@ -9,6 +9,7 @@
     ./programs/sway.nix
     ./programs/zsh.nix
     ./services/automount.nix
+    ./roles/base.nix
     ./roles/graphical.nix
     ./roles/media.nix
     ./roles/remote.nix

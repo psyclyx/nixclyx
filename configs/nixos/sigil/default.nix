@@ -19,6 +19,7 @@
 
   psyclyx = {
     roles = {
+      base.enable = true;
       graphical.enable = true;
       media.enable = true;
       remote.enable = true;
