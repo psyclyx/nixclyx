@@ -12,7 +12,6 @@ in
   time.timeZone = "America/Los_Angeles";
   imports = [
     inputs.stylix.nixosModules.stylix
-    ../../../modules/nixos/nixpkgs.nix
     ../../../modules/nixos/module.nix
     ../../../modules/nixos/system/home-manager.nix
 

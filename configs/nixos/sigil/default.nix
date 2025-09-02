@@ -17,13 +17,13 @@
     ./users.nix
   ];
 
-  environment.systemPackages = with pkgs; [
-    ffmpeg
-    osu-lazer-bin
-    imagemagick
-  ];
-
   psyclyx = {
+    roles = {
+      graphical.enable = true;
+      media.enable = true;
+      remote.enable = true;
+      utility.enable = true;
+    };
     hardware = {
       glasgow = {
         # 28-08-2025 workaround build failure
@@ -31,39 +31,22 @@
         # enable = true;
         users = [ "psyc" ];
       };
-      qmk.enable = true;
     };
     programs = {
-      aspell.enable = true;
       steam.enable = true;
-      sway.enable = true;
     };
     services = {
-      autoMount.enable = true;
-      fwupd.enable = true;
-      gnome-keyring.enable = true;
-      greetd.enable = true;
       home-assistant.enable = true;
       openrgb.enable = true;
-      openssh.enable = true;
       locate = {
-        enable = true;
         users = [ "psyc" ];
       };
-      printing.enable = true;
-      tailscale = {
-        enable = true;
-        exitNode = true;
-      };
+      tailscale.exitNode = true;
     };
     system = {
-      fonts.enable = true;
-      sudo.enable = true;
       virtualization.enable = true;
     };
     stylix = {
-      enable = true;
-      baseFontSize = 16;
       image = ../../wallpapers/4x-ppmm-mami.jpg;
       dark = true;
     };

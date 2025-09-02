@@ -9,6 +9,10 @@
     ./programs/sway.nix
     ./programs/zsh.nix
     ./services/automount.nix
+    ./roles/graphical.nix
+    ./roles/media.nix
+    ./roles/remote.nix
+    ./roles/utility.nix
     ./services/fwupd.nix
     ./services/gnome-keyring.nix
     ./services/greetd.nix
