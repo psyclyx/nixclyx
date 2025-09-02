@@ -30,7 +30,6 @@
       "udev.log_priority=3"
       "rd.systemd.show_status=auto"
       "mitigations=off"
-      "igb.EEE=0"
     ];
 
     kernelModules = [
