@@ -6,7 +6,6 @@
   imports = [
     inputs.stylix.nixosModules.stylix
     ../../../modules/nixos/module.nix
-    ../../../modules/nixos/system/home-manager.nix
 
     ./boot.nix
     ./filesystems.nix

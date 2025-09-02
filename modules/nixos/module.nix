@@ -25,6 +25,7 @@
     ./services/tailscale.nix
     ./system/console.nix
     ./system/fonts.nix
+    ./system/home-manager.nix
     ./system/locale.nix
     ./system/nix.nix
     ./system/nixpkgs.nix

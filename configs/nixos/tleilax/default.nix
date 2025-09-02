@@ -13,7 +13,6 @@ in
   imports = [
     inputs.stylix.nixosModules.stylix
     ../../../modules/nixos/module.nix
-    ../../../modules/nixos/system/home-manager.nix
 
     ../../../modules/nixos/services/fail2ban.nix
 
