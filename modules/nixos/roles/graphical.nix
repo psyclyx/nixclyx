@@ -15,6 +15,9 @@ in
   };
 
   config = lib.mkIf cfg.enable {
+    boot = {
+      kernelPackages = pkgs.linuxPackages_zen;
+    };
     psyclyx = {
       boot = {
         plymouth.enable = lib.mkDefault true;

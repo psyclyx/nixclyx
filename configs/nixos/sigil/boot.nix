@@ -1,7 +1,6 @@
 { inputs, pkgs, ... }:
 {
   boot = {
-    kernelPackages = pkgs.linuxPackages_zen;
 
     initrd = {
       systemd.enable = true;
