@@ -1,6 +1,7 @@
 {
   imports = [
     ../stylix
+    ./boot/plymouth.nix
     ./hardware/glasgow.nix
     ./hardware/qmk.nix
     ./programs/adb.nix

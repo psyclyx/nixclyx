@@ -16,6 +16,9 @@ in
 
   config = lib.mkIf cfg.enable {
     psyclyx = {
+      boot = {
+        plymouth.enable = lib.mkDefault true;
+      };
       hardware = {
         qmk.enable = lib.mkDefault true;
       };
