@@ -1,20 +1,6 @@
 { inputs, pkgs, ... }:
 {
   boot = {
-
-    initrd = {
-      systemd.enable = true;
-    };
-
-    loader = {
-      timeout = 0;
-      systemd-boot = {
-        enable = true;
-        configurationLimit = 16;
-      };
-      efi.canTouchEfiVariables = true;
-    };
-
     kernelParams = [
       "amd_iommu=on"
       "iommu=pt"

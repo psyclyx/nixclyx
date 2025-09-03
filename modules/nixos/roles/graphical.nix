@@ -21,6 +21,7 @@ in
     psyclyx = {
       boot = {
         plymouth.enable = lib.mkDefault true;
+        systemd-boot.enable = lib.mkDefault true;
       };
       hardware = {
         qmk.enable = lib.mkDefault true;

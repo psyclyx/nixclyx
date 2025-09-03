@@ -2,6 +2,7 @@
   imports = [
     ../stylix
     ./boot/plymouth.nix
+    ./boot/systemd-boot.nix
     ./hardware/glasgow.nix
     ./hardware/qmk.nix
     ./programs/adb.nix
