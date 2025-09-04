@@ -21,6 +21,7 @@ in
       htop
       lm_sensors
       pciutils
+      stress-ng
       sysbench
     ];
     psyclyx = {
