@@ -26,6 +26,7 @@
       utility.enable = true;
     };
     hardware = {
+      amd.enable = true;
       glasgow = {
         # 28-08-2025 workaround build failure
         enable = false;

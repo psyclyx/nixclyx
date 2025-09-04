@@ -5,9 +5,5 @@
       "boot.shell_on_fail"
       "mitigations=off"
     ];
-
-    kernelModules = [
-      "kvm-amd"
-    ];
   };
 }
