@@ -21,6 +21,7 @@ in
       htop
       lm_sensors
       pciutils
+      sysbench
     ];
     psyclyx = {
       programs = {
