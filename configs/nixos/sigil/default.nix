@@ -12,7 +12,6 @@
 
     ./boot.nix
     ./filesystems.nix
-    ./hardware.nix
     ./network.nix
     ./users.nix
   ];
