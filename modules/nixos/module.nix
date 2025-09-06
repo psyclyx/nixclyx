@@ -3,7 +3,7 @@
     ../stylix
     ./boot/plymouth.nix
     ./boot/systemd-boot.nix
-    ./hardware/amd.nix
+    ./hardware/cpu
     ./hardware/glasgow.nix
     ./hardware/nvidia.nix
     ./hardware/qmk.nix

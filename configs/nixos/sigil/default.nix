@@ -15,7 +15,6 @@
     ./users.nix
   ];
 
-  boot.kernelParams = [ "mitigations=off" ];
   psyclyx = {
     roles = {
       base.enable = true;
@@ -25,7 +24,10 @@
       utility.enable = true;
     };
     hardware = {
-      amd.enable = true;
+      cpu = {
+        amd.enable = true;
+        enableMitigations = false;
+      };
       glasgow = {
         # 28-08-2025 workaround build failure
         enable = false;
