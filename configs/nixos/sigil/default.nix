@@ -32,6 +32,7 @@
         # enable = true;
         users = [ "psyc" ];
       };
+      nvidia.enable = true;
     };
     programs = {
       steam.enable = true;

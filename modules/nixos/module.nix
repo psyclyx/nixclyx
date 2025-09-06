@@ -4,6 +4,7 @@
     ./boot/plymouth.nix
     ./boot/systemd-boot.nix
     ./hardware/glasgow.nix
+    ./hardware/nvidia.nix
     ./hardware/qmk.nix
     ./programs/adb.nix
     ./programs/aspell.nix
