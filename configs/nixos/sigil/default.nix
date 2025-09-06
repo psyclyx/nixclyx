@@ -10,12 +10,12 @@
     ../../../modules/nixos/module.nix
     ../../../modules/nixos/system/home-manager.nix
 
-    ./boot.nix
     ./filesystems.nix
     ./network.nix
     ./users.nix
   ];
 
+  boot.kernelParams = [ "mitigations=off" ];
   psyclyx = {
     roles = {
       base.enable = true;
