@@ -10,8 +10,6 @@
 
   systemd = {
     network = {
-      enable = true;
-      wait-online.anyInterface = true;
       networks."40-enp5s0" = {
         matchConfig.Name = "enp5s0";
         linkConfig.RequiredForOnline = "routable";
