@@ -16,6 +16,15 @@
   ];
 
   psyclyx = {
+    network = {
+      enable = true;
+      networks = {
+        "enp5s0" = {
+          enableDHCP = true;
+          requiredForOnline = true;
+        };
+      };
+    };
     roles = {
       base.enable = true;
       graphical.enable = true;
