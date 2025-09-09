@@ -44,6 +44,7 @@
         users = [ "psyc" ];
       };
       nvidia.enable = true;
+      rtl8125.disableEEEOn = [ "enp5s0" ];
     };
     programs = {
       steam.enable = true;

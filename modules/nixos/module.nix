@@ -7,6 +7,7 @@
     ./hardware/glasgow.nix
     ./hardware/nvidia.nix
     ./hardware/qmk.nix
+    ./hardware/rtl8125.nix
     ./network
     ./programs/adb.nix
     ./programs/aspell.nix
