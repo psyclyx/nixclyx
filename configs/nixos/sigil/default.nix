@@ -11,7 +11,6 @@
     ../../../modules/nixos/system/home-manager.nix
 
     ./filesystems.nix
-    ./network.nix
     ./users.nix
   ];
 
