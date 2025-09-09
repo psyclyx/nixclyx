@@ -2,8 +2,6 @@
 {
   imports = [
     inputs.disko.nixosModules.disko
-    inputs.stylix.nixosModules.stylix
-    ../stylix
     ./boot/plymouth.nix
     ./boot/systemd-boot.nix
     ./hardware/cpu
@@ -33,6 +31,7 @@
     ./services/openssh.nix
     ./services/printing.nix
     ./services/tailscale.nix
+    ./stylix.nix
     ./system/fonts.nix
     ./system/home-manager.nix
     ./system/locale.nix
