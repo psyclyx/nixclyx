@@ -4,12 +4,7 @@
   networking.hostName = "sigil";
   time.timeZone = "America/Los_Angeles";
   imports = [
-    inputs.disko.nixosModules.disko
-    inputs.stylix.nixosModules.stylix
-
     ../../../modules/nixos/module.nix
-    ../../../modules/nixos/system/home-manager.nix
-
     ./filesystems.nix
     ./users.nix
   ];

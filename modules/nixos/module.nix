@@ -1,5 +1,8 @@
+{ inputs, ... }:
 {
   imports = [
+    inputs.disko.nixosModules.disko
+    inputs.stylix.nixosModules.stylix
     ../stylix
     ./boot/plymouth.nix
     ./boot/systemd-boot.nix
