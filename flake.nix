@@ -23,31 +23,32 @@
   };
 
   outputs =
-    inputs:
+    { nixpkgs, ... }@inputs:
     let
-      inherit (inputs.nixpkgs) lib;
-      pkgsFor =
-        system:
-        (import inputs.nixpkgs {
-          inherit system;
-          config.allowUnfree = true;
-        });
-      systems = [
-        "x86_64-linux"
-        "aarch64-darwin"
-      ];
-      systemPkgs = lib.genAttrs systems pkgsFor;
-      mapSystemPkgs = f: (lib.mapAttrs (_: f) systemPkgs);
+      inherit (nixpkgs) lib;
+      psyclyxLib = import ./lib { inherit lib; };
 
       mkDarwinConfiguration = import ./modules/darwin { inherit inputs; };
       mkNixosConfiguration = import ./modules/nixos { inherit inputs; };
-    in
-    rec {
-      packages = mapSystemPkgs (pkgs: pkgs.psyclyx);
 
-      devShells = mapSystemPkgs (pkgs: {
-        default = import ./shell.nix { inherit pkgs; };
-      });
+      withSystemPkgs = with psyclyxLib.systems; f: genSystemPkgsAttrs nixpkgs f;
+    in
+    {
+      packages = withSystemPkgs (pkgs: import ./packages { inherit pkgs; });
+      devShells.default = withSystemPkgs (pkgs: import ./shell.nix { inherit pkgs; });
+      # checks =
+      #   let
+      #     hostConfigs = nixosConfigurations // darwinConfigurations;
+      #     hasSystem = system: hostConfig: hostConfig.pkgs.system == system;
+      #     systemHostConfigs = system: (lib.filterAttrs (_: (hasSystem system)) hostConfigs);
+      #     topLevel = hostConfig: hostConfig.config.system.build.toplevel;
+      #     systemChecks = system: lib.mapAttrs (_: topLevel) (systemHostConfigs system);
+      #   in
+      #   lib.genAttrs systems systemChecks;
+
+    }
+    // {
+      lib = psyclyxLib;
 
       homeManagerModules.default = ./modules/home/module.nix;
 
@@ -78,16 +79,6 @@
           modules = [ ./configs/darwin/halo ];
         };
       };
-
-      checks =
-        let
-          hostConfigs = nixosConfigurations // darwinConfigurations;
-          hasSystem = system: hostConfig: hostConfig.pkgs.system == system;
-          systemHostConfigs = system: (lib.filterAttrs (_: (hasSystem system)) hostConfigs);
-          topLevel = hostConfig: hostConfig.config.system.build.toplevel;
-          systemChecks = system: lib.mapAttrs (_: topLevel) (systemHostConfigs system);
-        in
-        lib.genAttrs systems systemChecks;
     };
 
   nixConfig = {

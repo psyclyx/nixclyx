@@ -2,6 +2,7 @@
   config,
   lib,
   pkgs,
+  inputs,
   ...
 }:
 let
@@ -13,11 +14,12 @@ in
   config = lib.mkIf cfgEnabled (
     lib.mkMerge [
       {
-        home.packages = with pkgs; [
-          psyclyx.upscale-image
-          psyclyx.print256colors
-          fastfetch
-        ];
+        home.packages =
+          (with pkgs; [ fastfetch ])
+          ++ (with inputs.self.packages."${pkgs.system}"; [
+            upscale-image
+            print256colors
+          ]);
       }
       (lib.mkIf pkgs.stdenv.isLinux {
         home.packages = with pkgs; [

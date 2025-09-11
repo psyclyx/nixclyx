@@ -1,6 +1,5 @@
 {
   config,
-  overlays,
   lib,
   ...
 }:
@@ -14,7 +13,6 @@ in
 
   config = lib.mkIf cfg.enable {
     nixpkgs = {
-      inherit overlays;
       config = {
         allowUnfree = true;
         nvidia.acceptLicense = true;
