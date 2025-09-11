@@ -3,6 +3,6 @@
   pkgs ? import <nixpkgs> { },
 }:
 {
-  platforms = import ./platforms.nix;
+  systems = import ./systems.nix;
   packageSets = import ./packageSets.nix { inherit pkgs; };
 }

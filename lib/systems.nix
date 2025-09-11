@@ -1,4 +1,3 @@
-# Supported platforms
 rec {
   aarch64-darwin = [ "aarch64-darwin" ];
   aarch64-linux = [ "aarch64-linux" ];

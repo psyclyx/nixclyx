@@ -5,6 +5,6 @@
 }:
 let
   inherit (psyclyxLib.packageSets) mkPackageSet;
-  packageDefs = import ./packageDefs.nix;
+  defs = import ./defs.nix;
 in
-mkPackageSet packageDefs
+mkPackageSet defs
