@@ -1,4 +1,4 @@
-{ inputs, overlays }:
+{ inputs }:
 {
   system,
   modules ? [ ],
@@ -7,6 +7,7 @@
 inputs.nixpkgs.lib.nixosSystem {
   inherit system modules;
   specialArgs = {
-    inherit inputs overlays;
-  } // args;
+    inherit inputs;
+  }
+  // args;
 }

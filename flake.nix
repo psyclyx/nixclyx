@@ -26,12 +26,10 @@
     inputs:
     let
       inherit (inputs.nixpkgs) lib;
-      overlay = import ./overlay.nix inputs;
-      overlays = [ overlay ];
       pkgsFor =
         system:
         (import inputs.nixpkgs {
-          inherit overlays system;
+          inherit system;
           config.allowUnfree = true;
         });
       systems = [
@@ -41,13 +39,11 @@
       systemPkgs = lib.genAttrs systems pkgsFor;
       mapSystemPkgs = f: (lib.mapAttrs (_: f) systemPkgs);
 
-      mkDarwinConfiguration = import ./modules/darwin { inherit inputs overlays; };
-      mkNixosConfiguration = import ./modules/nixos { inherit inputs overlays; };
+      mkDarwinConfiguration = import ./modules/darwin { inherit inputs; };
+      mkNixosConfiguration = import ./modules/nixos { inherit inputs; };
     in
     rec {
       packages = mapSystemPkgs (pkgs: pkgs.psyclyx);
-
-      overlays.default = overlay;
 
       devShells = mapSystemPkgs (pkgs: {
         default = import ./shell.nix { inherit pkgs; };

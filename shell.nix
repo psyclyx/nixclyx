@@ -1,5 +1,5 @@
 {
-  pkgs ? import <nixpkgs> { overlays = [ (import ./overlay.nix) ]; },
+  pkgs ? import <nixpkgs> { },
 }:
 pkgs.mkShell {
   packages = with pkgs; [
