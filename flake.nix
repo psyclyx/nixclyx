@@ -36,16 +36,6 @@
     {
       packages = withSystemPkgs (pkgs: import ./packages { inherit pkgs; });
       devShells.default = withSystemPkgs (pkgs: import ./shell.nix { inherit pkgs; });
-      # checks =
-      #   let
-      #     hostConfigs = nixosConfigurations // darwinConfigurations;
-      #     hasSystem = system: hostConfig: hostConfig.pkgs.system == system;
-      #     systemHostConfigs = system: (lib.filterAttrs (_: (hasSystem system)) hostConfigs);
-      #     topLevel = hostConfig: hostConfig.config.system.build.toplevel;
-      #     systemChecks = system: lib.mapAttrs (_: topLevel) (systemHostConfigs system);
-      #   in
-      #   lib.genAttrs systems systemChecks;
-
     }
     // {
       lib = psyclyxLib;
