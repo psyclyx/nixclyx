@@ -1,14 +1,10 @@
 # packages.nix
 {
   pkgs ? import <nixpkgs> { },
-  system ? pkgs.system,
+  psyclyxLib ? import ../lib { inherit pkgs; },
 }:
 let
-  inherit (pkgs) lib callPackage;
-  mkSupportedPackageSet = (import ../lib { inherit pkgs; }).packageSets.mkSupportedPackageSet;
-  packageDefs = {
-    upscale-image.path = ./upscale-image;
-    print256colors.path = ./print256colors.nix;
-  };
+  inherit (psyclyxLib.packageSets) mkPackageSet;
+  packageDefs = import ./packageDefs.nix;
 in
-mkSupportedPackageSet packageDefs
+mkPackageSet packageDefs
