@@ -40,7 +40,8 @@
     // {
       lib = psyclyxLib;
 
-      homeManagerModules.default = ./modules/home/module.nix;
+      homeManagerModules.psyclyx = ./modules/home/module.nix;
+      nixosModules.psyclyx = ./modules/nixos/module.nix;
 
       nixosConfigurations = {
         ix = mkNixosConfiguration {

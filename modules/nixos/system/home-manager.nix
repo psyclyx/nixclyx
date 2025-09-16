@@ -22,7 +22,7 @@ in
   config = lib.mkIf cfg.enable {
     home-manager = {
       sharedModules = [
-        inputs.self.homeManagerModules.default
+        inputs.self.homeManagerModules.psyclyx
       ];
       useGlobalPkgs = true;
       useUserPackages = true;
