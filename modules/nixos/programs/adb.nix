@@ -18,17 +18,7 @@ in
   };
 
   config = lib.mkIf cfg.enable {
-    programs = {
-      adb = {
-        enable = true;
-      };
-    };
-    users = {
-      groups = {
-        adbusers = {
-          members = cfg.users;
-        };
-      };
-    };
+    programs.adb.enable = true;
+    users.grous.adbusers = cfg.users;
   };
 }
