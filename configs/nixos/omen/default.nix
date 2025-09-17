@@ -18,6 +18,10 @@
       };
       gpu.intel.enable = true;
     };
+    network = {
+      enable = true;
+      networks."wlan0".enableDHCP = true;
+    };
     roles = {
       base.enable = true;
       graphical.enable = true;
