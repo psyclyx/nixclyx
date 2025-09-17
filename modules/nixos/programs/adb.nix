@@ -19,6 +19,6 @@ in
 
   config = lib.mkIf cfg.enable {
     programs.adb.enable = true;
-    users.grous.adbusers = cfg.users;
+    users.groups.adbusers = cfg.users;
   };
 }
