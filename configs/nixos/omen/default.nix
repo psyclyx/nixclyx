@@ -18,6 +18,7 @@
     hardware = {
       cpu = {
         enableMitigations = false;
+        intel.enable = true;
       };
     };
     roles = {

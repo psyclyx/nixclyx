@@ -8,7 +8,10 @@ let
   cfg = config.psyclyx.hardware.cpu;
 in
 {
-  imports = [ ./amd.nix ];
+  imports = [
+    ./amd.nix
+    ./intel.nix
+  ];
 
   options = {
     psyclyx.hardware.cpu = {
