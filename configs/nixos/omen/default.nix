@@ -38,7 +38,7 @@
       virtualization.enable = true;
     };
     stylix = {
-      image = ../../wallpapers/4x-ppmm-mami.jpg;
+      image = ../../wallpapers/2x-ppmm-madoka-homura.png;
       dark = true;
     };
   };
