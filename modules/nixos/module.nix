@@ -41,4 +41,8 @@
     ./system/sudo.nix
     ./system/virtualization.nix
   ];
+
+  config = {
+    system.stateVersion = "25.05";
+  };
 }

@@ -1,6 +1,5 @@
 { inputs, pkgs, ... }:
 {
-  system.stateVersion = "25.05";
   networking.hostName = "sigil";
   time.timeZone = "America/Los_Angeles";
   imports = [
