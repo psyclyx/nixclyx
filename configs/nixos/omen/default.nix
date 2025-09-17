@@ -5,7 +5,6 @@
   imports = [
     inputs.self.nixosModules.psyclyx
     ./filesystems.nix
-    ./hardware.nix
     ./users.nix
   ];
 
