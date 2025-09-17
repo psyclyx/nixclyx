@@ -4,9 +4,7 @@
   networking.hostName = "omen";
   time.timeZone = "America/Los_Angeles";
   imports = [
-    inputs.stylix.nixosModules.stylix
-    ../../../modules/nixos/module.nix
-
+    inputs.self.nixosModules.psyclyx
     ./filesystems.nix
     ./hardware.nix
     ./network.nix
