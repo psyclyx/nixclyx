@@ -1,9 +1,4 @@
 {
-  services = {
-    resolved = {
-      enable = true;
-    };
-  };
   networking = {
     useNetworkd = true;
     wireless = {
