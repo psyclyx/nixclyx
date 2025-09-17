@@ -60,7 +60,6 @@ in
           blur enable
           blur_xray enable
           shadows enable
-          corner_radius 4
         }
 
         layer_effects "fuzzel" {
