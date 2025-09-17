@@ -15,26 +15,29 @@
   ];
 
   psyclyx = {
-    programs = {
-      aspell.enable = true;
-      sway.enable = true;
+    hardware = {
+      cpu = {
+        enableMitigations = false;
+      };
+    };
+    roles = {
+      base.enable = true;
+      graphical.enable = true;
+      media.enable = true;
+      remote.enable = true;
+      utility.enable = true;
     };
     services = {
-      autoMount.enable = true;
-      gnome-keyring.enable = true;
-      greetd.enable = true;
       locate = {
-        enable = true;
         users = [ "psyc" ];
       };
-      openssh.enable = true;
-      kanata.enable = true;
-      printing.enable = true;
-      tailscale.enable = true;
     };
     system = {
-      fonts.enable = true;
-      sudo.enable = true;
+      virtualization.enable = true;
+    };
+    stylix = {
+      image = ../../wallpapers/4x-ppmm-mami.jpg;
+      dark = true;
     };
   };
 }
