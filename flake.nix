@@ -35,7 +35,9 @@
     in
     {
       packages = withSystemPkgs (pkgs: import ./packages { inherit pkgs; });
-      devShells.default = withSystemPkgs (pkgs: import ./shell.nix { inherit pkgs; });
+      devShells = withSystemPkgs (pkgs: {
+        default = import ./shell.nix { inherit pkgs; };
+      });
     }
     // {
       lib = psyclyxLib;
