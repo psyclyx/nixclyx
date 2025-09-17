@@ -6,7 +6,6 @@
     inputs.self.nixosModules.psyclyx
     ./filesystems.nix
     ./hardware.nix
-    ./network.nix
     ./users.nix
   ];
 
@@ -21,6 +20,7 @@
     network = {
       enable = true;
       networks."wlan0".enableDHCP = true;
+      wireless = true;
     };
     roles = {
       base.enable = true;

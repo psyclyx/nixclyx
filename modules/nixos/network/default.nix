@@ -34,11 +34,21 @@ in
       enable = lib.mkEnableOption "network config";
       waitOnline = lib.mkEnableOption "wait-online.target blocks on interfaces coming online";
       networks = lib.mkOption { type = lib.types.attrsOf (lib.types.submodule network); };
+      wireless = lib.mkEnableOption "wireless network connections";
     };
   };
 
   config = lib.mkIf cfg.enable {
-    networking.useNetworkd = true;
+    networking = {
+      useNetworkd = true;
+      wireless = lib.mkIf cfg.wireless {
+        iwd = {
+          enable = true;
+          settings.Settings.AutoConnect = true;
+        };
+      };
+    };
+
     systemd.network = {
       enable = true;
       wait-online = {
