@@ -13,6 +13,7 @@ in
       disableEEEOn = lib.mkOption {
         type = lib.types.listOf lib.types.str;
         description = "list rtl8125 interfaces to disable EEE on, to reduce random dropped connections";
+        default = [ ];
       };
     };
   };
