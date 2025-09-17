@@ -3,7 +3,7 @@
   networking.hostName = "sigil";
   time.timeZone = "America/Los_Angeles";
   imports = [
-    ../../../modules/nixos/module.nix
+    inputs.self.nixosModules.psyclyx
     ./filesystems.nix
     ./users.nix
   ];
