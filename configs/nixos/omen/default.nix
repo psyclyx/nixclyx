@@ -30,6 +30,7 @@
       utility.enable = true;
     };
     services = {
+      fstrim.enable = true;
       locate = {
         users = [ "psyc" ];
       };

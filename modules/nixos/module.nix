@@ -22,6 +22,7 @@
     ./roles/media.nix
     ./roles/remote.nix
     ./roles/utility.nix
+    ./services/fstrim.nix
     ./services/fwupd.nix
     ./services/gnome-keyring.nix
     ./services/greetd.nix
