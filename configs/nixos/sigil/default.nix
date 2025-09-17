@@ -17,6 +17,7 @@
           requiredForOnline = true;
         };
       };
+      waitOnline = true;
     };
     roles = {
       base.enable = true;

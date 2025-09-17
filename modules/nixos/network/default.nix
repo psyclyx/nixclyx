@@ -32,6 +32,7 @@ in
   options = {
     psyclyx.network = {
       enable = lib.mkEnableOption "network config";
+      waitOnline = lib.mkEnableOption "wait-online.target blocks on interfaces coming online";
       networks = lib.mkOption { type = lib.types.attrsOf (lib.types.submodule network); };
     };
   };
@@ -40,7 +41,10 @@ in
     networking.useNetworkd = true;
     systemd.network = {
       enable = true;
-      wait-online.anyInterface = true;
+      wait-online = {
+        enable = cfg.waitOnline;
+        anyInterface = true;
+      };
       networks = lib.mapAttrs' (
         name: network:
         lib.nameValuePair "40-${name}" {
