@@ -32,6 +32,7 @@
     ./services/openssh.nix
     ./services/printing.nix
     ./services/tailscale.nix
+    ./services/thermald.nix
     ./stylix.nix
     ./system/fonts.nix
     ./system/home-manager.nix

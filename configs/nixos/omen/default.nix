@@ -33,6 +33,7 @@
       locate = {
         users = [ "psyc" ];
       };
+      thermald.enable = true;
     };
     system = {
       virtualization.enable = true;
