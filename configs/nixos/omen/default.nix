@@ -30,6 +30,7 @@
     };
     services = {
       fstrim.enable = true;
+      kanata.enable = true;
       locate = {
         users = [ "psyc" ];
       };
