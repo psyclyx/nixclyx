@@ -7,7 +7,6 @@
     inputs.stylix.nixosModules.stylix
     ../../../modules/nixos/module.nix
 
-    ./boot.nix
     ./filesystems.nix
     ./hardware.nix
     ./network.nix
@@ -20,6 +19,7 @@
         enableMitigations = false;
         intel.enable = true;
       };
+      gpu.intel.enable = true;
     };
     roles = {
       base.enable = true;

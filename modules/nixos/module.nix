@@ -6,6 +6,7 @@
     ./boot/systemd-boot.nix
     ./hardware/cpu
     ./hardware/glasgow.nix
+    ./hardware/gpu/intel.nix
     ./hardware/gpu/nvidia.nix
     ./hardware/qmk.nix
     ./hardware/rtl8125.nix
