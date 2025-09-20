@@ -40,12 +40,9 @@
     ./system/locale.nix
     ./system/nix.nix
     ./system/nixpkgs.nix
+    ./system/stateVersion.nix
     ./system/sudo.nix
     ./system/timezone.nix
     ./system/virtualization.nix
   ];
-
-  config = {
-    system.stateVersion = "25.05";
-  };
 }
