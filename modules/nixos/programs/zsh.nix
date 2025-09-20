@@ -1,28 +1,27 @@
-{ config, lib, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 let
   cfg = config.psyclyx.programs.zsh;
 in
 {
   options = {
-    psyclyx = {
-      programs = {
-        zsh = {
-          enable = lib.mkOption {
-            type = lib.types.bool;
-            default = true;
-            description = "Let nixos configure zsh (recommended).";
-          };
-        };
+    psyclyx.programs.zsh = {
+      defaultShell = lib.mkEnableOption "Zsh as the default shell" // {
+        default = cfg.enable;
       };
+      enable = lib.mkEnableOption "Zsh config";
     };
   };
 
   config = lib.mkIf cfg.enable {
-    programs = {
-      zsh = {
-        enable = true;
-        enableGlobalCompInit = false;
-      };
+    programs.zsh = {
+      enable = true;
+      enableGlobalCompInit = false;
     };
+    users.defaultUserShell = lib.mkIf cfg.defaultShell pkgs.zsh;
   };
 }

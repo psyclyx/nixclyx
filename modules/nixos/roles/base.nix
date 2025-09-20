@@ -17,6 +17,9 @@ in
 
   config = lib.mkIf cfg.enable {
     psyclyx = {
+      programs = {
+        zsh.enable = lib.mkDefault true;
+      };
       system = {
         home-manager.enable = lib.mkDefault true;
         locale.enable = lib.mkDefault true;
