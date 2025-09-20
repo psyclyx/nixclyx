@@ -4,9 +4,6 @@
   users = {
     users = {
       psyc = {
-        name = "psyc";
-        home = "/home/psyc";
-        shell = pkgs.zsh;
         isNormalUser = true;
         extraGroups = [
           "wheel"
