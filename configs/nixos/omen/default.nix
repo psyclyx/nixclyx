@@ -36,6 +36,7 @@
       thermald.enable = true;
     };
     system = {
+      containers.enable = true;
       emulation.enable = true;
       virtualization.enable = true;
     };
