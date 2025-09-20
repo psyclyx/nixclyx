@@ -4,22 +4,17 @@ let
 in
 {
   options = {
-    psyclyx = {
-      system = {
-        locale = {
-          default = lib.mkOption {
-            type = lib.types.str;
-            default = "en_US.UTF-8";
-            description = "Default locale.";
-          };
-        };
+    psyclyx.system.locale = {
+      default = lib.mkOption {
+        type = lib.types.str;
+        default = "en_US.UTF-8";
+        description = "Default locale.";
       };
+      enable = lib.mkEnableOption "Locale config";
     };
   };
 
-  config = {
-    i18n = {
-      defaultLocale = cfg.default;
-    };
+  config = lib.mkIf cfg.enable {
+    i18n.defaultLocale = cfg.default;
   };
 }
