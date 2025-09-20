@@ -1,7 +1,6 @@
 { inputs, pkgs, ... }:
 {
   networking.hostName = "sigil";
-  time.timeZone = "America/Los_Angeles";
   imports = [
     inputs.self.nixosModules.psyclyx
     ./filesystems.nix

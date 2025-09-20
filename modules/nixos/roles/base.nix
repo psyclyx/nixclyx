@@ -22,6 +22,7 @@ in
         locale.enable = lib.mkDefault true;
         nix.enable = lib.mkDefault true;
         nixpkgs.enable = lib.mkDefault true;
+        timezone.enable = lib.mkDefault true;
       };
     };
   };

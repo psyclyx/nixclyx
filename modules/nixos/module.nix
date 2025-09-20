@@ -41,6 +41,7 @@
     ./system/nix.nix
     ./system/nixpkgs.nix
     ./system/sudo.nix
+    ./system/timezone.nix
     ./system/virtualization.nix
   ];
 
