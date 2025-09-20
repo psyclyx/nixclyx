@@ -36,6 +36,7 @@
       thermald.enable = true;
     };
     system = {
+      emulation.enable = true;
       virtualization.enable = true;
     };
     stylix = {

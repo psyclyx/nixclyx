@@ -55,6 +55,7 @@
       tailscale.exitNode = true;
     };
     system = {
+      emulation.enable = true;
       virtualization.enable = true;
     };
     stylix = {
