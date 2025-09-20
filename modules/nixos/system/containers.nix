@@ -1,7 +1,7 @@
 { config, lib, ... }:
 let
   cfg = config.psyclyx.system.containers;
-  nvidiaCfg = config.psyclyx.hardware.nvidia;
+  nvidiaCfg = config.psyclyx.hardware.gpu.nvidia;
 in
 {
   options = {

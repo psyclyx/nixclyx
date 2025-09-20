@@ -18,10 +18,7 @@ in
       modesetting.enable = true;
       open = true;
       package = config.boot.kernelPackages.nvidiaPackages.production;
-      powerManagement = {
-        enable = true;
-        finegrained = false;
-      };
+      powerManagement.enable = true;
     };
     services.xserver.videoDrivers = [ "nvidia" ];
     # TODO: I don't think I actually need this? Check if wake from hiberate works
