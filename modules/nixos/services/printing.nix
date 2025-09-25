@@ -1,4 +1,9 @@
-{ config, lib, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 let
   cfg = config.psyclyx.services.printing;
 in
@@ -16,6 +21,7 @@ in
     services = {
       printing = {
         enable = true;
+        drivers = with pkgs; [ brlaser ];
       };
     };
   };
