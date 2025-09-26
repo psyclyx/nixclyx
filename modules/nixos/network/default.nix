@@ -32,8 +32,9 @@ in
   options = {
     psyclyx.network = {
       enable = lib.mkEnableOption "network config";
-      waitOnline = lib.mkEnableOption "wait-online.target blocks on interfaces coming online";
       networks = lib.mkOption { type = lib.types.attrsOf (lib.types.submodule network); };
+      serviceDiscovery = lib.mkEnableOption "Avahi/MDNS for service discovery";
+      waitOnline = lib.mkEnableOption "wait-online.target blocks on interfaces coming online";
       wireless = lib.mkEnableOption "wireless network connections";
     };
   };

@@ -16,6 +16,7 @@
           requiredForOnline = true;
         };
       };
+      serviceDiscovery = true;
       waitOnline = true;
     };
     roles = {
