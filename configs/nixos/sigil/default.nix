@@ -20,6 +20,7 @@
       waitOnline = true;
     };
     roles = {
+      "3DPrinting".enable = true;
       base.enable = true;
       graphical.enable = true;
       media.enable = true;

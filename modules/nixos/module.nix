@@ -17,6 +17,7 @@
     ./programs/sway.nix
     ./programs/zsh.nix
     ./services/automount.nix
+    ./roles/3DPrinting.nix
     ./roles/base.nix
     ./roles/graphical.nix
     ./roles/media.nix
