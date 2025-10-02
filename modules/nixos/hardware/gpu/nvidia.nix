@@ -20,6 +20,9 @@ in
       package = config.boot.kernelPackages.nvidiaPackages.production;
       powerManagement.enable = true;
     };
+
+    nixpkgs.config.cudaSupport = true;
+
     services.xserver.videoDrivers = [ "nvidia" ];
     # TODO: I don't think I actually need this? Check if wake from hiberate works
     # systemd.services."systemd-suspend" = {
