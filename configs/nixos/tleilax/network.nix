@@ -88,7 +88,7 @@ in
           ];
           networkConfig = {
             IPv6AcceptRA = false;
-            IPv6ProxyNDP = true;
+            IPv6Forwarding = true;
           };
         };
       };
