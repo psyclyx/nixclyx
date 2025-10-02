@@ -21,6 +21,11 @@ in
       htop
       lm_sensors
       pciutils
+      unzip
+      zip
+      zstd
+      magic-wormhole
+      pv
       stress-ng
       sysbench
     ];
