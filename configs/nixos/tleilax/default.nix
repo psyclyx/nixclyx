@@ -11,7 +11,6 @@ in
   networking.hostName = "tleilax";
   time.timeZone = "America/Los_Angeles";
   imports = [
-    inputs.stylix.nixosModules.stylix
     ../../../modules/nixos/module.nix
 
     ../../../modules/nixos/services/fail2ban.nix
@@ -33,10 +32,16 @@ in
       };
     };
 
+    roles = {
+      base.enable = true;
+      remote.enable = true;
+      utility.enable = true;
+    };
     services = {
       openssh = {
         enable = true;
       };
+      locate.users = [ "psyc" ];
       tailscale = {
         enable = true;
         exitNode = true;
@@ -44,6 +49,7 @@ in
     };
 
     system = {
+      home-manager.enable = true;
       sudo = {
         enable = true;
       };
