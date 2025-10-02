@@ -19,6 +19,7 @@
     ./services/automount.nix
     ./roles/3DPrinting.nix
     ./roles/base.nix
+    ./roles/forensics.nix
     ./roles/graphical.nix
     ./roles/media.nix
     ./roles/remote.nix
