@@ -1,7 +1,7 @@
 { config, lib, ... }:
 let
   cfg = config.psyclyx.services.openssh;
-  ports = config.psyclyx.networking.ports.ssh;
+  ports = config.psyclyx.network.ports.ssh;
 in
 {
   options.psyclyx = {
@@ -15,7 +15,7 @@ in
         };
       };
     };
-    networking.ports.ssh = lib.mkOption {
+    network.ports.ssh = lib.mkOption {
       type = lib.types.listOf lib.types.port;
       default = [ 22 ];
       description = "Ports for OpenSSH to listen on.";

@@ -27,12 +27,11 @@ in
   boot.loader.systemd-boot.enable = true;
 
   psyclyx = {
-    networking = {
+    network = {
       ports = {
         ssh = [ 17891 ];
       };
     };
-
     roles = {
       base.enable = true;
       remote.enable = true;
@@ -48,7 +47,6 @@ in
         exitNode = true;
       };
     };
-
     system = {
       home-manager.enable = true;
       sudo = {
