@@ -1,7 +1,7 @@
 {
   commonModules = import ./common;
 
-  nixosModules.psyclyx = ./nixos/module.nix;
+  nixosModules.psyclyx = ./nixos;
 
   homeManagerModules.psyclyx = ./home/module.nix;
 }
