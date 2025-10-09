@@ -62,7 +62,8 @@
           modules = [ ./configs/nixos/tleilax ];
           system = "x86_64-linux";
         };
-      };
+      }
+      // lib.mapAttrs (_: mkNixosConfiguration) (import ./configs/nixos/lab);
 
       darwinConfigurations = {
         halo = mkDarwinConfiguration {
