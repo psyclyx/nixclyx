@@ -4,7 +4,6 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
     psyclyx-emacs.url = "git+file:submodules/emacs";
-    nixos-hardware.url = "github:NixOS/nixos-hardware/master";
     nix-darwin = {
       url = "github:LnL7/nix-darwin";
       inputs.nixpkgs.follows = "nixpkgs";
