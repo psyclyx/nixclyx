@@ -1,7 +1,10 @@
 { inputs, ... }:
+let
+  inherit (inputs) self stylix;
+in
 {
   imports = [
-    inputs.stylix.nixosModules.stylix
-    ../common/stylix.nix
+    stylix.nixosModules.stylix
+    self.commonModules.stylix
   ];
 }
