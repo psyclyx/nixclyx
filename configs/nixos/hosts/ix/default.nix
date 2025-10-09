@@ -1,14 +1,13 @@
 { inputs, ... }:
 let
-  inherit (inputs) disko;
+  inherit (inputs) disko self;
 in
 {
   system.stateVersion = "25.05";
   networking.hostName = "ix";
   time.timeZone = "America/Los_Angeles";
   imports = [
-    ../../../modules/nixos/module.nix
-
+    self.nixosModules.psyclyx
 
     ./boot.nix
     ./filesystems.nix
