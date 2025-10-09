@@ -9,10 +9,12 @@ rec {
   # Initialize `pkgs` from `nixpkgs` for `system`
   systemPkgs =
     nixpkgs: system:
-    import nixpkgs {
-      inherit system;
-    }
-    // pkgsOptions;
+    import nixpkgs (
+      {
+        inherit system;
+      }
+      // pkgsOptions
+    );
 
   # Call `f` with `nixpkgs` initialized for `system`
   withSystemPkgs =
