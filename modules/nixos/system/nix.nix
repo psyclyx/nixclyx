@@ -26,7 +26,9 @@ in
   config = lib.mkIf cfg.enable {
     nix = {
       package = pkgs.lix;
+
       registry.nixpkgs.flake = inputs.nixpkgs;
+
       settings = {
         inherit substituters trusted-substituters;
         http-connections = 128;
@@ -38,15 +40,18 @@ in
           "nixos-raspberrypi.cachix.org-1:4iMO9LXa8BqhU+Rpg6LQKiGa2lsNh/j2oiYLNOQ5sPI="
         ];
       };
+
       gc = {
         automatic = true;
         dates = [ "05:00" ];
         options = "--delete-older-than 3d";
       };
+
       optimise = {
         automatic = true;
         dates = [ "05:00" ];
       };
+
       extraOptions = ''
         experimental-features = nix-command flakes
       '';
@@ -64,5 +69,4 @@ in
       };
     };
   };
-
 }
