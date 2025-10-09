@@ -7,7 +7,6 @@ in
   networking.hostName = "ix";
   time.timeZone = "America/Los_Angeles";
   imports = [
-    inputs.stylix.nixosModules.stylix
     ../../../modules/nixos/module.nix
 
     ../../../modules/nixos/services/soju.nix
