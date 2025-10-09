@@ -5,6 +5,7 @@ let
   imports = {
     systems = ./systems.nix;
     packageSets = ./packageSets.nix;
+    nixos = ./nixos.nix;
     nixpkgs = ./nixpkgs.nix;
   };
 in

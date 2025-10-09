@@ -28,41 +28,27 @@
       psyclyxLib = import ./lib { inherit lib; };
 
       mkDarwinConfiguration = import ./modules/darwin { inherit inputs; };
-      mkNixosConfiguration = import ./modules/nixos { inherit inputs; };
 
       withSystemPkgs = with psyclyxLib.systems; f: genSystemPkgsAttrs nixpkgs f;
+
     in
     {
-      packages = withSystemPkgs (pkgs: import ./packages { inherit pkgs; });
+      lib = psyclyxLib;
+
       devShells = withSystemPkgs (pkgs: {
         default = import ./shell.nix { inherit pkgs; };
       });
-    }
-    // {
-      lib = psyclyxLib;
+
+      packages = withSystemPkgs (pkgs: import ./packages { inherit pkgs; });
 
       homeManagerModules.psyclyx = ./modules/home/module.nix;
+
       nixosModules.psyclyx = ./modules/nixos/module.nix;
 
-      nixosConfigurations = {
-        ix = mkNixosConfiguration {
-          modules = [ ./configs/nixos/ix ];
-          system = "x86_64-linux";
-        };
-        omen = mkNixosConfiguration {
-          modules = [ ./configs/nixos/omen ];
-          system = "x86_64-linux";
-        };
-        sigil = mkNixosConfiguration {
-          modules = [ ./configs/nixos/sigil ];
-          system = "x86_64-linux";
-        };
-        tleilax = mkNixosConfiguration {
-          modules = [ ./configs/nixos/tleilax ];
-          system = "x86_64-linux";
-        };
-      }
-      // lib.mapAttrs (_: mkNixosConfiguration) (import ./configs/nixos/lab);
+      nixosConfigurations = import ./configs/nixos {
+        inherit psyclyxLib;
+        specialArgs = { inherit inputs; };
+      };
 
       darwinConfigurations = {
         halo = mkDarwinConfiguration {
