@@ -62,7 +62,7 @@
       virtualization.enable = true;
     };
     stylix = {
-      image = ../../wallpapers/4x-ppmm-mami.jpg;
+      image = ../../../wallpapers/4x-ppmm-mami.jpg;
       dark = true;
     };
   };
