@@ -5,15 +5,13 @@
   ...
 }:
 let
+  inherit (inputs) self;
 in
 {
-  system.stateVersion = "25.05";
   networking.hostName = "tleilax";
-  time.timeZone = "America/Los_Angeles";
-  imports = [
-    ../../../modules/nixos/module.nix
 
-    ../../../modules/nixos/services/fail2ban.nix
+  imports = [
+    self.nixosModules.psyclyx
 
     #./containers.nix
     ./users.nix
@@ -25,6 +23,19 @@ in
   ];
 
   boot.loader.systemd-boot.enable = true;
+
+  services.fail2ban = {
+    enable = true;
+    maxretry = 5;
+    ignoreIP = [ "100.64.0.0/10" ];
+    bantime = "1h";
+    bantime-increment = {
+      enable = true;
+      multipliers = "1 2 4 8 16 32 64";
+      maxtime = "168h";
+      overalljails = true;
+    };
+  };
 
   psyclyx = {
     network = {
