@@ -21,47 +21,6 @@
     };
   };
 
-  outputs =
-    { nixpkgs, ... }@inputs:
-    let
-      inherit (nixpkgs) lib;
-      psyclyxLib = import ./lib { inherit lib; };
-
-      mkDarwinConfiguration = import ./modules/darwin { inherit inputs; };
-
-      withSystemPkgs = with psyclyxLib.systems; f: genSystemPkgsAttrs nixpkgs f;
-
-    in
-    {
-      assets = psyclyxLib.files.dirToAttrset ./assets;
-
-      lib = psyclyxLib;
-
-      devShells = withSystemPkgs (pkgs: {
-        default = import ./shell.nix { inherit pkgs; };
-      });
-
-      packages = withSystemPkgs (pkgs: import ./packages { inherit pkgs; });
-
-      homeManagerModules.psyclyx = ./modules/home/module.nix;
-
-      nixosModules.psyclyx = ./modules/nixos/module.nix;
-
-      nixosConfigurations = import ./configs/nixos {
-        inherit psyclyxLib;
-        specialArgs = { inherit inputs; };
-      };
-
-      darwinConfigurations = {
-        halo = mkDarwinConfiguration {
-          hostPlatform = "aarch64-darwin";
-          system = "aarch64-darwin";
-          hostName = "halo";
-          modules = [ ./configs/darwin/halo ];
-        };
-      };
-    };
-
   nixConfig = {
     extra-substituters = [
       "https://psyclyx.cachix.org?priority=0"
@@ -73,4 +32,52 @@
       "nixos-raspberrypi.cachix.org-1:4iMO9LXa8BqhU+Rpg6LQKiGa2lsNh/j2oiYLNOQ5sPI="
     ];
   };
+
+  outputs =
+    { nixpkgs, ... }@inputs:
+    let
+      inherit (nixpkgs) lib;
+      psyclyxLib = import ./lib { inherit lib; };
+
+      withSystemPkgs = with psyclyxLib.systems; f: genSystemPkgsAttrs nixpkgs f;
+
+      moduleOutputs = import ./modules;
+
+      perSystemOutputs = {
+        devShells = withSystemPkgs (pkgs: {
+          default = import ./shell.nix { inherit pkgs; };
+        });
+
+        packages = withSystemPkgs (pkgs: import ./packages { inherit pkgs; });
+      };
+
+      hostOutputs = {
+        nixosConfigurations = import ./configs/nixos {
+          inherit psyclyxLib;
+          specialArgs = { inherit inputs; };
+        };
+
+        darwinConfigurations =
+          let
+            mkDarwinConfiguration = import ./modules/darwin { inherit inputs; };
+          in
+          {
+            halo = mkDarwinConfiguration {
+              hostPlatform = "aarch64-darwin";
+              system = "aarch64-darwin";
+              hostName = "halo";
+              modules = [ ./configs/darwin/halo ];
+            };
+          };
+      };
+
+      outputs = {
+        assets = psyclyxLib.files.dirToAttrset ./assets;
+        lib = psyclyxLib;
+      }
+      // moduleOutputs
+      // perSystemOutputs
+      // hostOutputs;
+    in
+    outputs;
 }
