@@ -33,51 +33,5 @@
     ];
   };
 
-  outputs =
-    { nixpkgs, ... }@inputs:
-    let
-      inherit (nixpkgs) lib;
-      psyclyxLib = import ./lib { inherit lib; };
-
-      withSystemPkgs = with psyclyxLib.systems; f: genSystemPkgsAttrs nixpkgs f;
-
-      moduleOutputs = import ./modules;
-
-      perSystemOutputs = {
-        devShells = withSystemPkgs (pkgs: {
-          default = import ./shell.nix { inherit pkgs; };
-        });
-
-        packages = withSystemPkgs (pkgs: import ./packages { inherit pkgs; });
-      };
-
-      hostOutputs = {
-        nixosConfigurations = import ./configs/nixos {
-          inherit psyclyxLib;
-          specialArgs = { inherit inputs; };
-        };
-
-        darwinConfigurations =
-          let
-            mkDarwinConfiguration = import ./modules/darwin { inherit inputs; };
-          in
-          {
-            halo = mkDarwinConfiguration {
-              hostPlatform = "aarch64-darwin";
-              system = "aarch64-darwin";
-              hostName = "halo";
-              modules = [ ./configs/darwin/halo ];
-            };
-          };
-      };
-
-      outputs = {
-        assets = psyclyxLib.files.dirToAttrset ./assets;
-        lib = psyclyxLib;
-      }
-      // moduleOutputs
-      // perSystemOutputs
-      // hostOutputs;
-    in
-    outputs;
+  outputs = inputs: import ./outputs.nix inputs;
 }
