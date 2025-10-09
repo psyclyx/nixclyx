@@ -9,7 +9,9 @@ let
   psyclyx = inputs.self;
 in
 {
-  imports = [ psyclyx.nixosModules.psyclyx ];
+  imports = [
+    psyclyx.nixosModules.psyclyx
+  ];
 
   config = {
 
@@ -23,6 +25,8 @@ in
         "sr_mod"
       ];
     };
+
+    environment.systemPackages = [ psyclyx.packages.${pkgs.system}.ssacli ];
 
     networking.domain = "rack.home.psyclyx.net";
 
