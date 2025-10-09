@@ -33,6 +33,8 @@
 
     in
     {
+      assets = psyclyxLib.files.dirToAttrset ./assets;
+
       lib = psyclyxLib;
 
       devShells = withSystemPkgs (pkgs: {

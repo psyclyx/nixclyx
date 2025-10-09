@@ -1,8 +1,12 @@
 { inputs, pkgs, ... }:
+let
+  inherit (inputs) self;
+in
 {
   networking.hostName = "sigil";
+
   imports = [
-    inputs.self.nixosModules.psyclyx
+    self.nixosModules.psyclyx
     ./filesystems.nix
     ./users.nix
   ];
@@ -62,7 +66,7 @@
       virtualization.enable = true;
     };
     stylix = {
-      image = ../../../wallpapers/4x-ppmm-mami.jpg;
+      image = self.assets.wallpapers."4x-ppmm-mami.jpg";
       dark = true;
     };
   };

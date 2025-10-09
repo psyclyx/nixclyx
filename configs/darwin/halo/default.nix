@@ -1,4 +1,7 @@
 { inputs, ... }:
+let
+  inherit (inputs) self disko;
+in
 {
   imports = [
     inputs.stylix.darwinModules.stylix
@@ -9,6 +12,8 @@
     ./users.nix
     ./casks.nix
   ];
+
   stylix.enable = true;
-  stylix.image = ../../wallpapers/madoka-homura-2x.png;
+
+  stylix.image = self.assets.wallpapers."2x-ppmm-madoka-homura.png";
 }

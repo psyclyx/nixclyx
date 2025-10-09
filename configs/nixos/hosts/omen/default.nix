@@ -1,8 +1,12 @@
 { inputs, pkgs, ... }:
+let
+  inherit (inputs) self;
+in
 {
   networking.hostName = "omen";
+
   imports = [
-    inputs.self.nixosModules.psyclyx
+    self.nixosModules.psyclyx
     ./filesystems.nix
     ./users.nix
   ];
@@ -41,7 +45,7 @@
       virtualization.enable = true;
     };
     stylix = {
-      image = ../../../wallpapers/2x-ppmm-madoka-homura.png;
+      image = self.assets.wallpapers."2x-ppmm-madoka-homura.png";
       dark = true;
     };
   };
