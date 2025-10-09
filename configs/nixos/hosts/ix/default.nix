@@ -9,7 +9,6 @@ in
   imports = [
     ../../../modules/nixos/module.nix
 
-    ../../../modules/nixos/services/soju.nix
 
     ./boot.nix
     ./filesystems.nix
