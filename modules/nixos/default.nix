@@ -2,52 +2,13 @@
 {
   imports = [
     inputs.disko.nixosModules.disko
-    ./boot/plymouth.nix
-    ./boot/systemd-boot.nix
-    ./hardware/cpu
-    ./hardware/glasgow.nix
-    ./hardware/gpu/intel.nix
-    ./hardware/gpu/nvidia.nix
-    ./hardware/qmk.nix
-    ./hardware/rtl8125.nix
+    ./boot
+    ./hardware
     ./network
-    ./programs/adb.nix
-    ./programs/aspell.nix
-    ./programs/steam.nix
-    ./programs/sway.nix
-    ./programs/zsh.nix
-    ./services/automount.nix
-    ./roles/3DPrinting.nix
-    ./roles/base.nix
-    ./roles/forensics.nix
-    ./roles/graphical.nix
-    ./roles/media.nix
-    ./roles/remote.nix
-    ./roles/utility.nix
-    ./services/avahi.nix
-    ./services/fstrim.nix
-    ./services/fwupd.nix
-    ./services/gnome-keyring.nix
-    ./services/greetd.nix
-    ./services/home-assistant.nix
-    ./services/kanata
-    ./services/locate.nix
-    ./services/openrgb.nix
-    ./services/openssh.nix
-    ./services/printing.nix
-    ./services/tailscale.nix
-    ./services/thermald.nix
+    ./programs
+    ./roles
+    ./services
     ./stylix.nix
-    ./system/containers.nix
-    ./system/emulation.nix
-    ./system/fonts.nix
-    ./system/home-manager.nix
-    ./system/locale.nix
-    ./system/nix.nix
-    ./system/nixpkgs.nix
-    ./system/stateVersion.nix
-    ./system/sudo.nix
-    ./system/timezone.nix
-    ./system/virtualization.nix
+    ./system
   ];
 }

@@ -1,0 +1,18 @@
+{
+  imports = [
+    ./automount.nix
+    ./avahi.nix
+    ./fstrim.nix
+    ./fwupd.nix
+    ./gnome-keyring.nix
+    ./greetd.nix
+    ./home-assistant.nix
+    ./kanata
+    ./locate.nix
+    ./openrgb.nix
+    ./openssh.nix
+    ./printing.nix
+    ./tailscale.nix
+    ./thermald.nix
+  ];
+}
