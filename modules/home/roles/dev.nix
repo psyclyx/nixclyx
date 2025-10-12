@@ -12,9 +12,14 @@ in
 
   config = lib.mkIf cfgEnabled {
     home.packages = with pkgs; [
+      just
+      just-formatter
+
       nixd
       nixfmt-rfc-style
+
       temurin-bin-25
+
       zig
       zls
     ];
