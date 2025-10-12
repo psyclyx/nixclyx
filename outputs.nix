@@ -36,10 +36,12 @@ let
     specialArgs = { inherit inputs; };
   };
 
+  common = import ./configs/common;
 in
 {
   inherit
     assets
+    common
     devShells
     darwinConfigurations
     nixosConfigurations

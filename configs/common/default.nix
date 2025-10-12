@@ -1,0 +1,3 @@
+{
+  keys = import ./keys.nix;
+}
