@@ -20,6 +20,7 @@
 
   home-manager.users.psyc = {
     imports = [ ../../../home/psyc.nix ];
+    psyclyx.roles.llm-agent = true;
     psyclyx.configs.psyc = {
       enable = true;
       secrets = true;

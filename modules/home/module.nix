@@ -15,6 +15,7 @@
     ./programs/waybar.nix
     ./programs/zsh.nix
     ./roles/dev.nix
+    ./roles/llm-agent.nix
     ./roles/graphical.nix
     ./roles/shell.nix
     ./secrets
