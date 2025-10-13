@@ -64,6 +64,7 @@ in
         inherit image;
         base16Scheme = lib.mkIf (base16Scheme != null) base16Scheme;
         autoEnable = cfg.enable;
+        # TODO: the part of this that actually belongs in common is the palette generation stuff.
         opacity = {
           applications = 0.8;
           desktop = 0.7;

@@ -5,12 +5,8 @@ let
 in
 {
   options = {
-    psyclyx = {
-      programs = {
-        git = {
-          enable = lib.mkEnableOption "Configure git.";
-        };
-      };
+    psyclyx.programs.git = {
+      enable = lib.mkEnableOption "git version control";
     };
   };
   config = lib.mkIf cfg.enable {

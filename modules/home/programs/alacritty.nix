@@ -8,7 +8,11 @@ let
   cfg = config.psyclyx.programs.alacritty;
 in
 {
-  options.psyclyx.programs.alacritty.enable = lib.mkEnableOption "alacritty";
+  options = {
+    psyclyx.programs.alacritty = {
+      enable = lib.mkEnableOption "Alacritty terminal emulator";
+    };
+  };
 
   config = lib.mkIf cfg.enable {
 

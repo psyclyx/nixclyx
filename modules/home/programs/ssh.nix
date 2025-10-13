@@ -10,12 +10,8 @@ let
 in
 {
   options = {
-    psyclyx = {
-      programs = {
-        ssh = {
-          enable = lib.mkEnableOption "Enable SSH config";
-        };
-      };
+    psyclyx.programs.ssh = {
+      enable = lib.mkEnableOption "SSH configuration";
     };
   };
   config = lib.mkIf cfg.enable {

@@ -5,12 +5,16 @@
   ...
 }:
 let
-  cfgEnabled = config.psyclyx.roles.dev;
+  cfg = config.psyclyx.roles.dev;
 in
 {
-  options.psyclyx.roles.dev = lib.mkEnableOption "dev tools/config";
+  options = {
+    psyclyx.roles.dev = {
+      enable = lib.mkEnableOption "Development tools and configuration";
+    };
+  };
 
-  config = lib.mkIf cfgEnabled {
+  config = lib.mkIf cfg.enable {
     home.packages = with pkgs; [
       just
       just-formatter

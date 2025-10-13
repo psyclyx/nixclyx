@@ -61,12 +61,8 @@ let
 in
 {
   options = {
-    psyclyx = {
-      programs = {
-        zsh = {
-          enable = lib.mkEnableOption "Configure zsh.";
-        };
-      };
+    psyclyx.programs.zsh = {
+      enable = lib.mkEnableOption "Zsh shell with prezto";
     };
   };
   config = lib.mkIf cfg.enable {

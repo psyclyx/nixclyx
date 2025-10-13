@@ -8,7 +8,11 @@ let
   cfg = config.psyclyx.programs.emacs;
 in
 {
-  options.psyclyx.programs.emacs.enable = lib.mkEnableOption "emacs";
+  options = {
+    psyclyx.programs.emacs = {
+      enable = lib.mkEnableOption "Emacs text editor";
+    };
+  };
   config = lib.mkIf cfg.enable (
     lib.mkMerge [
       {

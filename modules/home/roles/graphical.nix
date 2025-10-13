@@ -6,12 +6,16 @@
   ...
 }:
 let
-  cfgEnabled = config.psyclyx.roles.graphical;
+  cfg = config.psyclyx.roles.graphical;
 in
 {
-  options.psyclyx.roles.graphical = lib.mkEnableOption "graphical session programs/config";
+  options = {
+    psyclyx.roles.graphical = {
+      enable = lib.mkEnableOption "Graphical session programs and configuration";
+    };
+  };
 
-  config = lib.mkIf cfgEnabled (
+  config = lib.mkIf cfg.enable (
     lib.mkMerge [
       {
         home.packages =

@@ -8,8 +8,10 @@ let
   cfg = config.psyclyx.services.mako;
 in
 {
-  options.psyclyx.services.mako = {
-    enable = lib.mkEnableOption "mako";
+  options = {
+    psyclyx.services.mako = {
+      enable = lib.mkEnableOption "Mako notification daemon";
+    };
   };
   config = lib.mkIf cfg.enable {
     home.packages = with pkgs; [ notify-desktop ];

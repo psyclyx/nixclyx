@@ -4,12 +4,8 @@ let
 in
 {
   options = {
-    psyclyx = {
-      programs = {
-        kitty = {
-          enable = lib.mkEnableOption "Configure kitty.";
-        };
-      };
+    psyclyx.programs.kitty = {
+      enable = lib.mkEnableOption "Kitty terminal emulator";
     };
   };
 

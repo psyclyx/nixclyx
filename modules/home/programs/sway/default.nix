@@ -13,8 +13,10 @@ in
     ./swaylock.nix
   ];
 
-  options.psyclyx.programs.sway = {
-    enable = lib.mkEnableOption "Sway config";
+  options = {
+    psyclyx.programs.sway = {
+      enable = lib.mkEnableOption "Sway window manager";
+    };
   };
 
   config = lib.mkIf cfg.enable {

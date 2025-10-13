@@ -14,9 +14,9 @@ in
       user.name = "psyclyx";
       user.email = "me@psyclyx.xyz";
       roles = rec {
-        shell = true;
-        dev = !cfg.server;
-        graphical = !cfg.server;
+        shell.enable = true;
+        dev.enable = !cfg.server;
+        graphical.enable = !cfg.server;
       };
       secrets.enable = cfg.secrets;
     };

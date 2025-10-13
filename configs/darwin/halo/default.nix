@@ -1,19 +1,29 @@
 { inputs, ... }:
 let
-  inherit (inputs) self disko;
+  inherit (inputs) self;
 in
 {
   imports = [
-    inputs.stylix.darwinModules.stylix
-    ../../../modules/darwin/base
-    ../../../modules/darwin/desktop
-    ../../../modules/darwin/programs/zsh.nix
-    ../../../modules/darwin/services/tailscale.nix
+    self.darwinModules.psyclyx
     ./users.nix
-    ./casks.nix
   ];
 
-  stylix.enable = true;
+  psyclyx = {
+    roles = {
+      base.enable = true;
+      desktop.enable = true;
+    };
+    services = {
+      tailscale.enable = true;
+    };
+    stylix = {
+      enable = true;
+      image = self.assets.wallpapers."2x-ppmm-madoka-homura.png";
+    };
+  };
 
-  stylix.image = self.assets.wallpapers."2x-ppmm-madoka-homura.png";
+  homebrew.casks = [
+    "orcaslicer"
+    "google-chrome"
+  ];
 }

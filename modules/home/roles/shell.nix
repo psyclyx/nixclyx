@@ -5,18 +5,16 @@
   ...
 }:
 let
-  cfgEnabled = config.psyclyx.roles.shell;
+  cfg = config.psyclyx.roles.shell;
 in
 {
   options = {
-    psyclyx = {
-      roles = {
-        shell = lib.mkEnableOption "basic shell config";
-      };
+    psyclyx.roles.shell = {
+      enable = lib.mkEnableOption "Basic shell configuration and utilities";
     };
   };
 
-  config = lib.mkIf cfgEnabled {
+  config = lib.mkIf cfg.enable {
     home = {
       packages = with pkgs; [
         curl

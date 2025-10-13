@@ -8,7 +8,11 @@ let
   cfg = config.psyclyx.programs.fastfetch;
 in
 {
-  options.psyclyx.programs.fastfetch.enable = lib.mkEnableOption "fastfetch";
+  options = {
+    psyclyx.programs.fastfetch = {
+      enable = lib.mkEnableOption "Fastfetch system info";
+    };
+  };
   config.programs.fastfetch = lib.mkIf cfg.enable {
     enable = true;
     settings = {

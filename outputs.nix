@@ -19,9 +19,9 @@ let
   mkPackages = pkgs: import ./packages { inherit pkgs; };
   packages = withSystemPkgs mkPackages;
 
-  mkDarwinConfiguration = import ./modules/darwin { inherit inputs; };
+  inherit (psyclyxLib.darwin) mkDarwinConfiguration;
   darwinConfigurations = {
-    halo = mkDarwinConfiguration {
+    halo = mkDarwinConfiguration inputs {
       hostPlatform = "aarch64-darwin";
       system = "aarch64-darwin";
       hostName = "halo";

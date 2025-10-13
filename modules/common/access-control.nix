@@ -1,3 +1,5 @@
+# very WIP
+# needs tests, documentation, and... to like,,, work
 { lib, config, ... }:
 let
   inherit (lib)

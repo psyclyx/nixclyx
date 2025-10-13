@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ pkgs, inputs, ... }:
 {
   nix.settings.trusted-users = [ "psyc" ];
   users = {
@@ -11,16 +11,14 @@
           "builders"
           "docker"
         ];
-        openssh.authorizedKeys.keys = [
-          "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEwUKqMso49edYpzalH/BFfNlwmLDmcUaT00USWiMoFO me@psyclyx.xyz"
-        ];
+        openssh.authorizedKeys.keys = inputs.self.common.keys.psyc.openssh;
       };
     };
   };
 
   home-manager.users.psyc = {
     imports = [ ../../../home/psyc.nix ];
-    psyclyx.roles.llm-agent = true;
+    psyclyx.roles.llm-agent.enable = true;
     psyclyx.configs.psyc = {
       enable = true;
       secrets = true;

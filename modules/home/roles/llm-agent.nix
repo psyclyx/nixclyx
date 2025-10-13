@@ -6,15 +6,17 @@
 }:
 let
   inherit (lib) mkEnableOption mkIf;
-  cfgEnabled = config.psyclyx.roles.llm-agent;
+  cfg = config.psyclyx.roles.llm-agent;
 in
 {
 
   options = {
-    psyclyx.roles.llm-agent = mkEnableOption "llm clients";
+    psyclyx.roles.llm-agent = {
+      enable = mkEnableOption "LLM AI agent clients";
+    };
   };
 
-  config = mkIf cfgEnabled {
+  config = mkIf cfg.enable {
     home.packages = [
       pkgs.aider-chat-with-help
       pkgs.claude-code

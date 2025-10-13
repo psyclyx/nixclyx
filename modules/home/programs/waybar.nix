@@ -4,7 +4,11 @@ let
   opacity = builtins.toString config.stylix.opacity.desktop;
 in
 {
-  options.psyclyx.programs.waybar.enable = lib.mkEnableOption "waybar config";
+  options = {
+    psyclyx.programs.waybar = {
+      enable = lib.mkEnableOption "Waybar status bar";
+    };
+  };
 
   config = lib.mkIf cfg.enable {
     stylix.targets.waybar.addCss = false;
