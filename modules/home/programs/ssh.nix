@@ -33,27 +33,40 @@ in
             identityFile = "~/.ssh/id_psyclyx";
           }
           // lib.optionalAttrs isDarwin { "useKeychain" = "yes"; };
+
           "alice157.github.com" = {
             hostname = "github.com";
             identityFile = "~/.ssh/id_alice157";
           };
+
           "psyclyx.github.com" = {
             hostname = "github.com";
           };
+
           "psyclyx.xyz *.psyclyx.xyz" = {
             forwardAgent = true;
           };
+
           "sigil.lan sigil sigil.local" = {
             forwardAgent = true;
           };
+
           "tleilax.lan tleilax tleilax.local tleilax.psyclyx.xyz" = {
             port = 17891;
             forwardAgent = true;
-            identityFile = "~/.ssh/id_psyclyx";
+          };
+
+          "*.lan" = {
+            forwardAgent = true;
+          };
+
+          "openwrt.lan" = {
+            user = "root";
           };
         };
       };
     };
+
     services = lib.mkIf pkgs.stdenv.isLinux {
       ssh-agent = {
         enable = true;
