@@ -15,15 +15,6 @@ let
           default = [ name ];
         };
         enableDHCP = lib.mkEnableOption "DHCP";
-        dns = lib.mkOption {
-          type = lib.types.listOf lib.types.str;
-          default = [
-            "2606:4700:4700::1111"
-            "2606:4700:4700::1001"
-            "1.1.1.1"
-            "1.0.0.1"
-          ];
-        };
         requiredForOnline = lib.mkEnableOption "participation in wait-online.target";
       };
     };
@@ -62,7 +53,6 @@ in
           matchConfig.Name = name;
           linkConfig.RequiredForOnline = lib.mkIf network.requiredForOnline "routable";
           networkConfig.DHCP = lib.mkIf network.enableDHCP "ipv4";
-          inherit (network) dns;
         }
       ) cfg.networks;
     };
