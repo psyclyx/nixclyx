@@ -52,7 +52,7 @@ in
         lib.nameValuePair "40-${name}" {
           matchConfig.Name = name;
           linkConfig.RequiredForOnline = lib.mkIf network.requiredForOnline "routable";
-          networkConfig.DHCP = lib.mkIf network.enableDHCP "ipv4";
+          networkConfig.DHCP = lib.mkIf network.enableDHCP true;
         }
       ) cfg.networks;
     };
