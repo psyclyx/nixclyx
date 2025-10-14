@@ -20,7 +20,7 @@ in
           requiredForOnline = true;
         };
       };
-      serviceDiscovery = true;
+      MDNS = true;
       waitOnline = true;
     };
     roles = {
