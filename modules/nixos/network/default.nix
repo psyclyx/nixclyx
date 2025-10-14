@@ -24,7 +24,7 @@ in
     psyclyx.network = {
       enable = lib.mkEnableOption "network config";
       networks = lib.mkOption { type = lib.types.attrsOf (lib.types.submodule network); };
-      serviceDiscovery = lib.mkEnableOption "Avahi/MDNS for service discovery";
+      MDNS = lib.mkEnableOption "MDNS for .local resolution and service discovery";
       waitOnline = lib.mkEnableOption "wait-online.target blocks on interfaces coming online";
       wireless = lib.mkEnableOption "wireless network connections";
     };
@@ -41,12 +41,16 @@ in
       };
     };
 
+    psyclyx.services.avahi.enable = cfg.MDNS;
+
     systemd.network = {
       enable = true;
+
       wait-online = {
         enable = cfg.waitOnline;
         anyInterface = true;
       };
+
       networks = lib.mapAttrs' (
         name: network:
         lib.nameValuePair "40-${name}" {
