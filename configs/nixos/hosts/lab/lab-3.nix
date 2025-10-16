@@ -16,7 +16,7 @@ in
 
   config = {
     networking = {
-      hostName = "lab-2";
+      hostName = "lab-3";
     };
   };
 }

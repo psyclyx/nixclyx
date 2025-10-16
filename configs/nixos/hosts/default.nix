@@ -9,5 +9,5 @@
 
   lab-1.modules = [ ./lab/lab-1.nix ];
 
-  lab-2.modules = [ ./lab/lab-2.nix ];
+  lab-3.modules = [ ./lab/lab-3.nix ];
 }
