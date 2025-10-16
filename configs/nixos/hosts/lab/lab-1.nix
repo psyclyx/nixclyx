@@ -22,9 +22,12 @@ in
     };
 
     boot.supportedFilesystems = [ "zfs" ];
+
     boot.loader.zfsbootmenu = {
       enable = true;
+      bootfs = "rpool/nixos";
     };
+
     boot.zfs.extraPools = [ "rpool" ];
 
     disko.devices = {

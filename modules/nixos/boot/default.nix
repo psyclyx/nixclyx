@@ -3,6 +3,6 @@
     ./initrd-ssh.nix
     ./plymouth.nix
     ./systemd-boot.nix
-    ./zsfbootmenu.nix
+    ./zfsbootmenu.nix
   ];
 }
