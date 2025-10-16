@@ -39,24 +39,11 @@ in
             hostname = "github.com";
           };
 
-          "psyclyx.xyz *.psyclyx.xyz" = {
+          "psyclyx.net *.psyclyx.net psyclyx.xyz *.psyclyx.xyz" = {
             forwardAgent = true;
           };
 
-          "sigil.lan sigil sigil.local" = {
-            forwardAgent = true;
-          };
-
-          "tleilax.lan tleilax tleilax.local tleilax.psyclyx.xyz" = {
-            port = 17891;
-            forwardAgent = true;
-          };
-
-          "*.lan" = {
-            forwardAgent = true;
-          };
-
-          "openwrt.lan" = {
+          "router.home.psyclyx.net" = {
             user = "root";
           };
         };
