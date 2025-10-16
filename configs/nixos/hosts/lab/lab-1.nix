@@ -2,18 +2,20 @@
 let
   inherit (lib) genAttrs;
 
-  disks = [
-    "scsi-35000c50085e87d1b"
-    "scsi-35000c50085e8525b"
-    "scsi-35000c500ca85744f"
-    "scsi-35000c500d723e9a7"
-  ];
+  disks = {
+    "sda" = "scsi-35000c50085e87d1b";
+    "sdb" = "scsi-35000c50085e8525b";
+    "sdc" = "scsi-35000c500ca85744f";
+    "sdd" = "scsi-35000c500d723e9a7";
+  };
 
   idDevice = id: "/dev/disk/by-id/${id}";
 
 in
 {
-  imports = [ ./common.nix ];
+  imports = [
+    ./common.nix
+  ];
 
   config = {
     networking = {
@@ -31,7 +33,7 @@ in
     boot.zfs.extraPools = [ "rpool" ];
 
     disko.devices = {
-      disk = genAttrs disks (id: {
+      disk = lib.mapAttrs (_: id: {
         type = "disk";
         device = idDevice id;
         content = {
@@ -46,20 +48,23 @@ in
             };
           };
         };
-      });
+      }) disks;
 
       zpool = {
         rpool = {
           type = "zpool";
-          rootFsOptions = {
-            compression = "lz4";
-            "com.sun:auto-snapshot" = "false";
-          };
+          mode = "mirror";
           datasets = {
-            root = {
+            "nixos" = {
               type = "zfs_fs";
               mountpoint = "/";
+              options = {
+                mountpoint = "/";
+                "com.sun:auto-snapshot" = "false";
+                compression = "zstd";
+              };
             };
+
           };
         };
       };
