@@ -11,6 +11,8 @@ in
     ./users.nix
   ];
 
+  boot.kernelParams = [ "snd-intel-dspcfg.dsp_driver=1" ];
+
   psyclyx = {
     hardware = {
       cpu = {

@@ -14,7 +14,6 @@ in
   };
 
   config = lib.mkIf cfg.enable {
-    boot.kernelParams = [ "snd-intel-dspcfg.dsp_driver=1" ];
     hardware = {
       cpu.intel.updateMicrocode = true;
       enableRedistributableFirmware = true;
