@@ -23,6 +23,7 @@ in
         "virtio_scsi"
         "sd_mod"
         "sr_mod"
+        "sg"
       ];
     };
 
