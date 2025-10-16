@@ -5,6 +5,7 @@
     users = {
       psyc = {
         isNormalUser = true;
+        shell = pkgs.zsh;
         extraGroups = [
           "wheel"
           "video"

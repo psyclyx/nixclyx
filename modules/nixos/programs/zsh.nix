@@ -11,7 +11,6 @@ in
   options = {
     psyclyx.programs.zsh = {
       defaultShell = lib.mkEnableOption "Zsh as the default shell" // {
-        default = cfg.enable;
       };
       enable = lib.mkEnableOption "Zsh config";
     };
