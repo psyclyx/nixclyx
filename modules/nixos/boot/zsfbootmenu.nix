@@ -34,7 +34,7 @@ in
         set -e
 
         profile="$1"
-        gen=$(echo "$profile" | sed 's/.*-\([0-9]\+\)-link/\1/')
+        gen=$(echo "$profile" | ${pkgs.sed}/bin/sed 's/.*-\([0-9]\+\)-link/\1/')
         dataset="${cfg.datasetPrefix}-$gen"
 
         # Find previous dataset (highest numbered that exists)
@@ -72,7 +72,7 @@ in
 
         kernel=$(readlink -f "$profile/kernel")
         initrd=$(readlink -f "$profile/initrd")
-        kver=$(echo "$kernel" | sed -E 's|.*linux-([0-9]+\.[0-9]+\.[0-9]+).*|\1|')
+        kver=$(echo "$kernel" | ${pkgs.sed}/bin/sed -E 's|.*linux-([0-9]+\.[0-9]+\.[0-9]+).*|\1|')
 
         cp "$kernel" "$tmp/boot/vmlinuz-$kver"
         cp "$initrd" "$tmp/boot/initramfs-$kver"
