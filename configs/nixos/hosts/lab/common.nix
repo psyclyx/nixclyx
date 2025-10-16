@@ -15,25 +15,15 @@ in
 
   config = {
 
-    boot = {
-      initrd.availableKernelModules = [
-        "ahci"
-        "xhci_pci"
-        "virtio_pci"
-        "virtio_scsi"
-        "sd_mod"
-        "sr_mod"
-        "sg"
-      ];
-    };
-
-    environment.systemPackages = [ psyclyx.packages.${pkgs.system}.ssacli ];
-
     networking.domain = "rack.home.psyclyx.net";
 
     psyclyx = {
       hardware = {
-        cpu.enableMitigations = false;
+        cpu = {
+          intel.enable = true;
+          enableMitigations = false;
+        };
+        hpe.enable = true;
       };
 
       roles = {
@@ -66,11 +56,9 @@ in
             "wheel"
             "builders"
           ];
-
-          openssh.authorizedKeys.keys = [
-            "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEwUKqMso49edYpzalH/BFfNlwmLDmcUaT00USWiMoFO me@psyclyx.xyz"
-          ];
+          openssh.authorizedKeys.keys = psyclyx.common.keys.psyc.openssh;
         };
+        root.openssh.authorizedKeys.keys = psyclyx.common.keys.psyc.openssh;
       };
     };
 
