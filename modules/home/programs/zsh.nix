@@ -16,7 +16,7 @@ let
   prezto = {
     enable = true;
     pmodules = [
-      "environment"
+      #"environment"
       "terminal"
       "editor"
       "history"
