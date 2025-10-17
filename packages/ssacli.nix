@@ -19,6 +19,7 @@ stdenv.mkDerivation {
   };
 
   nativeBuildInputs = [
+    autoPatchelfHook
     rpmextract
   ];
 
