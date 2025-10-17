@@ -5,6 +5,7 @@ let
   inherit (lib) mapAttrs;
 
   imports = {
+    checks = ./checks.nix;
     darwin = ./darwin.nix;
     files = ./files.nix;
     network = ./network;

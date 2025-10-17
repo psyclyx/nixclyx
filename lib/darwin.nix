@@ -32,7 +32,9 @@ let
         inherit inputs;
       } // args;
     };
+
+  mkDarwinToplevels = lib.mapAttrs (_: config: config.system.build.toplevel);
 in
 {
-  inherit mkDarwinConfiguration;
+  inherit mkDarwinConfiguration mkDarwinToplevels;
 }
