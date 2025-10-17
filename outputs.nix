@@ -37,6 +37,11 @@ let
   };
 
   common = import ./configs/common;
+
+  passthrough = {
+    inherit inputs;
+  };
+
 in
 {
   inherit
@@ -46,6 +51,7 @@ in
     darwinConfigurations
     nixosConfigurations
     packages
+    passthrough
     ;
   lib = psyclyxLib;
 }
