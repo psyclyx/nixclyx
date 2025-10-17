@@ -8,6 +8,8 @@ pkgs.mkShell {
     just-formatter
     nixfmt-rfc-style
     nixd
+    nix-output-monitor
+    nix-tree
     sops
     ssh-to-age
     yq

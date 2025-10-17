@@ -35,6 +35,10 @@ in
   };
 
   config = lib.mkIf cfg.enable {
+    environment.systemPackages = [
+      pkgs.nix-output-monitor
+      pkgs.nix-tree
+    ];
     nix = {
       package = pkgs.lix;
 
