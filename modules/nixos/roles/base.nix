@@ -1,7 +1,6 @@
 {
   config,
   lib,
-  pkgs,
   ...
 }:
 let
@@ -20,7 +19,9 @@ in
       programs = {
         zsh.enable = lib.mkDefault true;
       };
+
       system = {
+        documentation.enable = lib.mkDefault true;
         home-manager.enable = lib.mkDefault true;
         locale.enable = lib.mkDefault true;
         nix.enable = lib.mkDefault true;

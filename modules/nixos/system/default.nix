@@ -1,6 +1,7 @@
 {
   imports = [
     ./containers.nix
+    ./documentation.nix
     ./emulation.nix
     ./fonts.nix
     ./home-manager.nix
