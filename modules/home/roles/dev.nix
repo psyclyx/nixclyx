@@ -23,6 +23,11 @@ in
       nixfmt-rfc-style
 
       temurin-bin-25
+      clojure
+      leiningen
+      cljstyle
+      babashka
+      jet
 
       zig
       zls
