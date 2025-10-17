@@ -22,10 +22,11 @@ in
     };
 
     services.xserver.videoDrivers = [ "nvidia" ];
-    # TODO: I don't think I actually need this? Check if wake from hiberate works
-    # systemd.services."systemd-suspend" = {
-    #   serviceConfig = {
-    #     Environment = ''"SYSTEMD_SLEEP_FREEZE_USER_SESSIONS=false"'';
-    #   };
+
+    systemd.services."systemd-suspend" = {
+      serviceConfig = {
+        Environment = ''"SYSTEMD_SLEEP_FREEZE_USER_SESSIONS=false"'';
+      };
+    };
   };
 }
