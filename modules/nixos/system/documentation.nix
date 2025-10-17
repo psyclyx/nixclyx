@@ -20,7 +20,9 @@ in
       info.enable = true;
       nixos = {
         enable = true;
-        includeAllModules = true;
+
+        # Workaround: https://github.com/nix-community/stylix/issues/47
+        # includeAllModules = true;
       };
     };
   };
