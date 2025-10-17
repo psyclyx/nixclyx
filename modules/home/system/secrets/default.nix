@@ -17,6 +17,9 @@ in
     };
   };
   config = lib.mkIf cfg.enable {
+
+    home.packages = [ pkgs.bitwarden-cli ];
+
     sops = {
       age.keyFile =
         if isDarwin then
