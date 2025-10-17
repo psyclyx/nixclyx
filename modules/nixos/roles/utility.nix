@@ -23,14 +23,15 @@ in
       htop
       inetutils
       lm_sensors
-      pciutils
-      unzip
-      zip
-      zstd
       magic-wormhole
+      p7zip
+      pciutils
       pv
       stress-ng
       sysbench
+      unzip
+      zip
+      zstd
     ];
     psyclyx = {
       programs = {
