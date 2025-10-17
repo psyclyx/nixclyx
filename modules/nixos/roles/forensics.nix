@@ -18,9 +18,7 @@ in
   config = mkIf cfg.enable {
     environment.systemPackages = with pkgs; [
       hashcat
-      (john.overrideAttrs (old: {
-        buildInputs = (old.buildInputs ++ [ libxcrypt ]);
-      }))
+      john
       libxcrypt
       sleuthkit
       wordlists
