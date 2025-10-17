@@ -17,8 +17,11 @@ in
   config = lib.mkIf cfg.enable {
     environment.systemPackages = with pkgs; [
       binutils
+      dig
       ethtool
+      gotop
       htop
+      inetutils
       lm_sensors
       pciutils
       unzip
