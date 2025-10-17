@@ -4,6 +4,8 @@
 pkgs.mkShell {
   packages = with pkgs; [
     age
+    just
+    just-formatter
     nixfmt-rfc-style
     nixd
     sops
