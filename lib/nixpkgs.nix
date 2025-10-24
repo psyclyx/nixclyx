@@ -2,8 +2,10 @@
 rec {
   # Options used to initialize pkgs from the nixpkgs input
   pkgsOptions = {
-    config.allowUnfree = true;
-    nvidia.acceptLicense = true;
+    config = {
+      allowUnfree = true;
+      nvidia.acceptLicense = true;
+    };
   };
 
   # Initialize `pkgs` from `nixpkgs` for `system`
