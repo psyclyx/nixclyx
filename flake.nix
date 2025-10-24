@@ -2,7 +2,7 @@
   description = "nixos/nix-darwin configurations";
 
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
+    nixpkgs.url = "github:psyclyx/nixpkgs/psyclyx";
     psyclyx-emacs.url = "git+file:submodules/emacs";
     nix-darwin = {
       url = "github:LnL7/nix-darwin";
