@@ -26,13 +26,13 @@ in
             extraOptions = {
               "UpdateHostKeys" = "no";
             };
-            identityFile = "~/.ssh/id_psyclyx";
+            identityFile = config.sops.secrets."ssh/id_psyclyx".path;
           }
           // lib.optionalAttrs isDarwin { "useKeychain" = "yes"; };
 
           "alice157.github.com" = {
             hostname = "github.com";
-            identityFile = "~/.ssh/id_alice157";
+            identityFile = config.sops.secrets."ssh/id_alice157".path;
           };
 
           "psyclyx.github.com" = {
