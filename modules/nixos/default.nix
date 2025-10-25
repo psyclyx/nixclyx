@@ -4,7 +4,6 @@
     inputs.disko.nixosModules.disko
     ./boot
     ./hardware
-    ./network
     ./programs
     ./roles
     ./services
