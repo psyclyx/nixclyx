@@ -1,6 +1,7 @@
 {
   config,
   lib,
+  inputs,
   ...
 }:
 let
@@ -12,11 +13,6 @@ in
   };
 
   config = lib.mkIf cfg.enable {
-    nixpkgs = {
-      config = {
-        allowUnfree = true;
-        nvidia.acceptLicense = true;
-      };
-    };
+    nixpkgs = inputs.self.lib.nixpkgs.pkgsOptions;
   };
 }
