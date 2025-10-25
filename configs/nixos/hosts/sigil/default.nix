@@ -7,22 +7,12 @@ in
 
   imports = [
     self.nixosModules.psyclyx
+    ./network.nix
     ./filesystems.nix
     ./users.nix
   ];
 
   psyclyx = {
-    network = {
-      enable = true;
-      networks = {
-        "enp5s0" = {
-          enableDHCP = true;
-          requiredForOnline = true;
-        };
-      };
-      MDNS = true;
-      waitOnline = true;
-    };
     roles = {
       base.enable = true;
       forensics.enable = true;
