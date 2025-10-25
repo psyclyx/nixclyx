@@ -16,6 +16,9 @@ in
 
   config = lib.mkIf cfg.enable {
     home.packages = with pkgs; [
+      arduino-cli
+      screen
+
       just
       just-formatter
 
