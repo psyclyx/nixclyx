@@ -6,6 +6,7 @@ pkgs.mkShell {
     age
     just
     just-formatter
+    nh
     nixfmt-rfc-style
     nixd
     nix-output-monitor

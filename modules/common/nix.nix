@@ -36,6 +36,7 @@ in
 
   config = lib.mkIf cfg.enable {
     environment.systemPackages = [
+      pkgs.nh
       pkgs.nix-output-monitor
       pkgs.nix-tree
     ];
