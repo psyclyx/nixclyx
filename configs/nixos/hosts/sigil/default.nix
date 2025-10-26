@@ -26,12 +26,7 @@ in
         amd.enable = true;
         enableMitigations = false;
       };
-      glasgow = {
-        # 28-08-2025 workaround build failure
-        enable = false;
-        # enable = true;
-        users = [ "psyc" ];
-      };
+      glasgow.enable = true;
       gpu.nvidia.enable = true;
       rtl8125.disableEEEOn = [ "enp5s0" ];
     };
