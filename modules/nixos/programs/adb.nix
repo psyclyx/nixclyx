@@ -8,6 +8,7 @@ in
       enable = lib.mkEnableOption "Enable ADB and associated udev rules/groups.";
       users = lib.mkOption {
         type = lib.types.listOf lib.types.str;
+        default = config.users.groups.wheel.members or [ ];
         description = "Users to add to the adbusers group.";
       };
     };

@@ -36,18 +36,12 @@ in
       rtl8125.disableEEEOn = [ "enp5s0" ];
     };
     programs = {
-      adb = {
-        enable = true;
-        users = [ "psyc" ];
-      };
+      adb.enable = true;
       steam.enable = true;
     };
     services = {
       home-assistant.enable = true;
       openrgb.enable = true;
-      locate = {
-        users = [ "psyc" ];
-      };
       tailscale.exitNode = true;
     };
     system = {

@@ -34,6 +34,7 @@ in
     enable = lib.mkEnableOption "Glasgow digital interface explorer";
     users = lib.mkOption {
       type = lib.types.listOf lib.types.str;
+      default = config.users.groups.wheel.members or [ ];
       description = "Users to put in the plugdev group";
     };
   };
