@@ -28,7 +28,6 @@ in
       };
       glasgow.enable = true;
       gpu.nvidia.enable = true;
-      rtl8125.disableEEEOn = [ "enp5s0" ];
     };
     programs = {
       adb.enable = true;
