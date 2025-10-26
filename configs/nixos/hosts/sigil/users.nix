@@ -8,9 +8,6 @@
         shell = pkgs.zsh;
         extraGroups = [
           "wheel"
-          "video"
-          "builders"
-          "docker"
         ];
         openssh.authorizedKeys.keys = inputs.self.common.keys.psyc.openssh;
       };
