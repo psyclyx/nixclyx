@@ -34,7 +34,6 @@ in
 
       system = {
         containers.enable = true;
-        virtualization.enable = true;
       };
     };
 

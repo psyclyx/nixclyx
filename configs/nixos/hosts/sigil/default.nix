@@ -41,7 +41,6 @@ in
     system = {
       containers.enable = true;
       emulation.enable = true;
-      virtualization.enable = true;
     };
     stylix = {
       image = self.assets.wallpapers."4x-ppmm-mami.jpg";

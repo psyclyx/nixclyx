@@ -44,7 +44,6 @@ in
     system = {
       containers.enable = true;
       emulation.enable = true;
-      virtualization.enable = true;
     };
     stylix = {
       image = self.assets.wallpapers."2x-ppmm-madoka-homura.png";
