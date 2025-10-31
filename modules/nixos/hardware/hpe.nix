@@ -27,18 +27,9 @@ in
   config = mkIf cfg.enable {
     boot = {
       initrd.availableKernelModules = [
-        "xhci_pci"
-        "ehci_pci"
-        "uhci_hcd"
-        "hpsa"
-        "usbhid"
-        "usb_storage"
         "sd_mod"
         "sr_mod"
-        "sg"
       ];
-
-      kernelModules = [ "kvm-intel" ];
     };
 
     environment.systemPackages = [ self.packages.${pkgs.system}.ssacli ];

@@ -3,6 +3,7 @@
   imports = [
     inputs.disko.nixosModules.disko
     ./boot
+    ./filesystems
     ./hardware
     ./programs
     ./roles

@@ -18,5 +18,7 @@ in
       cpu.intel.updateMicrocode = true;
       enableRedistributableFirmware = true;
     };
+
+    boot.kernelModules = lib.optionals config.psyclyx.system.virtualization.enable [ "kvm-intel" ];
   };
 }

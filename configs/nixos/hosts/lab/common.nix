@@ -32,10 +32,6 @@ in
         utility.enable = true;
       };
 
-      services = {
-        locate.users = [ "psyc" ];
-      };
-
       system = {
         containers.enable = true;
         virtualization.enable = true;
