@@ -41,7 +41,7 @@ in
     };
 
     home-manager.users.psyc = {
-      imports = [ inputs.self.homeManagerModules.psyclyx ] ++ cfg.extraModules;
+      imports = [ inputs.self.homeManagerModules.config ] ++ cfg.extraModules;
       psyclyx.configs.psyc.enable = true;
     };
   };

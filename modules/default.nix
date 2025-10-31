@@ -5,5 +5,5 @@
 
   nixosModules.psyclyx = ./nixos;
 
-  homeManagerModules.psyclyx = ./home;
+  homeManagerModules = import ./home;
 }
