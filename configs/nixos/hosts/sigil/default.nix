@@ -39,7 +39,6 @@ in
       tailscale.exitNode = true;
     };
     system = {
-      containers.enable = true;
       emulation.enable = true;
     };
     stylix = {

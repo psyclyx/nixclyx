@@ -4,29 +4,32 @@
   ...
 }:
 let
+  inherit (lib) mkDefault mkEnableOption mkIf;
+
   cfg = config.psyclyx.roles.base;
 in
 
 {
   options = {
     psyclyx.roles.base = {
-      enable = lib.mkEnableOption "role for baseline config, likely applicable to all hosts";
+      enable = mkEnableOption "role for baseline config, likely applicable to all hosts";
     };
   };
 
-  config = lib.mkIf cfg.enable {
+  config = mkIf cfg.enable {
     psyclyx = {
       programs = {
-        zsh.enable = lib.mkDefault true;
+        zsh.enable = mkDefault true;
       };
 
       system = {
-        documentation.enable = lib.mkDefault true;
-        home-manager.enable = lib.mkDefault true;
-        locale.enable = lib.mkDefault true;
-        nix.enable = lib.mkDefault true;
-        nixpkgs.enable = lib.mkDefault true;
-        timezone.enable = lib.mkDefault true;
+        containers.enable = mkDefault true;
+        documentation.enable = mkDefault true;
+        home-manager.enable = mkDefault true;
+        locale.enable = mkDefault true;
+        nix.enable = mkDefault true;
+        nixpkgs.enable = mkDefault true;
+        timezone.enable = mkDefault true;
       };
     };
   };

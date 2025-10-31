@@ -31,10 +31,6 @@ in
         remote.enable = true;
         utility.enable = true;
       };
-
-      system = {
-        containers.enable = true;
-      };
     };
 
     nix.settings.trusted-users = [ "psyc" ];
