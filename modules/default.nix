@@ -5,5 +5,5 @@
 
   nixosModules.psyclyx = ./nixos;
 
-  homeManagerModules.psyclyx = ./home/module.nix;
+  homeManagerModules.psyclyx = ./home;
 }

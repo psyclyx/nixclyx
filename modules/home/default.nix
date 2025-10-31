@@ -1,15 +1,12 @@
+{ inputs, ... }:
 {
-  name,
-  email,
-  modules,
-  ...
-}:
-{
-  home.stateVersion = "25.05";
-  fonts.fontconfig.enable = true;
-
   imports = [
+    inputs.sops-nix.homeManagerModules.sops
+    inputs.psyclyx-emacs.homeManagerModules.default
     ./config.nix
-    { psyclyx.user = { inherit name email; }; }
-  ] ++ modules;
+    ./programs
+    ./roles
+    ./services
+    ./system
+  ];
 }

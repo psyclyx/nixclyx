@@ -1,4 +1,5 @@
 {
+  inputs,
   config,
   pkgs,
   lib,
@@ -21,7 +22,7 @@ in
     psyclyx.users.psyc = {
       enable = mkEnableOption "psyc user";
       admin = mkEnableOption "wheel group and trusted nix user";
-      hmImports = mkOption {
+      extraModules = mkOption {
         type = types.listOf types.any;
         default = [ ];
       };
@@ -40,7 +41,7 @@ in
     };
 
     home-manager.users.psyc = {
-      imports = cfg.hmImports;
+      imports = [ inputs.self.homeManagerModules.psyclyx ] ++ cfg.extraModules;
       psyclyx.configs.psyc.enable = true;
     };
   };
