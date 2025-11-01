@@ -1,0 +1,3 @@
+{
+  psyc = import ./psyc;
+}

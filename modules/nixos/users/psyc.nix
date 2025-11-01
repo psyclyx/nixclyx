@@ -22,9 +22,9 @@ in
     psyclyx.users.psyc = {
       enable = mkEnableOption "psyc user";
       admin = mkEnableOption "wheel group and trusted nix user";
-      extraModules = mkOption {
+      hmModules = mkOption {
         type = types.listOf types.any;
-        default = [ ];
+        default = [ inputs.self.homeManagerModules.homes.psyc.pc ];
       };
     };
   };
@@ -40,9 +40,6 @@ in
       openssh.authorizedKeys.keys = publicKey;
     };
 
-    home-manager.users.psyc = {
-      imports = [ inputs.self.homeManagerModules.config ] ++ cfg.extraModules;
-      psyclyx.configs.psyc.enable = true;
-    };
+    home-manager.users.psyc.imports = cfg.hmModules;
   };
 }
