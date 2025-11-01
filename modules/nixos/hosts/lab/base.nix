@@ -16,7 +16,10 @@
         utility.enable = true;
       };
 
-      users.psyc.enable = true;
+      users.psyc = {
+        enable = true;
+        admin = true;
+      };
     };
   };
 }
