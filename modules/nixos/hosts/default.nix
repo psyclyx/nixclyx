@@ -1,0 +1,4 @@
+{
+  sigil = ./sigil;
+}
+// import ./lab

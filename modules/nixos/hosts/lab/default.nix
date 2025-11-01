@@ -1,36 +1,39 @@
 {
-  config,
-  lib,
-  ...
-}:
-let
-  inherit (lib)
-    mkEnableOption
-    mkIf
-    ;
+  base =
+    { config, ... }:
+    {
+      imports = [ ./base.nix ];
+      config = {
+        networking.hostName = "lab-base";
+        users.users.root.openssh.authorizedKeys.keys = config.users.users.psyc.openssh.authorizedKeys.keys;
+      };
+    };
 
-  cfg = config.psyclyx.hosts.lab;
-in
-{
-  imports = [ ./disks.nix ];
-
-  options = {
-    psyclyx.hosts.lab = {
-      enable = mkEnableOption "Base homelab server config";
+  lab-1 = {
+    imports = [ ./base.nix ];
+    config = {
+      networking.hostName = "lab-1";
     };
   };
 
-  config = mkIf cfg.enable {
-    psyclyx = {
-      hardware.presets.dl360-gen9.enable = true;
-      boot.systemd-boot.enable = true;
-      filesystem.bcachefs.enable = true;
-      roles = {
-        base.enable = true;
-        remote.enable = true;
-        utility.enable = true;
-      };
-      users.psyc.enable = true;
+  lab-2 = {
+    imports = [ ./base.nix ];
+    config = {
+      networking.hostName = "lab-2";
+    };
+  };
+
+  lab-3 = {
+    imports = [ ./base.nix ];
+    config = {
+      networking.hostName = "lab-3";
+    };
+  };
+
+  lab-4 = {
+    imports = [ ./base.nix ];
+    config = {
+      networking.hostName = "lab-4";
     };
   };
 }

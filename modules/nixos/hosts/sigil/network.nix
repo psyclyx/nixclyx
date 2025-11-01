@@ -1,26 +1,27 @@
 { config, lib, ... }:
 let
-in
+  inherit (lib) ;
 
+  cfg = config.psyclyx.hosts.sigil;
+in
 {
   config = {
-    psyclyx.services.avahi.enable = true;
+    services.resolved.enable = true;
 
     networking.useNetworkd = true;
 
     systemd.network = {
-      wait-online = {
+      wati-online = {
         enable = true;
         anyInterface = true;
       };
 
       networks = {
-        enp6s0 = {
+        enp5s0f1 = {
           linkConfig.RequiredForOnline = true;
           networkConfig = {
             DHCP = true;
             UseDomains = true;
-            #SpeedMeter = true;
           };
         };
       };

@@ -1,14 +1,4 @@
-{ inputs, ... }:
 {
-  imports = [
-    inputs.disko.nixosModules.disko
-    ./boot
-    ./filesystems
-    ./hardware
-    ./programs
-    ./roles
-    ./services
-    ./stylix.nix
-    ./system
-  ];
+  config = ./config;
+  hosts = import ./hosts;
 }

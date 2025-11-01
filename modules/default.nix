@@ -3,7 +3,7 @@
 
   darwinModules.psyclyx = ./darwin;
 
-  nixosModules.psyclyx = ./nixos;
+  nixosModules = import ./nixos;
 
   homeManagerModules = import ./home;
 }
