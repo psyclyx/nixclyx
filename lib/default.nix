@@ -8,8 +8,6 @@ let
     checks = ./checks.nix;
     darwin = ./darwin.nix;
     files = ./files.nix;
-    network = ./network;
-    nixos = ./nixos.nix;
     nixpkgs = ./nixpkgs.nix;
     packageSets = ./packageSets.nix;
     systems = ./systems.nix;

@@ -1,3 +1,4 @@
-{...}: {
-  imports = [./zfs.nix]:
+{ ... }:
+{
+  imports = [ ./bcachefs.nix ];
 }

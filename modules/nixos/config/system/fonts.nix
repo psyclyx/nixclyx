@@ -28,7 +28,7 @@ in
         nerd-fonts.noto
         nerd-fonts.symbols-only
         twitter-color-emoji
-        ubuntu_font_family
+        ubuntu-classic
       ];
       fontconfig = {
         useEmbeddedBitmaps = true;

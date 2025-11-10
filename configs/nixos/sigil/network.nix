@@ -11,7 +11,7 @@ in
     networking.useNetworkd = true;
 
     systemd.network = {
-      wati-online = {
+      wait-online = {
         enable = true;
         anyInterface = true;
       };

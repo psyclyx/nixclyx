@@ -13,33 +13,55 @@ let
     types
     ;
 
-  publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEwUKqMso49edYpzalH/BFfNlwmLDmcUaT00USWiMoFO me@psyclyx.xyz";
-
   cfg = config.psyclyx.users.psyc;
 in
 {
   options = {
     psyclyx.users.psyc = {
       enable = mkEnableOption "psyc user";
-      admin = mkEnableOption "wheel group and trusted nix user";
-      hmModules = mkOption {
-        type = types.listOf types.any;
-        default = [ inputs.self.homeManagerModules.homes.psyc.pc ];
+      server = mkEnableOption "roles for server";
+      hmImport = mkOption {
+        default = { };
       };
     };
   };
 
   config = lib.mkIf cfg.enable {
-    nix.settings.trusted-users = optionals cfg.admin [ "psyc" ];
-
-    users.users.psyc = {
-      name = "psyc";
-      shell = pkgs.zsh;
-      isNormalUser = true;
-      extraGroups = [ "video" ] ++ (optionals cfg.admin [ "wheel" ]);
-      openssh.authorizedKeys.keys = publicKey;
+    users.users = {
+      psyc = {
+        name = "psyc";
+        shell = pkgs.zsh;
+        isNormalUser = true;
+        extraGroups = [
+          "wheel"
+          "video"
+        ];
+        openssh.authorizedKeys.keys = inputs.self.common.keys.psyc.openssh;
+      };
+      root.openssh.authorizedKeys.keys = inputs.self.common.keys.psyc.openssh;
     };
 
-    home-manager.users.psyc.imports = cfg.hmModules;
+    home-manager.users.psyc = {
+      imports = [
+        inputs.self.homeManagerModules.config
+        cfg.hmImport
+      ];
+
+      config = {
+        psyclyx = {
+          user = {
+            name = "psyclyx";
+            email = "me@psyclyx.xyz";
+          };
+
+          roles = {
+            shell.enable = true;
+            dev.enable = lib.mkIf (!cfg.server) true;
+            graphical.enable = lib.mkIf (!cfg.server) true;
+          };
+          secrets.enable = lib.mkIf (!cfg.server) true;
+        };
+      };
+    };
   };
 }

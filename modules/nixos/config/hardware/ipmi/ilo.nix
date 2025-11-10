@@ -17,6 +17,6 @@ in
   };
 
   config = mkIf cfg.enable {
-    initrd.availableKernelModules = [ "hpilo" ];
+    boot.initrd.availableKernelModules = [ "hpilo" ];
   };
 }

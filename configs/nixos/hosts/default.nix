@@ -1,3 +1,0 @@
-{
-  tleilax.modules = [ ./tleilax ];
-}

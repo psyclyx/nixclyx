@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ ... }:
 let
   prefix6 = "2606:7940:32:26::";
   prefix4 = "199.255.18.171";
@@ -17,7 +17,7 @@ in
         ManageForeignRoutes = false;
       };
 
-      wait-online.anyInterface = true;
+      wait-online.enable = true;
 
       links = {
         "04-bond" = {

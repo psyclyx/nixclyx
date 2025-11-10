@@ -20,7 +20,6 @@ in
 
       authorizedKeys = lib.mkOption {
         type = lib.types.listOf lib.types.str;
-        default = inputs.self.common.keys.psyc.openssh;
         description = "SSH public keys authorized to connect to initrd";
       };
 
@@ -42,13 +41,12 @@ in
         ssh = {
           enable = true;
           port = cfg.port;
-          authorizedKeys = cfg.authorizedKeys;
+          authorizedKeys = [ ];
           hostKeys = [ cfg.hostKeyPath ];
         };
 
         postCommands = ''
-          # Automatically ask for the password on SSH login
-          echo 'cryptsetup-askpass || echo "Unlock was successful; exiting SSH session" && exit 1' >> /root/.profile
+          echo 'cryptsetup-askpass || exit 1' >> /root/.profile
         '';
       };
     };

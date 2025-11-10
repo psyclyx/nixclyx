@@ -19,6 +19,8 @@ let
   mkPackages = pkgs: import ./packages { inherit pkgs; };
   packages = withSystemPkgs mkPackages;
 
+  packageGroups = import ./package-groups;
+
   inherit (psyclyxLib.darwin) mkDarwinConfiguration mkDarwinToplevels;
   darwinConfigurations = {
     halo = mkDarwinConfiguration inputs {
@@ -32,7 +34,7 @@ let
   moduleOutputs = import ./modules;
 
   nixosConfigurations = import ./configs/nixos {
-    inherit psyclyxLib;
+    inherit (lib) nixosSystem;
     specialArgs = { inherit inputs; };
   };
 
@@ -42,12 +44,8 @@ let
     inherit inputs;
   };
 
-  inherit (psyclyxLib.nixos) mkNixosToplevels mkNixosImages;
   inherit (psyclyxLib.checks) mkChecks;
 
-  nixosSystems = mkNixosToplevels nixosConfigurations;
-  darwinSystems = mkDarwinToplevels darwinConfigurations;
-  nixosImages = mkNixosImages nixosConfigurations;
   checks = mkChecks { inherit nixosConfigurations darwinConfigurations; };
 
 in
@@ -56,13 +54,11 @@ in
     assets
     checks
     common
-    darwinSystems
     devShells
     darwinConfigurations
     nixosConfigurations
-    nixosImages
-    nixosSystems
     packages
+    packageGroups
     passthrough
     ;
   lib = psyclyxLib;

@@ -1,3 +1,0 @@
-{
-  psyc = import ./psyc;
-}

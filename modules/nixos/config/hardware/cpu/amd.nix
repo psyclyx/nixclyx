@@ -1,6 +1,7 @@
 {
   config,
   lib,
+  pkgs,
   ...
 }:
 let
@@ -18,8 +19,18 @@ in
   config = lib.mkIf cfg.enable {
     boot = {
       kernelParams = [ "amd_pstate=active" ];
-      kernelModules = [ "kvm-amd" ];
+      extraModulePackages = [ config.boot.kernelPackages.zenpower ];
+      kernelModules = [
+        "kvm-amd"
+        "zenpower"
+      ];
     };
+
+    environment.systemPackages = [
+      pkgs.ryzen-monitor-ng
+      pkgs.zenstates
+      pkgs.corectrl
+    ];
 
     hardware = {
       cpu.amd.updateMicrocode = true;

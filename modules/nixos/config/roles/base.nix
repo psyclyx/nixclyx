@@ -1,6 +1,7 @@
 {
   config,
   lib,
+  pkgs,
   ...
 }:
 let
@@ -17,6 +18,55 @@ in
   };
 
   config = mkIf cfg.enable {
+    environment.systemPackages = [
+      pkgs.ack
+      pkgs.aria2
+      pkgs.bat
+      pkgs.btar
+      pkgs.btop
+      pkgs.bzip2
+      pkgs.coreutils
+      pkgs.curl
+      pkgs.duf
+      pkgs.eza
+      pkgs.fd
+      pkgs.file
+      pkgs.findutils
+      pkgs.fzf
+      pkgs.gawk
+      pkgs.gnugrep
+      pkgs.gnused
+      pkgs.gzip
+      pkgs.iotop
+      pkgs.less
+      pkgs.lsof
+      pkgs.magic-wormhole
+      pkgs.mc
+      pkgs.moreutils
+      pkgs.ncdu
+      pkgs.nmon
+      pkgs.p7zip
+      pkgs.parallel
+      pkgs.psmisc
+      pkgs.pv
+      pkgs.rar
+      pkgs.rclone
+      pkgs.reptyr
+      pkgs.ripgrep
+      pkgs.rsync
+      pkgs.screen
+      pkgs.silver-searcher
+      pkgs.tmux
+      pkgs.tree
+      pkgs.unrar
+      pkgs.unzip
+      pkgs.util-linux
+      pkgs.wget
+      pkgs.xz
+      pkgs.zip
+      pkgs.zstd
+    ];
+
     psyclyx = {
       programs = {
         zsh.enable = mkDefault true;

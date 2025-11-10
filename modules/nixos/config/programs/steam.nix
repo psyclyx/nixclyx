@@ -29,7 +29,6 @@ in
       extraPackages = with pkgs; [
         gamescope
         bumblebee
-        glxinfo
       ];
     };
   };

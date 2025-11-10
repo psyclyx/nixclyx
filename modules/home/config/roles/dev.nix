@@ -15,26 +15,6 @@ in
   };
 
   config = lib.mkIf cfg.enable {
-    home.packages = with pkgs; [
-      arduino-cli
-      screen
-
-      just
-      just-formatter
-
-      nixd
-      nixfmt-rfc-style
-
-      temurin-bin-25
-      clojure
-      leiningen
-      cljstyle
-      babashka
-      jet
-
-      zig
-      zls
-    ];
     psyclyx = {
       programs = {
         emacs.enable = lib.mkDefault true;

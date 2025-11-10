@@ -11,12 +11,14 @@ let
 in
 {
   imports = [
-    inputs.self.nixosModules.psyclyx
+    inputs.self.nixosModules.config
     ./filesystems.nix
     ./network.nix
   ];
 
   config = {
+    networking.hostName = "sigil";
+
     psyclyx = {
       hardware = {
         cpu = {
@@ -29,6 +31,7 @@ in
 
       roles = {
         base.enable = true;
+        dev.enable = true;
         forensics.enable = true;
         graphical.enable = true;
         media.enable = true;
@@ -57,10 +60,8 @@ in
         dark = true;
       };
 
-      users.psyclyx.users.psyc = {
+      users.psyc = {
         enable = true;
-        admin = true;
-        hmModules = [ inputs.self.homeManagerModules.homes.psyc.pc ];
       };
     };
   };

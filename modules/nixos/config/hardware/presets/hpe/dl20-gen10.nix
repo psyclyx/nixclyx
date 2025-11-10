@@ -5,8 +5,8 @@ let
 in
 {
   options = {
-    psyclyx.hardware.presets.hpe.dl360-gen9 = {
-      enable = mkEnableOption "HPE ProLiant DL360 Gen 9";
+    psyclyx.hardware.presets.hpe.dl20-gen9 = {
+      enable = mkEnableOption "HPE ProLiant DL20 Gen 10";
     };
   };
 
@@ -22,7 +22,7 @@ in
 
         ipmi.ilo.enable = true;
 
-        storage.p440a.enable = lib.mkDefault true;
+        storage.p408i-a-g10.enable = lib.mkDefault true;
       };
     };
   };

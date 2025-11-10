@@ -1,9 +1,11 @@
-{ psyclyxLib, specialArgs, ... }:
+{
+  nixosSystem,
+  specialArgs,
+  ...
+}:
 let
-  inherit (psyclyxLib.nixos) mkNixosSystems;
+  mkSystem = args: nixosSystem ({ inherit specialArgs; } // args);
 
-  hosts = import ./hosts;
-
-  nixosSystems = mkNixosSystems specialArgs;
+  hosts = import ./hosts.nix;
 in
-nixosSystems hosts
+builtins.mapAttrs (_: mkSystem) hosts

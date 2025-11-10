@@ -17,14 +17,6 @@ in
 
   config = lib.mkIf cfg.enable (
     lib.mkMerge [
-      {
-        home.packages =
-          (with pkgs; [ fastfetch ])
-          ++ (with inputs.self.packages."${pkgs.system}"; [
-            upscale-image
-            print256colors
-          ]);
-      }
       (lib.mkIf pkgs.stdenv.isLinux {
         home.packages = with pkgs; [
           firefox-bin

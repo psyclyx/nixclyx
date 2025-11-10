@@ -15,21 +15,6 @@ in
   };
 
   config = lib.mkIf cfg.enable {
-    home = {
-      packages = with pkgs; [
-        curl
-        dtach
-        fd
-        htop
-        killall
-        jq
-        rclone
-        ripgrep
-        tree
-        wget
-      ];
-    };
-
     psyclyx = {
       programs = {
         ssh = {

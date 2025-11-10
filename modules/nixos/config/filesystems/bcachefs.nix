@@ -17,7 +17,7 @@ in
 {
   options = {
     psyclyx.filesystems.bcachefs = {
-      enable = mkEnableOption "ZFS";
+      enable = mkEnableOption "bcachefs";
     };
   };
 

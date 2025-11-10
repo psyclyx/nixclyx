@@ -27,6 +27,7 @@
 
       roles = {
         base.enable = true;
+        dev.enable = true;
         graphical.enable = true;
         media.enable = true;
         remote.enable = true;
@@ -50,8 +51,6 @@
 
       users.psyc = {
         enable = true;
-        admin = true;
-        hmModules = [ inputs.self.homeManagerModules.homes.psyc.pc ];
       };
     };
   };

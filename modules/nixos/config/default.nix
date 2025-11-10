@@ -10,5 +10,6 @@
     ./services
     ./stylix.nix
     ./system
+    ./users
   ];
 }

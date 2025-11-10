@@ -8,17 +8,17 @@
 let
   inherit (lib) mkEnableOption mkIf;
 
-  cfg = config.psyclyx.hardware.storage.p440a;
+  cfg = config.psyclyx.hardware.storage.p408i-a-g10;
 in
 {
   options = {
-    psyclyx.hardware.storage.p440a = {
-      enable = mkEnableOption "HPE P440 storage controller";
+    psyclyx.hardware.storage.p408i-a-g10 = {
+      enable = mkEnableOption "HPE P408i-a-G10 storage controller";
     };
   };
 
   config = mkIf cfg.enable {
-    boot.initrd.availableKernelModules = [ "hpsa" ];
+    boot.initrd.availableKernelModules = [ "smartpqi" ];
 
     psyclyx.hardware.drivers.scsi = {
       enable = true;

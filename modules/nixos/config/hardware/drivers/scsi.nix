@@ -20,7 +20,7 @@ in
   };
 
   config = mkIf cfg.enable {
-    initrd.availableKernelModules =
+    boot.initrd.availableKernelModules =
       (optionals cfg.cdRom "sr_mod") ++ (optionals cfg.disk "sd_mod") ++ (optionals cfg.generic "sg");
   };
 }

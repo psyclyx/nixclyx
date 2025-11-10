@@ -64,5 +64,23 @@
         };
       };
     };
+
+    disk.disk4 = {
+      device = "/dev/disk/by-id/ata-Samsung_SSD_870_EVO_2TB_S753NL0Y105029W";
+      type = "disk";
+      content = {
+        type = "gpt";
+        partitions = {
+          root = {
+            size = "100%";
+            content = {
+              type = "filesystem";
+              format = "ext4";
+              mountpoint = "/var/lib/misc2";
+            };
+          };
+        };
+      };
+    };
   };
 }
