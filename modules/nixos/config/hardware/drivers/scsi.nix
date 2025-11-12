@@ -21,6 +21,8 @@ in
 
   config = mkIf cfg.enable {
     boot.initrd.availableKernelModules =
-      (optionals cfg.cdRom "sr_mod") ++ (optionals cfg.disk "sd_mod") ++ (optionals cfg.generic "sg");
+      (optionals cfg.cdRom [ "sr_mod" ])
+      ++ (optionals cfg.disk [ "sd_mod" ])
+      ++ (optionals cfg.generic [ "sg" ]);
   };
 }
