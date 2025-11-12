@@ -2,7 +2,6 @@
 {
   imports = [
     inputs.self.nixosModules.config
-    inputs.self.nixosModules.users_psyc_base
     ./filesystem.nix
     ./network.nix
   ];
