@@ -1,11 +1,11 @@
 { config, lib, ... }:
 let
   inherit (lib) mkEnableOption mkIf;
-  cfg = config.psyclyx.hardware.presets.hpe.dl360-gen9;
+  cfg = config.psyclyx.hardware.presets.hpe.dl20-gen10;
 in
 {
   options = {
-    psyclyx.hardware.presets.hpe.dl20-gen9 = {
+    psyclyx.hardware.presets.hpe.dl20-gen10 = {
       enable = mkEnableOption "HPE ProLiant DL20 Gen 10";
     };
   };
