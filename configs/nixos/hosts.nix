@@ -11,7 +11,7 @@
 
   tleilax = {
     system = "x86_64-linux";
-    modules = [ ./omen ];
+    modules = [ ./tleilax ];
   };
 
   lab-base = {
