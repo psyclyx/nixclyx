@@ -26,13 +26,13 @@ in
             extraOptions = {
               "UpdateHostKeys" = "no";
             };
-            identityFile = config.sops.secrets."ssh/id_psyclyx".path;
+            identityFile = config.sops.secrets."ssh/id_psyclyx".path or null;
           }
           // lib.optionalAttrs isDarwin { "useKeychain" = "yes"; };
 
           "alice157.github.com" = {
             hostname = "github.com";
-            identityFile = config.sops.secrets."ssh/id_alice157".path;
+            identityFile = config.sops.secrets."ssh/id_alice157".path or null;
           };
 
           "psyclyx.github.com" = {
@@ -50,6 +50,7 @@ in
           "tleilax" = {
             hostname = "tleilax.psyclyx.xyz";
             port = 17891;
+            forwardAgent = true;
           };
         };
       };
