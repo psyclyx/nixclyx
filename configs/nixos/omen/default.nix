@@ -10,6 +10,11 @@
 
     boot.kernelParams = [ "snd-intel-dspcfg.dsp_driver=1" ];
 
+    networking.wireless.iwd = {
+      enable = true;
+      settings.Settings.AutoConnect = true;
+    };
+
     psyclyx = {
       hardware = {
         cpu = {
@@ -17,12 +22,6 @@
           intel.enable = true;
         };
         gpu.intel.enable = true;
-      };
-
-      network = {
-        enable = true;
-        networks."wlan0".enableDHCP = true;
-        wireless = true;
       };
 
       roles = {
