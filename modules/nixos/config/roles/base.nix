@@ -68,6 +68,8 @@ in
     ];
 
     psyclyx = {
+      boot.systemd-boot.enable = lib.mkDefault true;
+
       programs = {
         zsh.enable = mkDefault true;
       };
