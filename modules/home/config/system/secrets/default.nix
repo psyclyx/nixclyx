@@ -30,8 +30,8 @@ in
       defaultSopsFile = ./secrets.json;
 
       secrets = {
-        "ssh/id_psyclyx".path = ".ssh/id_psyclyx";
-        "ssh/id_alice157".path = ".ssh/id_alice157";
+        "ssh/id_psyclyx".path = "${configHome}/.ssh/id_psyclyx";
+        "ssh/id_alice157".path = "${configHome}/.ssh/id_alice157";
         github = { };
         openrouter.path = ".tokens/openrouter";
         replicate.path = ".tokens/replicate";
