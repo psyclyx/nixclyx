@@ -24,6 +24,10 @@
         gpu.intel.enable = true;
       };
 
+      programs = {
+        adb.enable = true;
+      };
+
       roles = {
         base.enable = true;
         dev.enable = true;
