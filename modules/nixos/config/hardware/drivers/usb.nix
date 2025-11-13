@@ -31,6 +31,6 @@ in
       ++ (optionals cfg.storage [ "xhci_pci" ])
       ++ (optionals cfg.xhci [ "xhci_pci" ])
       ++ (optionals cfg.ehci [ "ehci_pci" ])
-      ++ (optionals cfg.uhci [ "uhci_pci" ]);
+      ++ (optionals cfg.uhci [ "uhci_hcd" ]);
   };
 }
