@@ -17,7 +17,7 @@ in
   config = lib.mkIf cfg.enable {
     boot = {
       loader = {
-        timeout = 0;
+        timeout = 1;
         systemd-boot = {
           enable = true;
           configurationLimit = 16;
