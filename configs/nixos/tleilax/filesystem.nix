@@ -13,7 +13,7 @@
             size = "1G";
             content = {
               type = "filesystem";
-              format = "fat32";
+              format = "vfat";
               mountpoint = "/boot";
               mountOptions = [ "umask=0077" ];
             };
