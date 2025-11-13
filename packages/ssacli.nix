@@ -18,6 +18,8 @@ stdenv.mkDerivation {
     url = "https://downloads.linux.hpe.com/sdr/repo/mcp/centos/7/x86_64/current/ssacli-${version}.x86_64.rpm";
   };
 
+  buildInputs = [ stdenv.cc.cc.lib ];
+
   nativeBuildInputs = [
     autoPatchelfHook
     rpmextract
@@ -46,8 +48,8 @@ stdenv.mkDerivation {
     cp -v ./opt/smartstorageadmin/ssacli/bin/ssascripting $out/bin/ssascripting
 
     # man pages
-    mkdir -pv $out/share
-    cp -rv ./usr/man $out/share
+    mkdir -pv $out/share/man
+    cp -rv ./usr/man $out/share/man
 
     runHook postInstall
   '';
