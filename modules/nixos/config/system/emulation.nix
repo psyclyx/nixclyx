@@ -18,7 +18,7 @@ in
       enable = lib.mkEnableOption "Architecture emulation config";
       emulatedSystems = lib.mkOption {
         type = lib.types.listOf lib.types.str;
-        default = defaultSystems."${pkgs.system}" or [ ];
+        default = defaultSystems."${pkgs.stdenv.hostPlatform.system}" or [ ];
       };
     };
   };
