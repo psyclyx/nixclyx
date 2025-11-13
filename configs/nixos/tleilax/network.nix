@@ -5,13 +5,11 @@ let
 in
 {
   networking = {
-    useNetworkd = true;
     useDHCP = false;
   };
 
   systemd = {
     network = {
-      enable = true;
       config.networkConfig = {
         ManageForeignRoutingPolicyRules = false;
         ManageForeignRoutes = false;

@@ -5,6 +5,7 @@
     ./boot
     ./filesystems
     ./hardware
+    ./network
     ./programs
     ./roles
     ./services

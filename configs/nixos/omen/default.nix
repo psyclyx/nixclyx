@@ -24,6 +24,11 @@
         gpu.intel.enable = true;
       };
 
+      network = {
+        enable = true;
+        wireless = true;
+      };
+
       programs = {
         adb.enable = true;
       };

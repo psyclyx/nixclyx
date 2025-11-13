@@ -14,6 +14,8 @@
 
       hardware.presets.hpe.dl20-gen10.enable = true;
 
+      network.enable = true;
+
       roles = {
         base.enable = true;
         remote.enable = true;

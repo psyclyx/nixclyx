@@ -1,19 +1,8 @@
-{
-  config,
-  inputs,
-  lib,
-  ...
-}:
-let
-  inherit (inputs.self.nixosModules) ;
-
-  inherit (lib) mkEnableOption mkIf;
-in
+{ inputs, ... }:
 {
   imports = [
     inputs.self.nixosModules.config
     ./filesystems.nix
-    ./network.nix
   ];
 
   config = {
@@ -28,6 +17,8 @@ in
         glasgow.enable = true;
         gpu.nvidia.enable = true;
       };
+
+      network.enable = true;
 
       roles = {
         base.enable = true;
