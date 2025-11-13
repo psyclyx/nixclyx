@@ -4,10 +4,6 @@ let
   prefix4 = "199.255.18.171";
 in
 {
-  networking = {
-    useDHCP = false;
-  };
-
   systemd = {
     network = {
       config.networkConfig = {
@@ -17,19 +13,11 @@ in
 
       wait-online.enable = true;
 
-      links = {
-        "04-bond" = {
-          matchConfig = {
-            Type = "bond";
-          };
-          linkConfig = {
-            MACAddressPolicy = "none";
-          };
-        };
-      };
-
       netdevs = {
-        "10-bond0" = {
+        "10-eno1".enable = false;
+        "10-eno2".enable = false;
+
+        "20-bond0" = {
           netdevConfig = {
             Name = "bond0";
             Kind = "bond";
@@ -44,32 +32,24 @@ in
 
       networks = {
         "30-ens1f0np0" = {
-          matchConfig = {
-            Name = "ens1f0np0";
-            PermanentMACAddress = "6c:b3:11:95:03:88";
-          };
+          matchConfig.Name = "ens1f0np0";
           networkConfig.Bond = "bond0";
         };
 
         "30-ens1f1np1" = {
-          matchConfig = {
-            Name = "ens1f1np1";
-            PermanentMACAddress = "6c:b3:11:95:03:89";
-          };
+          matchConfig.Name = "ens1f1np1";
           networkConfig.Bond = "bond0";
         };
 
         "40-bond0" = {
           matchConfig.Name = "bond0";
-          linkConfig = {
-            MACAddress = "6c:b3:11:95:03:88";
-            RequiredForOnline = "routable";
-          };
+          linkConfig.RequiredForOnline = "routable";
+
           address = [
             "${prefix4}/32"
             "${prefix6}10/120"
           ];
-          gateway = [ "${prefix6}1" ];
+
           routes = [
             {
               Destination = "::/0";
@@ -80,21 +60,19 @@ in
               Gateway = "${prefix6}1";
             }
           ];
+
           dns = [
             "2606:4700:4700::1111"
             "2001:4860:4860::8888"
           ];
+
           networkConfig = {
+            DHCP = false;
             IPv6AcceptRA = false;
             IPv6Forwarding = true;
           };
         };
       };
     };
-  };
-
-  networking.firewall = {
-    enable = true;
-    allowedTCPPorts = [ 8080 ];
   };
 }
