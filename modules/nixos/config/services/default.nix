@@ -12,6 +12,7 @@
     ./openrgb.nix
     ./openssh.nix
     ./printing.nix
+    ./resolved.nix
     ./tailscale.nix
     ./thermald.nix
   ];

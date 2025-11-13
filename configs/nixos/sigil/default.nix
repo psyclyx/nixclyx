@@ -48,6 +48,7 @@ in
         avahi.enable = true;
         home-assistant.enable = true;
         openrgb.enable = true;
+        resolved.enable = true;
         tailscale.exitNode = true;
       };
 
