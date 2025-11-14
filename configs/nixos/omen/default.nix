@@ -53,8 +53,8 @@
         dark = true;
       };
 
-      users.psyc = {
-        enable = true;
+      users = {
+        psyc.enable = true;
       };
     };
   };
