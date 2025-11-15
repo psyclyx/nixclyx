@@ -4,7 +4,6 @@
     ./drivers
     ./glasgow.nix
     ./gpu
-    ./hpe.nix
     ./ipmi
     ./presets
     ./qmk.nix
