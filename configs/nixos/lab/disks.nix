@@ -72,7 +72,10 @@ in
                         type = "bcachefs";
                         filesystem = "bpool";
                         label = "${group}.${name}";
-                        extraFormatArgs = [ "--discard" ];
+                        extraFormatArgs = [
+                          "--discard"
+                          "--force"
+                        ];
                       };
                     };
                   };
