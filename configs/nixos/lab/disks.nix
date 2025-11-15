@@ -7,17 +7,12 @@
 let
 
   inherit (lib)
-    genAttrs'
+    listToAttrs
     types
-    mkDefault
     mkEnableOption
     mkIf
-    mkMerge
     mkOption
-    nameValuePair
     ;
-
-  inherit (builtins) length elemAt;
 
   diskType = types.submodule {
     options = {
@@ -45,36 +40,39 @@ in
   config = mkIf cfg.enable {
     disko = {
       devices = {
-        disk = genAttrs' cfg.pool (
+        disk = listToAttrs cfg.pool (
           {
             id,
             name,
             group,
             boot,
           }:
-          nameValuePair name {
-            device = idDevice id;
-            type = "disk";
-            content = {
-              type = "gpt";
-              partitions = {
-                ESP = mkIf boot {
-                  type = "EF00";
-                  size = "1G";
-                  content = {
-                    type = "filesystem";
-                    format = "vfat";
-                    mountpoint = "/boot";
-                    mountOptions = [ "umask=0077" ];
+          {
+            inherit name;
+            value = {
+              device = idDevice id;
+              type = "disk";
+              content = {
+                type = "gpt";
+                partitions = {
+                  ESP = mkIf boot {
+                    type = "EF00";
+                    size = "1G";
+                    content = {
+                      type = "filesystem";
+                      format = "vfat";
+                      mountpoint = "/boot";
+                      mountOptions = [ "umask=0077" ];
+                    };
                   };
-                };
-                bcache = {
-                  size = "100%";
-                  content = {
-                    type = "bcachefs";
-                    filesystem = "bpool";
-                    label = "${group}.${name}";
-                    extraFormatArgs = [ "--discard" ];
+                  bcache = {
+                    size = "100%";
+                    content = {
+                      type = "bcachefs";
+                      filesystem = "bpool";
+                      label = "${group}.${name}";
+                      extraFormatArgs = [ "--discard" ];
+                    };
                   };
                 };
               };
