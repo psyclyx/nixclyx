@@ -19,9 +19,7 @@ let
   mkPackages = pkgs: import ./packages { inherit pkgs; };
   packages = withSystemPkgs mkPackages;
 
-  packageGroups = import ./package-groups;
-
-  inherit (psyclyxLib.darwin) mkDarwinConfiguration mkDarwinToplevels;
+  inherit (psyclyxLib.darwin) mkDarwinConfiguration;
   darwinConfigurations = {
     halo = mkDarwinConfiguration inputs {
       hostPlatform = "aarch64-darwin";
@@ -58,7 +56,6 @@ in
     darwinConfigurations
     nixosConfigurations
     packages
-    packageGroups
     passthrough
     ;
   lib = psyclyxLib;
