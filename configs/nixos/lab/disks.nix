@@ -40,44 +40,46 @@ in
   config = mkIf cfg.enable {
     disko = {
       devices = {
-        disk = listToAttrs cfg.pool (
-          {
-            id,
-            name,
-            group,
-            boot,
-          }:
-          {
-            inherit name;
-            value = {
-              device = idDevice id;
-              type = "disk";
-              content = {
-                type = "gpt";
-                partitions = {
-                  ESP = mkIf boot {
-                    type = "EF00";
-                    size = "1G";
-                    content = {
-                      type = "filesystem";
-                      format = "vfat";
-                      mountpoint = "/boot";
-                      mountOptions = [ "umask=0077" ];
+        disk = listToAttrs (
+          map (
+            {
+              id,
+              name,
+              group,
+              boot,
+            }:
+            {
+              inherit name;
+              value = {
+                device = idDevice id;
+                type = "disk";
+                content = {
+                  type = "gpt";
+                  partitions = {
+                    ESP = mkIf boot {
+                      type = "EF00";
+                      size = "1G";
+                      content = {
+                        type = "filesystem";
+                        format = "vfat";
+                        mountpoint = "/boot";
+                        mountOptions = [ "umask=0077" ];
+                      };
                     };
-                  };
-                  bcache = {
-                    size = "100%";
-                    content = {
-                      type = "bcachefs";
-                      filesystem = "bpool";
-                      label = "${group}.${name}";
-                      extraFormatArgs = [ "--discard" ];
+                    bcache = {
+                      size = "100%";
+                      content = {
+                        type = "bcachefs";
+                        filesystem = "bpool";
+                        label = "${group}.${name}";
+                        extraFormatArgs = [ "--discard" ];
+                      };
                     };
                   };
                 };
               };
-            };
-          }
+            }
+          ) cfg.pool
         );
 
         bcachefs_filesystems = {
