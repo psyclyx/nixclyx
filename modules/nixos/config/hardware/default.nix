@@ -2,7 +2,6 @@
   imports = [
     ./cpu
     ./drivers
-    ./glasgow.nix
     ./gpu
     ./ipmi
     ./presets

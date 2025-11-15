@@ -14,7 +14,6 @@
           amd.enable = true;
           enableMitigations = false;
         };
-        glasgow.enable = true;
         gpu.nvidia.enable = true;
       };
 
@@ -32,6 +31,7 @@
 
       programs = {
         adb.enable = true;
+        glasgow.enable = true;
         steam.enable = true;
       };
 
