@@ -9,6 +9,8 @@
     networking.hostName = "lab-installer";
 
     psyclyx = {
+      boot.systemd-boot.enable = false;
+
       hardware.presets.hpe.dl360-gen9.enable = true;
 
       filesystems.bcachefs.enable = true;

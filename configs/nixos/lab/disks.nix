@@ -24,6 +24,7 @@ let
       id = mkOption { type = types.str; };
       name = mkOption { type = types.str; };
       group = mkOption { type = types.str; };
+      boot = mkEnableOption "boot partition";
     };
   };
 
@@ -41,20 +42,23 @@ in
     };
   };
 
-  config = mkIf cfg.enable (mkMerge [
-    {
-      disko.devices.disk =
-        let
-          boot = elemAt cfg.pool 0;
-        in
-        {
-          "${boot.name}" = {
-            device = idDevice boot.id;
+  config = mkIf cfg.enable {
+    disko = {
+      devices = {
+        disk = genAttrs' cfg.pool (
+          {
+            id,
+            name,
+            group,
+            boot,
+          }:
+          nameValuePair name {
+            device = idDevice id;
             type = "disk";
             content = {
               type = "gpt";
               partitions = {
-                ESP = {
+                ESP = mkIf boot {
                   type = "EF00";
                   size = "1G";
                   content = {
@@ -64,77 +68,55 @@ in
                     mountOptions = [ "umask=0077" ];
                   };
                 };
-              };
-            };
-          };
-        };
-    }
-
-    {
-      disko = {
-        devices = {
-          disk = genAttrs' cfg.pool (
-            {
-              id,
-              name,
-              group,
-            }:
-            nameValuePair name {
-              device = idDevice id;
-              type = "disk";
-              content = {
-                type = "gpt";
-                partitions = {
-                  bcache = {
-                    size = "100%";
-                    content = {
-                      type = "bcachefs";
-                      filesystem = "bpool";
-                      label = "${group}.${name}";
-                      extraFormatArgs = [ "--discard" ];
-                    };
+                bcache = {
+                  size = "100%";
+                  content = {
+                    type = "bcachefs";
+                    filesystem = "bpool";
+                    label = "${group}.${name}";
+                    extraFormatArgs = [ "--discard" ];
                   };
                 };
               };
-            }
-          );
+            };
+          }
+        );
 
-          bcachefs_filesystems = {
-            bpool = {
-              type = "bcachefs_filesystem";
-              passwordFile = "/tmp/bpool.key";
-              extraFormatArgs = [
-                "--compression=lz4"
-                "--replicas=2"
-              ];
+        bcachefs_filesystems = {
+          bpool = {
+            type = "bcachefs_filesystem";
+            passwordFile = "/tmp/bpool.key";
+            extraFormatArgs = [
+              "--compression=lz4"
+              "--replicas=2"
+            ];
 
-              subvolumes = {
-                "nixos/root" = {
-                  mountpoint = "/";
-                  mountOptions = [ "verbose" ];
-                };
+            subvolumes = {
+              "nixos/root" = {
+                mountpoint = "/";
+                mountOptions = [ "verbose" ];
+              };
 
-                "nixos/nix" = {
-                  mountpoint = "/nix";
-                };
+              "nixos/nix" = {
+                mountpoint = "/nix";
+              };
 
-                "nixos/var" = {
-                  mountpoint = "/var";
-                  mountOptions = [ "noatime" ];
-                };
+              "nixos/var" = {
+                mountpoint = "/var";
+                mountOptions = [ "noatime" ];
+              };
 
-                "nixos/home" = {
-                  mountpoint = "/home";
-                };
+              "nixos/home" = {
+                mountpoint = "/home";
+              };
 
-                "nixos/home/root" = {
-                  mountpoint = "/root";
-                };
+              "nixos/home/root" = {
+                mountpoint = "/root";
               };
             };
           };
         };
       };
-    }
-  ]);
+    };
+  };
 }

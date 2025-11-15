@@ -9,28 +9,34 @@
 
   # ssh keys
 
-  for d in {"${TEMP}/etc/ssh","${TEMP}/etc/secrets/initrd}; do
+  for d in {"${TEMP}/etc/ssh","${TEMP}/etc/secrets/initrd"}; do
     install -d -m755 "${d}"
-    ssh-keygen -o -a 100 -N "" -t ed25519 -f "${d}/etc/ssh/ssh_host_ed25519_key"
+    ssh-keygen -o -a 100 -N "" -t ed25519 -f "${d}/ssh_host_ed25519_key"
   done
 
 
-  # bitwarden secrets
-
+  # FDE keys
   BW_FOLDER="foo/bar";
   BW_ITEM="baz";
-  SECRET_OUT="/tmp/baz";
+  FDE_REMOTE="/tmp/baz.key"
+  FDE_LOCAL=$(mktemp "nixos-anywhere-temp-${BW_ITEM}.XXXXXXX")
 
-  bw get password $(bw list items --search ${BW_ITEM} --folderid $(bw get folder ${BW_FOLDER} | jq '.id' --raw-output) | jq '.[0].id' --raw-output) > "${TEMP}{SECRET_OUT}"
+  bw get password $(bw list items --search "${BW_ITEM}" --folderid $(bw get folder "${BW_FOLDER}" | jq '.id' --raw-output) | jq '.[0].id' --raw-output) >! "${FDE_LOCAL}"
 
   # install
 
-  HOSTNAME="example"
-  HOST="10.0.0.250"
+  NA_HOSTNAME="example"
+  NA_HOST="10.0.0.250"
 
-  nix run github:nixos-community/nixos-anywhere -- \
+  nix run github:nix-community/nixos-anywhere -- \
+    --flake "github:psyclyx/nix#${NA_HOSTNAME}" \
+    --target-host "{NA_HOST}" \
     --extra-files "${TEMP}" \
-    --flake ".\#${HOSTNAME}" \
-    --target-host "root@{HOST}"
+    --disk-encryption-keys "${FDE_REMOTE}" "${FDE_LOCAL}"
 
+
+  # clean up
+
+  rm -r "${TEMP}"
+  rm "${FDE_LOCAL}"
 #+end_src

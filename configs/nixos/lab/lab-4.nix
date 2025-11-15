@@ -13,6 +13,7 @@
             id = "ata-LK0800GEYMU_BTHC6230013F800NGN";
             name = "a";
             group = "ssd";
+            boot = true;
           }
           {
             id = "ata-LK0800GEYMU_BTHC6403075M800NGN";
