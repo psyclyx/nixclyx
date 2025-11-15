@@ -14,7 +14,6 @@
         ];
         systemd.network = {
           enable = true;
-          config.DHCP = true;
         };
       };
     };
