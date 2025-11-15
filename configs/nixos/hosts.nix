@@ -14,11 +14,10 @@
     modules = [ ./tleilax ];
   };
 
-  lab-base = {
+  lab-installer = {
     system = "x86_64-linux";
     modules = [
-      ./lab
-      { psyclyx.host.suffix = "base"; }
+      ./lab/installer.nix
     ];
   };
 
