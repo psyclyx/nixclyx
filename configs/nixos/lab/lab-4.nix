@@ -5,6 +5,20 @@
   config = {
     networking.hostName = "lab-4";
 
+    boot = {
+      kernelParams = "ip=::::${config.networking.hostName}::dhcp";
+      initrd = {
+        availableKernelModules = [
+          "tg3"
+          "mlx4_core"
+        ];
+        systemd.network = {
+          enable = true;
+          config.DHCP = true;
+        };
+      };
+    };
+
     psyclyx = {
       hosts.lab.disks = {
         enable = true;

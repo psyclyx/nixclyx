@@ -43,7 +43,6 @@ in
     psyclyx.boot.initrd-ssh.authorizedKeys = config.users.users.root.openssh.authorizedKeys.keys;
 
     boot.initrd = {
-      systemd.network.enable = true;
       network = {
         flushBeforeStage2 = true;
         ssh = {
