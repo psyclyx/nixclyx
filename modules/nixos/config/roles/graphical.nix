@@ -22,11 +22,9 @@ in
       boot = {
         plymouth.enable = lib.mkDefault true;
       };
-      hardware = {
-        qmk.enable = lib.mkDefault true;
-      };
       programs = {
         sway.enable = lib.mkDefault true;
+        qmk.enable = lib.mkDefault true;
       };
       services = {
         autoMount.enable = lib.mkDefault true;
