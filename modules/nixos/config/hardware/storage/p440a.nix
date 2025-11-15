@@ -13,7 +13,7 @@ in
 {
   options = {
     psyclyx.hardware.storage.p440a = {
-      enable = mkEnableOption "HPE P440 storage controller";
+      enable = mkEnableOption "HPE P440a(r) storage controller";
     };
   };
 
