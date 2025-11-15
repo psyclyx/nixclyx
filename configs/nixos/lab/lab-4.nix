@@ -1,0 +1,41 @@
+{ inputs, config, ... }:
+{
+  imports = [ ./base.nix ];
+
+  config = {
+    networking.hostName = "lab-4";
+
+    psyclyx = {
+      hosts.lab.disks = {
+        enable = true;
+        pool = [
+          {
+            id = "ata-LK0800GEYMU_BTHC6230013F800NGN";
+            name = "a";
+            group = "ssd";
+          }
+          {
+            id = "ata-LK0800GEYMU_BTHC6403075M800NGN";
+            name = "b";
+            group = "ssd";
+          }
+          {
+            id = "ata-LK0800GEYMU_BTHC6162030P800NGN";
+            name = "c";
+            group = "ssd";
+          }
+          {
+            id = "ata-LK0800GEYMU_BTHC624302D3800NGN";
+            name = "d";
+            group = "ssd";
+          }
+          {
+            id = "ata-LK0800GEYMU_BTHC623100VD800NGN";
+            name = "f";
+            group = "ssd";
+          }
+        ];
+      };
+    };
+  };
+}

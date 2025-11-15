@@ -7,7 +7,7 @@
 let
   inherit (lib) mkOption types;
 
-  cfg = config.psyclyx.host;
+  cfg = config.psyclyx.hosts.lab;
 in
 {
   imports = [
@@ -15,23 +15,16 @@ in
     ./disks.nix
   ];
 
-  options = {
-    psyclyx.host = {
-      suffix = mkOption {
-        type = types.str;
-      };
-    };
-  };
-
   config = {
-    networking = {
-      hostName = "lab-${cfg.suffix}";
-    };
+    boot.kernelParams = [ "ip=::::${config.networking.hostName}::dhcp" ];
 
     psyclyx = {
       hardware.presets.hpe.dl360-gen9.enable = true;
 
-      boot.systemd-boot.enable = true;
+      boot = {
+        systemd-boot.enable = true;
+        initrd-ssh.enable = true;
+      };
 
       filesystems.bcachefs.enable = true;
 

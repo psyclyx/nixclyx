@@ -3,4 +3,34 @@
 #+PROPERTY: header-args:emacs-lisp :lexical t
 #+STARTUP: content
 
-This repository contains (most) of the configuration for my various devices, and associated documentation.
+* nixos-anywhere
+#+begin_src shell
+  TEMP=$(mktemp -d nixos-anywhere-temp.XXXXXXX)
+
+  # ssh keys
+
+  for d in {"${TEMP}/etc/ssh","${TEMP}/etc/secrets/initrd}; do
+    install -d -m755 "${d}"
+    ssh-keygen -o -a 100 -N "" -t ed25519 -f "${d}/etc/ssh/ssh_host_ed25519_key"
+  done
+
+
+  # bitwarden secrets
+
+  BW_FOLDER="foo/bar";
+  BW_ITEM="baz";
+  SECRET_OUT="/tmp/baz";
+
+  bw get password $(bw list items --search ${BW_ITEM} --folderid $(bw get folder ${BW_FOLDER} | jq '.id' --raw-output) | jq '.[0].id' --raw-output) > "${TEMP}{SECRET_OUT}"
+
+  # install
+
+  HOSTNAME="example"
+  HOST="10.0.0.250"
+
+  nix run github:nixos-community/nixos-anywhere -- \
+    --extra-files "${TEMP}" \
+    --flake ".\#${HOSTNAME}" \
+    --target-host "root@{HOST}"
+
+#+end_src

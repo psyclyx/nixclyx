@@ -2,52 +2,56 @@
   config,
   lib,
   inputs,
+  pkgs,
   ...
 }:
 let
+  inherit (lib)
+    mkOption
+    mkEnableOption
+    mkIf
+    types
+    ;
   cfg = config.psyclyx.boot.initrd-ssh;
+  portCfg = config.psyclyx.network.ports.initrd-ssh;
 in
 {
   options = {
+    psyclyx.network.ports.initrd-ssh = mkOption {
+      type = types.port;
+      default = 8022;
+      description = "SSH port to listen on in initrd";
+    };
+
     psyclyx.boot.initrd-ssh = {
-      enable = lib.mkEnableOption "SSH access to initrd for remote disk unlocking";
+      enable = mkEnableOption "SSH access to initrd for remote disk unlocking";
 
-      port = lib.mkOption {
-        type = lib.types.port;
-        default = 8022;
-        description = "SSH port to listen on in initrd";
-      };
-
-      authorizedKeys = lib.mkOption {
-        type = lib.types.listOf lib.types.str;
+      authorizedKeys = mkOption {
+        type = types.listOf types.str;
         description = "SSH public keys authorized to connect to initrd";
       };
 
-      hostKeyPath = lib.mkOption {
-        type = lib.types.str;
-        default = "/etc/secrets/initrd/ssh_host_key";
-        description = "Path to the SSH host key for initrd";
+      hostKeyPaths = mkOption {
+        type = types.listOf types.str;
+        default = [ "/etc/secrets/initrd/ssh_host_ed25519_key" ];
+        description = "Paths to SSH host keys for initrd";
       };
     };
   };
 
-  config = lib.mkIf cfg.enable {
-    boot.initrd = {
-      network = {
-        enable = true;
-        udhcpc.enable = true;
-        flushBeforeStage2 = true;
+  config = mkIf cfg.enable {
+    psyclyx.boot.initrd-ssh.authorizedKeys = config.users.users.root.openssh.authorizedKeys.keys;
 
+    boot.initrd = {
+      systemd.network.enable = true;
+      network = {
+        flushBeforeStage2 = true;
         ssh = {
           enable = true;
-          port = cfg.port;
-          authorizedKeys = [ ];
-          hostKeys = [ cfg.hostKeyPath ];
+          port = portCfg;
+          authorizedKeys = cfg.authorizedKeys;
+          hostKeys = cfg.hostKeyPaths;
         };
-
-        postCommands = ''
-          echo 'cryptsetup-askpass || exit 1' >> /root/.profile
-        '';
       };
     };
   };

@@ -24,7 +24,7 @@ in
         };
         efi.canTouchEfiVariables = true;
       };
-      initrd.systemd.enable = true;
+      initrd.systemd.enable = lib.mkDefault true;
     };
   };
 }

@@ -16,40 +16,11 @@
 
   lab-installer = {
     system = "x86_64-linux";
-    modules = [
-      ./lab/installer.nix
-    ];
-  };
-
-  lab-1 = {
-    system = "x86_64-linux";
-    modules = [
-      ./lab
-      { psyclyx.host.suffix = "1"; }
-    ];
-  };
-
-  lab-2 = {
-    system = "x86_64-linux";
-    modules = [
-      ./lab
-      { psyclyx.host.suffix = "2"; }
-    ];
-  };
-
-  lab-3 = {
-    system = "x86_64-linux";
-    modules = [
-      ./lab
-      { psyclyx.host.suffix = "3"; }
-    ];
+    modules = [ ./lab/installer.nix ];
   };
 
   lab-4 = {
     system = "x86_64-linux";
-    modules = [
-      ./lab
-      { psyclyx.host.suffix = "4"; }
-    ];
+    modules = [ ./lab/lab-4.nix ];
   };
 }
