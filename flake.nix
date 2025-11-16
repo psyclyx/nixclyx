@@ -3,7 +3,7 @@
 
   inputs = {
     nixpkgs.url = "github:psyclyx/nixpkgs/psyclyx";
-    psyclyx-emacs.url = "git+file:submodules/emacs";
+    psyclyx-emacs.url = "github:psyclyx/emacs";
     nix-darwin = {
       url = "github:LnL7/nix-darwin";
       inputs.nixpkgs.follows = "nixpkgs";
