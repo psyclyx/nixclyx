@@ -95,27 +95,20 @@ in
             ];
 
             subvolumes = {
-              "nixos/root" = {
+              "nixos" = {
                 mountpoint = "/";
                 mountOptions = [ "verbose" ];
               };
 
-              "nixos/nix" = {
-                mountpoint = "/nix";
-              };
+              "nixos/nix" = { };
 
               "nixos/var" = {
-                mountpoint = "/var";
                 mountOptions = [ "noatime" ];
               };
 
-              "nixos/home" = {
-                mountpoint = "/home";
-              };
+              "nixos/home" = { };
 
-              "nixos/home/root" = {
-                mountpoint = "/root";
-              };
+              "nixos/root" = { };
             };
           };
         };
