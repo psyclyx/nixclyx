@@ -15,6 +15,7 @@ in
   };
 
   config = lib.mkIf cfg.enable {
-    virtualisation.podman.enable = true;
+    # TODO: investigate build failures
+    virtualisation.podman.enable = false;
   };
 }
