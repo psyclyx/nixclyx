@@ -16,6 +16,6 @@ in
 
   config = lib.mkIf cfg.enable {
     # TODO: investigate build failures
-    virtualisation.podman.enable = false;
+    virtualisation.podman.enable = lib.mkForce false;
   };
 }
