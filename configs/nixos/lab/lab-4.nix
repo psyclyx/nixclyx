@@ -12,9 +12,6 @@
           "tg3"
           "mlx4_core"
         ];
-        systemd.network = {
-          enable = true;
-        };
       };
     };
 
