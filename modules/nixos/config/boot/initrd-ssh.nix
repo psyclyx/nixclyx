@@ -44,6 +44,8 @@ in
 
     boot.initrd = {
       network = {
+        enable = true;
+        udhcpc.enable = true;
         flushBeforeStage2 = true;
         ssh = {
           enable = true;
