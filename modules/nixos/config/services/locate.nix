@@ -35,6 +35,7 @@ in
         "result"
         ".cargo"
         ".julia"
+        ".direnv"
       ];
     };
 

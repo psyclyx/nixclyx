@@ -1,7 +1,11 @@
 { inputs, ... }:
+let
+  inherit (inputs) disko self;
+in
 {
   imports = [
-    inputs.disko.nixosModules.disko
+    disko.nixosModules.disko
+    self.commonModules.config
     ./boot
     ./filesystems
     ./hardware
@@ -13,4 +17,8 @@
     ./system
     ./users
   ];
+
+  config = {
+    system.stateVersion = "25.05";
+  };
 }
