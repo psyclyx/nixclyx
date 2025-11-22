@@ -1,63 +1,56 @@
-inputs:
+{ nixpkgs, ... }@inputs:
 let
-  inherit (inputs) nixpkgs;
   inherit (nixpkgs) lib;
 
-  psyclyxLib = import ./lib { inherit lib; };
-
-  inherit (psyclyxLib.files) dirToAttrset;
-  assets = dirToAttrset ./assets;
-
-  inherit (psyclyxLib.systems) genSystemPkgsAttrs;
-  withSystemPkgs = f: genSystemPkgsAttrs nixpkgs f;
-
-  mkDevShells = pkgs: {
-    default = import ./shell.nix { inherit pkgs; };
-  };
-  devShells = withSystemPkgs mkDevShells;
-
-  mkPackages = pkgs: import ./packages { inherit pkgs; };
-  packages = withSystemPkgs mkPackages;
-
-  inherit (psyclyxLib.darwin) mkDarwinConfiguration;
-  darwinConfigurations = {
-    halo = mkDarwinConfiguration inputs {
-      hostPlatform = "aarch64-darwin";
-      system = "aarch64-darwin";
-      hostName = "halo";
-      modules = [ ./configs/darwin/halo ];
+  mkPkgs =
+    system:
+    import nixpkgs {
+      hostPlatform = system;
+      config = {
+        allowUnfree = true;
+        nvidia.acceptLicense = true;
+      };
     };
-  };
 
-  moduleOutputs = import ./modules;
-
-  nixosConfigurations = import ./configs/nixos {
-    inherit (lib) nixosSystem;
-    specialArgs = { inherit inputs; };
-  };
-
-  common = import ./configs/common;
-
-  passthrough = {
-    inherit inputs;
-  };
-
-  inherit (psyclyxLib.checks) mkChecks;
-
-  checks = mkChecks { inherit nixosConfigurations darwinConfigurations; };
+  mkFlakeOutputs =
+    {
+      systems,
+      commonOutputs ? { },
+      perSystemOutputs ? { },
+    }:
+    let
+      outputs =
+        commonOutputs
+        // (lib.mapAttrs (
+          output: f:
+          lib.genAttrs systems (
+            system:
+            f {
+              inherit system outputs;
+              pkgs = mkPkgs system;
+            }
+          )
+        ) perSystemOutputs);
+    in
+    outputs;
 
 in
-{
-  inherit
-    assets
-    checks
-    common
-    devShells
-    darwinConfigurations
-    nixosConfigurations
-    packages
-    passthrough
-    ;
-  lib = psyclyxLib;
+mkFlakeOutputs {
+  systems = [
+    "x86_64-linux"
+    "aarch64-linux"
+    "x86_64-darwin"
+    "aarch64-darwin"
+  ];
+
+  commonOutputs = {
+    assets = import ./assets;
+    passthrough = inputs;
+  }
+  // import ./configs { inherit inputs; };
+
+  perSystemOutputs = {
+    packages = { pkgs, ... }: import ./packages { inherit pkgs; };
+    devShells = { pkgs, ... }: import ./shell.nix { inherit pkgs; };
+  };
 }
-// moduleOutputs
