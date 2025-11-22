@@ -81,6 +81,7 @@ in
         locale.enable = mkDefault true;
         nix.enable = mkDefault true;
         nixpkgs.enable = mkDefault true;
+        stylix.enable = mkDefault true;
         timezone.enable = mkDefault true;
       };
     };

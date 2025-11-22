@@ -21,7 +21,9 @@ in
   };
 
   config = mkIf cfg.enable {
-    boot.kernelModules = optionals config.psyclyx.system.virtualization.enable [ "kvm-intel" ];
+    nixpkgs.hostPlatform = "x86_64-linux";
+
+    boot.kernelModules = [ "kvm-intel" ];
 
     psyclyx.system.virtualization.enable = mkDefault true;
 

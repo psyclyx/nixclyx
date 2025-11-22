@@ -5,7 +5,7 @@
   ...
 }:
 let
-  inherit (lib) mkDefault mkEnableOption;
+  inherit (lib) mkEnableOption;
 
   cfg = config.psyclyx.hardware.cpu.amd;
 in
@@ -17,11 +17,13 @@ in
   };
 
   config = lib.mkIf cfg.enable {
+    nixpkgs.hostPlatform = "x86_64-linux";
+
     boot = {
       kernelParams = [ "amd_pstate=active" ];
       extraModulePackages = [ config.boot.kernelPackages.zenpower ];
       kernelModules = [
-        "kvm-amd"
+        "kvm_amd"
         "zenpower"
       ];
     };
@@ -33,12 +35,13 @@ in
     ];
 
     hardware = {
-      cpu.amd.updateMicrocode = true;
+      cpu.amd = {
+        ryzen-smu.enable = true;
+        updateMicrocode = true;
+      };
       enableRedistributableFirmware = true;
     };
 
     powerManagement.cpuFreqGovernor = "performance";
-
-    psyclyx.system.virtualization.enable = mkDefault true;
   };
 }
