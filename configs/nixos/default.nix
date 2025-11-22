@@ -1,11 +1,9 @@
-{
-  nixosSystem,
-  specialArgs,
-  ...
-}:
+{ inputs }:
 let
-  mkSystem = args: nixosSystem ({ inherit specialArgs; } // args);
+  inherit (inputs.nixpkgs.lib) mapAttrs nixosSystem;
+
+  mkSystem = args: nixosSystem ({ specialArgs = { inherit inputs; }; } // args);
 
   hosts = import ./hosts.nix;
 in
-builtins.mapAttrs (_: mkSystem) hosts
+mapAttrs (_: mkSystem) hosts

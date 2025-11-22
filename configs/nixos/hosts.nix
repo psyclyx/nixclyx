@@ -1,26 +1,11 @@
 {
-  sigil = {
-    system = "x86_64-linux";
-    modules = [ ./sigil ];
-  };
+  sigil.modules = [ ./sigil ];
 
-  omen = {
-    system = "x86_64-linux";
-    modules = [ ./omen ];
-  };
+  omen.modules = [ ./omen ];
 
-  tleilax = {
-    system = "x86_64-linux";
-    modules = [ ./tleilax ];
-  };
+  tleilax.modules = [ ./tleilax ];
 
-  lab-installer = {
-    system = "x86_64-linux";
-    modules = [ ./lab/installer.nix ];
-  };
+  lab-installer.modules = [ ./lab/installer.nix ];
 
-  lab-4 = {
-    system = "x86_64-linux";
-    modules = [ ./lab/lab-4.nix ];
-  };
+  lab-4.modules = [ ./lab/lab-4.nix ];
 }
