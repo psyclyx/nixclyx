@@ -1,4 +1,0 @@
-[submodule "submodules/emacs"]
-	path = submodules/emacs
-	url = https://github.com/psyclyx/emacs
-	branch = main
