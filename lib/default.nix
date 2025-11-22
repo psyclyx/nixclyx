@@ -7,7 +7,6 @@ let
   imports = {
     checks = ./checks.nix;
     darwin = ./darwin.nix;
-    files = ./files.nix;
     nixpkgs = ./nixpkgs.nix;
     packageSets = ./packageSets.nix;
     systems = ./systems.nix;
