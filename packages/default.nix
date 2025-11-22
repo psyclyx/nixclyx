@@ -1,10 +1,7 @@
 # packages.nix
-{
-  pkgs ? import <nixpkgs> { },
-  psyclyxLib ? import ../lib { inherit (pkgs) lib; },
-}:
+{ pkgs }:
 let
-  inherit (psyclyxLib.packageSets) mkPackageSet;
-  defs = import ./defs.nix;
+  packages = import ./packages { inherit pkgs; };
+  envs = import ./envs { inherit pkgs; };
 in
-mkPackageSet pkgs defs
+packages // { inherit envs; }
