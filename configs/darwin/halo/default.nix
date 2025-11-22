@@ -8,22 +8,29 @@ in
     ./users.nix
   ];
 
-  psyclyx = {
-    roles = {
-      base.enable = true;
-      desktop.enable = true;
-    };
-    services = {
-      tailscale.enable = true;
-    };
-    stylix = {
-      enable = true;
-      image = self.assets.wallpapers."2x-ppmm-madoka-homura.png";
-    };
-  };
+  config = {
+    nixpkgs.hostPlatform = "aarch64-darwin";
 
-  homebrew.casks = [
-    "orcaslicer"
-    "google-chrome"
-  ];
+    system.stateVersion = 5;
+
+    networking.hostName = "halo";
+
+    psyclyx = {
+      roles = {
+        base.enable = true;
+        desktop.enable = true;
+      };
+      services = {
+        tailscale.enable = true;
+      };
+      stylix = {
+        enable = true;
+        image = self.assets.wallpapers."2x-ppmm-madoka-homura.png";
+      };
+    };
+
+    homebrew.casks = [
+      "orcaslicer"
+    ];
+  };
 }
