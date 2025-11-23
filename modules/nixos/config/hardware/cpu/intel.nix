@@ -4,12 +4,7 @@
   ...
 }:
 let
-  inherit (lib)
-    mkDefault
-    mkEnableOption
-    mkIf
-    optionals
-    ;
+  inherit (lib) mkEnableOption mkIf;
 
   cfg = config.psyclyx.hardware.cpu.intel;
 in
@@ -24,8 +19,6 @@ in
     nixpkgs.hostPlatform = "x86_64-linux";
 
     boot.kernelModules = [ "kvm-intel" ];
-
-    psyclyx.system.virtualization.enable = mkDefault true;
 
     hardware = {
       cpu.intel.updateMicrocode = true;
