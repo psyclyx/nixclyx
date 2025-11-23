@@ -2,12 +2,9 @@
   config,
   lib,
   pkgs,
-  inputs,
   ...
 }:
 let
-  inherit (inputs) stylix;
-  inherit (pkgs) stdenv;
   inherit (lib)
     getExe
     mkDefault
@@ -23,24 +20,13 @@ let
       flavours = getExe pkgs.flavours;
       yq = getExe pkgs.yq;
     in
-    pkgs.writeShellScriptBin "flavours-palette-generator" ''
+    pkgs.writeShellScriptBin "palette-generator" ''
       ${flavours} generate "$1" "$2" --stdout | ${yq} > "$3"
     '';
-
-  stylixModule =
-    if stdenv.isNixos then
-      stylix.nixosModules.stylix
-    else if stdenv.isDarwin then
-      stylix.darwinModules.stylix
-    else
-      builtins.throw "unsupported env";
 
   cfg = config.psyclyx.system.stylix;
 in
 {
-
-  imports = [ stylixModule ];
-
   options = {
     psyclyx.system.stylix = {
       enable = mkEnableOption "stylix configuration";
@@ -57,7 +43,7 @@ in
     stylix = {
       enable = true;
 
-      paletteGenerator = mkIf cfg.flavours (mkForce flavours-palette-generator);
+      paletteGenerator = mkIf cfg.flavours flavours-palette-generator;
 
       image = mkDefault "${pkgs.nixos-artwork.wallpapers.catppuccin-macchiato}/share/backgrounds/nixos/nixos-wallpaper-catppucin-macchiato.png";
 
@@ -69,6 +55,10 @@ in
       };
 
       fonts = {
+        sizes = {
+          applications = mkDefault 16;
+          desktop = mkDefault (config.stylix.fonts.sizes.applications - 2);
+        };
         serif = mkDefault {
           package = pkgs.nerd-fonts.noto;
           name = "NotoSerif Nerd Font";

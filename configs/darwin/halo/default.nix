@@ -20,17 +20,18 @@ in
         base.enable = true;
         desktop.enable = true;
       };
+
       services = {
         tailscale.enable = true;
-      };
-      stylix = {
-        enable = true;
-        image = self.assets.wallpapers."2x-ppmm-madoka-homura.png";
       };
     };
 
     homebrew.casks = [
       "orcaslicer"
     ];
+
+    stylix = {
+      image = self.assets.wallpapers."2x-ppmm-madoka-homura.png";
+    };
   };
 }

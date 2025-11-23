@@ -1,14 +1,14 @@
 { inputs, ... }:
 let
-  inherit (inputs) self;
+  inherit (inputs) self stylix;
 in
 {
   imports = [
+    stylix.darwinModules.stylix
     self.commonModules.config
     ./programs
     ./roles
     ./services
-    ./stylix.nix
     ./system
   ];
 }
