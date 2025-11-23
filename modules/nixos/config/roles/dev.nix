@@ -18,6 +18,9 @@ in
 
   config = mkIf cfg.enable {
     environment.systemPackages = [
+      pkgs.lazygit
+      pkgs.helix
+
       pkgs.claude-code
 
       pkgs.babashka
