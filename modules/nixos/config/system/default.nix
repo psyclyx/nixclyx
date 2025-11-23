@@ -8,7 +8,6 @@
     ./locale.nix
     ./nix-ld.nix
     ./nix.nix
-    ./nixpkgs.nix
     ./sudo.nix
     ./timezone.nix
   ];
