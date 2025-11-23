@@ -1,11 +1,11 @@
 { nixpkgs, ... }@inputs:
 let
-  inherit (nixpkgs) lib;
+  inherit (nixpkgs.lib) genAttrs mapAttrs;
 
   mkPkgs =
     system:
     import nixpkgs {
-      hostPlatform = system;
+      inherit system;
       config = {
         allowUnfree = true;
         nvidia.acceptLicense = true;
@@ -21,9 +21,9 @@ let
     let
       outputs =
         commonOutputs
-        // (lib.mapAttrs (
+        // (mapAttrs (
           output: f:
-          lib.genAttrs systems (
+          genAttrs systems (
             system:
             f {
               inherit system outputs;
@@ -47,10 +47,15 @@ mkFlakeOutputs {
     assets = import ./assets;
     passthrough = inputs;
   }
-  // import ./configs { inherit inputs; };
+  // (import ./configs { inherit inputs; })
+  // (import ./modules);
 
   perSystemOutputs = {
     packages = { pkgs, ... }: import ./packages { inherit pkgs; };
-    devShells = { pkgs, ... }: import ./shell.nix { inherit pkgs; };
+    devShells =
+      { pkgs, ... }:
+      {
+        default = import ./shell.nix { inherit pkgs; };
+      };
   };
 }
