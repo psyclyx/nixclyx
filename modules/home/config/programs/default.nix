@@ -1,15 +1,19 @@
 {
   imports = [
     ./alacritty.nix
+    ./direnv.nix
     ./emacs.nix
     ./fastfetch
     ./fuzzel.nix
+    ./fzf.nix
     ./git.nix
     ./helix
     ./kitty.nix
+    ./shell.nix
     ./ssh.nix
     ./sway
     ./waybar.nix
     ./zsh.nix
+    ./zoxide.nix
   ];
 }
