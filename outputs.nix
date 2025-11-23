@@ -1,39 +1,8 @@
-{ nixpkgs, ... }@inputs:
+inputs:
 let
-  inherit (nixpkgs.lib) genAttrs mapAttrs;
-
-  mkPkgs =
-    system:
-    import nixpkgs {
-      inherit system;
-      config = {
-        allowUnfree = true;
-        nvidia.acceptLicense = true;
-      };
-    };
-
-  mkFlakeOutputs =
-    {
-      systems,
-      commonOutputs ? { },
-      perSystemOutputs ? { },
-    }:
-    let
-      outputs =
-        commonOutputs
-        // (mapAttrs (
-          output: f:
-          genAttrs systems (
-            system:
-            f {
-              inherit system outputs;
-              pkgs = mkPkgs system;
-            }
-          )
-        ) perSystemOutputs);
-    in
-    outputs;
-
+  inherit (inputs) nixpkgs self;
+  psycLib = import ./lib { inherit (nixpkgs) lib; };
+  inherit (psycLib) mkFlakeOutputs;
 in
 mkFlakeOutputs {
   systems = [
@@ -43,19 +12,38 @@ mkFlakeOutputs {
     "aarch64-darwin"
   ];
 
-  commonOutputs = {
-    assets = import ./assets;
-    passthrough = inputs;
-  }
-  // (import ./configs { inherit inputs; })
-  // (import ./modules);
+  perSystemArgs =
+    { system, ... }@args:
+    args
+    // {
+      pkgs = import nixpkgs {
+        inherit system;
+        config = {
+          allowUnfree = true;
+          nvidia.acceptLicense = true;
+        };
+      };
+    };
 
   perSystemOutputs = {
-    packages = { pkgs, ... }: import ./packages { inherit pkgs; };
-    devShells =
-      { pkgs, ... }:
+    packages = import ./packages;
+    devShells = import ./devShells;
+    envs = import ./envs;
+    checks =
+      { outputs, system, ... }:
+      let
+      in
       {
-        default = import ./shell.nix { inherit pkgs; };
       };
   };
+
+  commonOutputs =
+    outputs:
+    {
+      assets = import ./assets { psycNix = outputs; };
+      lib = import ./lib { inherit (nixpkgs) lib; };
+      passthrough = inputs;
+    }
+    // (import ./configs { inherit inputs; })
+    // (import ./modules);
 }
