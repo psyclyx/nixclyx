@@ -1,7 +1,5 @@
-# packages.nix
-{ pkgs }:
-let
-  packages = import ./packages { inherit pkgs; };
-  envs = import ./envs { inherit pkgs; };
-in
-packages // { inherit envs; }
+{
+  print256colors = ./print256colors.nix;
+  ssacli = ./ssacli.nix;
+  upscale-image = ./upscale-image;
+}
