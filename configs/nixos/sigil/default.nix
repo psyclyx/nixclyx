@@ -47,14 +47,14 @@
         emulation.enable = true;
       };
 
-      stylix = {
-        image = inputs.self.assets.wallpapers."4x-ppmm-mami.jpg";
-        dark = true;
-      };
-
       users.psyc = {
         enable = true;
       };
+    };
+
+    stylix = {
+      image = inputs.self.assets.wallpapers."4x-ppmm-mami.jpg";
+      polarity = "dark";
     };
   };
 }

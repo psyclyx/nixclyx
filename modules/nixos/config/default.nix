@@ -1,10 +1,11 @@
 { inputs, ... }:
 let
-  inherit (inputs) disko self;
+  inherit (inputs) disko self stylix;
 in
 {
   imports = [
     disko.nixosModules.disko
+    stylix.nixosModules.stylix
     self.commonModules.config
     ./boot
     ./filesystems
@@ -13,7 +14,6 @@ in
     ./programs
     ./roles
     ./services
-    ./stylix.nix
     ./system
     ./users
   ];

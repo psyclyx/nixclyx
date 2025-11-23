@@ -34,10 +34,7 @@ in
       };
       system = {
         fonts.enable = lib.mkDefault true;
-      };
-      stylix = {
-        enable = lib.mkDefault true;
-        baseFontSize = lib.mkDefault 16;
+        stylix.enable = lib.mkDefault true;
       };
     };
   };

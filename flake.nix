@@ -19,7 +19,7 @@
     sops-nix.url = "github:Mic92/sops-nix";
     nix-homebrew.url = "github:zhaofengli-wip/nix-homebrew";
     stylix = {
-      url = "github:danth/stylix";
+      url = "github:psyclyx/stylix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };
