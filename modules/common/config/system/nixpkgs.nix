@@ -12,10 +12,18 @@ in
     psyclyx.system.nixpkgs.enable = lib.mkEnableOption "nixpkgs config (unfree, etc)";
   };
 
-  config = lib.mkIf cfg.enable {
-    nixpkgs.config = {
-      allowUnfree = true;
-      nvidia.acceptLicense = true;
-    };
-  };
+  config = lib.mkMerge [
+    { nixpkgs.overlays = [ inputs.self.overlays.default ]; }
+
+    (lib.mkIf cfg.enable {
+      nixpkgs = {
+        config = {
+          allowUnfree = true;
+          nvidia.acceptLicense = true;
+        };
+        overlays = [ inputs.self.overlays.default ];
+      };
+    })
+  ];
+
 }
