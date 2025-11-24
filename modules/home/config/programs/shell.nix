@@ -12,18 +12,16 @@ in
   };
 
   config = {
-    home.shell = {
-      shellAliases = {
-        "ns" = "nix search nixpkgs";
-        "nsp" = "nix-shell --run $SHELL -p";
-        "nr" = "nixos-rebuild";
-        "nrf" = "nixos-rebuild --flake";
+    home.shellAliases = {
+      "ns" = "nix search nixpkgs";
+      "nsp" = "nix-shell --run $SHELL -p";
+      "nr" = "nixos-rebuild";
+      "nrf" = "nixos-rebuild --flake";
 
-        "ipf" = "ip -4";
-        "ips" = "ip -6";
-        "ifB" = "ip -B";
-        "ipL" = "ip -L";
-      };
+      "ipf" = "ip -4";
+      "ips" = "ip -6";
+      "ifB" = "ip -B";
+      "ipL" = "ip -L";
     };
 
     psyclyx.programs = {

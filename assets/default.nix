@@ -1,1 +1,1 @@
-{ psycNix }: psycNix.lib.dirToAttrSet ./.
+{ nixclyx }: nixclyx.lib.dirToAttrSet ./.

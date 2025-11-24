@@ -25,6 +25,6 @@ in
       generic = true;
     };
 
-    environment.systemPackages = [ inputs.self.packages.${pkgs.system}.ssacli ];
+    environment.systemPackages = [ inputs.self.packages.ssacli ];
   };
 }

@@ -1,5 +1,7 @@
 { config, lib, ... }:
 let
+  inherit (lib) mkDefault;
+
   cfg = config.psyclyx.programs.git;
   user = config.psyclyx.user;
 in
@@ -13,8 +15,8 @@ in
     programs = {
       git = {
         enable = true;
-        userName = user.name;
-        userEmail = user.email;
+        settings.user.name = mkDefault user.name;
+        settings.user.email = mkDefault user.email;
         iniContent = {
           "pull" = {
             "rebase" = true;
