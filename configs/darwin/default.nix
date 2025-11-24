@@ -4,6 +4,6 @@ let
 
   mkSystem = args: darwinSystem ({ specialArgs = { inherit inputs; }; } // args);
 
-  hosts = import ./halo;
+  hosts = import ./hosts.nix;
 in
 builtins.mapAttrs (_: mkSystem) hosts

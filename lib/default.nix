@@ -8,7 +8,6 @@ let
     genAttrs
     mapAttrs
     pipe
-    readDir
     ;
 in
 {
@@ -52,7 +51,7 @@ in
             in
             if directory then recurse name' else name';
 
-          entries = mapAttrs entryValue (readDir dir);
+          entries = mapAttrs entryValue (builtins.readDir dir);
         in
         entries // { "." = dir; };
     in
@@ -141,12 +140,8 @@ in
     {
       systems,
       commonOutputs ? { },
-      perSystemArgs ?
-        { system, ... }:
-        {
-          inherit system;
-        },
-      perSystemOutputs ? (_: { }),
+      perSystemArgs ? {system, ...}: {inherit system;};
+      perSystemOutputs ? { },
     }:
     let
       perSystemLeaf =

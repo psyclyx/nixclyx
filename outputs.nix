@@ -1,10 +1,12 @@
 inputs:
 let
   inherit (inputs) nixpkgs self;
-  psycLib = import ./lib { inherit (nixpkgs) lib; };
-  inherit (psycLib) mkFlakeOutputs;
+  inherit (nixpkgs) lib;
+  nixclyx = self;
+
+  psyclib = import ./lib { inherit lib; };
 in
-mkFlakeOutputs {
+psyclib.mkFlakeOutputs {
   systems = [
     "x86_64-linux"
     "aarch64-linux"
@@ -13,9 +15,9 @@ mkFlakeOutputs {
   ];
 
   perSystemArgs =
-    { system, ... }@args:
-    args
-    // {
+    { system, ... }:
+    {
+      inherit system nixclyx;
       pkgs = import nixpkgs {
         inherit system;
         config = {
@@ -29,21 +31,14 @@ mkFlakeOutputs {
     packages = import ./packages;
     devShells = import ./devShells;
     envs = import ./envs;
-    checks =
-      { outputs, system, ... }:
-      let
-      in
-      {
-      };
   };
 
-  commonOutputs =
-    outputs:
-    {
-      assets = import ./assets { psycNix = outputs; };
-      lib = import ./lib { inherit (nixpkgs) lib; };
-      passthrough = inputs;
-    }
-    // (import ./configs { inherit inputs; })
-    // (import ./modules);
+  commonOutputs = {
+    assets = import ./assets { inherit nixclyx; };
+    lib = psyclib;
+    overlays = import ./overlays { inherit nixclyx; };
+    passthrough = inputs;
+  }
+  // (import ./configs { inherit inputs; })
+  // (import ./modules);
 }

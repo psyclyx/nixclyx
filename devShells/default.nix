@@ -1,6 +1,4 @@
-{
-  pkgs ? import <nixpkgs> { },
-}:
+{ pkgs, ... }:
 {
   default = pkgs.mkShell {
     packages = with pkgs; [
