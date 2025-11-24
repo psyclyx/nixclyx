@@ -43,9 +43,10 @@ in
     stylix = {
       enable = true;
 
+      polarity = mkIf cfg.flavours (mkDefault "light");
       paletteGenerator = mkIf cfg.flavours flavours-palette-generator;
 
-      image = mkDefault "${pkgs.nixos-artwork.wallpapers.catppuccin-macchiato}/share/backgrounds/nixos/nixos-wallpaper-catppucin-macchiato.png";
+      image = mkDefault "${pkgs.nixos-artwork.wallpapers.catppuccin-macchiato}/share/backgrounds/nixos/nixos-wallpaper-catppuccin-macchiato.png";
 
       opacity = {
         applications = mkDefault 0.85;
