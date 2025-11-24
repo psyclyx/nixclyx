@@ -19,12 +19,9 @@ in
 
   config = mkIf cfg.enable {
     boot.initrd.availableKernelModules = [ "smartpqi" ];
-
-    psyclyx.hardware.drivers.scsi = {
-      enable = true;
-      generic = true;
+    psyclyx = {
+      hardware.drivers.scsi.enable = true;
+      programs.ssacli.enable = true;
     };
-
-    environment.systemPackages = [ inputs.self.packages.ssacli ];
   };
 }

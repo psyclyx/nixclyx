@@ -140,7 +140,11 @@ in
     {
       systems,
       commonOutputs ? { },
-      perSystemArgs ? {system, ...}: {inherit system;};
+      perSystemArgs ?
+        { system, ... }:
+        {
+          inherit system;
+        },
       perSystemOutputs ? { },
     }:
     let

@@ -24,6 +24,7 @@ psyclib.mkFlakeOutputs {
           allowUnfree = true;
           nvidia.acceptLicense = true;
         };
+        overlays = [ nixclyx.overlays.default ];
       };
     };
 

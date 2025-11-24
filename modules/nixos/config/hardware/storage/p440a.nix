@@ -19,9 +19,9 @@ in
 
   config = mkIf cfg.enable {
     boot.initrd.availableKernelModules = [ "hpsa" ];
-
-    psyclyx.hardware.drivers.scsi.enable = true;
-
-    environment.systemPackages = [ inputs.self.packages.${pkgs.system}.ssacli ];
+    psyclyx = {
+      hardware.drivers.scsi.enable = true;
+      programs.ssacli.enable = true;
+    };
   };
 }
