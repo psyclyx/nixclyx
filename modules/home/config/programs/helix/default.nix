@@ -24,7 +24,10 @@ in
         {
           name = "nix";
           auto-format = true;
-          formatter.command = getExe pkgs.nixfmt;
+          formatter = {
+            command = getExe pkgs.nixfmt;
+            args = [ "--strict" ];
+          };
         }
       ];
     };
