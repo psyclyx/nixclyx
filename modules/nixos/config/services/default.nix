@@ -1,6 +1,5 @@
 {
   imports = [
-    ./automount.nix
     ./avahi.nix
     ./fstrim.nix
     ./fwupd.nix

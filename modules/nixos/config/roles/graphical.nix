@@ -27,7 +27,6 @@ in
         qmk.enable = lib.mkDefault true;
       };
       services = {
-        autoMount.enable = lib.mkDefault true;
         gnome-keyring.enable = lib.mkDefault true;
         greetd.enable = lib.mkDefault true;
         printing.enable = lib.mkDefault true;
