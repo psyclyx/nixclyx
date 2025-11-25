@@ -17,9 +17,9 @@ in
         desktop = "\$HOME/desktop";
         documents = "\$HOME/documents";
         download = "\$HOME/downloads";
-        music = "\$HOME/music";
-        pictures = "\$HOME/pictures";
-        videos = "\$HOME/videos";
+        music = "\$HOME/media/music";
+        pictures = "\$HOME/media/pictures";
+        videos = "\$HOME/media/videos";
         templates = "\$HOME/templates";
         publicShare = "\$HOME/public";
       };
