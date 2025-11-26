@@ -39,7 +39,7 @@ in
 
       registry =
         let
-          isFlake = input: input._type == "flake";
+          isFlake = input: input._type or null == "flake";
           flakeInputs = filterAttrs (_: isFlake) inputs;
           registrySet = flakeInput: { flake = flakeInput; };
         in

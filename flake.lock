@@ -374,7 +374,8 @@
         "nixpkgs": "nixpkgs_2",
         "psyclyx-emacs": "psyclyx-emacs",
         "sops-nix": "sops-nix",
-        "stylix": "stylix"
+        "stylix": "stylix",
+        "zsh-pure": "zsh-pure"
       }
     },
     "sops-nix": {
@@ -522,6 +523,22 @@
       "original": {
         "owner": "tinted-theming",
         "repo": "base16-zed",
+        "type": "github"
+      }
+    },
+    "zsh-pure": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1763198167,
+        "narHash": "sha256-AZSxP2g6BWoxyiSQH7yzbbbfGcwD8jgnXPPfcYwJUL0=",
+        "owner": "sindresorhus",
+        "repo": "pure",
+        "rev": "54bd501c802283dee0940457da6eb3e642bd1453",
+        "type": "github"
+      },
+      "original": {
+        "owner": "sindresorhus",
+        "repo": "pure",
         "type": "github"
       }
     }

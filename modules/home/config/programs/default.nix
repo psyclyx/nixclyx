@@ -5,7 +5,6 @@
     ./emacs.nix
     ./fastfetch
     ./fuzzel.nix
-    ./fzf.nix
     ./git.nix
     ./helix
     ./kitty.nix
