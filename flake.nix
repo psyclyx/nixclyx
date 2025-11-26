@@ -22,6 +22,10 @@
       url = "github:psyclyx/stylix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    zsh-pure = {
+      url = "github:sindresorhus/pure";
+      flake = false;
+    };
   };
 
   outputs = inputs: import ./outputs.nix inputs;
