@@ -22,8 +22,6 @@ in
       zsh = {
         enable = true;
 
-        defaultKeymap = "viins";
-
         dirHashes = {
           dl = config.xdg.userDirs.download;
           doc = config.xdg.userDirs.documents;
@@ -47,12 +45,12 @@ in
 
         plugins = [
           {
-            name = "jzsh-vi-mode";
-            src = "${pkgs.zsh-vi-mode}/share/zsh-vi-mode";
+            name = "zsh-vi-mode";
+            src = pkgs.zsh-vi-mode;
           }
           {
             name = "fzf-tab";
-            src = "${pkgs.zsh-fzf-tab}/share/fzf-tab";
+            src = pkgs.zsh-fzf-tab;
           }
           {
             name = "pure";
