@@ -13,40 +13,41 @@
           "mlx4_core"
         ];
       };
+      swraid.enable = true;
     };
 
-    psyclyx = {
-      hosts.lab.disks = {
-        enable = true;
-        pool = [
-          {
-            id = "ata-LK0800GEYMU_BTHC6230013F800NGN";
-            name = "a";
-            group = "ssd";
-            boot = true;
-          }
-          {
-            id = "ata-LK0800GEYMU_BTHC6403075M800NGN";
-            name = "b";
-            group = "ssd";
-          }
-          {
-            id = "ata-LK0800GEYMU_BTHC6162030P800NGN";
-            name = "c";
-            group = "ssd";
-          }
-          {
-            id = "ata-LK0800GEYMU_BTHC624302D3800NGN";
-            name = "d";
-            group = "ssd";
-          }
-          {
-            id = "ata-LK0800GEYMU_BTHC623100VD800NGN";
-            name = "f";
-            group = "ssd";
-          }
-        ];
+    fileSystems =
+      let
+        bcachefsSubvolume = subdir: neededForBoot: {
+          device = "/dev/disk/by-label/f0136e-bcachefs";
+          fsType = "bcachefs";
+          options = [ "X-mount.subdir=${subdir}" ];
+          inherit neededForBoot;
+        };
+      in
+      {
+        "/" = bcachefsSubvolume "root" false;
+        "/nix" = bcachefsSubvolume "nix" false;
+        "/persist" = bcachefsSubvolume "persist" true;
+        "/var/log" = bcachefsSubvolume "log" true;
+        "boot" = {
+          device = "/dev/disk/by-uuid/DEEC-EF39";
+          fsType = "vfat";
+          options = [
+            "fmask=0077"
+            "dmask=0077"
+          ];
+        };
       };
-    };
+
+    swapDevices = [
+      { device = "/dev/disk/by-partlabel/f0136e-05ec41-swap"; }
+      { device = "/dev/disk/by-partlabel/f0136e-148d8e-swap"; }
+      { device = "/dev/disk/by-partlabel/f0136e-14b2c2-swap"; }
+      { device = "/dev/disk/by-partlabel/f0136e-277051-swap"; }
+      { device = "/dev/disk/by-partlabel/f0136e-36cdba-swap"; }
+      { device = "/dev/disk/by-partlabel/f0136e-5a29cc-swap"; }
+    ];
   };
+
 }
