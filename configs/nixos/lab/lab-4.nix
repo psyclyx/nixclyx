@@ -13,7 +13,6 @@
           "mlx4_core"
         ];
       };
-      swraid.enable = true;
     };
 
     fileSystems =
@@ -31,7 +30,7 @@
         "/persist" = bcachefsSubvolume "persist" true;
         "/var/log" = bcachefsSubvolume "log" true;
         "boot" = {
-          device = "/dev/disk/by-uuid/DEEC-EF39";
+          device = "/dev/disk/by-partlabel/f0136e-14b2c2-boot";
           fsType = "vfat";
           options = [
             "fmask=0077"
