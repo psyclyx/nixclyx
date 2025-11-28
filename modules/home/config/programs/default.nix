@@ -8,6 +8,7 @@
     ./git.nix
     ./helix
     ./kitty.nix
+    ./neovim
     ./shell.nix
     ./ssh.nix
     ./sway
