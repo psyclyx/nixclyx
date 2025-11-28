@@ -22,6 +22,8 @@ in
       zsh = {
         enable = true;
 
+        defaultKeymap = "viins";
+
         dirHashes = {
           dl = config.xdg.userDirs.download;
           doc = config.xdg.userDirs.documents;

@@ -15,13 +15,10 @@ in
     home.shellAliases = {
       "ns" = "nix search nixpkgs";
       "nsp" = "nix-shell --run $SHELL -p";
-      "nr" = "nixos-rebuild";
-      "nrf" = "nixos-rebuild --flake";
+      "nrs" = "sudo nixos-rebuild switch";
 
       "ipf" = "ip -4";
       "ips" = "ip -6";
-      "ifB" = "ip -B";
-      "ipL" = "ip -L";
     };
 
     psyclyx.programs = {
