@@ -2,6 +2,7 @@
   imports = [
     ./adb.nix
     ./aspell.nix
+    ./ghostty.nix
     ./glasgow.nix
     ./qmk.nix
     ./ssacli.nix
