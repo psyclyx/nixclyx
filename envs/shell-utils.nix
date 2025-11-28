@@ -18,15 +18,21 @@ pkgs.buildEnv {
     pkgs.eza
     pkgs.fd
     pkgs.fzf
-    pkgs.mc
     pkgs.ncdu
     pkgs.ripgrep
     pkgs.silver-searcher
     pkgs.sleuthkit
+    pkgs.skim
+    pkgs.yazi
+
+    pkgs.nvim
+    pkgs.git
 
     pkgs.reptyr
+    pkgs.dtach
     pkgs.screen
     pkgs.tmux
+    pkgs.zellij
 
     pkgs.gawk
     pkgs.gnugrep
