@@ -1,4 +1,9 @@
 {
+  harp = {
+    system = "aarch64-linux";
+    modules = [ ./harp ]
+  };
+
   sigil.modules = [ ./sigil ];
 
   omen.modules = [ ./omen ];
