@@ -22,6 +22,9 @@
       url = "github:psyclyx/stylix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    ghostty = {
+      url = "github:ghostty-org/ghostty";
+    };
     zsh-pure = {
       url = "github:sindresorhus/pure";
       flake = false;

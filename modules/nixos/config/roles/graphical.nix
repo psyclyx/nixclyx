@@ -23,6 +23,7 @@ in
         plymouth.enable = lib.mkDefault true;
       };
       programs = {
+        ghostty.enable = lib.mkDefault true;
         sway.enable = lib.mkDefault true;
         qmk.enable = lib.mkDefault true;
       };
