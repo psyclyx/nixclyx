@@ -1,4 +1,4 @@
-{ inputs, ... }:
+{ inputs, pkgs, ... }:
 {
   imports = [
     inputs.self.nixosModules.config
@@ -9,13 +9,17 @@
     networking.hostName = "sigil";
 
     # Development and specialized environments
-    environment.systemPackages = with pkgs.psyclyx.envs; [
-      shell
-      languages
-      "3dprinting"
-      forensics
-      llm
-      media
+    environment.systemPackages = 
+    let
+    inherit (pkgs.psyclyx) envs;
+    in
+    [ 
+      envs._3DPrinting
+      envs.forensics
+      envs.languages
+      envs.llm
+      envs.media
+      envs.shell
     ];
 
     psyclyx = {

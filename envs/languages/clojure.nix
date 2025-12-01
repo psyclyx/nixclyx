@@ -19,7 +19,7 @@ pkgs.buildEnv {
     pkgs.jet
 
     # Native compilation
-    pkgs.graalvm-ce
+    pkgs.graalvmPackages.graalvm-ce
 
     # LSP
     pkgs.clojure-lsp
