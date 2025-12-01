@@ -1,10 +1,12 @@
 {
-  pkgs ? import <nixpkgs>,
+  pkgs ? import <nixpkgs> { },
 }:
 let
-  inherit (pkgs.lib) mapAttrs;
-  mkEnvs = mapAttrs (_: mkEnv: mkEnv pkgs);
+  # Import shell and language environments
+  shell = import ./shell pkgs;
+  languages = import ./languages pkgs;
 in
-mkEnvs {
-  shell-utils = ./shell-utils.nix;
+{
+  # Expose shell and languages at top level
+  inherit shell languages;
 }
