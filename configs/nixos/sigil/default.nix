@@ -20,6 +20,7 @@
       network.enable = true;
 
       roles = {
+        "3DPrinting".enable = true;
         base.enable = true;
         dev.enable = true;
         forensics.enable = true;
