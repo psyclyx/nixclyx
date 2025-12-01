@@ -10,6 +10,14 @@
 
     boot.kernelParams = [ "snd-intel-dspcfg.dsp_driver=1" ];
 
+    # Development and specialized environments
+    environment.systemPackages = with pkgs.psyclyx.envs; [
+      shell
+      languages
+      llm
+      media
+    ];
+
     psyclyx = {
       hardware = {
         cpu = {
@@ -30,9 +38,7 @@
 
       roles = {
         base.enable = true;
-        dev.enable = true;
         graphical.enable = true;
-        media.enable = true;
         remote.enable = true;
         utility.enable = true;
       };

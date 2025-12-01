@@ -8,9 +8,24 @@ let
   clojureEnv = import ./clojure.nix pkgs;
   nixEnv = import ./nix.nix pkgs;
   luaEnv = import ./lua.nix pkgs;
+
+  # Combined environment with all languages
+  fullLanguages = pkgs.buildEnv {
+    name = "languages-full";
+    paths = [
+      cEnv
+      rustEnv
+      zigEnv
+      nodeEnv
+      clojureEnv
+      nixEnv
+      luaEnv
+    ];
+    meta.description = "Complete language development environment with all languages";
+  };
 in
-{
-  # Expose individual languages as attributes
+# Return the full languages derivation with individual languages as attributes
+fullLanguages // {
   c = cEnv;
   rust = rustEnv;
   zig = zigEnv;
@@ -18,35 +33,4 @@ in
   clojure = clojureEnv;
   nix = nixEnv;
   lua = luaEnv;
-
-  # Combined environment with all languages
-  # Usage: languages.full
-  # Override: languages.full.override { rust = false; zig = false; }
-  full = pkgs.lib.makeOverridable
-    (
-      {
-        c ? false,
-        rust ? false,
-        zig ? false,
-        node ? false,
-        clojure ? false,
-        nix ? true,
-        lua ? false,
-      }:
-      let
-        selected = pkgs.lib.optionals c [ cEnv ]
-          ++ pkgs.lib.optionals rust [ rustEnv ]
-          ++ pkgs.lib.optionals zig [ zigEnv ]
-          ++ pkgs.lib.optionals node [ nodeEnv ]
-          ++ pkgs.lib.optionals clojure [ clojureEnv ]
-          ++ pkgs.lib.optionals nix [ nixEnv ]
-          ++ pkgs.lib.optionals lua [ luaEnv ];
-      in
-      pkgs.buildEnv {
-        name = "languages-full";
-        paths = selected;
-        meta.description = "Combined language development environment with selected languages";
-      }
-    )
-    { };
 }

@@ -8,6 +8,16 @@
   config = {
     networking.hostName = "sigil";
 
+    # Development and specialized environments
+    environment.systemPackages = with pkgs.psyclyx.envs; [
+      shell
+      languages
+      "3dprinting"
+      forensics
+      llm
+      media
+    ];
+
     psyclyx = {
       hardware = {
         cpu = {
@@ -20,12 +30,8 @@
       network.enable = true;
 
       roles = {
-        "3DPrinting".enable = true;
         base.enable = true;
-        dev.enable = true;
-        forensics.enable = true;
         graphical.enable = true;
-        media.enable = true;
         remote.enable = true;
         utility.enable = true;
       };
