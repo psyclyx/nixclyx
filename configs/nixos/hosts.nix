@@ -1,7 +1,7 @@
 {
   harp = {
     system = "aarch64-linux";
-    modules = [ ./harp ]
+    modules = [ ./harp ];
   };
 
   sigil.modules = [ ./sigil ];
