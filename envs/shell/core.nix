@@ -17,7 +17,7 @@ pkgs.buildEnv {
     pkgs.parallel
 
     # Basic compression
-    pkgs.tar
+    pkgs.btar
     pkgs.gzip
     pkgs.bzip2
     pkgs.xz
