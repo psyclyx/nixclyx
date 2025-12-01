@@ -35,14 +35,11 @@ in
         enableVteIntegration = true;
 
         history = {
-          expireDuplicatesFirst = true;
-          extended = true;
-          findNoDups = true;
-          ignoreAllDups = true;
-          ignoreDups = true;
-          save = 32000;
-          saveNoDups = true;
-          size = 32000;
+          size = 4000;
+        };
+
+        localVariables = {
+          ZVM_INIT_MODE = "sourcing";
         };
 
         plugins = [
