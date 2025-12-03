@@ -4,6 +4,7 @@
     ./direnv.nix
     ./fastfetch
     ./fuzzel.nix
+    ./ghostty.nix
     ./git.nix
     ./helix
     ./kitty.nix
