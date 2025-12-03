@@ -15,9 +15,7 @@ let
   screenshot-menu = getExe menus.screenshot-menu;
 
   browser = "firefox";
-  terminal = "alacritty";
-  editor = "emacsclient";
-  editorAlt = "emacs";
+  terminal = "xdg-terminal";
 
   backlightUp = "light -U 10";
   backlightDown = "light -D 10";
@@ -98,8 +96,6 @@ let
 
     "${leaderKey}+u" = "exec ${browser}";
     "${leaderKey}+i" = "exec ${terminal}";
-    "${leaderKey}+o" = "exec ${editor} -cn -a ''";
-    "${leaderKey}+Shift+o" = "exec ${editorAlt}";
   };
 
   backlightBinds = {

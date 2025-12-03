@@ -2,7 +2,6 @@
   imports = [
     ./alacritty.nix
     ./direnv.nix
-    ./emacs.nix
     ./fastfetch
     ./fuzzel.nix
     ./git.nix

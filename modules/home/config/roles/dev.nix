@@ -17,7 +17,6 @@ in
   config = lib.mkIf cfg.enable {
     psyclyx = {
       programs = {
-        emacs.enable = lib.mkDefault true;
         fastfetch.enable = lib.mkDefault true;
         git.enable = lib.mkDefault true;
         helix.enable = lib.mkDefault true;
