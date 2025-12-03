@@ -2,7 +2,7 @@
 
 pkgs.neovim.override {
   configure = {
-    customRC = '''';
+    customLuaRC = builtins.readFile ./init.lua;
 
     packages.myPlugins = with pkgs.vimPlugins; {
       start = [
@@ -12,6 +12,4 @@ pkgs.neovim.override {
       opt = [ ];
     };
   };
-
-  extraLuaConfig = builtins.readFile ./init.lua;
 }
