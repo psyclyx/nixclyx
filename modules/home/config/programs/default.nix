@@ -12,7 +12,6 @@
     ./shell.nix
     ./ssh.nix
     ./sway
-    ./waybar.nix
     ./zsh.nix
     ./zoxide.nix
   ];

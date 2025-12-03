@@ -11,6 +11,7 @@ in
   imports = [
     ./keybindings.nix
     ./swaylock.nix
+    ./waybar.nix
   ];
 
   options = {
@@ -30,6 +31,7 @@ in
       programs = {
         alacritty.enable = lib.mkDefault true;
         fuzzel.enable = lib.mkDefault true;
+        waybar.enable = lib.mkDefault true;
       };
       services = {
         mako.enable = lib.mkDefault true;
