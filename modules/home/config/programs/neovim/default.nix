@@ -5,7 +5,7 @@
   ...
 }:
 let
-  inherit (lib) mkEnableOption mkIf;
+  inherit (lib) mkDefault mkEnableOption mkIf;
   cfg = config.psyclyx.programs.neovim;
 in
 {
@@ -17,19 +17,7 @@ in
   };
 
   config = mkIf cfg.enable {
-    programs.neovim = {
-      enable = true;
-
-      defaultEditor = mkDefault cfg.defaultEditor;
-
-      plugins = [ pkgs.vimPlugins.nvim-tree-sitter.withAllGrammars ];
-
-      vimdiffAlias = true;
-      viAlias = true;
-      vimAlias = true;
-      withNodeJs = true;
-      withPython3 = true;
-      withRuby = true;
-    };
-  };
+  home.packages = [pkgs.psyclyx.nvim];
+  home.sessionVariables.EDITOR = "nvim";
+};
 }
