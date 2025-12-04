@@ -2,9 +2,8 @@ pkgs:
 pkgs.buildEnv {
   name = "lang-c";
   paths = [
-    # Compilers
     pkgs.gcc
-    pkgs.clang
+    (pkgs.lib.meta.hiPrio pkgs.clang)
 
     # Build tools
     pkgs.gnumake

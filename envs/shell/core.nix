@@ -9,12 +9,12 @@ pkgs.buildEnv {
     pkgs.less
     pkgs.findutils
     pkgs.gnugrep
+    pkgs.moreutils
 
     # Text processing
     pkgs.gawk
     pkgs.gnused
-    pkgs.moreutils
-    pkgs.parallel
+    (pkgs.lib.meta.hiPrio pkgs.parallel)
 
     # Basic compression
     pkgs.btar
