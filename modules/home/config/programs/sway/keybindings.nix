@@ -15,7 +15,7 @@ let
   screenshot-menu = getExe menus.screenshot-menu;
 
   browser = "firefox";
-  terminal = "xdg-terminal";
+  terminal = "xdg-terminal-exec";
 
   backlightUp = "light -U 10";
   backlightDown = "light -D 10";
