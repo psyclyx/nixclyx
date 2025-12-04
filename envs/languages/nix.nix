@@ -11,10 +11,9 @@ pkgs.buildEnv {
     pkgs.deadnix
 
     # Formatters
-    pkgs.nixpkgs-fmt
+    pkgs.nixfmt
+    pkgs.nixfmt-tree
     pkgs.alejandra
-    pkgs.nixfmt-rfc-style
-    pkgs.nixfmt-classic
 
     # Utilities
     pkgs.nix-tree

@@ -6,8 +6,7 @@ pkgs.buildEnv {
     pkgs.zip
     pkgs.unzip
     pkgs.p7zip
-    pkgs.rar
-    pkgs.unrar
+    pkgs.unar
   ];
   meta.description = "Additional compression formats beyond basic tar/gzip/xz";
 }

@@ -18,9 +18,6 @@ pkgs.buildEnv {
     pkgs.neil
     pkgs.jet
 
-    # Native compilation
-    pkgs.graalvmPackages.graalvm-ce
-
     # LSP
     pkgs.clojure-lsp
 
