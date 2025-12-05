@@ -7,7 +7,12 @@
 }:
 let
 
-  inherit (lib) mkEnableOption mkIf mkBefore getExe;
+  inherit (lib)
+    mkEnableOption
+    mkIf
+    mkBefore
+    getExe
+    ;
 
   inherit (pkgs.stdenv.hostPlatform) system;
   inherit (inputs.ghostty.packages."${system}") ghostty;
@@ -34,9 +39,11 @@ in
 
     xdg.terminal-exec = {
       enable = true;
-      settings.default = if cfg.defaultTerminal
-        then mkBefore [ "com.mitchellh.ghostty.desktop" ]
-        else [ "com.mitchellh.ghostty.desktop" ];
+      settings.default =
+        if cfg.defaultTerminal then
+          mkBefore [ "com.mitchellh.ghostty.desktop" ]
+        else
+          [ "com.mitchellh.ghostty.desktop" ];
     };
   };
 }

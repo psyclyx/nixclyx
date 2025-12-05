@@ -25,7 +25,8 @@ let
   };
 in
 # Return the full shell derivation with individual groups as attributes
-fullShell // {
+fullShell
+// {
   core = coreEnv;
   modern = modernEnv;
   compression = compressionEnv;

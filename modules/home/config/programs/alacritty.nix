@@ -5,7 +5,12 @@
   ...
 }:
 let
-  inherit (lib) mkEnableOption mkIf mkBefore getExe;
+  inherit (lib)
+    mkEnableOption
+    mkIf
+    mkBefore
+    getExe
+    ;
   cfg = config.psyclyx.programs.alacritty;
 in
 {
@@ -34,9 +39,8 @@ in
 
     xdg.terminal-exec = {
       enable = true;
-      settings.default = if cfg.defaultTerminal
-        then mkBefore [ "Alacritty.desktop" ]
-        else [ "Alacritty.desktop" ];
+      settings.default =
+        if cfg.defaultTerminal then mkBefore [ "Alacritty.desktop" ] else [ "Alacritty.desktop" ];
     };
   };
 }

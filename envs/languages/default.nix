@@ -25,7 +25,8 @@ let
   };
 in
 # Return the full languages derivation with individual languages as attributes
-fullLanguages // {
+fullLanguages
+// {
   c = cEnv;
   rust = rustEnv;
   zig = zigEnv;

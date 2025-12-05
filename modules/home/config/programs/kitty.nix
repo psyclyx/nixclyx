@@ -1,6 +1,11 @@
 { config, lib, ... }:
 let
-  inherit (lib) mkEnableOption mkIf mkBefore getExe;
+  inherit (lib)
+    mkEnableOption
+    mkIf
+    mkBefore
+    getExe
+    ;
   cfg = config.psyclyx.programs.kitty;
 in
 {
@@ -32,9 +37,8 @@ in
 
     xdg.terminal-exec = {
       enable = true;
-      settings.default = if cfg.defaultTerminal
-        then mkBefore [ "kitty.desktop" ]
-        else [ "kitty.desktop" ];
+      settings.default =
+        if cfg.defaultTerminal then mkBefore [ "kitty.desktop" ] else [ "kitty.desktop" ];
     };
   };
 }
