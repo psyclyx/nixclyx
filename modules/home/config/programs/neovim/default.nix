@@ -17,7 +17,15 @@ in
   };
 
   config = mkIf cfg.enable {
-    home.packages = [ pkgs.psyclyx.nvim ];
-    home.sessionVariables.EDITOR = "nvim";
+    programs.neovim = {
+      enable = true;
+      defaultEditor = cfg.defaultEditor;
+
+      extraLuaConfig = builtins.readFile ./init.lua;
+
+      plugins = with pkgs.vimPlugins; [
+        nvim-treesitter.withAllGrammars
+      ];
+    };
   };
 }
