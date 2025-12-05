@@ -19,6 +19,7 @@ in
 
   config = mkIf cfg.enable {
     programs = {
+    fzf.enable = true;
       zsh = {
         enable = true;
 
@@ -32,6 +33,7 @@ in
 
         dotDir = "${config.xdg.configHome}/zsh";
 
+        enableCompletion = true;
         enableVteIntegration = true;
 
         history = {
@@ -40,16 +42,14 @@ in
 
         localVariables = {
           ZVM_INIT_MODE = "sourcing";
+          ZVM_SYSTEM_CLIPBOARD_ENABLED = true;
         };
 
+        
         plugins = [
           {
             name = "zsh-vi-mode";
             src = pkgs.zsh-vi-mode;
-          }
-          {
-            name = "fzf-tab";
-            src = pkgs.zsh-fzf-tab;
           }
           {
             name = "pure";
