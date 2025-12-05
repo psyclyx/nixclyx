@@ -9,18 +9,18 @@
     networking.hostName = "sigil";
 
     # Development and specialized environments
-    environment.systemPackages = 
-    let
-    inherit (pkgs.psyclyx) envs;
-    in
-    [ 
-      envs._3DPrinting
-      envs.forensics
-      envs.languages
-      envs.llm
-      envs.media
-      envs.shell
-    ];
+    environment.systemPackages =
+      let
+        inherit (pkgs.psyclyx) envs;
+      in
+      [
+        envs._3DPrinting
+        envs.forensics
+        envs.languages
+        envs.llm
+        envs.media
+        envs.shell
+      ];
 
     psyclyx = {
       hardware = {

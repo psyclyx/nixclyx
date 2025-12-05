@@ -25,8 +25,10 @@ in
         psyclyx = {
           programs = {
             alacritty.enable = lib.mkDefault true;
-	    ghostty = {enable = lib.mkDefault true;
-	    defaultTerminal = lib.mkDefault true;};
+            ghostty = {
+              enable = lib.mkDefault true;
+              defaultTerminal = lib.mkDefault true;
+            };
             sway.enable = lib.mkDefault true;
           };
           xdg.enable = lib.mkDefault true;

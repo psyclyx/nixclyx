@@ -17,7 +17,7 @@ in
   };
 
   config = mkIf cfg.enable {
-  home.packages = [pkgs.psyclyx.nvim];
-  home.sessionVariables.EDITOR = "nvim";
-};
+    home.packages = [ pkgs.psyclyx.nvim ];
+    home.sessionVariables.EDITOR = "nvim";
+  };
 }

@@ -19,7 +19,7 @@ in
 
   config = mkIf cfg.enable {
     programs = {
-    fzf.enable = true;
+      fzf.enable = true;
       zsh = {
         enable = true;
 
@@ -45,7 +45,6 @@ in
           ZVM_SYSTEM_CLIPBOARD_ENABLED = true;
         };
 
-        
         plugins = [
           {
             name = "zsh-vi-mode";
