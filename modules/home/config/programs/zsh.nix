@@ -76,6 +76,12 @@ in
           enable = true;
           highlighters = [ "brackets" ];
         };
+
+        initExtra = ''
+          # Allow backspace to delete anywhere in insert mode, not just where you entered it
+          bindkey -v '^?' backward-delete-char
+          bindkey -v '^H' backward-delete-char
+        '';
       };
     };
 
