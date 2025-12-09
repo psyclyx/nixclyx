@@ -24,6 +24,8 @@ local servers = {
   },
   clangd = {},
   ts_ls = {},
+  clojure_lsp = {},
+  zls = {},
 }
 
 for server, config in pairs(servers) do
@@ -34,6 +36,7 @@ end
 vim.api.nvim_create_autocmd('LspAttach', {
   callback = function(args)
     local bufnr = args.buf
+    local client = vim.lsp.get_client_by_id(args.data.client_id)
     local opts = { buffer = bufnr, silent = true }
 
     vim.keymap.set('n', '<leader>cd', vim.lsp.buf.definition, vim.tbl_extend('force', opts, { desc = 'Go to definition' }))
@@ -49,6 +52,15 @@ vim.api.nvim_create_autocmd('LspAttach', {
     vim.keymap.set('n', '<leader>ce', vim.diagnostic.open_float, vim.tbl_extend('force', opts, { desc = 'Show diagnostics' }))
     vim.keymap.set('n', '<leader>c[', vim.diagnostic.goto_prev, vim.tbl_extend('force', opts, { desc = 'Previous diagnostic' }))
     vim.keymap.set('n', '<leader>c]', vim.diagnostic.goto_next, vim.tbl_extend('force', opts, { desc = 'Next diagnostic' }))
+
+    if client and client.supports_method('textDocument/formatting') then
+      vim.api.nvim_create_autocmd('BufWritePre', {
+        buffer = bufnr,
+        callback = function()
+          vim.lsp.buf.format({ bufnr = bufnr })
+        end,
+      })
+    end
   end,
 })
 

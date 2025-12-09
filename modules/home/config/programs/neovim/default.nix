@@ -28,6 +28,8 @@ in
         rust-analyzer # Rust LSP
         clang-tools # C/C++ LSP (clangd)
         nodePackages.typescript-language-server # TypeScript/JS LSP
+        clojure-lsp # Clojure/ClojureScript LSP
+        zls # Zig LSP
       ];
 
       # Just load init.lua - it will require() everything else
@@ -36,6 +38,7 @@ in
       plugins = with pkgs.vimPlugins; [
         nvim-treesitter.withAllGrammars
         mini-nvim
+        conjure
       ];
     };
 

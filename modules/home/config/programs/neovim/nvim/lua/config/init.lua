@@ -1,4 +1,5 @@
 require('config.options')
 require('plugins.mini')
+require('plugins.conjure')
 require('config.lsp')
 require('config.keybindings')
