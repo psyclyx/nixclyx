@@ -1,6 +1,7 @@
 local servers = {
-  nil_ls = {},
+  nil_ls = { filetypes = { 'nix' } },
   lua_ls = {
+    filetypes = { 'lua' },
     settings = {
       Lua = {
         runtime = { version = 'LuaJIT' },
@@ -14,6 +15,7 @@ local servers = {
     },
   },
   rust_analyzer = {
+    filetypes = { 'rust' },
     settings = {
       ['rust-analyzer'] = {
         checkOnSave = {
@@ -22,16 +24,29 @@ local servers = {
       },
     },
   },
-  clangd = {},
-  ts_ls = {},
-  clojure_lsp = {},
-  zls = {},
+  clangd = { filetypes = { 'c', 'cpp', 'objc', 'objcpp' } },
+  ts_ls = { filetypes = { 'javascript', 'javascriptreact', 'javascript.jsx', 'typescript', 'typescriptreact', 'typescript.tsx' } },
+  clojure_lsp = { filetypes = { 'clojure', 'edn' } },
+  zls = { filetypes = { 'zig', 'zir' } },
 }
 
 for server, config in pairs(servers) do
   vim.lsp.config(server, config)
-  vim.lsp.enable(server)
 end
+
+vim.api.nvim_create_autocmd('FileType', {
+  callback = function(args)
+    local bufnr = args.buf
+    local ft = vim.bo[bufnr].filetype
+
+    for server, config in pairs(servers) do
+      if config.filetypes and vim.tbl_contains(config.filetypes, ft) then
+        vim.lsp.enable(server)
+        break
+      end
+    end
+  end,
+})
 
 vim.api.nvim_create_autocmd('LspAttach', {
   callback = function(args)
