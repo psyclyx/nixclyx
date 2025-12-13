@@ -1,7 +1,13 @@
 local servers = {
-  nil_ls = { filetypes = { 'nix' } },
+  nil_ls = {
+    cmd = { 'nil' },
+    filetypes = { 'nix' },
+    root_markers = { 'flake.nix', '.git' },
+  },
   lua_ls = {
+    cmd = { 'lua-language-server' },
     filetypes = { 'lua' },
+    root_markers = { '.luarc.json', '.luarc.jsonc', '.git' },
     settings = {
       Lua = {
         runtime = { version = 'LuaJIT' },
@@ -15,7 +21,9 @@ local servers = {
     },
   },
   rust_analyzer = {
+    cmd = { 'rust-analyzer' },
     filetypes = { 'rust' },
+    root_markers = { 'Cargo.toml', '.git' },
     settings = {
       ['rust-analyzer'] = {
         checkOnSave = {
@@ -24,10 +32,26 @@ local servers = {
       },
     },
   },
-  clangd = { filetypes = { 'c', 'cpp', 'objc', 'objcpp' } },
-  ts_ls = { filetypes = { 'javascript', 'javascriptreact', 'javascript.jsx', 'typescript', 'typescriptreact', 'typescript.tsx' } },
-  clojure_lsp = { filetypes = { 'clojure', 'edn' } },
-  zls = { filetypes = { 'zig', 'zir' } },
+  clangd = {
+    cmd = { 'clangd' },
+    filetypes = { 'c', 'cpp', 'objc', 'objcpp' },
+    root_markers = { 'compile_commands.json', '.git' },
+  },
+  ts_ls = {
+    cmd = { 'typescript-language-server', '--stdio' },
+    filetypes = { 'javascript', 'javascriptreact', 'javascript.jsx', 'typescript', 'typescriptreact', 'typescript.tsx' },
+    root_markers = { 'package.json', 'tsconfig.json', 'jsconfig.json', '.git' },
+  },
+  clojure_lsp = {
+    cmd = { 'clojure-lsp' },
+    filetypes = { 'clojure', 'edn' },
+    root_markers = { 'project.clj', 'deps.edn', 'build.boot', 'shadow-cljs.edn', '.git' },
+  },
+  zls = {
+    cmd = { 'zls' },
+    filetypes = { 'zig', 'zir' },
+    root_markers = { 'zls.json', 'build.zig', '.git' },
+  },
 }
 
 for server, config in pairs(servers) do
