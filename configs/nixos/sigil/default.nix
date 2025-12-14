@@ -55,6 +55,7 @@
       };
 
       system = {
+        containers.enable = true;
         emulation.enable = true;
       };
 
