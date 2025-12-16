@@ -55,7 +55,9 @@ in
 
         trusted-users = [ "@builders" ];
 
-        http-connections = 128;
+        http-connections = 0;
+
+        max-jobs = 4;
 
         connect-timeout = 5;
       };
