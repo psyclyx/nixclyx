@@ -22,7 +22,6 @@ in
       default = 8022;
       description = "SSH port to listen on in initrd";
     };
-
     psyclyx.boot.initrd-ssh = {
       enable = mkEnableOption "SSH access to initrd for remote disk unlocking";
 
@@ -45,7 +44,6 @@ in
     boot.initrd = {
       network = {
         enable = true;
-        udhcpc.enable = true;
         flushBeforeStage2 = true;
         ssh = {
           enable = true;
