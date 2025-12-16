@@ -8,7 +8,6 @@
   config = {
     networking.hostName = "sigil";
 
-    # Development and specialized environments
     environment.systemPackages =
       let
         inherit (pkgs.psyclyx) envs;
@@ -23,6 +22,8 @@
       ];
 
     psyclyx = {
+      filesystems.bcachefs.enable = true;
+
       hardware = {
         cpu = {
           amd.enable = true;
