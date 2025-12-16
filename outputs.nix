@@ -1,6 +1,6 @@
 inputs:
 let
-  inherit (inputs) nixpkgs self;
+  inherit (inputs) nixpkgs colmena self;
   inherit (nixpkgs) lib;
   nixclyx = self;
 
@@ -17,7 +17,11 @@ psyclib.mkFlakeOutputs {
   perSystemArgs =
     { system, ... }:
     {
-      inherit system nixclyx;
+      inherit
+        colmena
+        nixclyx
+        system
+        ;
       pkgs = import nixpkgs {
         inherit system;
         config = {
@@ -36,6 +40,14 @@ psyclib.mkFlakeOutputs {
 
   commonOutputs = {
     assets = import ./assets { inherit nixclyx; };
+    colmenaHive = import ./colmenaHive.nix {
+      inherit
+        colmena
+        nixclyx
+        nixpkgs
+        inputs
+        ;
+    };
     lib = psyclib;
     overlays = import ./overlays { inherit nixclyx; };
     passthrough = inputs;

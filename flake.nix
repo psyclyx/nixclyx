@@ -12,6 +12,9 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     disko.url = "github:nix-community/disko";
+
+    colmena.url = "github:zhaofengli/colmena";
+
     sops-nix.url = "github:Mic92/sops-nix";
     nix-homebrew.url = "github:zhaofengli-wip/nix-homebrew";
     stylix = {
