@@ -1,8 +1,13 @@
-{ pkgs, ... }:
+{
+  pkgs,
+  colmena,
+  system,
+  ...
+}:
 {
   default = pkgs.mkShell {
     packages = with pkgs; [
-      age
+      colmena.packages."${system}".colmena
       nixfmt-rfc-style
       nixd
       nix-tree
