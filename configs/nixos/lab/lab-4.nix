@@ -8,6 +8,8 @@ in
   config = {
     networking.hostName = "lab-4";
 
+    psyclyx.system.preservation.restore.bcachefs.device = bcachefsDevice;
+
     boot = {
       kernelParams = [ "ip=::::${config.networking.hostName}::dhcp" ];
       initrd = {
