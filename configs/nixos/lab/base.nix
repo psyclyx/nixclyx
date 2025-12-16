@@ -18,6 +18,8 @@ in
   config = {
     boot.kernelParams = [ "ip=::::${config.networking.hostName}::dhcp" ];
 
+    boot.initrd.systemd.enable = true;
+
     psyclyx = {
       hardware.presets.hpe.dl360-gen9.enable = true;
 
@@ -32,6 +34,15 @@ in
         base.enable = true;
         remote.enable = true;
         utility.enable = true;
+      };
+
+      system = {
+        preservation = {
+          enable = true;
+          restore.bcachefs = {
+            enable = true;
+          };
+        };
       };
 
       users.psyc = {
