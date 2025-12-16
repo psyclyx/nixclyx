@@ -1,4 +1,7 @@
 { inputs, config, ... }:
+let
+  bcachefsDevice = "/dev/disk/by-label/f0136e-bcachefs";
+in
 {
   imports = [ ./base.nix ];
 
@@ -17,35 +20,56 @@
 
     fileSystems =
       let
-        bcachefsSubvolume = subdir: neededForBoot: {
-          device = "/dev/disk/by-label/f0136e-bcachefs";
+        fs = {
+          device = bcachefsDevice;
           fsType = "bcachefs";
-          options = [ "X-mount.subdir=${subdir}" ];
-          inherit neededForBoot;
         };
+        subdir =
+          s: neededForBoot:
+          fs
+          // {
+            inherit neededForBoot;
+            options = [ "X-mount.subdir=${s}" ];
+          };
       in
       {
-        "/" = bcachefsSubvolume "root" false;
-        "/nix" = bcachefsSubvolume "nix" false;
-        "/persist" = bcachefsSubvolume "persist" true;
-        "/var/log" = bcachefsSubvolume "log" true;
-        "boot" = {
+        "/" = subdir "root" false;
+        "/fs" = fs;
+        "/nix" = subdir "nix" false;
+        "/persist" = subdir "persist" true;
+        "/var/log" = subdir "log" true;
+        "/boot" = {
           device = "/dev/disk/by-partlabel/f0136e-14b2c2-boot";
           fsType = "vfat";
-          options = [
-            "fmask=0077"
-            "dmask=0077"
-          ];
+          options = [ "umask=0077" ];
         };
       };
 
     swapDevices = [
-      { device = "/dev/disk/by-partlabel/f0136e-05ec41-swap"; }
-      { device = "/dev/disk/by-partlabel/f0136e-148d8e-swap"; }
-      { device = "/dev/disk/by-partlabel/f0136e-14b2c2-swap"; }
-      { device = "/dev/disk/by-partlabel/f0136e-277051-swap"; }
-      { device = "/dev/disk/by-partlabel/f0136e-36cdba-swap"; }
-      { device = "/dev/disk/by-partlabel/f0136e-5a29cc-swap"; }
+      {
+        device = "/dev/disk/by-partlabel/f0136e-05ec41-swap";
+        options = [ "discard" ];
+      }
+      {
+        device = "/dev/disk/by-partlabel/f0136e-148d8e-swap";
+        options = [ "discard" ];
+      }
+      {
+        device = "/dev/disk/by-partlabel/f0136e-14b2c2-swap";
+        options = [ "discard" ];
+      }
+      {
+        device = "/dev/disk/by-partlabel/f0136e-277051-swap";
+        options = [ "discard" ];
+      }
+      {
+        device = "/dev/disk/by-partlabel/f0136e-36cdba-swap";
+        options = [ "discard" ];
+      }
+      {
+        device = "/dev/disk/by-partlabel/f0136e-5a29cc-swap";
+        options = [ "discard" ];
+      }
     ];
   };
 
