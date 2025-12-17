@@ -1,15 +1,14 @@
 {
   config,
   lib,
-  inputs,
-  pkgs,
   ...
 }:
 let
   inherit (lib)
-    mkOption
+    mkDefault
     mkEnableOption
     mkIf
+    mkOption
     types
     ;
   cfg = config.psyclyx.boot.initrd-ssh;
@@ -42,15 +41,13 @@ in
     psyclyx.boot.initrd-ssh.authorizedKeys = config.users.users.root.openssh.authorizedKeys.keys;
 
     boot.initrd = {
-      network = {
+      systemd.network.enable = true;
+
+      network.ssh = {
         enable = true;
-        flushBeforeStage2 = true;
-        ssh = {
-          enable = true;
-          port = portCfg;
-          authorizedKeys = cfg.authorizedKeys;
-          hostKeys = cfg.hostKeyPaths;
-        };
+        port = portCfg;
+        authorizedKeys = cfg.authorizedKeys;
+        hostKeys = cfg.hostKeyPaths;
       };
     };
   };
