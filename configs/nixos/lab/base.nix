@@ -1,23 +1,12 @@
 {
   config,
   inputs,
-  lib,
   ...
 }:
-let
-  inherit (lib) mkOption types;
-
-  cfg = config.psyclyx.hosts.lab;
-in
 {
-  imports = [
-    inputs.self.nixosModules.config
-    ./disks.nix
-  ];
+  imports = [ inputs.self.nixosModules.config ];
 
   config = {
-    boot.kernelParams = [ "ip=::::${config.networking.hostName}::dhcp" ];
-
     boot.initrd.systemd.enable = true;
 
     psyclyx = {
