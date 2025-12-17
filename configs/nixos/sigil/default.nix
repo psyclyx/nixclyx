@@ -1,9 +1,6 @@
 { inputs, pkgs, ... }:
 {
-  imports = [
-    inputs.self.nixosModules.config
-    ./filesystems.nix
-  ];
+  imports = [ inputs.self.nixosModules.config ];
 
   config = {
     networking.hostName = "sigil";
@@ -20,6 +17,18 @@
         envs.media
         envs.shell
       ];
+
+    fileSystems = {
+      "/" = {
+        device = "LABEL=bcachefs";
+        fsType = "bcachefs";
+      };
+      "/boot" = {
+        device = "PARTLABEL=boot";
+        fsType = "vfat";
+        options = [ "umask=0077" ];
+      };
+    };
 
     psyclyx = {
       filesystems.bcachefs.enable = true;
