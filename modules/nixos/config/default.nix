@@ -4,14 +4,12 @@ let
     disko
     self
     stylix
-    preservation
     ;
 in
 {
   imports = [
     disko.nixosModules.disko
     stylix.nixosModules.stylix
-    preservation.nixosModules.preservation
     self.commonModules.config
     ./boot
     ./filesystems

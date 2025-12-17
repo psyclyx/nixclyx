@@ -27,8 +27,6 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    preservation.url = "github:nix-community/preservation";
-
     ghostty.url = "github:ghostty-org/ghostty";
 
     zsh-pure = {

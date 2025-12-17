@@ -36,15 +36,6 @@ in
         utility.enable = true;
       };
 
-      system = {
-        preservation = {
-          enable = true;
-          restore.bcachefs = {
-            enable = true;
-          };
-        };
-      };
-
       users.psyc = {
         enable = true;
         server = true;
