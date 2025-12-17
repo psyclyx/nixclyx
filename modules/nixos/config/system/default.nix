@@ -9,6 +9,7 @@
     ./nix-ld.nix
     ./nix.nix
     ./sudo.nix
+    ./swap.nix
     ./timezone.nix
   ];
 }
