@@ -3,6 +3,6 @@
   imports = [ ./base.nix ];
 
   config = {
-    networking.hostName = "lab-4";
+    networking.hostName = "lab-2";
   };
 }
