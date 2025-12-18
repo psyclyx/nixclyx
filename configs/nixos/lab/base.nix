@@ -20,7 +20,7 @@
             enable = true;
             networks."10-eno1" = {
               enable = true;
-              MatchConfig.Name = "eno1";
+              matchConfig.Name = "eno1";
               DHCP = "yes";
             };
           };
