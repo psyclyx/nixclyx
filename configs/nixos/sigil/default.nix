@@ -67,6 +67,7 @@
       system = {
         containers.enable = true;
         emulation.enable = true;
+        swap.enable = true;
       };
 
       users.psyc = {
