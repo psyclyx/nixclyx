@@ -1,5 +1,6 @@
 {
   inputs,
+  pkgs,
   ...
 }:
 {
@@ -7,7 +8,6 @@
 
   config = {
     boot = {
-
       initrd = {
         availableKernelModules = [
           "tg3"
@@ -27,6 +27,10 @@
         };
       };
     };
+
+    environment.systemPackages = [
+      pkgs.psyclyx.envs.forensics
+    ];
 
     fileSystems = {
       "/" = {
