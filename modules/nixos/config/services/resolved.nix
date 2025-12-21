@@ -10,6 +10,11 @@ in
   };
 
   config = lib.mkIf cfg.enable {
-    services.resolved.enable = true;
+    services.resolved = {
+      enable = true;
+      extraConfig = ''
+        MulticastDNS = off
+      '';
+    };
   };
 }
