@@ -14,11 +14,14 @@ in
     };
   };
   config = lib.mkIf cfg.enable {
+    boot.blacklistedKernelModules = [
+      "nova"
+      "nova_core"
+    ];
     hardware.nvidia = {
       modesetting.enable = true;
       open = true;
       package = config.boot.kernelPackages.nvidiaPackages.production;
-      powerManagement.enable = true;
     };
 
     services.xserver.videoDrivers = [ "nvidia" ];
