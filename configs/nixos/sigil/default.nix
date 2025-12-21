@@ -18,20 +18,14 @@
         envs.shell
       ];
 
-    fileSystems = {
-      "/" = {
-        device = "LABEL=bcachefs";
-        fsType = "bcachefs";
-      };
-      "/boot" = {
-        device = "PARTLABEL=boot";
-        fsType = "vfat";
-        options = [ "umask=0077" ];
-      };
-    };
-
     psyclyx = {
-      filesystems.bcachefs.enable = true;
+      filesystems.layouts.bcachefs-pool = {
+        enable = true;
+        UUID = {
+          root = "ccb2b4e2-b5b7-4d85-aca8-039ca1ccc985";
+          boot = "71AE-12DD";
+        };
+      };
 
       hardware = {
         cpu = {
