@@ -19,7 +19,10 @@ in
 
   config = mkIf cfg.enable {
     psyclyx = {
-      boot.systemd-boot.enable = lib.mkDefault true;
+      boot = {
+        systemd-boot.enable = lib.mkDefault true;
+        systemd-initrd.enable = lib.mkDefault true;
+      };
 
       programs = {
         zsh.enable = mkDefault true;
