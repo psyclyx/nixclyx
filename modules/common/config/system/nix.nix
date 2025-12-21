@@ -9,9 +9,13 @@ let
   inherit (lib) filterAttrs mapAttrs;
 
   cfg = config.psyclyx.system.nix;
+
   substituters = [
-    "https://psyclyx.cachix.org?priority=0"
     "https://nix-community.cachix.org?priority=1"
+  ];
+
+  trusted-substituters = [
+    "https://psyclyx.cachix.org?priority=10"
   ];
 
   trusted-public-keys = [
@@ -46,7 +50,7 @@ in
         mapAttrs (_: registrySet) flakeInputs;
 
       settings = {
-        inherit substituters trusted-public-keys;
+        inherit substituters trusted-substituters trusted-public-keys;
 
         experimental-features = [
           "nix-command"
