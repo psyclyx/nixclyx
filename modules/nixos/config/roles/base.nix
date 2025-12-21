@@ -24,6 +24,14 @@ in
         systemd-initrd.enable = lib.mkDefault true;
       };
 
+      hardware = {
+        tune = {
+          hdd.enable = lib.mkDefault true;
+          ssd.enable = lib.mkDefault true;
+          nvme.enable = lib.mkDefault true;
+        };
+      };
+
       programs = {
         zsh.enable = mkDefault true;
       };
