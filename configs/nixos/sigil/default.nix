@@ -35,7 +35,10 @@
         gpu.nvidia.enable = true;
       };
 
-      network.enable = true;
+      network = {
+        dns.client.enable = true;
+        enable = true;
+      };
 
       roles = {
         base.enable = true;
@@ -51,10 +54,8 @@
       };
 
       services = {
-        avahi.enable = true;
         home-assistant.enable = true;
         openrgb.enable = true;
-        resolved.enable = true;
         tailscale.exitNode = true;
       };
 
