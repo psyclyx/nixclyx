@@ -24,6 +24,10 @@ in
         systemd-initrd.enable = lib.mkDefault true;
       };
 
+      filesystems = {
+        bcachefs.enable = lib.mkDefault true;
+      };
+
       hardware = {
         tune = {
           hdd.enable = lib.mkDefault true;
