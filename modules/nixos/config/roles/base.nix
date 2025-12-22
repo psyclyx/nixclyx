@@ -44,6 +44,7 @@ in
         nix.enable = mkDefault true;
         nixpkgs.enable = mkDefault true;
         stylix.enable = mkDefault true;
+        swap.enable = mkDefault true;
         timezone.enable = mkDefault true;
       };
     };

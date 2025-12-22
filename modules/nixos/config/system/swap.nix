@@ -9,10 +9,11 @@ let
     getExe'
     mkDefault
     mkEnableOption
+    optionals
     mkForce
     mkIf
-    mkMerge
-    optionalAttrs
+    types
+    mkOption
     ;
 
   cfg = config.psyclyx.system.swap;
@@ -20,66 +21,25 @@ in
 {
   options = {
     psyclyx.system.swap = {
-      enable = mkEnableOption "swap configuration";
-
-      auto = mkEnableOption "swapon all partitions with label swap-ssd (with discard) and swap-hdd (no discard)";
-
-      zswap = mkEnableOption "zswap";
+      enable = mkEnableOption "swap config";
+      zswap = mkOption {
+        type = types.bool;
+        default = true;
+        description = "zswap (swap to zstd in-memory before disk)";
+      };
+      swappiness = mkOption {
+        type = types.ints.between 0 200;
+        default = 60;
+        description = "Lower values are suitable for database workloads, desktops, machines with olenty of ram, etc.";
+      };
     };
   };
 
   config = mkIf cfg.enable {
+    psyclyx.system.swap.zswap = mkDefault true;
     boot.kernelParams = mkIf cfg.zswap [ "zswap.enabled=1" ];
-
-    psyclyx.system.swap = {
-      auto = mkDefault true;
-      zswap = mkDefault true;
+    boot.kernel.sysctl = {
+      "vm.swappiness" = cfg.swappiness;
     };
-
-    systemd.services = mkIf cfg.auto (
-      let
-        blkid = getExe' pkgs.util-linux "blkid";
-        swapon = getExe' pkgs.util-linux "swapon";
-      in
-      {
-        swap-hdd = {
-          description = "Activate labeled HDD swap";
-          before = [ "swap.target" ];
-          wantedBy = [ "swap.target" ];
-          serviceConfig = {
-            Type = "oneshot";
-            RemainAfterExit = true;
-          };
-          script = ''
-            for device in $(${blkid} -t LABEL=swap-hdd -o device); do
-              if ! ${swapon} --show=NAME --noheadings | grep -q "^$device$"; then
-                echo "Enabling HDD swap on $device (priority 10)"
-                ${swapon} -p 10 "$device"
-              fi
-            done
-          '';
-        };
-
-        swap-ssd = {
-          description = "Activate labeled SSD swap";
-          before = [ "swap.target" ];
-          wantedBy = [ "swap.target" ];
-          serviceConfig = {
-            Type = "oneshot";
-            RemainAfterExit = true;
-          };
-          script = ''
-            for device in $(${blkid} -t LABEL=swap-ssd -o device); do
-              if ! ${swapon} --show=NAME --noheadings | grep -q "^$device$"; then
-                echo "Enabling SSD swap on $device (priority 100, discard)"
-                ${swapon} -d -p 100 "$device"
-              fi
-            done
-          '';
-        };
-      }
-    );
-
-    swapDevices = mkIf cfg.auto (mkForce [ ]);
   };
 }
