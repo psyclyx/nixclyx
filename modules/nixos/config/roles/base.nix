@@ -28,6 +28,8 @@ in
         bcachefs.enable = lib.mkDefault true;
       };
 
+      network.enable = true;
+
       hardware = {
         tune = {
           hdd.enable = lib.mkDefault true;

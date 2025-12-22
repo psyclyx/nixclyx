@@ -37,7 +37,6 @@
 
       network = {
         dns.client.enable = true;
-        enable = true;
       };
 
       roles = {
