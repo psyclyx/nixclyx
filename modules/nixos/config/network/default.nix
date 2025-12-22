@@ -9,6 +9,8 @@ let
   cfg = config.psyclyx.network;
 in
 {
+  imports = [ ./dns ];
+
   options = {
     psyclyx.network = {
       enable = mkEnableOption "common network settings";
