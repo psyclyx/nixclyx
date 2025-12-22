@@ -37,7 +37,7 @@ in
       };
 
       system = {
-        containers.enable = mkDefault false;
+        containers.enable = mkDefault true;
         documentation.enable = mkDefault true;
         home-manager.enable = mkDefault true;
         locale.enable = mkDefault true;

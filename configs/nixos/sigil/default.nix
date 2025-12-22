@@ -60,7 +60,6 @@
       };
 
       system = {
-        containers.enable = true;
         emulation.enable = true;
         swap.swappiness = 10;
       };
