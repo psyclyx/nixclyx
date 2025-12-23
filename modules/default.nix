@@ -1,5 +1,6 @@
+{ lib }:
 {
-  commonModules = import ./common;
+  commonModules = import ./common { inherit lib; };
 
   darwinModules.psyclyx = ./darwin;
 

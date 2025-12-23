@@ -1,4 +1,7 @@
 {
+  moduleGroup ? "common",
+}:
+{
   config,
   lib,
   pkgs,
@@ -24,11 +27,11 @@ let
       ${flavours} generate "$1" "$2" --stdout | ${yq} > "$3"
     '';
 
-  cfg = config.psyclyx.system.stylix;
+  cfg = config.psyclyx.${moduleGroup}.system.stylix;
 in
 {
   options = {
-    psyclyx.system.stylix = {
+    psyclyx.${moduleGroup}.system.stylix = {
       enable = mkEnableOption "stylix configuration";
 
       flavours = mkOption {

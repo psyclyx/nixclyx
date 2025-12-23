@@ -4,21 +4,16 @@
   ...
 }:
 {
-  imports = [ inputs.self.nixosModules.config ];
+  imports = [
+    inputs.self.nixosModules.psyclyx
+  ];
 
   config = {
     boot = {
       initrd = {
-        availableKernelModules = [
-          "tg3"
-          "mlx4_core"
-        ];
-
         systemd = {
-          enable = true;
           network = {
-            enable = true;
-            networks."10-eno1" = {
+            networks."10-ethernet-dhcp" = {
               enable = true;
               matchConfig.Name = "et* en*";
               DHCP = "yes";
@@ -32,38 +27,21 @@
       pkgs.psyclyx.envs.forensics
     ];
 
-    fileSystems = {
-      "/" = {
-        device = "LABEL=bcachefs";
-        fsType = "bcachefs";
-      };
-      "/boot" = {
-        # all disks have space for /boot, only one ever actually has it
-        device = "PARTLABEL=boot";
-        fsType = "vfat";
-        options = [ "umask=0077" ];
-      };
-    };
-
     psyclyx = {
-      hardware.presets.hpe.dl360-gen9.enable = true;
+      filesystems.layouts.bcachefs-pool.enable = true;
 
-      boot = {
-        systemd-boot.enable = true;
-        initrd-ssh.enable = true;
+      nixos = {
+        boot = {
+          initrd-ssh.enable = true;
+        };
       };
 
-      filesystems.bcachefs.enable = true;
+      hardware.presets.hpe.dl360-gen9.enable = true;
 
       roles = {
         base.enable = true;
         remote.enable = true;
         utility.enable = true;
-      };
-
-      system = {
-        containers.enable = true;
-        swap.enable = true;
       };
 
       users.psyc = {
