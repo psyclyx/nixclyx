@@ -1,4 +1,7 @@
 {
+  moduleGroup ? "common",
+}:
+{
   config,
   inputs,
   lib,
@@ -8,7 +11,7 @@
 let
   inherit (lib) filterAttrs mapAttrs;
 
-  cfg = config.psyclyx.system.nix;
+  cfg = config.psyclyx.${moduleGroup}.system.nix;
 
   substituters = [
     "https://nix-community.cachix.org?priority=1"
@@ -25,7 +28,7 @@ let
 in
 {
   options = {
-    psyclyx.system.nix = {
+    psyclyx.${moduleGroup}.system.nix = {
       enable = lib.mkEnableOption "Nix config";
     };
   };
@@ -51,19 +54,15 @@ in
 
       settings = {
         inherit substituters trusted-substituters trusted-public-keys;
-
+        connect-timeout = 5;
         experimental-features = [
           "nix-command"
           "flakes"
         ];
 
-        trusted-users = [ "@builders" ];
-
         http-connections = 0;
-
         max-jobs = 4;
-
-        connect-timeout = 5;
+        trusted-users = [ "@builders" ];
       };
 
       gc = {

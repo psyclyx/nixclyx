@@ -53,5 +53,5 @@ psyclib.mkFlakeOutputs {
     passthrough = inputs;
   }
   // (import ./configs { inherit inputs; })
-  // (import ./modules);
+  // (import ./modules { inherit lib; });
 }

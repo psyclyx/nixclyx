@@ -1,15 +1,18 @@
 {
+  moduleGroup ? "common",
+}:
+{
   config,
   lib,
   inputs,
   ...
 }:
 let
-  cfg = config.psyclyx.system.nixpkgs;
+  cfg = config.psyclyx.${moduleGroup}.system.nixpkgs;
 in
 {
   options = {
-    psyclyx.system.nixpkgs.enable = lib.mkEnableOption "nixpkgs config (unfree, etc)";
+    psyclyx.${moduleGroup}.system.nixpkgs.enable = lib.mkEnableOption "nixpkgs config (unfree, etc)";
   };
 
   config = lib.mkMerge [

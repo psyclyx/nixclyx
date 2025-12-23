@@ -4,7 +4,7 @@
   ...
 }:
 let
-  cfg = config.psyclyx.system.nix;
+  cfg = config.psyclyx.darwin.system.nix;
 in
 {
   config = lib.mkIf cfg.enable {

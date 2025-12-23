@@ -1,6 +1,6 @@
 { inputs, pkgs, ... }:
 {
-  imports = [ inputs.self.nixosModules.config ];
+  imports = [ inputs.self.nixosModules.psyclyx ];
 
   config = {
     networking.hostName = "sigil";
@@ -19,6 +19,24 @@
       ];
 
     psyclyx = {
+      nixos = {
+        programs = {
+          adb.enable = true;
+          glasgow.enable = true;
+          steam.enable = true;
+        };
+
+        services = {
+          openrgb.enable = true;
+          tailscale.exitNode = true;
+        };
+
+        system = {
+          emulation.enable = true;
+          swap.swappiness = 10;
+        };
+      };
+
       filesystems.layouts.bcachefs-pool = {
         enable = true;
         UUID = {
@@ -44,22 +62,6 @@
         graphical.enable = true;
         remote.enable = true;
         utility.enable = true;
-      };
-
-      programs = {
-        adb.enable = true;
-        glasgow.enable = true;
-        steam.enable = true;
-      };
-
-      services = {
-        openrgb.enable = true;
-        tailscale.exitNode = true;
-      };
-
-      system = {
-        emulation.enable = true;
-        swap.swappiness = 10;
       };
 
       users.psyc = {

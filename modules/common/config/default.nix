@@ -1,4 +1,5 @@
-{ ... }:
+args:
+{ lib, ... }:
 {
-  imports = [ ./system ];
+  imports = [ (lib.modules.importApply ./system args) ];
 }
