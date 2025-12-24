@@ -5,7 +5,7 @@
   ...
 }:
 let
-  inherit (lib) mkIf mkEnableOption;
+  inherit (lib) mkIf mkEnableOption optionals;
   configHome = config.xdg.configHome;
   home = config.home.homeDirectory;
   isDarwin = pkgs.stdenv.hostPlatform.isDarwin;
@@ -19,7 +19,11 @@ in
   };
 
   config = mkIf cfg.enable {
-    home.packages = [ pkgs.bitwarden-cli ];
+    home.packages = [
+      pkgs.bitwarden-cli
+      pkgs.rbw
+    ]
+    ++ optionals config.psyclyx.home.programs.fuzzel.enable [ pkgs.rofi-rbw ];
 
     sops = {
       age.keyFile =
@@ -29,6 +33,7 @@ in
           "${configHome}/sops/age/keys.txt";
 
       defaultSopsFile = ./secrets.json;
+
       secrets = {
         "ssh/id_psyclyx".path = "${configHome}/.ssh/id_psyclyx";
         "ssh/id_alice157".path = "${configHome}/.ssh/id_alice157";
