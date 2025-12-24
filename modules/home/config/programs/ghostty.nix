@@ -23,6 +23,9 @@ in
     programs.ghostty = {
       enable = true;
       package = ghostty;
+      settings = {
+        shell-integration-features = "ssh-terminfo,ssh-env";
+      };
     };
 
     home.sessionVariables = lib.mkIf cfg.defaultTerminal {
