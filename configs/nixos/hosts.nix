@@ -5,6 +5,8 @@
 
   tleilax.modules = [ ./tleilax ];
 
+  vigil.modules = [ ./vigil ];
+
   lab-installer.modules = [ ./lab/installer.nix ];
 
   lab-1.modules = [ ./lab/lab-1.nix ];
