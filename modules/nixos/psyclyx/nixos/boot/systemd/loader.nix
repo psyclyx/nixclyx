@@ -5,11 +5,11 @@
 }:
 let
   inherit (lib) mkEnableOption mkIf;
-  cfg = config.psyclyx.nixos.boot.systemd-boot;
+  cfg = config.psyclyx.nixos.boot.systemd.loader;
 in
 {
   options = {
-    psyclyx.nixos.boot.systemd-boot = {
+    psyclyx.nixos.boot.systemd.loader = {
       enable = mkEnableOption "systemd-boot";
     };
   };
