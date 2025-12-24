@@ -37,25 +37,27 @@ in
 
     home-manager.users.psyc = {
       imports = [
-        inputs.self.homeManagerModules.config
+        inputs.self.homeManagerModules.psyclyx
         cfg.hmImport
       ];
 
       config = {
         psyclyx = {
-          user = {
-            name = "psyclyx";
-            email = "me@psyclyx.xyz";
-          };
+          home = {
+            info = {
+              name = "psyclyx";
+              email = "me@psyclyx.xyz";
+            };
 
-          xdg.enable = true;
+            roles = {
+              shell.enable = true;
+              dev.enable = lib.mkIf (!cfg.server) true;
+              graphical.enable = lib.mkIf (!cfg.server) true;
+            };
 
-          roles = {
-            shell.enable = true;
-            dev.enable = lib.mkIf (!cfg.server) true;
-            graphical.enable = lib.mkIf (!cfg.server) true;
+            secrets.enable = lib.mkIf (!cfg.server) true;
+            xdg.enable = true;
           };
-          secrets.enable = lib.mkIf (!cfg.server) true;
         };
       };
     };

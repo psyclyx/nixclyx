@@ -1,0 +1,122 @@
+{ config, lib, ... }:
+let
+  inherit (lib) mkAfter mkEnableOption mkIf;
+  cfg = config.psyclyx.home.programs.waybar;
+  opacity = builtins.toString config.stylix.opacity.desktop;
+in
+{
+  options = {
+    psyclyx.home.programs.waybar = {
+      enable = mkEnableOption "Waybar status bar";
+    };
+  };
+
+  config = mkIf cfg.enable {
+    stylix.targets.waybar.addCss = false;
+    programs.waybar = {
+      enable = true;
+      style =
+        # css
+        mkAfter ''
+          * {
+              border: none;
+              border-radius: 0;
+          }
+
+          window#waybar {
+              background: alpha(@base01, ${opacity});
+              color: @base04;
+              padding: 0;
+              margin: 0;
+          }
+
+          tooltip {
+              background-color: alpha(@base01, ${opacity});
+          }
+
+          tooltip label {
+              color: @base05;
+          }
+
+          #workspaces button {
+              color: @base04;
+              background: transparent;
+          }
+
+          #workspaces button.focused {
+              background: @base00;
+              color: @base05;
+          }
+
+          #workspaces button.urgent {
+              background: @base02;
+              color: @base05;
+          }
+
+          #clock,
+          #network,
+          #backlight,
+          #pulseaudio,
+          #memory,
+          #cpu,
+          #battery {
+              color: @base05;
+              padding: 0 8px;
+          }
+        '';
+      settings = {
+        mainBar = {
+          position = "top";
+          spacing = 16;
+
+          modules-left = [
+            "sway/workspaces"
+            "sway/mode"
+          ];
+          modules-center = [
+            "clock"
+          ];
+          modules-right = [
+            "network"
+            "backlight"
+            "pulseaudio"
+            "memory"
+            "cpu"
+            "battery"
+          ];
+
+          "pulseaudio" = {
+            format = "VOL: {volume}%";
+            format-muted = "VOL: MUTE";
+          };
+          "network" = {
+            format-wifi = "WIFI: {ifname} {ipaddr}/{cidr} {signalStrength}%";
+            format-ethernet = "ETH: {ifname} {ipaddr}/{cidr}";
+            format-linked = "NET: {ifname} (No IP)";
+            format-disconnected = "NET: NONE";
+            interval = 10;
+          };
+          "backlight" = {
+            format = "BLT: {percent}%";
+          };
+          "clock" = {
+            interval = 5;
+            format = "{:%I:%M %m/%d/%y}";
+          };
+          "cpu" = {
+            interval = 5;
+            format = "CPU: {}%";
+          };
+          "memory" = {
+            interval = 5;
+            format = "MEM: {}%";
+          };
+          "battery" = {
+            interval = 5;
+            format = "BAT: {capacity}%";
+          };
+        };
+      };
+    };
+  };
+}
