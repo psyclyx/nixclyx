@@ -1,11 +1,8 @@
 let
-  submodules = import ./psyclyx;
-  psyclyx = {
-    imports = builtins.attrValues submodules;
-  };
+  psyclyxModules = import ./psyclyx;
 in
-submodules
-// {
-  inherit psyclyx;
-  default = psyclyx;
+{
+  "psyclyx/config" = psyclyxModules.config;
+  "psyclyx/nixos" = psyclyxModules.nixos;
+  psyclyx = psyclyxModules.default;
 }
