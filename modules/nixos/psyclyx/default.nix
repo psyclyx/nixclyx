@@ -1,4 +1,13 @@
+let
+  nixos = ./nixos;
+  config = ./config;
+  default = {
+    imports = [
+      nixos
+      config
+    ];
+  };
+in
 {
-  "psyclyx/config" = ./config;
-  "psyclyx/nixos" = ./nixos;
+  inherit config default nixos;
 }
