@@ -16,6 +16,7 @@ in
   };
 
   config = lib.mkIf cfg.enable {
+    environment.pathsToLink = [ "/share/zsh" ];
     programs.zsh = {
       enable = true;
       enableGlobalCompInit = false;
