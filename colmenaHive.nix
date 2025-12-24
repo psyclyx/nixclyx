@@ -14,6 +14,17 @@ colmena.lib.makeHive {
     specialArgs = { inherit inputs; };
   };
 
+  vigil =
+    { ... }:
+    {
+      imports = [ ./configs/nixos/vigil ];
+      deployment = {
+        targetHost = "vigil.home.psyclyx.net";
+        targetPort = 22;
+        targetUser = "root";
+      };
+    };
+
   lab-1 =
     { ... }:
     {
