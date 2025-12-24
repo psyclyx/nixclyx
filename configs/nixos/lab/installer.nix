@@ -10,7 +10,7 @@
 
     psyclyx = {
       nixos = {
-        boot.systemd-boot.enable = false;
+        boot.systemd.loader.enable = false;
       };
 
       hardware.presets.hpe.dl360-gen9.enable = true;

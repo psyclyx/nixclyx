@@ -1,7 +1,6 @@
 {
   config,
   lib,
-  pkgs,
   ...
 }:
 let
@@ -21,9 +20,9 @@ in
     psyclyx = {
       hardware = {
         tune = {
-          hdd.enable = lib.mkDefault true;
-          ssd.enable = lib.mkDefault true;
-          nvme.enable = lib.mkDefault true;
+          hdd.enable = mkDefault true;
+          ssd.enable = mkDefault true;
+          nvme.enable = mkDefault true;
         };
       };
 
@@ -31,12 +30,15 @@ in
 
       nixos = {
         boot = {
-          systemd-boot.enable = lib.mkDefault true;
-          systemd-initrd.enable = lib.mkDefault true;
+          systemd = {
+            initrd.enable = mkDefault true;
+            keyring.enable = mkDefault true;
+            loader.enable = mkDefault true;
+          };
         };
 
         filesystems = {
-          bcachefs.enable = lib.mkDefault true;
+          bcachefs.enable = mkDefault true;
         };
 
         programs = {

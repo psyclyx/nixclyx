@@ -1,6 +1,5 @@
 {
   imports = [
-    ./boot
     ./filesystems
     ./hardware
     ./network
