@@ -67,6 +67,7 @@
 
     stylix = {
       image = inputs.self.assets.wallpapers."2x-ppmm-madoka-homura.png";
+      polarity = "dark";
     };
   };
 }
