@@ -8,6 +8,7 @@
     ./locale.nix
     ./nix-ld.nix
     ./nix.nix
+    ./storage.nix
     ./sudo.nix
     ./swap.nix
     ./timezone.nix
