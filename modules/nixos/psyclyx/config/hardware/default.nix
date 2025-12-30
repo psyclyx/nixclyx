@@ -7,6 +7,5 @@
     ./presets
     ./rtl8125.nix
     ./storage
-    ./tune
   ];
 }

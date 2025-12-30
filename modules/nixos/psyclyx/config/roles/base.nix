@@ -18,14 +18,6 @@ in
 
   config = mkIf cfg.enable {
     psyclyx = {
-      hardware = {
-        tune = {
-          hdd.enable = mkDefault true;
-          ssd.enable = mkDefault true;
-          nvme.enable = mkDefault true;
-        };
-      };
-
       network.enable = true;
 
       nixos = {
@@ -52,6 +44,7 @@ in
           locale.enable = mkDefault true;
           nix.enable = mkDefault true;
           nixpkgs.enable = mkDefault true;
+          storage.enable = mkDefault true;
           stylix.enable = mkDefault true;
           swap.enable = mkDefault true;
           timezone.enable = mkDefault true;
