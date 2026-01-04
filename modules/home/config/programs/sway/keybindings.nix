@@ -25,17 +25,18 @@ let
 
   # Keys
   leaderKey = "Super";
+  moveKey = "Shift";
+  fineKey = "Ctrl";
+  coarseKey = "Super";
+  resizeModeKey = "r";
+  exitModeKey = "Escape";
   directionKeys = {
     left = "h";
     down = "j";
     up = "k";
     right = "l";
   };
-  moveKey = "Shift";
-  fineKey = "Ctrl";
-  coarseKey = "Super";
-  resizeModeKey = "r";
-  exitModeKey = "Escape";
+
   workspaceKeys = lib.listToAttrs (
     lib.imap1 (i: key: {
       name = "workspace number ${builtins.toString i}";
