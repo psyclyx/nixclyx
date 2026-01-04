@@ -17,7 +17,7 @@ in
         "i915.enable_fbc=1"
         "i915.enable_psr=0"
       ];
-      initrd.availableKernelModules = [ "i915" ];
+      initrd.kernelModules = [ "i915" ];
     };
   };
 }
