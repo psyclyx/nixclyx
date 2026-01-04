@@ -17,8 +17,8 @@ let
   browser = "firefox";
   terminal = "xdg-terminal-exec";
 
-  backlightUp = "light -U 10";
-  backlightDown = "light -D 10";
+  backlightUp = "light -A 10";
+  backlightDown = "light -U 10";
   volumeUp = "pactl set-sink-volume '@DEFAULT_SINK@' '+5%'";
   volumeDown = "pactl set-sink-volume '@DEFAULT_SINK@' '-5%'";
   volumeMute = "pactl set-sink-mute '@DEFAULT_SINK@' toggle";
