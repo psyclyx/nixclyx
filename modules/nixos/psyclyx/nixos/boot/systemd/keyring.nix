@@ -4,20 +4,9 @@
   pkgs,
   ...
 }:
-
 let
-  inherit (lib)
-    attrNames
-    filter
-    hasPrefix
-    mkEnableOption
-    mkIf
-    mkOption
-    types
-    ;
-
-  unlockServices = filter (hasPrefix "unlock-bcachefs-") (
-    attrNames config.boot.initrd.systemd.services
+  unlockServices = lib.filter (lib.hasPrefix "unlock-bcachefs-") (
+    lib.attrNames config.boot.initrd.systemd.services
   );
 
   cfg = config.psyclyx.nixos.boot.systemd.keyring;
@@ -25,15 +14,15 @@ in
 {
   options = {
     psyclyx.nixos.boot.systemd.keyring = {
-      enable = mkEnableOption "link session keyring in init, share with relevant services";
+      enable = lib.mkEnableOption "link session keyring in init, share with relevant services";
     };
 
-    boot.initrd.systemd.services = mkOption {
-      type = types.attrsOf (
-        types.submodule (
+    boot.initrd.systemd.services = lib.mkOption {
+      type = lib.types.attrsOf (
+        lib.types.submodule (
           { name, ... }:
           {
-            config = mkIf (hasPrefix "unlock-bcachefs-" name) {
+            config = lib.mkIf (lib.hasPrefix "unlock-bcachefs-" name) {
               serviceConfig.KeyringMode = "shared";
             };
           }
@@ -42,7 +31,7 @@ in
     };
   };
 
-  config = mkIf cfg.enable {
+  config = lib.mkIf cfg.enable {
     boot.initrd.systemd = {
       initrdBin = [ pkgs.keyutils ];
       services = {

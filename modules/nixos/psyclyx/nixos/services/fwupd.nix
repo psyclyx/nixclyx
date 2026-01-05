@@ -1,16 +1,15 @@
 { config, lib, ... }:
 let
-  inherit (lib) mkEnableOption mkIf;
   cfg = config.psyclyx.nixos.services.fwupd;
 in
 {
   options = {
     psyclyx.nixos.services.fwupd = {
-      enable = mkEnableOption "fwupd";
+      enable = lib.mkEnableOption "fwupd";
     };
   };
 
-  config = mkIf cfg.enable {
+  config = lib.mkIf cfg.enable {
     services.fwupd.enable = true;
   };
 }

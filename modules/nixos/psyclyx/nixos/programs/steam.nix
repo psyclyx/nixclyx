@@ -5,17 +5,16 @@
   ...
 }:
 let
-  inherit (lib) mkEnableOption mkIf;
   cfg = config.psyclyx.nixos.programs.steam;
 in
 {
   options = {
     psyclyx.nixos.programs.steam = {
-      enable = mkEnableOption "Enable steam.";
+      enable = lib.mkEnableOption "Enable steam.";
     };
   };
 
-  config = mkIf cfg.enable {
+  config = lib.mkIf cfg.enable {
     programs.gamescope.enable = true;
     programs.steam = {
       gamescopeSession.enable = true;

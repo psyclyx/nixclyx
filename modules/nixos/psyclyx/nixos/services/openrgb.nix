@@ -5,17 +5,16 @@
   ...
 }:
 let
-  inherit (lib) mkEnableOption mkIf;
   cfg = config.psyclyx.nixos.services.openrgb;
 in
 {
   options = {
     psyclyx.nixos.services.openrgb = {
-      enable = mkEnableOption "OpenRGB";
+      enable = lib.mkEnableOption "OpenRGB";
     };
   };
 
-  config = mkIf cfg.enable {
+  config = lib.mkIf cfg.enable {
     environment.systemPackages = [
       pkgs.i2c-tools
       pkgs.openrgb-with-all-plugins

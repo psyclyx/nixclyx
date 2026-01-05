@@ -1,11 +1,5 @@
 { config, lib, ... }:
 let
-  inherit (lib)
-    mkEnableOption
-    mkIf
-    mkOption
-    types
-    ;
   cfg = config.psyclyx.nixos.services.home-assistant;
   port = config.psyclyx.network.ports.home-assistant;
 in
@@ -14,20 +8,20 @@ in
     psyclyx = {
       network = {
         ports = {
-          home-assistant = mkOption {
-            type = types.port;
+          home-assistant = lib.mkOption {
+            type = lib.types.port;
             default = 8123;
           };
         };
       };
 
       nixos.services.home-assistant = {
-        enable = mkEnableOption "Enables Home Assistant, with @psyclyx's config";
+        enable = lib.mkEnableOption "Enables Home Assistant, with @psyclyx's config";
       };
     };
   };
 
-  config = mkIf cfg.enable {
+  config = lib.mkIf cfg.enable {
     networking.firewall.allowedTCPPorts = [ port ];
     services = {
       home-assistant = {

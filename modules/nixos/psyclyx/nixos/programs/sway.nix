@@ -5,17 +5,16 @@
   ...
 }:
 let
-  inherit (lib) mkEnableOption mkIf;
   cfg = config.psyclyx.nixos.programs.sway;
 in
 {
   options = {
     psyclyx.nixos.programs.sway = {
-      enable = mkEnableOption "swayfx wm";
+      enable = lib.mkEnableOption "swayfx wm";
     };
   };
 
-  config = mkIf cfg.enable {
+  config = lib.mkIf cfg.enable {
     # dbus service is started by nixpkgs module
     environment.systemPackages = [
       pkgs.dbus
@@ -39,33 +38,25 @@ in
     };
 
     programs = {
-      light = {
-        enable = true;
-      };
+      light.enable = true;
 
       sway = {
         enable = true;
-
         package = pkgs.swayfx;
-
-        wrapperFeatures = {
-          gtk = true;
-        };
-
+        extraOptions = [ "--unsupported-gpu" ];
+        wrapperFeatures.gtk = true;
         extraPackages = [
           pkgs.wev
           pkgs.wl-clipboard
           pkgs.wtype
         ];
 
-        extraOptions = [ "--unsupported-gpu" ];
-
         extraSessionCommands = ''
           export SDL_VIDEODRIVER=wayland
           export QT_QPA_PLATFORM=wayland-egl
           export QT_WAYLAND_DISABLE_WINDOWDECORATION=1
           export _JAVA_AWT_WM_NONREPARENTING=1
-          NIXOS_OZONE_WL=1
+          export NIXOS_OZONE_WL=1
         '';
       };
     };

@@ -5,23 +5,17 @@
   ...
 }:
 let
-  inherit (lib)
-    mkEnableOption
-    mkIf
-    mkBefore
-    getExe
-    ;
   cfg = config.psyclyx.programs.alacritty;
 in
 {
   options = {
     psyclyx.programs.alacritty = {
-      enable = mkEnableOption "Alacritty terminal emulator";
-      defaultTerminal = mkEnableOption "setting as default terminal via TERMINAL environment variable";
+      enable = lib.mkEnableOption "Alacritty terminal emulator";
+      defaultTerminal = lib.mkEnableOption "setting as default terminal via TERMINAL environment variable";
     };
   };
 
-  config = mkIf cfg.enable {
+  config = lib.mkIf cfg.enable {
 
     programs.alacritty = {
       enable = true;
@@ -33,14 +27,14 @@ in
       };
     };
 
-    home.sessionVariables = mkIf cfg.defaultTerminal {
-      TERMINAL = getExe config.programs.alacritty.package;
+    home.sessionVariables = lib.mkIf cfg.defaultTerminal {
+      TERMINAL = lib.getExe config.programs.alacritty.package;
     };
 
     xdg.terminal-exec = {
       enable = true;
       settings.default =
-        if cfg.defaultTerminal then mkBefore [ "Alacritty.desktop" ] else [ "Alacritty.desktop" ];
+        if cfg.defaultTerminal then lib.mkBefore [ "Alacritty.desktop" ] else [ "Alacritty.desktop" ];
     };
   };
 }

@@ -1,16 +1,15 @@
 { config, lib, ... }:
 let
-  inherit (lib) mkEnableOption mkIf;
   cfg = config.psyclyx.nixos.system.documentation;
 in
 {
   options = {
     psyclyx.nixos.system.documentation = {
-      enable = mkEnableOption "documentation generation";
+      enable = lib.mkEnableOption "documentation generation";
     };
   };
 
-  config = mkIf cfg.enable {
+  config = lib.mkIf cfg.enable {
     documentation = {
       enable = true;
       dev.enable = true;

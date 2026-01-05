@@ -5,7 +5,6 @@
   ...
 }:
 let
-  inherit (lib) mkEnableOption mkIf;
   cfg = config.psyclyx.nixos.system.home-manager;
 in
 {
@@ -15,11 +14,11 @@ in
 
   options = {
     psyclyx.nixos.system.home-manager = {
-      enable = mkEnableOption "home-manager config";
+      enable = lib.mkEnableOption "home-manager config";
     };
   };
 
-  config = mkIf cfg.enable {
+  config = lib.mkIf cfg.enable {
     home-manager = {
       useGlobalPkgs = true;
       useUserPackages = true;

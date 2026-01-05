@@ -6,18 +6,16 @@
   ...
 }:
 let
-  inherit (lib) mkDefault mkEnableOption mkIf;
-
   cfg = config.psyclyx.programs.zsh;
 in
 {
   options = {
     psyclyx.programs.zsh = {
-      enable = mkEnableOption "Zsh shell with prezto";
+      enable = lib.mkEnableOption "Zsh shell with prezto";
     };
   };
 
-  config = mkIf cfg.enable {
+  config = lib.mkIf cfg.enable {
     programs = {
       fzf.enable = true;
       zsh = {
@@ -85,6 +83,6 @@ in
       };
     };
 
-    psyclyx.programs.shell.enable = mkDefault true;
+    psyclyx.programs.shell.enable = lib.mkDefault true;
   };
 }

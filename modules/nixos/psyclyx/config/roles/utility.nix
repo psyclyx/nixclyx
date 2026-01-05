@@ -5,18 +5,16 @@
   ...
 }:
 let
-  inherit (lib) mkDefault mkEnableOption mkIf;
-
   cfg = config.psyclyx.roles.utility;
 in
 {
   options = {
     psyclyx.roles.utility = {
-      enable = mkEnableOption "role with various system utilities";
+      enable = lib.mkEnableOption "role with various system utilities";
     };
   };
 
-  config = mkIf cfg.enable {
+  config = lib.mkIf cfg.enable {
     environment.systemPackages = with pkgs; [
       binutils
       dig
@@ -39,16 +37,16 @@ in
     psyclyx = {
       nixos = {
         programs = {
-          aspell.enable = mkDefault true;
+          aspell.enable = lib.mkDefault true;
         };
 
         services = {
-          fwupd.enable = mkDefault true;
-          locate.enable = mkDefault true;
+          fwupd.enable = lib.mkDefault true;
+          locate.enable = lib.mkDefault true;
         };
 
         system = {
-          sudo.enable = mkDefault true;
+          sudo.enable = lib.mkDefault true;
         };
       };
     };

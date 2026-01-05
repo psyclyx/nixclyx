@@ -6,16 +6,14 @@
   ...
 }:
 let
-  inherit (lib) mkEnableOption mkOption;
-
   cfg = config.psyclyx.users.psyc;
 in
 {
   options = {
     psyclyx.users.psyc = {
-      enable = mkEnableOption "psyc user";
-      server = mkEnableOption "roles for server";
-      hmImport = mkOption {
+      enable = lib.mkEnableOption "psyc user";
+      server = lib.mkEnableOption "roles for server";
+      hmImport = lib.mkOption {
         default = { };
       };
     };
@@ -24,15 +22,16 @@ in
   config = lib.mkIf cfg.enable {
     users.users = {
       psyc = {
-        name = "psyc";
-        shell = pkgs.zsh;
-        isNormalUser = true;
         extraGroups = [
           "wheel"
           "video"
         ];
+
+        isNormalUser = true;
         openssh.authorizedKeys.keys = inputs.self.common.keys.psyc.openssh;
+        shell = pkgs.zsh;
       };
+
       root.openssh.authorizedKeys.keys = inputs.self.common.keys.psyc.openssh;
     };
 

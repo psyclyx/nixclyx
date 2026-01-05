@@ -5,27 +5,20 @@
   ...
 }:
 let
-  inherit (lib)
-    mkEnableOption
-    mkIf
-    mkOption
-    types
-    ;
-
   cfg = config.psyclyx.nixos.programs.glasgow;
 in
 {
   options = {
     psyclyx.nixos.programs.glasgow = {
-      enable = mkEnableOption "Glasgow digital interface explorer";
-      users = mkOption {
-        type = types.listOf types.str;
+      enable = lib.mkEnableOption "Glasgow digital interface explorer";
+      users = lib.mkOption {
+        type = lib.types.listOf lib.types.str;
         description = "Users to put in the plugdev group";
       };
     };
   };
 
-  config = mkIf cfg.enable {
+  config = lib.mkIf cfg.enable {
     psyclyx.nixos.programs.glasgow.users = config.users.groups.wheel.members;
     users.groups.plugdev.members = cfg.users;
     services.udev.packages = [ pkgs.glasgow ];

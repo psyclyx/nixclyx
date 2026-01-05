@@ -1,17 +1,15 @@
 { config, lib, ... }:
 let
-  inherit (lib) mkEnableOption mkIf;
-
   cfg = config.psyclyx.programs.direnv;
 in
 {
   options = {
     psyclyx.programs.direnv = {
-      enable = mkEnableOption "direnv";
+      enable = lib.mkEnableOption "direnv";
     };
   };
 
-  config = mkIf cfg.enable {
+  config = lib.mkIf cfg.enable {
     programs.direnv = {
       enable = true;
       silent = true;

@@ -4,17 +4,16 @@
   ...
 }:
 let
-  inherit (lib) mkEnableOption mkIf;
   cfg = config.psyclyx.nixos.boot.plymouth;
 in
 {
   options = {
     psyclyx.nixos.boot.plymouth = {
-      enable = mkEnableOption "graphical startup";
+      enable = lib.mkEnableOption "graphical startup";
     };
   };
 
-  config = mkIf cfg.enable {
+  config = lib.mkIf cfg.enable {
     boot = {
       plymouth.enable = true;
       initrd.verbose = false;

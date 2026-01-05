@@ -5,14 +5,12 @@
   ...
 }:
 let
-  inherit (lib) mkEnableOption;
-
   cfg = config.psyclyx.hardware.cpu.amd;
 in
 {
   options = {
     psyclyx.hardware.cpu.amd = {
-      enable = mkEnableOption "AMD CPU config (currently only Ryzen 5950x)";
+      enable = lib.mkEnableOption "AMD CPU config (currently only Ryzen 5950x)";
     };
   };
 
@@ -39,6 +37,7 @@ in
         ryzen-smu.enable = true;
         updateMicrocode = true;
       };
+
       enableRedistributableFirmware = true;
     };
 

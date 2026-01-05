@@ -9,8 +9,6 @@
   ...
 }:
 let
-  inherit (lib) filterAttrs mapAttrs;
-
   cfg = config.psyclyx.${moduleGroup}.system.nix;
 
   substituters = [
@@ -47,10 +45,10 @@ in
       registry =
         let
           isFlake = input: input._type or null == "flake";
-          flakeInputs = filterAttrs (_: isFlake) inputs;
+          flakeInputs = lib.filterAttrs (_: isFlake) inputs;
           registrySet = flakeInput: { flake = flakeInput; };
         in
-        mapAttrs (_: registrySet) flakeInputs;
+        lib.mapAttrs (_: registrySet) flakeInputs;
 
       settings = {
         inherit substituters trusted-substituters trusted-public-keys;

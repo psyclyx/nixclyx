@@ -4,17 +4,16 @@
   ...
 }:
 let
-  inherit (lib) mkEnableOption mkIf;
   cfg = config.psyclyx.nixos.boot.systemd.loader;
 in
 {
   options = {
     psyclyx.nixos.boot.systemd.loader = {
-      enable = mkEnableOption "systemd-boot";
+      enable = lib.mkEnableOption "systemd-boot";
     };
   };
 
-  config = mkIf cfg.enable {
+  config = lib.mkIf cfg.enable {
     boot = {
       loader = {
         efi.canTouchEfiVariables = true;
