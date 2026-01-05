@@ -5,17 +5,16 @@
   ...
 }:
 let
-  inherit (lib) mkEnableOption mkIf;
   cfg = config.psyclyx.nixos.programs.qmk;
 in
 {
   options = {
     psyclyx.nixos.programs.qmk = {
-      enable = mkEnableOption "QMK";
+      enable = lib.mkEnableOption "QMK";
     };
   };
 
-  config = mkIf cfg.enable {
+  config = lib.mkIf cfg.enable {
     environment.systemPackages = [
       pkgs.qmk
       pkgs.via

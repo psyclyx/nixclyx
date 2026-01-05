@@ -1,16 +1,15 @@
 { config, lib, ... }:
 let
-  inherit (lib) mkEnableOption mkIf;
   cfg = config.psyclyx.nixos.services.avahi;
 in
 {
   options = {
     psyclyx.nixos.services.avahi = {
-      enable = mkEnableOption "Service discovery / MDNS";
+      enable = lib.mkEnableOption "Service discovery / MDNS";
     };
   };
 
-  config = mkIf cfg.enable {
+  config = lib.mkIf cfg.enable {
     services.avahi = {
       enable = true;
       nssmdns4 = true;

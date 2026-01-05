@@ -4,21 +4,14 @@
   ...
 }:
 let
-  inherit (lib)
-    mkEnableOption
-    mkIf
-    types
-    mkOption
-    ;
-
   cfg = config.psyclyx.nixos.system.swap;
 in
 {
   options = {
     psyclyx.nixos.system.swap = {
-      enable = mkEnableOption "swap config";
-      swappiness = mkOption {
-        type = types.ints.between 0 200;
+      enable = lib.mkEnableOption "swap config";
+      swappiness = lib.mkOption {
+        type = lib.types.ints.between 0 200;
         default = 60;
         description = ''
           RAM/swap bias (0=max ram preference, 200=max swap preference).
@@ -26,18 +19,18 @@ in
         '';
       };
 
-      zswap = mkOption {
-        type = types.bool;
+      zswap = lib.mkOption {
+        type = lib.types.bool;
         default = true;
         description = "zswap (swap to zstd in-memory before disk)";
       };
     };
   };
 
-  config = mkIf cfg.enable {
+  config = lib.mkIf cfg.enable {
     boot = {
       kernel.sysctl."vm.swappiness" = cfg.swappiness;
-      kernelParams = mkIf cfg.zswap [ "zswap.enabled=1" ];
+      kernelParams = lib.mkIf cfg.zswap [ "zswap.enabled=1" ];
     };
   };
 }

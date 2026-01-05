@@ -1,32 +1,27 @@
 { config, lib, ... }:
 let
-  inherit (lib)
-    mkIf
-    mkEnableOption
-    mkOption
-    types
-    ;
-
   cfg = config.psyclyx.filesystems.layouts.bcachefs-pool;
 in
 {
   options = {
     psyclyx.filesystems.layouts.bcachefs-pool = {
-      enable = mkEnableOption "@psyclyx's bcachefs-pool disk layout";
+      enable = lib.mkEnableOption "@psyclyx's bcachefs-pool disk layout";
+
       UUID = {
-        root = mkOption {
-          type = types.str;
+        root = lib.mkOption {
+          type = lib.types.str;
           description = "external bcachefs FS UUID (`bcachefs show-superblock`)";
         };
-        boot = mkOption {
-          type = types.str;
+
+        boot = lib.mkOption {
+          type = lib.types.str;
           description = "boot partition UUID (`ls -lah /dev/disk/by-uuid`)";
         };
       };
     };
   };
 
-  config = mkIf cfg.enable {
+  config = lib.mkIf cfg.enable {
     psyclyx.nixos.filesystems.bcachefs.enable = true;
 
     fileSystems = {
@@ -40,7 +35,6 @@ in
         fsType = "vfat";
         options = [ "umask=0077" ];
       };
-
     };
   };
 

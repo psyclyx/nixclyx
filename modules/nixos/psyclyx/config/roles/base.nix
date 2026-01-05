@@ -4,50 +4,48 @@
   ...
 }:
 let
-  inherit (lib) mkDefault mkEnableOption mkIf;
-
   cfg = config.psyclyx.roles.base;
 in
 
 {
   options = {
     psyclyx.roles.base = {
-      enable = mkEnableOption "role for baseline config, likely applicable to all hosts";
+      enable = lib.mkEnableOption "role for baseline config, likely applicable to all hosts";
     };
   };
 
-  config = mkIf cfg.enable {
+  config = lib.mkIf cfg.enable {
     psyclyx = {
       network.enable = true;
 
       nixos = {
         boot = {
           systemd = {
-            initrd.enable = mkDefault true;
-            keyring.enable = mkDefault true;
-            loader.enable = mkDefault true;
+            initrd.enable = lib.mkDefault true;
+            keyring.enable = lib.mkDefault true;
+            loader.enable = lib.mkDefault true;
           };
         };
 
         filesystems = {
-          bcachefs.enable = mkDefault true;
+          bcachefs.enable = lib.mkDefault true;
         };
 
         programs = {
-          zsh.enable = mkDefault true;
+          zsh.enable = lib.mkDefault true;
         };
 
         system = {
-          containers.enable = mkDefault true;
-          documentation.enable = mkDefault true;
-          home-manager.enable = mkDefault true;
-          locale.enable = mkDefault true;
-          nix.enable = mkDefault true;
-          nixpkgs.enable = mkDefault true;
-          storage.enable = mkDefault true;
-          stylix.enable = mkDefault true;
-          swap.enable = mkDefault true;
-          timezone.enable = mkDefault true;
+          containers.enable = lib.mkDefault true;
+          documentation.enable = lib.mkDefault true;
+          home-manager.enable = lib.mkDefault true;
+          locale.enable = lib.mkDefault true;
+          nix.enable = lib.mkDefault true;
+          nixpkgs.enable = lib.mkDefault true;
+          storage.enable = lib.mkDefault true;
+          stylix.enable = lib.mkDefault true;
+          swap.enable = lib.mkDefault true;
+          timezone.enable = lib.mkDefault true;
         };
       };
     };

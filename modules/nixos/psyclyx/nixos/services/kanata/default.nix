@@ -1,6 +1,5 @@
 { config, lib, ... }:
 let
-  inherit (lib) mkEnableOption mkIf;
   cfg = config.psyclyx.nixos.services.kanata;
 in
 {
@@ -10,7 +9,7 @@ in
     };
   };
 
-  config = mkIf cfg.enable {
+  config = lib.mkIf cfg.enable {
     services.kanata = {
       enable = true;
       keyboards.default = {

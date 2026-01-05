@@ -1,15 +1,6 @@
 {
   lib ? <nixpkgs>.lib,
 }:
-let
-  inherit (lib)
-    elem
-    filterAttrs
-    genAttrs
-    mapAttrs
-    pipe
-    ;
-in
 {
   /*
     Converts a directory tree into a nested attrset mirroring its structure.
@@ -51,7 +42,7 @@ in
             in
             if directory then recurse name' else name';
 
-          entries = mapAttrs entryValue (builtins.readDir dir);
+          entries = lib.mapAttrs entryValue (builtins.readDir dir);
         in
         entries // { "." = dir; };
     in
@@ -90,13 +81,13 @@ in
           system = pkgs.stdenv.hostPlatform.system;
           platforms = package.meta.platforms or [ ];
           empty = platforms == [ ];
-          systemSupported = elem system platforms;
+          systemSupported = lib.elem system platforms;
         in
         empty || systemSupported;
     in
-    pipe packageDefs [
-      (mapAttrs (_: callPackage'))
-      (filterAttrs (_: supported))
+    lib.pipe packageDefs [
+      (lib.mapAttrs (_: callPackage'))
+      (lib.filterAttrs (_: supported))
     ];
 
   /*
@@ -150,12 +141,12 @@ in
     let
       perSystemLeaf =
         f: system:
-        pipe { inherit system; } [
+        lib.pipe { inherit system; } [
           perSystemArgs
           f
         ];
-      perOutput = f: genAttrs systems (perSystemLeaf f);
-      perSystem = mapAttrs (_: perOutput) perSystemOutputs;
+      perOutput = f: lib.genAttrs systems (perSystemLeaf f);
+      perSystem = lib.mapAttrs (_: perOutput) perSystemOutputs;
     in
     commonOutputs // perSystem;
 }

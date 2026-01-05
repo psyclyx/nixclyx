@@ -5,13 +5,6 @@
   ...
 }:
 let
-  inherit (lib)
-    mkEnableOption
-    mkIf
-    mkOption
-    types
-    ;
-
   inherit (pkgs.stdenv.hostPlatform) system;
   defaultSystems =
     {
@@ -27,9 +20,9 @@ in
 {
   options = {
     psyclyx.nixos.system.emulation = {
-      enable = mkEnableOption "Architecture emulation config";
-      emulatedSystems = mkOption {
-        type = types.listOf types.str;
+      enable = lib.mkEnableOption "Architecture emulation config";
+      emulatedSystems = lib.mkOption {
+        type = lib.types.listOf lib.types.str;
         description = "Systems to emulate";
         example = [ "aarch64-linux" ];
         default = defaultSystems;
@@ -37,7 +30,7 @@ in
     };
   };
 
-  config = mkIf cfg.enable {
+  config = lib.mkIf cfg.enable {
     boot.binfmt.emulatedSystems = cfg.emulatedSystems;
   };
 }

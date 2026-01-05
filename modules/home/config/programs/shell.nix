@@ -1,17 +1,15 @@
 { config, lib, ... }:
 let
-  inherit (lib) mkEnableOption;
-
   cfg = config.psyclyx.programs.shell;
 in
 {
   options = {
     psyclyx.programs.shell = {
-      enable = mkEnableOption "generic shell configuration";
+      enable = lib.mkEnableOption "generic shell configuration";
     };
   };
 
-  config = {
+  config = lib.mkIf cfg.enable {
     home.shellAliases = {
       "ns" = "nix search nixpkgs";
       "nsp" = "nix-shell --run $SHELL -p";

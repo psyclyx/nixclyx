@@ -5,14 +5,12 @@
   ...
 }:
 let
-  inherit (lib) getExe getExe' concatMapAttrs;
-
   # Applications
   menus = import ./menus.nix { inherit config pkgs lib; };
 
   launcher = "fuzzel";
-  power-menu = getExe menus.power-menu;
-  screenshot-menu = getExe menus.screenshot-menu;
+  power-menu = lib.getExe menus.power-menu;
+  screenshot-menu = lib.getExe menus.screenshot-menu;
 
   browser = "firefox";
   terminal = "xdg-terminal-exec";
@@ -59,7 +57,7 @@ let
   };
 
   # Binds
-  directionBinds = concatMapAttrs (direction: key: {
+  directionBinds = lib.concatMapAttrs (direction: key: {
     "${leaderKey}+${key}" = "focus ${direction}";
     "${leaderKey}+${moveKey}+${key}" = "move ${direction} ${steps.default}";
   }) directionKeys;

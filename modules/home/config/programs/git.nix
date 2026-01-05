@@ -1,7 +1,5 @@
 { config, lib, ... }:
 let
-  inherit (lib) mkDefault;
-
   cfg = config.psyclyx.programs.git;
   user = config.psyclyx.user;
 in
@@ -11,19 +9,15 @@ in
       enable = lib.mkEnableOption "git version control";
     };
   };
+
   config = lib.mkIf cfg.enable {
     programs = {
       git = {
         enable = true;
-        settings.user.name = mkDefault user.name;
-        settings.user.email = mkDefault user.email;
+        settings.user = lib.mapAttrs (_: lib.mkDefault) { inherit (user) name email; };
         iniContent = {
-          "pull" = {
-            "rebase" = true;
-          };
-          "core" = {
-            "fsmonitor" = true;
-          };
+          pull.rebase = true;
+          core.fsmonitor = true;
         };
       };
     };

@@ -4,8 +4,6 @@
   ...
 }:
 let
-  inherit (lib) mkDefault mkEnableOption mkIf;
-
   cfg = config.psyclyx.network;
 in
 {
@@ -13,16 +11,16 @@ in
 
   options = {
     psyclyx.network = {
-      enable = mkEnableOption "common network settings";
-      wireless = mkEnableOption "wireless network support";
+      enable = lib.mkEnableOption "common network settings";
+      wireless = lib.mkEnableOption "wireless network support";
     };
   };
 
-  config = mkIf cfg.enable {
+  config = lib.mkIf cfg.enable {
     networking = {
       useNetworkd = true;
 
-      wireless.iwd = mkIf cfg.wireless {
+      wireless.iwd = lib.mkIf cfg.wireless {
         enable = true;
         settings.Settings.AutoConnect = true;
       };
@@ -30,7 +28,7 @@ in
 
     systemd.network = {
       enable = true;
-      wait-online.enable = mkDefault false;
+      wait-online.enable = lib.mkDefault false;
     };
   };
 }

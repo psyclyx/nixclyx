@@ -54,14 +54,10 @@ stdenv.mkDerivation {
     runHook postInstall
   '';
 
-  meta =
-    let
-      inherit (lib) sourceTypes licenses maintainers;
-    in
-    {
-      sourceProvenance = [ sourceTypes.binaryNativeCode ];
-      license = licenses.unfree;
-      platforms = [ "x86_64-linux" ];
-      maintainers = [ maintainers.psyclyx ];
-    };
+  meta = {
+    sourceProvenance = [ lib.sourceTypes.binaryNativeCode ];
+    license = lib.licenses.unfree;
+    platforms = [ "x86_64-linux" ];
+    maintainers = [ lib.maintainers.psyclyx ];
+  };
 }

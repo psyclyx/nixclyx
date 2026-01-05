@@ -5,28 +5,21 @@
   ...
 }:
 let
-  inherit (lib)
-    mkEnableOption
-    mkIf
-    mkOption
-    types
-    ;
   cfg = config.psyclyx.nixos.services.locate;
 in
 {
   options = {
     psyclyx.nixos.services.locate = {
-      enable = mkEnableOption "Locate service";
-      users = mkOption {
-        type = types.listOf types.str;
+      enable = lib.mkEnableOption "Locate service";
+      users = lib.mkOption {
+        type = lib.types.listOf lib.types.str;
         default = [ ];
         description = "Users to put in the mlocate group";
       };
     };
   };
 
-  config = mkIf cfg.enable {
-    psyclyx.nixos.services.locate.users = config.users.groups.wheel.members;
+  config = lib.mkIf cfg.enable {
     services.locate = {
       enable = true;
       interval = "hourly";
@@ -41,6 +34,7 @@ in
       ];
     };
 
+    psyclyx.nixos.services.locate.users = config.users.groups.wheel.members;
     users.groups.mlocate.members = cfg.users;
   };
 }

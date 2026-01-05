@@ -4,17 +4,16 @@
   ...
 }:
 let
-  inherit (lib) mkIf mkEnableOption;
   cfg = config.psyclyx.network.dns.client;
 in
 {
   options = {
     psyclyx.network.dns.client = {
-      enable = mkEnableOption "avahi+systemd-resolved";
+      enable = lib.mkEnableOption "avahi+systemd-resolved";
     };
   };
 
-  config = mkIf cfg.enable {
+  config = lib.mkIf cfg.enable {
     psyclyx.nixos.services = {
       avahi.enable = true;
       resolved.enable = true;
