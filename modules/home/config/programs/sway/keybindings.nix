@@ -38,8 +38,8 @@ let
   };
 
   workspaceKeys = lib.listToAttrs (
-    lib.imap1 (i: key: {
-      name = "workspace number ${builtins.toString i}";
+    lib.imap1 (idx: key: {
+      name = "workspace number ${builtins.toString idx}";
       value = builtins.toString key;
     }) (lib.range 1 9 ++ [ 0 ])
   );
