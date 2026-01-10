@@ -43,6 +43,10 @@
           root = "ccb2b4e2-b5b7-4d85-aca8-039ca1ccc985";
           boot = "71AE-12DD";
         };
+        wants = [
+          "/dev/disk/by-id/nvme-eui.0025384c41416f3c"
+          "/dev/disk/by-id/nvme-eui.ace42e00457c0fbf2ee4ac0000000001"
+        ];
       };
 
       hardware = {
