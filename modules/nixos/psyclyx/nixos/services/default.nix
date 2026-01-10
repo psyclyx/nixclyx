@@ -4,6 +4,7 @@
     ./fstrim.nix
     ./fwupd.nix
     ./gnome-keyring.nix
+    ./gnupg-agent.nix
     ./greetd.nix
     ./home-assistant.nix
     ./kanata
