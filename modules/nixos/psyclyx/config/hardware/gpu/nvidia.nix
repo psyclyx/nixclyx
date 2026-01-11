@@ -18,6 +18,13 @@ in
       "nova"
       "nova_core"
     ];
+
+    environment.variables = {
+      __GLX_VENDOR_LIBRARY_NAME = "nvidia";
+      LIBVA_DRIVER_NAME = "nvidia";
+      NIXOS_OZONE_WL = "1";
+    };
+
     hardware.nvidia = {
       modesetting.enable = true;
       open = true;
