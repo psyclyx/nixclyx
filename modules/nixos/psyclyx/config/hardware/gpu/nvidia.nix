@@ -1,7 +1,6 @@
 {
   config,
   lib,
-  pkgs,
   ...
 }:
 let
@@ -14,10 +13,6 @@ in
     };
   };
   config = lib.mkIf cfg.enable {
-    boot.blacklistedKernelModules = [
-      "nova"
-      "nova_core"
-    ];
 
     environment.variables = {
       __GLX_VENDOR_LIBRARY_NAME = "nvidia";
