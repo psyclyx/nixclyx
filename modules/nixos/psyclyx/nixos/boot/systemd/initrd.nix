@@ -17,6 +17,7 @@ in
     boot.initrd = {
       systemd = {
         enable = true;
+        emergencyAccess = true;
         network.enable = true;
       };
     };
