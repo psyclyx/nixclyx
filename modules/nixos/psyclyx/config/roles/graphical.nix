@@ -22,7 +22,11 @@ in
     psyclyx = {
       nixos = {
         boot = {
-          plymouth.enable = lib.mkDefault true;
+          # TODO: consider removing plymouth entirely
+          # frequently breaks when i twiddle nvidia settings, tty unlock occasionally
+          # echos keystrokes instead of *, seems occasionally unhappy when decryption prompts
+          # straddle stage1/stage2
+          # plymouth.enable = lib.mkDefault true;
         };
 
         programs = {
