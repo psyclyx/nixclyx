@@ -1,6 +1,5 @@
 {
   imports = [
-    ./adb.nix
     ./aspell.nix
     ./glasgow.nix
     ./qmk.nix
