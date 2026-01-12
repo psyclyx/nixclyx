@@ -16,12 +16,13 @@
         envs.llm
         envs.media
         envs.shell
+
+        pkgs.android-tools
       ];
 
     psyclyx = {
       nixos = {
         programs = {
-          adb.enable = true;
           glasgow.enable = true;
           steam.enable = true;
         };

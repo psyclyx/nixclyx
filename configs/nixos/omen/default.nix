@@ -19,14 +19,12 @@
         envs.llm
         envs.media
         envs.shell
+
+        pkgs.android-tools
       ];
 
     psyclyx = {
       nixos = {
-        programs = {
-          adb.enable = true;
-        };
-
         services = {
           fstrim.enable = true;
           kanata.enable = true;
