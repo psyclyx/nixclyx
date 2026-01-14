@@ -37,13 +37,13 @@ in
 
     fileSystems = {
       "/" = {
-        device = "/dev/disk/by-uuid/${cfg.UUID.root}";
+        device = "UUID=${cfg.UUID.root}";
         fsType = "bcachefs";
         options = builtins.map (x: "x-systemd.wants=${x}") cfg.wants;
       };
 
       "/boot" = {
-        device = "/dev/disk/by-uuid/${cfg.UUID.boot}";
+        device = "UUID=${cfg.UUID.boot}";
         fsType = "vfat";
         options = [ "umask=0077" ];
       };
