@@ -21,6 +21,25 @@
       ];
 
     psyclyx = {
+      users.psyc.hmImport = {
+        wayland.windowManager.sway.config.output = {
+          # Primary monitor (BenQ) - center
+          "BNQ BenQ RD280U V5R0042101Q" = {
+            position = "0,0";
+          };
+
+          # Secondary monitor (Gawfolk) - left side
+          "QHX GF005 Unknown" = {
+            position = "-3840,0";
+          };
+
+          # Tertiary monitor (Dell) - right side, top edge aligned
+          "Dell Inc. DELL S2721QS 9PPZM43" = {
+            position = "3840,0";
+          };
+        };
+      };
+
       nixos = {
         programs = {
           glasgow.enable = true;
