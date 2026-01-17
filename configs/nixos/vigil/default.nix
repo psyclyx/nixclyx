@@ -48,6 +48,10 @@
         };
       };
 
+      hardware = {
+        cpu.intel.enable = true;
+      };
+
       roles = {
         base.enable = true;
         remote.enable = true;
