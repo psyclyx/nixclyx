@@ -13,7 +13,6 @@ in
     };
   };
   config = lib.mkIf cfg.enable {
-
     environment.variables = {
       __GLX_VENDOR_LIBRARY_NAME = "nvidia";
       LIBVA_DRIVER_NAME = "nvidia";
@@ -24,14 +23,9 @@ in
       modesetting.enable = true;
       open = true;
       package = config.boot.kernelPackages.nvidiaPackages.production;
+      powerManagement.enable = true;
     };
 
     services.xserver.videoDrivers = [ "nvidia" ];
-
-    systemd.services."systemd-suspend" = {
-      serviceConfig = {
-        Environment = ''"SYSTEMD_SLEEP_FREEZE_USER_SESSIONS=false"'';
-      };
-    };
   };
 }
