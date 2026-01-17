@@ -22,7 +22,6 @@ in
         boot = {
           systemd = {
             initrd.enable = lib.mkDefault true;
-            keyring.enable = lib.mkDefault true;
             loader.enable = lib.mkDefault true;
           };
         };
