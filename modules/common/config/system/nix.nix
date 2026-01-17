@@ -34,6 +34,7 @@ in
   config = lib.mkIf cfg.enable {
     environment.systemPackages = [
       pkgs.nh
+      pkgs.niv
       pkgs.nix-output-monitor
       pkgs.nix-tree
       pkgs.nixfmt-tree
