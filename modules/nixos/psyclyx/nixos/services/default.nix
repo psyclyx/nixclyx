@@ -13,6 +13,7 @@
     ./openssh.nix
     ./printing.nix
     ./resolved.nix
+    ./sddm.nix
     ./tailscale.nix
     ./thermald.nix
   ];
