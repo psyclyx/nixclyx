@@ -19,8 +19,8 @@ in
         efi.canTouchEfiVariables = true;
         systemd-boot = {
           enable = true;
-          consoleMode = "auto";
           configurationLimit = 8;
+          consoleMode = "max";
         };
 
         timeout = 1;
