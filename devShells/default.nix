@@ -8,7 +8,7 @@
   default = pkgs.mkShell {
     packages = with pkgs; [
       colmena.packages."${system}".colmena
-      nixfmt-rfc-style
+      nixfmt
       nixd
       nix-tree
       sops
