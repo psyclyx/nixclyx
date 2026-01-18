@@ -12,9 +12,9 @@ in
   config = lib.mkIf cfg.enable {
     services.resolved = {
       enable = true;
-      extraConfig = ''
-        MulticastDNS = off
-      '';
+      settings.Resolve = {
+        MulticastDNS = false;
+      };
     };
   };
 }
