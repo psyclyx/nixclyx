@@ -18,6 +18,7 @@
         envs.shell
 
         pkgs.android-tools
+        pkgs.gimp-with-plugins
       ];
 
     psyclyx = {
