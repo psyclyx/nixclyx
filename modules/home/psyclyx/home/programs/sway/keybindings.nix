@@ -8,7 +8,7 @@ let
   # Applications
   menus = import ./menus.nix { inherit config pkgs lib; };
 
-  launcher = "fuzzel";
+  launcher = lib.getExe config.programs.fuzzel.package;
   power-menu = lib.getExe menus.power-menu;
   screenshot-menu = lib.getExe menus.screenshot-menu;
 

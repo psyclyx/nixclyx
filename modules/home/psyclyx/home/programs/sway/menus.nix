@@ -4,15 +4,17 @@
   lib,
 }:
 let
-  # Assume these are on path
-  fuzzel = "fuzzel";
-  grim = "grim";
-  makoctl = "makoctl";
-  slurp = "slurp";
-  wl-copy = "wl-copy";
   swaymsg = "swaymsg";
-  swaylock = "swaylock";
+
+  fuzzel = lib.getExe config.programs.fuzzel.package;
+  swaylock = lib.getExe config.programs.swaylock.package;
+
+  grim = lib.getExe pkgs.grim;
   jq = lib.getExe pkgs.jq;
+  notify-send = lib.getExe' pkgs.libnotify "notify-send";
+  slurp = lib.getExe pkgs.slurp;
+  wayland-logout = lib.getExe pkgs.wayland-logout;
+  wl-copy = lib.getExe' pkgs.wl-clipboard "wl-copy";
 in
 {
   power-menu = pkgs.writeShellScriptBin "power-menu" ''
@@ -26,7 +28,7 @@ in
         ${swaylock}
         ;;
       "Logout")
-        loginctl terminate-session $XDG_SESSION_ID
+        ${wayland-logout}
         ;;
       "Suspend")
         systemctl suspend
@@ -53,31 +55,31 @@ in
     case $chosen in
       "Full Screen")
         ${grim} "$filename"
-        ${makoctl} notify "Screenshot saved" "$filename"
+        ${notify-send} "Screenshot saved" "$filename"
         ;;
       "Selection")
         ${grim} -g "$(${slurp})" "$filename"
         if [ $? -eq 0 ]; then
-          ${makoctl} notify "Screenshot saved" "$filename"
+          ${notify-send} "Screenshot saved" "$filename"
         fi
         ;;
       "Current Window")
         ${grim} -g "$(${swaymsg} -t get_tree | ${jq} -r '.. | select(.focused?) | .rect | "\(.x),\(.y) \(.width)x\(.height)"')" "$filename"
-        ${makoctl} notify "Screenshot saved" "$filename"
+        ${notify-send} "Screenshot saved" "$filename"
         ;;
       "Full Screen (Clipboard)")
         ${grim} - | ${wl-copy} -t image/png
-        ${makoctl} notify "Screenshot copied to clipboard"
+        ${notify-send} "Screenshot copied to clipboard"
         ;;
       "Selection (Clipboard)")
         ${grim} -g "$(${slurp})" - | ${wl-copy} -t image/png
         if [ $? -eq 0 ]; then
-          ${makoctl} notify "Screenshot copied to clipboard"
+          ${notify-send} "Screenshot copied to clipboard"
         fi
         ;;
       "Current Window (Clipboard)")
         ${grim} -g "$(${swaymsg} -t get_tree | ${jq} -r '.. | select(.focused?) | .rect | "\(.x),\(.y) \(.width)x\(.height)"')" - | ${wl-copy} -t image/png
-        ${makoctl} notify "Screenshot copied to clipboard"
+        ${notify-send} "Screenshot copied to clipboard"
         ;;
     esac
   '';
