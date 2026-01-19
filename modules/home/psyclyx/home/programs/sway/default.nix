@@ -30,8 +30,6 @@ in
   config = mkIf cfg.enable {
     home.packages = with pkgs; [
       pulseaudio
-      grim
-      slurp
     ];
 
     psyclyx = {
