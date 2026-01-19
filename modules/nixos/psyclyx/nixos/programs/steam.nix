@@ -17,7 +17,6 @@ in
   config = lib.mkIf cfg.enable {
     programs.gamescope.enable = true;
     programs.steam = {
-      gamescopeSession.enable = true;
       enable = true;
       remotePlay.openFirewall = true;
       dedicatedServer.openFirewall = true;
