@@ -38,10 +38,14 @@
       url = "github:aylur/astal";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    niri.url = "github:sodiboo/niri-flake";
+
     zsh-pure = {
       url = "github:sindresorhus/pure";
       flake = false;
     };
+
   };
 
   outputs = inputs: import ./outputs.nix inputs;
