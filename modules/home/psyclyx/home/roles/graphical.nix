@@ -31,6 +31,7 @@ in
                 enable = lib.mkDefault true;
                 defaultTerminal = lib.mkDefault true;
               };
+              niri.enable = lib.mkDefault true;
               sway.enable = lib.mkDefault true;
             };
             xdg.enable = lib.mkDefault true;
