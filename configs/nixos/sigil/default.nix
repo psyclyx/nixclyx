@@ -48,7 +48,6 @@
         };
 
         services = {
-          home-assistant.enable = true;
           openrgb.enable = true;
           tailscale.exitNode = true;
         };
