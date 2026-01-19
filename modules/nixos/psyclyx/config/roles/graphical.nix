@@ -36,10 +36,10 @@ in
         };
 
         services = {
+          gdm.enable = lib.mkDefault true;
           gnome-keyring.enable = lib.mkDefault true;
           gnupg-agent.enable = lib.mkDefault true;
           printing.enable = lib.mkDefault true;
-          sddm.enable = lib.mkDefault true;
         };
 
         system = {
