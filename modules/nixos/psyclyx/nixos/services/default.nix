@@ -3,6 +3,7 @@
     ./avahi.nix
     ./fstrim.nix
     ./fwupd.nix
+    ./gdm.nix
     ./gnome-keyring.nix
     ./gnupg-agent.nix
     ./greetd.nix
