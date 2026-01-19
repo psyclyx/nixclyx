@@ -1,5 +1,6 @@
 {
   imports = [
+    ./ags
     ./alacritty.nix
     ./direnv.nix
     ./fastfetch
