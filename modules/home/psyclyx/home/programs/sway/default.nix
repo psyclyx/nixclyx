@@ -13,6 +13,7 @@ let
     ;
 
   cfg = config.psyclyx.home.programs.sway;
+  monitors = config.psyclyx.home.hardware.monitors;
 in
 {
   imports = [
@@ -152,9 +153,17 @@ in
         };
 
         workspaceAutoBackAndForth = true;
-        output = {
-          "*".scale = "1";
-        };
+        output =
+          if monitors == { }
+          then { "*".scale = "1"; }
+          else lib.mapAttrs' (_: m: lib.nameValuePair m.identifier (
+            { position = "${toString m.position.x},${toString m.position.y}"; scale = toString m.scale; }
+            // lib.optionalAttrs (!m.enable) { enable = "disable"; }
+            // lib.optionalAttrs (m.mode != null) {
+              mode = "${toString m.mode.width}x${toString m.mode.height}"
+                + lib.optionalString (m.mode.refresh != null) "@${toString m.mode.refresh}";
+            }
+          )) monitors;
       };
     };
   };

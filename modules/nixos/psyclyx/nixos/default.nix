@@ -15,6 +15,7 @@ in
     self.commonModules.nixos
     ./boot
     ./filesystems
+    ./hardware
     ./programs
     ./services
     ./system

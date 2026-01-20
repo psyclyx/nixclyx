@@ -5,6 +5,33 @@
 }:
 let
   cfg = config.psyclyx.home.programs.niri;
+  monitors = config.psyclyx.home.hardware.monitors;
+
+  toNiriOutput = monitor: {
+    ${monitor.connector} = lib.filterAttrs (_: v: v != null) (
+      {
+        position = {
+          x = monitor.position.x;
+          y = monitor.position.y;
+        };
+        scale = monitor.scale;
+        enable = monitor.enable;
+      }
+      // lib.optionalAttrs (monitor.mode != null) {
+        mode =
+          let
+            m = monitor.mode;
+          in
+          {
+            width = m.width;
+            height = m.height;
+          }
+          // lib.optionalAttrs (m.refresh != null) { refresh = m.refresh; };
+      }
+    );
+  };
+
+  monitorOutputs = lib.foldl' (acc: m: acc // toNiriOutput m) { } (lib.attrValues monitors);
 in
 {
   options = {
@@ -47,6 +74,7 @@ in
   config = lib.mkIf cfg.enable {
     programs.niri = {
       settings = {
+        outputs = lib.mkIf (monitors != { }) monitorOutputs;
         binds =
           let
             inherit (cfg.binds) modifiers movement;
