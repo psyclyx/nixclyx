@@ -22,26 +22,36 @@
       ];
 
     psyclyx = {
-      users.psyc.hmImport = {
-        wayland.windowManager.sway.config.output = {
-          # Primary monitor (BenQ) - center
-          "BNQ BenQ RD280U V5R0042101Q" = {
-            position = "0,0";
+      nixos = {
+        hardware.monitors = {
+          benq = {
+            connector = "DP-4";
+            identifier = "BNQ BenQ RD280U V5R0042101Q";
+            mode = {
+              width = 3840;
+              height = 2560;
+            };
           };
-
-          # Secondary monitor (Gawfolk) - left side
-          "QHX GF005 Unknown" = {
-            position = "-3840,0";
+          gawfolk = {
+            connector = "DP-2";
+            identifier = "QHX GF005 Unknown";
+            mode = {
+              width = 3840;
+              height = 2560;
+            };
+            position.x = -3840;
           };
-
-          # Tertiary monitor (Dell) - right side, top edge aligned
-          "Dell Inc. DELL S2721QS 9PPZM43" = {
-            position = "3840,0";
+          dell = {
+            connector = "DP-1";
+            identifier = "Dell Inc. DELL S2721QS 9PPZM43";
+            mode = {
+              width = 3840;
+              height = 2160;
+            };
+            position.x = 3840;
           };
         };
-      };
 
-      nixos = {
         programs = {
           glasgow.enable = true;
           steam.enable = true;
