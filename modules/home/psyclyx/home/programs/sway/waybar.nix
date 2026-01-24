@@ -59,14 +59,14 @@ in
           #pulseaudio,
           #memory,
           #cpu,
-          #battery {
+          #battery,
+          #tray {
               color: @base05;
               padding: 0 8px;
           }
         '';
       settings = {
-        mainBar = {
-          position = "top";
+        sway = {
           spacing = 16;
 
           modules-left = [
@@ -83,37 +83,42 @@ in
             "memory"
             "cpu"
             "battery"
+            "tray"
           ];
 
-          "pulseaudio" = {
+          pulseaudio = {
             format = "VOL: {volume}%";
             format-muted = "VOL: MUTE";
           };
-          "network" = {
+          network = {
             format-wifi = "WIFI: {ifname} {ipaddr}/{cidr} {signalStrength}%";
             format-ethernet = "ETH: {ifname} {ipaddr}/{cidr}";
             format-linked = "NET: {ifname} (No IP)";
             format-disconnected = "NET: NONE";
             interval = 10;
           };
-          "backlight" = {
+          backlight = {
             format = "BLT: {percent}%";
           };
-          "clock" = {
+          clock = {
             interval = 5;
             format = "{:%I:%M %m/%d/%y}";
           };
-          "cpu" = {
+          cpu = {
             interval = 5;
-            format = "CPU: {}%";
+            format = "CPU: {usage}% | {load}";
           };
-          "memory" = {
+          memory = {
             interval = 5;
             format = "MEM: {}%";
           };
-          "battery" = {
+          battery = {
             interval = 5;
             format = "BAT: {capacity}%";
+          };
+          tray = {
+            icon-size = 24;
+            spacing = 16;
           };
         };
       };
