@@ -23,7 +23,7 @@ in
       enable = true;
       package = ghostty;
       settings = {
-        shell-integration-features = "ssh-terminfo,ssh-env";
+        shell-integration-features = "ssh-env";
       };
     };
 
