@@ -19,6 +19,7 @@
 
         pkgs.android-tools
         pkgs.gimp-with-plugins
+        pkgs.kicad
       ];
 
     psyclyx = {
