@@ -18,6 +18,7 @@
         envs.shell
 
         pkgs.android-tools
+        pkgs.audacity
         pkgs.gimp-with-plugins
         pkgs.kicad
       ];
