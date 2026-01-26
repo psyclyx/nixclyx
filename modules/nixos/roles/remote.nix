@@ -1,15 +1,14 @@
 {
   config,
   lib,
-  pkgs,
   ...
 }:
 let
-  cfg = config.psyclyx.roles.remote;
+  cfg = config.psyclyx.nixos.roles.remote;
 in
 {
   options = {
-    psyclyx.roles.remote = {
+    psyclyx.nixos.roles.remote = {
       enable = lib.mkEnableOption "role for networking between hosts";
     };
   };

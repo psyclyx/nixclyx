@@ -4,19 +4,18 @@
   ...
 }:
 let
-  cfg = config.psyclyx.roles.base;
+  cfg = config.psyclyx.nixos.roles.base;
 in
 
 {
   options = {
-    psyclyx.roles.base = {
+    psyclyx.nixos.roles.base = {
       enable = lib.mkEnableOption "role for baseline config, likely applicable to all hosts";
     };
   };
 
   config = lib.mkIf cfg.enable {
     psyclyx = {
-
       nixos = {
         boot = {
           systemd = {

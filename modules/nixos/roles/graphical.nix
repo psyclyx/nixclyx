@@ -5,11 +5,11 @@
   ...
 }:
 let
-  cfg = config.psyclyx.roles.graphical;
+  cfg = config.psyclyx.nixos.roles.graphical;
 in
 {
   options = {
-    psyclyx.roles.graphical = {
+    psyclyx.nixos.roles.graphical = {
       enable = lib.mkEnableOption "role for hosts intended to be used primarily through graphical sessions";
     };
   };

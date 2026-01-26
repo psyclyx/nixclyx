@@ -5,11 +5,11 @@
   ...
 }:
 let
-  cfg = config.psyclyx.roles.utility;
+  cfg = config.psyclyx.nixos.roles.utility;
 in
 {
   options = {
-    psyclyx.roles.utility = {
+    psyclyx.nixos.roles.utility = {
       enable = lib.mkEnableOption "role with various system utilities";
     };
   };

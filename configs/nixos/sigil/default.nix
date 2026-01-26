@@ -1,6 +1,6 @@
 { inputs, pkgs, ... }:
 {
-  imports = [ inputs.self.nixosModules.psyclyx ];
+  imports = [ inputs.self.nixosModules.default ];
 
   config = {
     networking.hostName = "sigil";
@@ -86,6 +86,13 @@
           steam.enable = true;
         };
 
+        roles = {
+          base.enable = true;
+          graphical.enable = true;
+          remote.enable = true;
+          utility.enable = true;
+        };
+
         services = {
           openrgb.enable = true;
           tailscale.exitNode = true;
@@ -95,18 +102,12 @@
           emulation.enable = true;
           swap.swappiness = 10;
         };
+
+        users.psyc = {
+          enable = true;
+        };
       };
 
-      roles = {
-        base.enable = true;
-        graphical.enable = true;
-        remote.enable = true;
-        utility.enable = true;
-      };
-
-      users.psyc = {
-        enable = true;
-      };
     };
 
     stylix = {

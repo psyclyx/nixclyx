@@ -6,11 +6,11 @@
   ...
 }:
 let
-  cfg = config.psyclyx.users.psyc;
+  cfg = config.psyclyx.nixos.users.psyc;
 in
 {
   options = {
-    psyclyx.users.psyc = {
+    psyclyx.nixos.users.psyc = {
       enable = lib.mkEnableOption "psyc user";
       server = lib.mkEnableOption "roles for server";
       hmImport = lib.mkOption {

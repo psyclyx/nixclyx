@@ -1,7 +1,7 @@
 { inputs, pkgs, ... }:
 {
   imports = [
-    inputs.self.nixosModules.psyclyx
+    inputs.self.nixosModules.default
     ./filesystems.nix
   ];
 
@@ -46,18 +46,19 @@
         system = {
           emulation.enable = true;
         };
+
+        roles = {
+          base.enable = true;
+          graphical.enable = true;
+          remote.enable = true;
+          utility.enable = true;
+        };
+
+        users = {
+          psyc.enable = true;
+        };
       };
 
-      roles = {
-        base.enable = true;
-        graphical.enable = true;
-        remote.enable = true;
-        utility.enable = true;
-      };
-
-      users = {
-        psyc.enable = true;
-      };
     };
 
     stylix = {

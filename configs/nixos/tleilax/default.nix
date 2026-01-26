@@ -1,7 +1,7 @@
 { inputs, ... }:
 {
   imports = [
-    inputs.self.nixosModules.psyclyx
+    inputs.self.nixosModules.default
     ./network.nix
   ];
 
@@ -26,20 +26,20 @@
 
         network.ports.ssh = [ 17891 ];
 
+        roles = {
+          base.enable = true;
+          remote.enable = true;
+          utility.enable = true;
+        };
+
         services = {
           tailscale.exitNode = true;
         };
-      };
 
-      roles = {
-        base.enable = true;
-        remote.enable = true;
-        utility.enable = true;
-      };
-
-      users.psyc = {
-        enable = true;
-        server = true;
+        users.psyc = {
+          enable = true;
+          server = true;
+        };
       };
     };
   };
