@@ -11,6 +11,7 @@
     stylix.darwinModules.stylix
     nixclyx.commonModules.darwin
     home-manager.darwinModules.home-manager
+    nix-homebrew.darwinModules.nix-homebrew
     ./programs
     ./roles
     ./services
