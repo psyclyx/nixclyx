@@ -28,13 +28,12 @@
     ];
 
     psyclyx = {
-      filesystems.layouts.bcachefs-pool.enable = true;
 
       nixos = {
         boot = {
           initrd-ssh.enable = true;
         };
-
+        filesystems.layouts.bcachefs-pool.enable = true;
         hardware.presets.hpe.dl360-gen9.enable = true;
       };
 
