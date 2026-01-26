@@ -1,18 +1,16 @@
 { inputs, ... }:
 {
   imports = [
-    inputs.self.nixosModules.psyclyx
+    inputs.self.nixosModules.default
     "${inputs.nixpkgs}/nixos/modules/installer/cd-dvd/installation-cd-minimal-new-kernel-no-zfs.nix"
   ];
 
   config = {
     networking.hostName = "lab-installer";
 
-    psyclyx = {
-      nixos = {
-        boot.systemd.loader.enable = false;
-        hardware.presets.hpe.dl360-gen9.enable = true;
-      };
+    psyclyx.nixos = {
+      boot.systemd.loader.enable = false;
+      hardware.presets.hpe.dl360-gen9.enable = true;
 
       roles = {
         base.enable = true;
