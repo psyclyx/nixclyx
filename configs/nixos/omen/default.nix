@@ -25,6 +25,15 @@
 
     psyclyx = {
       nixos = {
+        hardware = {
+          cpu = {
+            enableMitigations = false;
+            intel.enable = true;
+          };
+
+          gpu.intel.enable = true;
+        };
+
         services = {
           fstrim.enable = true;
           kanata.enable = true;
@@ -35,15 +44,6 @@
         system = {
           emulation.enable = true;
         };
-      };
-
-      hardware = {
-        cpu = {
-          enableMitigations = false;
-          intel.enable = true;
-        };
-
-        gpu.intel.enable = true;
       };
 
       network = {

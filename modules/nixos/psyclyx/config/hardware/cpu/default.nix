@@ -1,11 +1,10 @@
 {
   config,
   lib,
-  pkgs,
   ...
 }:
 let
-  cfg = config.psyclyx.hardware.cpu;
+  cfg = config.psyclyx.nixos.hardware.cpu;
 in
 {
   imports = [
@@ -14,7 +13,7 @@ in
   ];
 
   options = {
-    psyclyx.hardware.cpu = {
+    psyclyx.nixos.hardware.cpu = {
       enableMitigations =
         (lib.mkEnableOption "Runtime patches for CPU vulnerabilities. Whether or not this is worth the potential performance gains depends on workload, the specific CPU model in question (run benchmarks), and threat model.")
         // {

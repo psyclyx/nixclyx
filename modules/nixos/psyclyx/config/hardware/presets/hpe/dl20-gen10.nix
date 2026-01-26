@@ -1,16 +1,16 @@
 { config, lib, ... }:
 let
-  cfg = config.psyclyx.hardware.presets.hpe.dl20-gen10;
+  cfg = config.psyclyx.nixos.hardware.presets.hpe.dl20-gen10;
 in
 {
   options = {
-    psyclyx.hardware.presets.hpe.dl20-gen10 = {
+    psyclyx.nixos.hardware.presets.hpe.dl20-gen10 = {
       enable = lib.mkEnableOption "HPE ProLiant DL20 Gen 10";
     };
   };
 
   config = lib.mkIf cfg.enable {
-    psyclyx = {
+    psyclyx.nixos = {
       hardware = {
         cpu.intel.enable = true;
         drivers = {

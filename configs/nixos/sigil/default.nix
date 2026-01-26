@@ -25,32 +25,43 @@
 
     psyclyx = {
       nixos = {
-        hardware.monitors = {
-          benq = {
-            connector = "DP-4";
-            identifier = "BNQ BenQ RD280U V5R0042101Q";
-            mode = {
-              width = 3840;
-              height = 2560;
-            };
+        hardware = {
+          cpu = {
+            amd.enable = true;
+            enableMitigations = false;
           };
-          gawfolk = {
-            connector = "DP-2";
-            identifier = "QHX GF005 Unknown";
-            mode = {
-              width = 3840;
-              height = 2560;
+
+          gpu.nvidia.enable = true;
+
+          monitors = {
+            benq = {
+              connector = "DP-4";
+              identifier = "BNQ BenQ RD280U V5R0042101Q";
+              mode = {
+                width = 3840;
+                height = 2560;
+              };
             };
-            position.x = -3840;
-          };
-          dell = {
-            connector = "DP-1";
-            identifier = "Dell Inc. DELL S2721QS 9PPZM43";
-            mode = {
-              width = 3840;
-              height = 2160;
+
+            gawfolk = {
+              connector = "DP-2";
+              identifier = "QHX GF005 Unknown";
+              mode = {
+                width = 3840;
+                height = 2560;
+              };
+              position.x = -3840;
             };
-            position.x = 3840;
+
+            dell = {
+              connector = "DP-1";
+              identifier = "Dell Inc. DELL S2721QS 9PPZM43";
+              mode = {
+                width = 3840;
+                height = 2160;
+              };
+              position.x = 3840;
+            };
           };
         };
 
@@ -80,14 +91,6 @@
           "/dev/disk/by-id/nvme-eui.0025384c41416f3c"
           "/dev/disk/by-id/nvme-eui.ace42e00457c0fbf2ee4ac0000000001"
         ];
-      };
-
-      hardware = {
-        cpu = {
-          amd.enable = true;
-          enableMitigations = false;
-        };
-        gpu.nvidia.enable = true;
       };
 
       network = {

@@ -46,10 +46,10 @@
         boot = {
           initrd-ssh.enable = true;
         };
-      };
 
-      hardware = {
-        cpu.intel.enable = true;
+        hardware = {
+          cpu.intel.enable = true;
+        };
       };
 
       roles = {
