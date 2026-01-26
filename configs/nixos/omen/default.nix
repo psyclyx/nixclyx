@@ -34,6 +34,8 @@
           gpu.intel.enable = true;
         };
 
+        network.wireless.enable = true;
+
         services = {
           fstrim.enable = true;
           kanata.enable = true;
@@ -44,11 +46,6 @@
         system = {
           emulation.enable = true;
         };
-      };
-
-      network = {
-        enable = true;
-        wireless = true;
       };
 
       roles = {

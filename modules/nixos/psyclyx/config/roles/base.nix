@@ -16,7 +16,6 @@ in
 
   config = lib.mkIf cfg.enable {
     psyclyx = {
-      network.enable = true;
 
       nixos = {
         boot = {
@@ -29,6 +28,8 @@ in
         filesystems = {
           bcachefs.enable = lib.mkDefault true;
         };
+
+        network.networkd.enable = true;
 
         programs = {
           zsh.enable = lib.mkDefault true;

@@ -24,14 +24,12 @@
       nixos = {
         hardware.presets.hpe.dl20-gen10.enable = true;
 
+        network.ports.ssh = [ 17891 ];
+
         services = {
           tailscale.exitNode = true;
         };
       };
-
-      network.ports.ssh = [ 17891 ];
-
-      network.enable = true;
 
       roles = {
         base.enable = true;

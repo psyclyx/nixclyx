@@ -1,18 +1,18 @@
 { config, lib, ... }:
 let
   cfg = config.psyclyx.nixos.services.openssh;
-  ports = config.psyclyx.network.ports.ssh;
+  ports = config.psyclyx.nixos.network.ports.ssh;
 in
 {
   options = {
-    psyclyx = {
+    psyclyx.nixos = {
       network.ports.ssh = lib.mkOption {
         type = lib.types.listOf lib.types.port;
         default = [ 22 ];
         description = "Ports for OpenSSH to listen on.";
       };
 
-      nixos.services.openssh = {
+      services.openssh = {
         enable = lib.mkEnableOption "Enable OpenSSH.";
         agentAuth = {
           enable = lib.mkOption {
