@@ -1,13 +1,9 @@
 {
   config,
   lib,
-  inputs,
-  pkgs,
   ...
 }:
 let
-  inherit (pkgs.stdenv.hostPlatform) system;
-  inherit (inputs.ghostty.packages."${system}") ghostty;
   cfg = config.psyclyx.home.programs.ghostty;
 in
 {
@@ -21,7 +17,6 @@ in
   config = lib.mkIf cfg.enable {
     programs.ghostty = {
       enable = true;
-      package = ghostty;
       settings = {
         shell-integration-features = "ssh-env";
       };

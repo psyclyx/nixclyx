@@ -1,8 +1,9 @@
-{ inputs, ... }:
+{ nixclyx, nixpkgs, ... }:
+{ ... }:
 {
   imports = [
-    inputs.self.nixosModules.default
-    "${inputs.nixpkgs}/nixos/modules/installer/cd-dvd/installation-cd-minimal-new-kernel-no-zfs.nix"
+    nixclyx.nixosModules.default
+    "${nixpkgs}/nixos/modules/installer/cd-dvd/installation-cd-minimal-new-kernel-no-zfs.nix"
   ];
 
   config = {

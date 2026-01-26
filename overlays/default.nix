@@ -1,4 +1,4 @@
-{ nixclyx }:
+{ nixclyx, ... }:
 {
   default =
     final: prev:

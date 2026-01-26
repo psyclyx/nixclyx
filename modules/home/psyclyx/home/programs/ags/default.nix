@@ -2,7 +2,6 @@
   config,
   lib,
   pkgs,
-  inputs,
   ...
 }:
 let
@@ -11,6 +10,8 @@ let
     mkIf
     ;
   inherit (pkgs.stdenv.hostPlatform) system;
+
+  inherit (config.psyclyx.home.deps) astal;
 
   cfg = config.psyclyx.home.programs.ags;
 in
@@ -28,7 +29,7 @@ in
       configDir = ./shell;
       extraPackages =
         let
-          astalPkgs = inputs.astal.packages.${system};
+          astalPkgs = astal.packages.${system};
         in
         [
           astalPkgs.tray

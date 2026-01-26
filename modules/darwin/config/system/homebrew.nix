@@ -2,18 +2,14 @@
   config,
   lib,
   pkgs,
-  inputs,
   ...
 }:
 let
-  inherit (inputs) nix-homebrew;
   inherit (pkgs.stdenv) hostPlatform;
 
   cfg = config.psyclyx.system.homebrew;
 in
 {
-  imports = [ nix-homebrew.darwinModules.nix-homebrew ];
-
   options = {
     psyclyx.system.homebrew = {
       enable = lib.mkEnableOption "homebrew config";

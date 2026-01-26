@@ -1,8 +1,8 @@
+{ nixpkgs, ... }@deps:
 rec {
-  nixos = ./nixos;
+  nixos = nixpkgs.lib.modules.importApply ./nixos deps;
   roles = ./roles;
   users = ./users;
-
   default =
     { ... }:
     {
