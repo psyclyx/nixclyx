@@ -44,5 +44,5 @@
 
   };
 
-  outputs = inputs: import ./outputs.nix inputs;
+  outputs = inputs: import ./outputs.nix (builtins.removeAttrs inputs [ "self" ]);
 }

@@ -1,15 +1,12 @@
 {
   config,
   lib,
-  inputs,
   ...
 }:
 let
   cfg = config.psyclyx.system.home-manager;
 in
 {
-  imports = [ inputs.home-manager.darwinModules.home-manager ];
-
   options = {
     psyclyx.system.home-manager = {
       enable = lib.mkEnableOption "home-manager config";
@@ -18,10 +15,9 @@ in
 
   config = lib.mkIf cfg.enable {
     home-manager = {
-      sharedModules = [ inputs.self.homeManagerModules.psyclyx ];
+      sharedModules = [ config.psyclyx.darwin.deps.nixclyx.homeManagerModules.default ];
       useGlobalPkgs = true;
       useUserPackages = true;
-      extraSpecialArgs = { inherit inputs; };
     };
   };
 }

@@ -1,11 +1,11 @@
 {
-  inputs,
   config,
   pkgs,
   lib,
   ...
 }:
 let
+  inherit (config.psyclyx.nixos.deps) nixclyx;
   cfg = config.psyclyx.nixos.users.psyc;
 in
 {
@@ -28,16 +28,16 @@ in
         ];
 
         isNormalUser = true;
-        openssh.authorizedKeys.keys = inputs.self.common.keys.psyc.openssh;
+        openssh.authorizedKeys.keys = nixclyx.common.keys.psyc.openssh;
         shell = pkgs.zsh;
       };
 
-      root.openssh.authorizedKeys.keys = inputs.self.common.keys.psyc.openssh;
+      root.openssh.authorizedKeys.keys = nixclyx.common.keys.psyc.openssh;
     };
 
     home-manager.users.psyc = {
       imports = [
-        inputs.self.homeManagerModules.psyclyx
+        nixclyx.homeManagerModules.default
         cfg.hmImport
       ];
 

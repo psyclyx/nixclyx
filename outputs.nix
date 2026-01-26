@@ -1,57 +1,54 @@
 inputs:
 let
-  inherit (inputs) nixpkgs colmena self;
-  inherit (nixpkgs) lib;
-  nixclyx = self;
+  inherit (inputs) nixpkgs colmena;
 
-  psyclib = import ./lib { inherit lib; };
-in
-psyclib.mkFlakeOutputs {
-  systems = [
-    "x86_64-linux"
-    "aarch64-linux"
-    "x86_64-darwin"
-    "aarch64-darwin"
-  ];
+  psyclib = import ./lib { inherit (nixpkgs) lib; };
 
-  perSystemArgs =
-    { system, ... }:
-    {
-      inherit
-        colmena
-        nixclyx
-        system
-        ;
-      pkgs = import nixpkgs {
-        inherit system;
-        config = {
-          allowUnfree = true;
-          nvidia.acceptLicense = true;
-        };
-        overlays = [ nixclyx.overlays.default ];
-      };
-    };
-
-  perSystemOutputs = {
-    packages = import ./packages;
-    devShells = import ./devShells;
-    envs = import ./envs;
+  deps = inputs // {
+    inherit nixclyx;
   };
 
-  commonOutputs = {
-    assets = import ./assets { inherit nixclyx; };
-    colmenaHive = import ./colmenaHive.nix {
-      inherit
-        colmena
-        nixclyx
-        nixpkgs
-        inputs
-        ;
+  nixclyx = psyclib.mkFlakeOutputs {
+    systems = [
+      "x86_64-linux"
+      "aarch64-linux"
+      "x86_64-darwin"
+      "aarch64-darwin"
+    ];
+
+    perSystemArgs =
+      { system, ... }:
+      {
+        inherit
+          colmena
+          nixclyx
+          system
+          ;
+        pkgs = import nixpkgs {
+          inherit system;
+          config = {
+            allowUnfree = true;
+            nvidia.acceptLicense = true;
+          };
+          overlays = [ nixclyx.overlays.default ];
+        };
+      };
+
+    perSystemOutputs = {
+      packages = import ./packages;
+      devShells = import ./devShells;
+      envs = import ./envs;
     };
-    lib = psyclib;
-    overlays = import ./overlays { inherit nixclyx; };
-    passthrough = inputs;
-  }
-  // (import ./configs { inherit inputs; })
-  // (import ./modules { inherit lib; });
-}
+
+    commonOutputs = {
+      assets = import ./assets deps;
+      colmenaHive = import ./colmenaHive.nix deps;
+      lib = psyclib;
+      overlays = import ./overlays deps;
+      passthrough = nixclyx;
+    }
+    // (import ./configs deps)
+    // (import ./modules deps);
+  };
+in
+nixclyx

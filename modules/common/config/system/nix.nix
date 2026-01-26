@@ -3,7 +3,6 @@
 }:
 {
   config,
-  inputs,
   lib,
   pkgs,
   ...
@@ -42,14 +41,6 @@ in
 
     nix = {
       package = pkgs.lix;
-
-      registry =
-        let
-          isFlake = input: input._type or null == "flake";
-          flakeInputs = lib.filterAttrs (_: isFlake) inputs;
-          registrySet = flakeInput: { flake = flakeInput; };
-        in
-        lib.mapAttrs (_: registrySet) flakeInputs;
 
       settings = {
         inherit substituters trusted-substituters trusted-public-keys;

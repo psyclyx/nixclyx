@@ -1,10 +1,6 @@
-{ lib }:
-{
-  commonModules = import ./common { inherit lib; };
-
-  darwinModules.psyclyx = ./darwin;
-
-  nixosModules = import ./nixos;
-
-  homeManagerModules = import ./home;
+deps: {
+  commonModules = import ./common deps;
+  darwinModules.psyclyx = ./darwin deps;
+  nixosModules = import ./nixos deps;
+  homeManagerModules = import ./home deps;
 }

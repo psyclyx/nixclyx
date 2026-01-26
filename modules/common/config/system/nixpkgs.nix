@@ -4,7 +4,6 @@
 {
   config,
   lib,
-  inputs,
   ...
 }:
 let
@@ -16,7 +15,7 @@ in
   };
 
   config = lib.mkMerge [
-    { nixpkgs.overlays = [ inputs.self.overlays.default ]; }
+    { nixpkgs.overlays = [ config.psyclyx.common.deps.nixclyx.overlays.default ]; }
 
     (lib.mkIf cfg.enable {
       nixpkgs = {
@@ -24,7 +23,6 @@ in
           allowUnfree = true;
           nvidia.acceptLicense = true;
         };
-        overlays = [ inputs.self.overlays.default ];
       };
     })
   ];

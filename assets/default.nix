@@ -1,1 +1,1 @@
-{ nixclyx }: nixclyx.lib.dirToAttrSet ./.
+{ nixclyx, ... }: nixclyx.lib.dirToAttrSet ./.
