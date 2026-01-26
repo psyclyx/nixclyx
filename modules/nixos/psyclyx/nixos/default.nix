@@ -14,6 +14,7 @@ in
     ./boot
     ./filesystems
     ./hardware
+    ./network
     ./programs
     ./services
     ./system
