@@ -4,11 +4,11 @@
   ...
 }:
 let
-  cfg = config.psyclyx.hardware.gpu.nvidia;
+  cfg = config.psyclyx.nixos.hardware.gpu.nvidia;
 in
 {
   options = {
-    psyclyx.hardware.gpu.nvidia = {
+    psyclyx.nixos.hardware.gpu.nvidia = {
       enable = lib.mkEnableOption "Nvidia GPU (currently 3090)";
     };
   };

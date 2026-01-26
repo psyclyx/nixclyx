@@ -22,14 +22,14 @@
 
     psyclyx = {
       nixos = {
+        hardware.presets.hpe.dl20-gen10.enable = true;
+
         services = {
           tailscale.exitNode = true;
         };
       };
 
       network.ports.ssh = [ 17891 ];
-
-      hardware.presets.hpe.dl20-gen10.enable = true;
 
       network.enable = true;
 

@@ -34,9 +34,9 @@
         boot = {
           initrd-ssh.enable = true;
         };
-      };
 
-      hardware.presets.hpe.dl360-gen9.enable = true;
+        hardware.presets.hpe.dl360-gen9.enable = true;
+      };
 
       roles = {
         base.enable = true;

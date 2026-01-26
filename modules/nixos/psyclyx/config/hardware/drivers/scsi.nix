@@ -1,10 +1,10 @@
 { config, lib, ... }:
 let
-  cfg = config.psyclyx.hardware.drivers.scsi;
+  cfg = config.psyclyx.nixos.hardware.drivers.scsi;
 in
 {
   options = {
-    psyclyx.hardware.drivers.scsi = {
+    psyclyx.nixos.hardware.drivers.scsi = {
       enable = lib.mkEnableOption "SCSI drivers";
       cdRom = lib.mkEnableOption "SCSI CD_ROM" // {
         default = true;

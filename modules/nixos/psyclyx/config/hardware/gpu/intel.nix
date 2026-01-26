@@ -1,10 +1,10 @@
 { config, lib, ... }:
 let
-  cfg = config.psyclyx.hardware.gpu.intel;
+  cfg = config.psyclyx.nixos.hardware.gpu.intel;
 in
 {
   options = {
-    psyclyx.hardware.gpu.intel = {
+    psyclyx.nixos.hardware.gpu.intel = {
       enable = lib.mkEnableOption "Intel graphics (i915 driver, kaby lake)";
     };
   };

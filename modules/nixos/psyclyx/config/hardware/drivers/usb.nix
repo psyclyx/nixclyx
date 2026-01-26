@@ -1,10 +1,10 @@
 { config, lib, ... }:
 let
-  cfg = config.psyclyx.hardware.drivers.usb;
+  cfg = config.psyclyx.nixos.hardware.drivers.usb;
 in
 {
   options = {
-    psyclyx.hardware.drivers.usb = {
+    psyclyx.nixos.hardware.drivers.usb = {
       enable = lib.mkEnableOption "USB drivers";
       hid = lib.mkEnableOption "USB HID" // {
         default = true;

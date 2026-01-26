@@ -5,11 +5,11 @@
   ...
 }:
 let
-  cfg = config.psyclyx.hardware.cpu.amd;
+  cfg = config.psyclyx.nixos.hardware.cpu.amd;
 in
 {
   options = {
-    psyclyx.hardware.cpu.amd = {
+    psyclyx.nixos.hardware.cpu.amd = {
       enable = lib.mkEnableOption "AMD CPU config (currently only Ryzen 5950x)";
     };
   };

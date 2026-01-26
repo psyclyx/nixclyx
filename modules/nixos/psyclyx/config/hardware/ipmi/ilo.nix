@@ -4,11 +4,11 @@
   ...
 }:
 let
-  cfg = config.psyclyx.hardware.ipmi.ilo;
+  cfg = config.psyclyx.nixos.hardware.ipmi.ilo;
 in
 {
   options = {
-    psyclyx.hardware.ipmi.ilo = {
+    psyclyx.nixos.hardware.ipmi.ilo = {
       enable = lib.mkEnableOption "HPE Integrated Lights Out";
     };
   };
