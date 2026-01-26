@@ -1,8 +1,20 @@
-{ lib, ... }:
+deps:
 let
-  importWithArgs = modulePath: importArgs: {
-    imports = [ (lib.modules.importApply modulePath importArgs) ];
-  };
+  importWithArgs =
+    modulePath: importArgs:
+    { lib, ... }:
+    {
+      imports = [
+        (lib.modules.importApply modulePath importArgs)
+        {
+          options.psyclyx.common.deps = lib.mkOption {
+            type = lib.types.attrsOf lib.types.unspecified;
+            default = { };
+          };
+          config.psyclyx.common = { inherit deps; };
+        }
+      ];
+    };
 
   groups = {
     common.moduleGroup = "common";

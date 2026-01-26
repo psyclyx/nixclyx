@@ -1,6 +1,7 @@
-{ inputs, ... }:
+{ nixclyx, ... }:
+{ ... }:
 {
-  imports = [ inputs.self.nixosModules.default ];
+  imports = [ nixclyx.nixosModules.default ];
 
   config = {
     networking.hostName = "vigil";

@@ -1,5 +1,0 @@
-{
-  halo = {
-    modules = [ ./halo ];
-  };
-}

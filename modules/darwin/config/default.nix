@@ -1,14 +1,30 @@
-{ inputs, lib, ... }:
-let
-  inherit (inputs) self stylix;
-in
+{
+  stylix,
+  nixclyx,
+  home-manager,
+  nix-homebrew,
+  ...
+}@deps:
+{ lib, ... }:
 {
   imports = [
     stylix.darwinModules.stylix
-    self.commonModules.darwin
+    nixclyx.commonModules.darwin
+    home-manager.darwinModules.home-manager
     ./programs
     ./roles
     ./services
     ./system
   ];
+
+  options = {
+    psyclyx.darwin.deps = lib.mkOption {
+      type = lib.types.attrsOf lib.types.unspecified;
+      default = { };
+    };
+  };
+
+  config = {
+    psyclyx.darwin = { inherit deps; };
+  };
 }

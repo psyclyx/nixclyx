@@ -1,9 +1,8 @@
-{ inputs }:
+{ nix-darwin, nixpkgs, ... }@deps:
 let
-  inherit (inputs.nix-darwin) darwinSystem;
-
-  mkSystem = args: darwinSystem ({ specialArgs = { inherit inputs; }; } // args);
-
-  hosts = import ./hosts.nix;
+  applyDeps = module: nixpkgs.lib.modules.importApply module deps;
+  hosts = {
+    halo.modules = [ (applyDeps ./halo) ];
+  };
 in
-builtins.mapAttrs (_: mkSystem) hosts
+builtins.mapAttrs (_: nix-darwin.darwinSystem) hosts

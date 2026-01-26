@@ -1,8 +1,6 @@
-{ inputs, ... }:
+{ ... }:
 {
   imports = [
-    inputs.ags.homeManagerModules.default
-    inputs.sops-nix.homeManagerModules.sops
     ./hardware
     ./programs
     ./roles

@@ -1,5 +1,4 @@
 {
-  inputs,
   config,
   lib,
   pkgs,
@@ -46,7 +45,7 @@ in
           }
           {
             name = "pure";
-            src = inputs.zsh-pure;
+            src = config.psyclyx.home.deps.zsh-pure;
           }
         ];
 
