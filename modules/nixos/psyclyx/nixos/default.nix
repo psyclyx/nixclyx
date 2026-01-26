@@ -1,7 +1,6 @@
 { inputs, ... }:
 let
   inherit (inputs)
-    disko
     niri
     self
     stylix
@@ -9,7 +8,6 @@ let
 in
 {
   imports = [
-    disko.nixosModules.disko
     niri.nixosModules.niri
     stylix.nixosModules.stylix
     self.commonModules.nixos

@@ -2,12 +2,23 @@
 {
   imports = [
     inputs.self.nixosModules.psyclyx
-    ./filesystem.nix
     ./network.nix
   ];
 
   config = {
     networking.hostName = "tleilax";
+
+    fileSystems = {
+      "/" = {
+        device = "UUID=a5823c8f-07c7-41c5-ad9f-4782cb5ba154";
+        fsType = "ext4";
+      };
+      "/boot" = {
+        device = "UUID=C8F3-8E47";
+        fsType = "vfat";
+        options = [ "umask=0077" ];
+      };
+    };
 
     psyclyx = {
       nixos = {
