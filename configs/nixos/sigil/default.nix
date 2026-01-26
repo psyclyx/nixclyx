@@ -65,6 +65,10 @@
           };
         };
 
+        network = {
+          dns.client.enable = true;
+        };
+
         programs = {
           glasgow.enable = true;
           steam.enable = true;
@@ -91,10 +95,6 @@
           "/dev/disk/by-id/nvme-eui.0025384c41416f3c"
           "/dev/disk/by-id/nvme-eui.ace42e00457c0fbf2ee4ac0000000001"
         ];
-      };
-
-      network = {
-        dns.client.enable = true;
       };
 
       roles = {

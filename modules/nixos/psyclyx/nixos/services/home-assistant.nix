@@ -1,11 +1,11 @@
 { config, lib, ... }:
 let
   cfg = config.psyclyx.nixos.services.home-assistant;
-  port = config.psyclyx.network.ports.home-assistant;
+  port = config.psyclyx.nixos.network.ports.home-assistant;
 in
 {
   options = {
-    psyclyx = {
+    psyclyx.nixos = {
       network = {
         ports = {
           home-assistant = lib.mkOption {
@@ -15,7 +15,7 @@ in
         };
       };
 
-      nixos.services.home-assistant = {
+      services.home-assistant = {
         enable = lib.mkEnableOption "Enables Home Assistant, with @psyclyx's config";
       };
     };

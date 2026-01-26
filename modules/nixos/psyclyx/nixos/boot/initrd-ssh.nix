@@ -5,18 +5,12 @@
 }:
 let
   cfg = config.psyclyx.nixos.boot.initrd-ssh;
-  portCfg = config.psyclyx.network.ports.initrd-ssh;
+  portCfg = config.psyclyx.nixos.network.ports.initrd-ssh;
 in
 {
   options = {
-    psyclyx = {
-      network.ports.initrd-ssh = lib.mkOption {
-        type = lib.types.port;
-        default = 8022;
-        description = "SSH port to listen on in initrd";
-      };
-
-      nixos.boot.initrd-ssh = {
+    psyclyx.nixos = {
+      boot.initrd-ssh = {
         enable = lib.mkEnableOption "SSH access to initrd for remote disk unlocking";
         authorizedKeys = lib.mkOption {
           type = lib.types.listOf lib.types.str;
@@ -28,6 +22,12 @@ in
           default = [ "/etc/secrets/initrd/ssh_host_ed25519_key" ];
           description = "Paths to SSH host keys for initrd";
         };
+      };
+
+      network.ports.initrd-ssh = lib.mkOption {
+        type = lib.types.port;
+        default = 8022;
+        description = "SSH port to listen on in initrd";
       };
     };
   };

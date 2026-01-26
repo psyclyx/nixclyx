@@ -4,11 +4,11 @@
   ...
 }:
 let
-  cfg = config.psyclyx.network.dns.client;
+  cfg = config.psyclyx.nixos.network.dns.client;
 in
 {
   options = {
-    psyclyx.network.dns.client = {
+    psyclyx.nixos.network.dns.client = {
       enable = lib.mkEnableOption "avahi+systemd-resolved";
     };
   };
