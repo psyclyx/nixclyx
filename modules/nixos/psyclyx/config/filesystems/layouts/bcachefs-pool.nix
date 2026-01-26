@@ -39,7 +39,7 @@ in
       "/" = {
         device = "UUID=${cfg.UUID.root}";
         fsType = "bcachefs";
-        options = builtins.map (x: "x-systemd.wants=${x}") cfg.wants;
+        options = lib.mkIf (cfg.wants != [ ]) (builtins.map (x: "x-systemd.wants=${x}") cfg.wants);
       };
 
       "/boot" = {
