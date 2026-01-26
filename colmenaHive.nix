@@ -2,7 +2,6 @@
   colmena,
   nixclyx,
   nixpkgs,
-  inputs,
   ...
 }:
 colmena.lib.makeHive {
@@ -11,7 +10,6 @@ colmena.lib.makeHive {
       system = "x86_64-linux";
       overlays = [ nixclyx.overlays.default ];
     };
-    specialArgs = { inherit inputs; };
   };
 
   vigil =

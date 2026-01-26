@@ -1,10 +1,7 @@
-{ inputs, ... }:
-let
-  inherit (inputs) self;
-in
+{ nixclyx, ... }:
 {
   imports = [
-    self.darwinModules.psyclyx
+    nixclyx.darwinModules.psyclyx
     ./users.nix
   ];
 
@@ -31,7 +28,7 @@ in
     ];
 
     stylix = {
-      image = self.assets.wallpapers."2x-ppmm-madoka-homura.png";
+      image = nixclyx.assets.wallpapers."2x-ppmm-madoka-homura.png";
     };
   };
 }

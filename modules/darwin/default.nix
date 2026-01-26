@@ -1,3 +1,4 @@
+{ nixpkgs, ... }@deps:
 {
-  config = ./config;
+  config = nixpkgs.lib.importApply ./config deps;
 }

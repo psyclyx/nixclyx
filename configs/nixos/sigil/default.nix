@@ -1,6 +1,7 @@
-{ inputs, pkgs, ... }:
+{ nixclyx, ... }:
+{ pkgs, ... }:
 {
-  imports = [ inputs.self.nixosModules.default ];
+  imports = [ nixclyx.nixosModules.default ];
 
   config = {
     networking.hostName = "sigil";
@@ -111,7 +112,7 @@
     };
 
     stylix = {
-      image = inputs.self.assets.wallpapers."4x-ppmm-mami.jpg";
+      image = nixclyx.assets.wallpapers."4x-ppmm-mami.jpg";
       polarity = "dark";
     };
   };

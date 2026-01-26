@@ -25,8 +25,6 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    ghostty.url = "github:ghostty-org/ghostty";
-
     ags = {
       url = "github:aylur/ags";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -46,5 +44,5 @@
 
   };
 
-  outputs = inputs: import ./outputs.nix inputs;
+  outputs = inputs: import ./outputs.nix (builtins.removeAttrs inputs [ "self" ]);
 }

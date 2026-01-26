@@ -1,11 +1,8 @@
-{
-  inputs,
-  pkgs,
-  ...
-}:
+{ nixclyx, ... }:
+{ pkgs, ... }:
 {
   imports = [
-    inputs.self.nixosModules.default
+    nixclyx.nixosModules.default
   ];
 
   config = {
