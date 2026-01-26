@@ -2,5 +2,6 @@
 {
   imports = [
     ./bcachefs.nix
+    ./layouts
   ];
 }
