@@ -1,0 +1,7 @@
+{ ... }:
+{
+  imports = [
+    ./bcachefs.nix
+    ./layouts
+  ];
+}

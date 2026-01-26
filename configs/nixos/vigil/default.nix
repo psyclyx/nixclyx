@@ -1,6 +1,6 @@
 { inputs, ... }:
 {
-  imports = [ inputs.self.nixosModules.psyclyx ];
+  imports = [ inputs.self.nixosModules.default ];
 
   config = {
     networking.hostName = "vigil";
@@ -46,21 +46,21 @@
         boot = {
           initrd-ssh.enable = true;
         };
-      };
 
-      hardware = {
-        cpu.intel.enable = true;
-      };
+        hardware = {
+          cpu.intel.enable = true;
+        };
 
-      roles = {
-        base.enable = true;
-        remote.enable = true;
-        utility.enable = true;
-      };
+        roles = {
+          base.enable = true;
+          remote.enable = true;
+          utility.enable = true;
+        };
 
-      users.psyc = {
-        enable = true;
-        server = true;
+        users.psyc = {
+          enable = true;
+          server = true;
+        };
       };
     };
   };
