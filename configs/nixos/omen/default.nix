@@ -1,7 +1,7 @@
 { inputs, pkgs, ... }:
 {
   imports = [
-    inputs.self.nixosModules.psyclyx
+    inputs.self.nixosModules.default
     ./filesystems.nix
   ];
 
@@ -25,6 +25,17 @@
 
     psyclyx = {
       nixos = {
+        hardware = {
+          cpu = {
+            enableMitigations = false;
+            intel.enable = true;
+          };
+
+          gpu.intel.enable = true;
+        };
+
+        network.wireless.enable = true;
+
         services = {
           fstrim.enable = true;
           kanata.enable = true;
@@ -35,32 +46,19 @@
         system = {
           emulation.enable = true;
         };
-      };
 
-      hardware = {
-        cpu = {
-          enableMitigations = false;
-          intel.enable = true;
+        roles = {
+          base.enable = true;
+          graphical.enable = true;
+          remote.enable = true;
+          utility.enable = true;
         };
 
-        gpu.intel.enable = true;
+        users = {
+          psyc.enable = true;
+        };
       };
 
-      network = {
-        enable = true;
-        wireless = true;
-      };
-
-      roles = {
-        base.enable = true;
-        graphical.enable = true;
-        remote.enable = true;
-        utility.enable = true;
-      };
-
-      users = {
-        psyc.enable = true;
-      };
     };
 
     stylix = {

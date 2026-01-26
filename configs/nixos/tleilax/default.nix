@@ -1,7 +1,7 @@
 { inputs, ... }:
 {
   imports = [
-    inputs.self.nixosModules.psyclyx
+    inputs.self.nixosModules.default
     ./network.nix
   ];
 
@@ -22,26 +22,24 @@
 
     psyclyx = {
       nixos = {
+        hardware.presets.hpe.dl20-gen10.enable = true;
+
+        network.ports.ssh = [ 17891 ];
+
+        roles = {
+          base.enable = true;
+          remote.enable = true;
+          utility.enable = true;
+        };
+
         services = {
           tailscale.exitNode = true;
         };
-      };
 
-      network.ports.ssh = [ 17891 ];
-
-      hardware.presets.hpe.dl20-gen10.enable = true;
-
-      network.enable = true;
-
-      roles = {
-        base.enable = true;
-        remote.enable = true;
-        utility.enable = true;
-      };
-
-      users.psyc = {
-        enable = true;
-        server = true;
+        users.psyc = {
+          enable = true;
+          server = true;
+        };
       };
     };
   };
