@@ -37,6 +37,7 @@ in
       pkgs.nix-output-monitor
       pkgs.nix-tree
       pkgs.nixfmt-tree
+      pkgs.npins
     ];
 
     nix = {
