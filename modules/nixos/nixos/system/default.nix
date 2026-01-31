@@ -12,5 +12,6 @@
     ./sudo.nix
     ./swap.nix
     ./timezone.nix
+    ./yubikey.nix
   ];
 }
