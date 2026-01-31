@@ -19,5 +19,6 @@ in
   stylix = loadFlake pins.stylix;
   ags = loadFlake pins.ags;
   astal = loadFlake pins.astal;
+  nvf = loadFlake pins.nvf;
   #  niri = loadFlake pins.niri;
 }
