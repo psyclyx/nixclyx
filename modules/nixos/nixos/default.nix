@@ -3,6 +3,7 @@
   stylix,
   nixclyx,
   home-manager,
+  nvf,
   ...
 }@deps:
 { lib, ... }:
@@ -12,6 +13,7 @@
     stylix.nixosModules.stylix
     nixclyx.commonModules.nixos
     home-manager.nixosModules.home-manager
+    nvf.nixosModules.default
     ./boot
     ./filesystems
     ./hardware

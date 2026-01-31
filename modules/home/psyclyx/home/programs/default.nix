@@ -9,7 +9,6 @@
     ./git.nix
     ./helix
     ./kitty.nix
-    ./neovim
     #    ./niri
     ./shell.nix
     ./ssh.nix

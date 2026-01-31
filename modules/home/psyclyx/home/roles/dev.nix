@@ -2,12 +2,10 @@
   config,
   lib,
   ...
-}:
-let
+}: let
   inherit (lib) mkDefault mkEnableOption mkIf;
   cfg = config.psyclyx.home.roles.dev;
-in
-{
+in {
   options = {
     psyclyx.home.roles.dev = {
       enable = mkEnableOption "Development tools and configuration";
@@ -21,7 +19,6 @@ in
           fastfetch.enable = mkDefault true;
           git.enable = mkDefault true;
           helix.enable = mkDefault true;
-          neovim.enable = mkDefault true;
         };
       };
     };
