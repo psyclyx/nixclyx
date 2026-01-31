@@ -45,6 +45,7 @@ in
           stylix.enable = lib.mkDefault true;
           swap.enable = lib.mkDefault true;
           timezone.enable = lib.mkDefault true;
+          yubikey.enable = lib.mkDefault true;
         };
       };
     };
