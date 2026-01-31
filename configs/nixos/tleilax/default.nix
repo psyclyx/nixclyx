@@ -1,8 +1,6 @@
-{ nixclyx, ... }:
 { ... }:
 {
   imports = [
-    nixclyx.nixosModules.default
     ./network.nix
   ];
 

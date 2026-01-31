@@ -1,8 +1,6 @@
-{ nixclyx, ... }:
-{ pkgs, ... }:
+{ config, pkgs, ... }:
 {
   imports = [
-    nixclyx.nixosModules.default
     ./filesystems.nix
   ];
 
@@ -63,7 +61,7 @@
     };
 
     stylix = {
-      image = nixclyx.assets.wallpapers."2x-ppmm-madoka-homura.png";
+      image = config.psyclyx.nixos.deps.nixclyx.assets.wallpapers."2x-ppmm-madoka-homura.png";
       polarity = "dark";
     };
   };

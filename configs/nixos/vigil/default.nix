@@ -1,8 +1,5 @@
-{ nixclyx, ... }:
 { ... }:
 {
-  imports = [ nixclyx.nixosModules.default ];
-
   config = {
     networking.hostName = "vigil";
 

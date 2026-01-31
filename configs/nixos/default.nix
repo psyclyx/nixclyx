@@ -1,25 +1,39 @@
-{ nixpkgs, ... }@deps:
+{ nixpkgs, nixclyx, ... }@deps:
 let
+  module = nixclyx.nixosModules.default;
+
   hosts = {
-    sigil.modules = [ (import ./sigil deps) ];
-    omen.modules = [ (import ./omen deps) ];
-    tleilax.modules = [ (import ./tleilax deps) ];
-    vigil.modules = [ (import ./vigil deps) ];
-    lab-installer.modules = [ (import ./lab/installer.nix deps) ];
+    sigil.modules = [
+      module
+      ./sigil
+    ];
+    omen.modules = [
+      module
+      ./omen
+    ];
+    tleilax.modules = [
+      module
+      ./tleilax
+    ];
+    vigil.modules = [
+      module
+      ./vigil
+    ];
+
     lab-1.modules = [
-      (import ./lab/base.nix deps)
+      module
       ./lab/lab-1.nix
     ];
     lab-2.modules = [
-      (import ./lab/base.nix deps)
+      module
       ./lab/lab-2.nix
     ];
     lab-3.modules = [
-      (import ./lab/base.nix deps)
+      module
       ./lab/lab-3.nix
     ];
     lab-4.modules = [
-      (import ./lab/base.nix deps)
+      module
       ./lab/lab-4.nix
     ];
   };

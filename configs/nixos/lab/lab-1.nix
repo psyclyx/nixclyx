@@ -1,5 +1,7 @@
 { ... }:
 {
+  imports = [ ./base.nix ];
+
   config = {
     networking.hostName = "lab-1";
     psyclyx.nixos = {

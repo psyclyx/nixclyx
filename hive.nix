@@ -1,21 +1,37 @@
+let
+  nixclyx = import ./.;
+  module = nixclyx.nixosModules.default;
+in
 {
-  colmena,
-  nixclyx,
-  nixpkgs,
-  ...
-}:
-colmena.lib.makeHive {
   meta = {
-    nixpkgs = import nixpkgs {
+    nixpkgs = import nixclyx.passthrough.nixpkgs {
       system = "x86_64-linux";
       overlays = [ nixclyx.overlays.default ];
     };
   };
 
+  sigil =
+    { ... }:
+    {
+      imports = [
+        module
+        ./configs/nixos/sigil
+      ];
+      deployment = {
+        allowLocalDeployment = true;
+        targetHost = "sigil.home.psyclyx.net";
+        targetPort = 22;
+        targetUser = "root";
+      };
+    };
+
   vigil =
     { ... }:
     {
-      imports = [ ./configs/nixos/vigil ];
+      imports = [
+        module
+        ./configs/nixos/vigil
+      ];
       deployment = {
         targetHost = "vigil.home.psyclyx.net";
         targetPort = 22;
@@ -26,7 +42,10 @@ colmena.lib.makeHive {
   lab-1 =
     { ... }:
     {
-      imports = [ ./configs/nixos/lab/lab-1.nix ];
+      imports = [
+        module
+        ./configs/nixos/lab/lab-1.nix
+      ];
       deployment = {
         targetHost = "lab-1.home.psyclyx.net";
         targetPort = 22;
@@ -37,7 +56,10 @@ colmena.lib.makeHive {
   lab-2 =
     { ... }:
     {
-      imports = [ ./configs/nixos/lab/lab-2.nix ];
+      imports = [
+        module
+        ./configs/nixos/lab/lab-2.nix
+      ];
       deployment = {
         targetHost = "lab-2.home.psyclyx.net";
         targetPort = 22;
@@ -48,7 +70,10 @@ colmena.lib.makeHive {
   lab-3 =
     { ... }:
     {
-      imports = [ ./configs/nixos/lab/lab-3.nix ];
+      imports = [
+        module
+        ./configs/nixos/lab/lab-3.nix
+      ];
       deployment = {
         targetHost = "lab-3.home.psyclyx.net";
         targetPort = 22;
@@ -59,7 +84,10 @@ colmena.lib.makeHive {
   lab-4 =
     { ... }:
     {
-      imports = [ ./configs/nixos/lab/lab-4.nix ];
+      imports = [
+        module
+        ./configs/nixos/lab/lab-4.nix
+      ];
       deployment = {
         targetHost = "lab-4.home.psyclyx.net";
         targetPort = 22;
