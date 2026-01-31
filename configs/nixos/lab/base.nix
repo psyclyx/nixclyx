@@ -1,10 +1,5 @@
-{ nixclyx, ... }:
 { pkgs, ... }:
 {
-  imports = [
-    nixclyx.nixosModules.default
-  ];
-
   config = {
     boot = {
       initrd = {

@@ -2,7 +2,7 @@
   imports = [
     ./aspell.nix
     ./glasgow.nix
-    ./niri.nix
+    #    ./niri.nix
     ./qmk.nix
     ./ssacli.nix
     ./steam.nix

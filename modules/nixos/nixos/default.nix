@@ -1,5 +1,5 @@
 {
-  niri,
+  #niri,
   stylix,
   nixclyx,
   home-manager,
@@ -8,7 +8,7 @@
 { lib, ... }:
 {
   imports = [
-    niri.nixosModules.niri
+    #    niri.nixosModules.niri
     stylix.nixosModules.stylix
     nixclyx.commonModules.nixos
     home-manager.nixosModules.home-manager

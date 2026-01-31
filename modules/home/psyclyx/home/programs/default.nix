@@ -10,7 +10,7 @@
     ./helix
     ./kitty.nix
     ./neovim
-    ./niri
+    #    ./niri
     ./shell.nix
     ./ssh.nix
     ./sway
