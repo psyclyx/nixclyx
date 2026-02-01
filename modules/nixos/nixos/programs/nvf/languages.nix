@@ -30,7 +30,10 @@
         crates.enable = true;
       };
       clojure.enable = true;
-      zig.enable = true;
+      zig = {
+        enable = true;
+        dap.enable = true;
+      };
       lua.enable = true;
       ts.enable = true;
       clang.enable = true;
