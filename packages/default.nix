@@ -8,6 +8,7 @@ nixclyx.lib.callSupportedPackages pkgs {
   ensure-key = ./ensure-key.nix;
   sign-key = ./sign-key.nix;
   provision-host = ./provision-host.nix;
+  pki-manage = ./pki-manage.nix;
   ssacli = ./ssacli.nix;
   upscale-image = ./upscale-image;
 }

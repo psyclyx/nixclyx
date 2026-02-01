@@ -31,6 +31,7 @@ writeShellApplication {
       host --std sshd      /etc/ssh/ssh_host_ed25519_key
       host --std initrd    /etc/secrets/initrd/ssh_host_ed25519_key
       user --std root      /root/.ssh/id_ed25519
+      user --std self      ~/.ssh/id_ed25519
       wg   --std wg        /etc/secrets/wireguard/private.key
       ca   --std host      ~/.ssh/host_ca
       ca   --std initrd    ~/.ssh/initrd_host_ca
@@ -61,6 +62,7 @@ writeShellApplication {
         host:sshd)   base="/etc/ssh/ssh_host_ed25519_key" ;;
         host:initrd) base="/etc/secrets/initrd/ssh_host_ed25519_key" ;;
         user:root)   base="/root/.ssh/id_ed25519" ;;
+        user:self)   base="$HOME/.ssh/id_ed25519" ;;
         wg:wg)       base="/etc/secrets/wireguard/private.key" ;;
         ca:host)     base="$HOME/.ssh/host_ca" ;;
         ca:initrd)   base="$HOME/.ssh/initrd_host_ca" ;;

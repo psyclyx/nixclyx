@@ -10,6 +10,7 @@
       pkgs.psyclyx.ensure-key
       pkgs.psyclyx.sign-key
       pkgs.psyclyx.provision-host
+      pkgs.psyclyx.pki-manage
       nixfmt
       nixd
       nix-tree
