@@ -49,7 +49,11 @@ in {
           updatetime = 250;
         };
 
-        clipboard.enable = true;
+        clipboard = {
+          enable = true;
+          registers = "unnamedplus";
+          providers.wl-copy.enable = true;
+        };
         searchCase = "smart";
         hideSearchHighlight = true;
         preventJunkFiles = true;
