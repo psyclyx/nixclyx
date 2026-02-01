@@ -42,5 +42,27 @@
 
     # ── REPL ──────────────────────────────────────────────────────
     repl.conjure.enable = true;
+
+    # ── Git ───────────────────────────────────────────────────────
+    git.vim-fugitive.enable = true;
+
+    # ── AI assistant ──────────────────────────────────────────────
+    assistant.avante-nvim = {
+      enable = true;
+      setupOpts = {
+        provider = "claude";
+        behaviour = {
+          auto_set_keymaps = true;
+          auto_set_highlight_group = true;
+          minimize_diff = true;
+          enable_token_counting = true;
+        };
+        windows = {
+          position = "right";
+          width = 30;
+          wrap = true;
+        };
+      };
+    };
   };
 }
