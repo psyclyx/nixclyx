@@ -2,11 +2,13 @@ let
   inputs = import ./inputs.nix;
   inherit (inputs) nixpkgs colmena;
 
-  psyclib = import ./lib { inherit (nixpkgs) lib; };
+  psyclib = import ./lib {inherit (nixpkgs) lib;};
 
-  deps = inputs // {
-    inherit nixclyx;
-  };
+  deps =
+    inputs
+    // {
+      inherit nixclyx;
+    };
 
   nixclyx = psyclib.mkFlakeOutputs {
     systems = [
@@ -16,23 +18,21 @@ let
       "aarch64-darwin"
     ];
 
-    perSystemArgs =
-      { system, ... }:
-      {
-        inherit
-          colmena
-          nixclyx
-          system
-          ;
-        pkgs = import nixpkgs {
-          inherit system;
-          config = {
-            allowUnfree = true;
-            nvidia.acceptLicense = true;
-          };
-          overlays = [ nixclyx.overlays.default ];
+    perSystemArgs = {system, ...}: {
+      inherit
+        colmena
+        nixclyx
+        system
+        ;
+      pkgs = import nixpkgs {
+        inherit system;
+        config = {
+          allowUnfree = true;
+          nvidia.acceptLicense = true;
         };
+        overlays = [nixclyx.overlays.default];
       };
+    };
 
     perSystemOutputs = {
       packages = import ./packages;
@@ -40,14 +40,15 @@ let
       envs = import ./envs;
     };
 
-    commonOutputs = {
-      assets = import ./assets deps;
-      lib = psyclib;
-      overlays = import ./overlays deps;
-      passthrough = inputs;
-    }
-    // (import ./configs deps)
-    // (import ./modules deps);
+    commonOutputs =
+      {
+        assets = import ./assets deps;
+        lib = psyclib;
+        overlays = import ./overlays deps;
+        passthrough = inputs;
+      }
+      // (import ./configs deps)
+      // (import ./modules deps);
   };
 in
-nixclyx
+  nixclyx

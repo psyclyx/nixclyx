@@ -16,31 +16,33 @@ writeShellApplication {
     Usage: provision-host [options] <hostname> <fqdn>
 
     Options:
-      --connect HOST    ssh destination override
-      --root PATH       remote path prefix (default: none)
-      --host-ca PATH    host CA key (default: ~/.ssh/host_ca)
-      --user-ca PATH    user CA key (default: ~/.ssh/user_ca)
-      --initrd-ca PATH  initrd host CA key (default: ~/.ssh/initrd_host_ca)
-      --rotate          rotate all keys before generating
-      --check           check only, don't generate or sign
+      --connect HOST      ssh destination override
+      --root PATH         remote path prefix (default: none)
+      --host-ca PATH      host CA key (default: ~/.ssh/host_ca)
+      --user-ca PATH      user CA key (default: ~/.ssh/user_ca)
+      --initrd-ca PATH    initrd host CA key (default: ~/.ssh/initrd_host_ca)
+      --serial-start NUM  starting serial number for certificates
+      --rotate            rotate all keys before generating
+      --check             check only, don't generate or sign
     USAGE
       exit 1
     }
 
-    CONNECT="" ROOT="" HOST_CA="" INITRD_CA="" USER_CA="" ROTATE="" CHECK=""
+    CONNECT="" ROOT="" HOST_CA="" INITRD_CA="" USER_CA="" ROTATE="" CHECK="" SERIAL_START=""
 
     while [ $# -gt 0 ]; do
       case "$1" in
-        --connect)    CONNECT="$2"; shift 2 ;;
-        --root)       ROOT="$2"; shift 2 ;;
-        --host-ca)    HOST_CA="$2"; shift 2 ;;
-        --initrd-ca)  INITRD_CA="$2"; shift 2 ;;
-        --user-ca)    USER_CA="$2"; shift 2 ;;
-        --rotate)     ROTATE=1; shift ;;
-        --check)      CHECK=1; shift ;;
-        --help)       usage ;;
-        -*)           die "unknown option: $1" ;;
-        *)            break ;;
+        --connect)      CONNECT="$2"; shift 2 ;;
+        --root)         ROOT="$2"; shift 2 ;;
+        --host-ca)      HOST_CA="$2"; shift 2 ;;
+        --initrd-ca)    INITRD_CA="$2"; shift 2 ;;
+        --user-ca)      USER_CA="$2"; shift 2 ;;
+        --serial-start) SERIAL_START="$2"; shift 2 ;;
+        --rotate)       ROTATE=1; shift ;;
+        --check)        CHECK=1; shift ;;
+        --help)         usage ;;
+        -*)             die "unknown option: $1" ;;
+        *)              break ;;
       esac
     done
 
@@ -95,6 +97,12 @@ writeShellApplication {
       [ -n "$INITRD_CA" ] && sign_initrd_args+=(--ca "$INITRD_CA")
       [ -n "$USER_CA" ] && sign_user_args+=(--ca "$USER_CA")
 
+      if [ -n "$SERIAL_START" ]; then
+        sign_host_args+=(--serial "$SERIAL_START")
+        sign_initrd_args+=(--serial "$((SERIAL_START + 1))")
+        sign_user_args+=(--serial "$((SERIAL_START + 2))")
+      fi
+
       host_cert=$(echo "$host_pub" | sign-key "''${sign_host_args[@]}")
       initrd_cert=$(echo "$initrd_pub" | sign-key "''${sign_initrd_args[@]}")
       root_cert=$(echo "$root_pub" | sign-key "''${sign_user_args[@]}")
@@ -107,22 +115,60 @@ writeShellApplication {
     fi
 
     echo "done" >&2
-    jq -n \
-      --arg hostname "$HOSTNAME" \
-      --arg fqdn "$FQDN" \
-      --arg ssh_host "$host_pub" \
-      --arg ssh_host_initrd "$initrd_pub" \
-      --arg ssh_user_root "$root_pub" \
-      --arg wireguard "$wg_pub" \
-      '{
-        hostname: $hostname,
-        fqdn: $fqdn,
-        pubkeys: {
-          ssh_host: $ssh_host,
-          ssh_host_initrd: $ssh_host_initrd,
-          ssh_user_root: $ssh_user_root,
-          wireguard: $wireguard
-        }
-      }'
+
+    serial_args=()
+    if [ -n "$SERIAL_START" ] && [ -z "$CHECK" ]; then
+      serial_args+=(
+        --argjson serial_host "$SERIAL_START"
+        --argjson serial_initrd "$((SERIAL_START + 1))"
+        --argjson serial_user "$((SERIAL_START + 2))"
+        --argjson next_serial "$((SERIAL_START + 3))"
+      )
+    fi
+
+    if [ ''${#serial_args[@]} -gt 0 ]; then
+      jq -n \
+        --arg hostname "$HOSTNAME" \
+        --arg fqdn "$FQDN" \
+        --arg ssh_host "$host_pub" \
+        --arg ssh_host_initrd "$initrd_pub" \
+        --arg ssh_user_root "$root_pub" \
+        --arg wireguard "$wg_pub" \
+        "''${serial_args[@]}" \
+        '{
+          hostname: $hostname,
+          fqdn: $fqdn,
+          pubkeys: {
+            ssh_host: $ssh_host,
+            ssh_host_initrd: $ssh_host_initrd,
+            ssh_user_root: $ssh_user_root,
+            wireguard: $wireguard
+          },
+          serials: {
+            ssh_host: $serial_host,
+            ssh_host_initrd: $serial_initrd,
+            ssh_user_root: $serial_user
+          },
+          next_serial: $next_serial
+        }'
+    else
+      jq -n \
+        --arg hostname "$HOSTNAME" \
+        --arg fqdn "$FQDN" \
+        --arg ssh_host "$host_pub" \
+        --arg ssh_host_initrd "$initrd_pub" \
+        --arg ssh_user_root "$root_pub" \
+        --arg wireguard "$wg_pub" \
+        '{
+          hostname: $hostname,
+          fqdn: $fqdn,
+          pubkeys: {
+            ssh_host: $ssh_host,
+            ssh_host_initrd: $ssh_host_initrd,
+            ssh_user_root: $ssh_user_root,
+            wireguard: $wireguard
+          }
+        }'
+    fi
   '';
 }
