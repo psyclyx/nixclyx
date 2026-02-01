@@ -3,7 +3,9 @@
   lib,
   pkgs,
   ...
-}: {
+}: let
+  cfg = config.psyclyx.nixos.programs.nvf;
+in {
   imports = [
     ./languages.nix
     ./mini.nix
@@ -15,9 +17,10 @@
       enable = lib.mkEnableOption "nvf (neovim)";
     };
   };
+
   config = {
     programs.nvf = {
-      enable = true;
+      enable = lib.mkIf cfg.enable true;
       settings.vim = {
         # ── Core options ──────────────────────────────────────────────
         globals = {
