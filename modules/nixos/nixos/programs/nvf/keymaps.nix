@@ -28,7 +28,7 @@
       {key = "<leader>fs"; mode = ["n"]; action = "<cmd>w<CR>"; silent = true; desc = "Save file";}
       {key = "<leader>fS"; mode = ["n"]; action = "<cmd>wa<CR>"; silent = true; desc = "Save all files";}
       {key = "<leader>ft"; mode = ["n"]; action = "<cmd>lua MiniFiles.open()<CR>"; silent = true; desc = "File tree";}
-      {key = "<leader>fe"; mode = ["n"]; action = "<cmd>lua MiniFiles.open(vim.api.nvim_buf_get_name(0))<CR>"; silent = true; desc = "Find file in tree";}
+      {key = "<leader>fe"; mode = ["n"]; action = "<cmd>lua MiniFiles.open((vim.fn.filereadable(vim.api.nvim_buf_get_name(0)) == 1) and vim.api.nvim_buf_get_name(0) or nil)<CR>"; silent = true; desc = "Find file in tree";}
       {key = "<leader>fy"; mode = ["n"]; action = "<cmd>let @+ = expand(\"%:p\")<CR>"; silent = true; desc = "Yank file path";}
 
       # ── Git (g) ──

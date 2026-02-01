@@ -7,7 +7,10 @@
 in {
   config.programs.nvf.settings.vim = {
     # ── Navigation & finding ──────────────────────────────────────
-    mini.files.enable = true;
+    mini.files = {
+      enable = true;
+      setupOpts.options.use_as_default_explorer = true;
+    };
     mini.pick.enable = true;
     mini.extra.enable = true;
     mini.fuzzy.enable = true;
@@ -46,7 +49,15 @@ in {
     mini.statusline.enable = true;
     mini.tabline.enable = true;
     mini.icons.enable = true;
-    mini.starter.enable = true;
+    mini.starter = {
+      enable = true;
+      setupOpts.items = [
+        (mkLuaInline "require('mini.starter').sections.sessions(5, true)")
+        (mkLuaInline "require('mini.starter').sections.recent_files(5, false, false)")
+        (mkLuaInline "require('mini.starter').sections.builtin_actions()")
+        {name = "File explorer"; action = "lua MiniFiles.open()"; section = "Actions";}
+      ];
+    };
     mini.notify.enable = true;
     mini.indentscope.enable = true;
     mini.cursorword.enable = true;
@@ -135,6 +146,18 @@ in {
         callback = mkLuaInline ''
           function(args)
             vim.bo[args.buf].omnifunc = 'v:lua.MiniCompletion.completefunc_lsp'
+          end
+        '';
+      }
+      {
+        event = ["User"];
+        pattern = ["MiniFilesBufferCreate"];
+        desc = "Map Enter to open file in mini.files";
+        callback = mkLuaInline ''
+          function(args)
+            vim.keymap.set('n', '<CR>', function()
+              MiniFiles.go_in({ close_on_file = true })
+            end, { buffer = args.data.buf_id, desc = 'Open file' })
           end
         '';
       }
