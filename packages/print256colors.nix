@@ -1,4 +1,4 @@
-{ writeShellApplication }:
+{writeShellApplication}:
 writeShellApplication {
   name = "print256colors";
   text = ''
@@ -87,5 +87,4 @@ writeShellApplication {
     print_blocks 16 231 6 6 3 # 6x6x6 colour cube between 16 and 231 inclusive
     print_blocks 232 255 12 2 1 # Not 50, but 24 Shades of Grey
   '';
-
 }

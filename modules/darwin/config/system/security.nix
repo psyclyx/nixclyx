@@ -2,11 +2,9 @@
   config,
   lib,
   ...
-}:
-let
+}: let
   cfg = config.psyclyx.system.security;
-in
-{
+in {
   options = {
     psyclyx.system.security = {
       enable = lib.mkEnableOption "security settings";

@@ -1,8 +1,10 @@
-{ config, lib, ... }:
-let
-  cfg = config.psyclyx.nixos.system.locale;
-in
 {
+  config,
+  lib,
+  ...
+}: let
+  cfg = config.psyclyx.nixos.system.locale;
+in {
   options = {
     psyclyx.nixos.system.locale = {
       enable = lib.mkEnableOption "Locale config";

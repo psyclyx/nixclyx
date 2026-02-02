@@ -2,11 +2,9 @@
   config,
   lib,
   ...
-}:
-let
+}: let
   cfg = config.psyclyx.programs.firefox;
-in
-{
+in {
   options = {
     psyclyx.programs.firefox = {
       enable = lib.mkEnableOption "Firefox browser";
@@ -14,6 +12,6 @@ in
   };
 
   config = lib.mkIf cfg.enable {
-    homebrew.casks = [ "firefox" ];
+    homebrew.casks = ["firefox"];
   };
 }

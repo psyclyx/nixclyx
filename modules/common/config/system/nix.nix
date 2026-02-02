@@ -1,13 +1,9 @@
-{
-  moduleGroup ? "common",
-}:
-{
+{moduleGroup ? "common"}: {
   config,
   lib,
   pkgs,
   ...
-}:
-let
+}: let
   cfg = config.psyclyx.${moduleGroup}.system.nix;
 
   substituters = [
@@ -22,8 +18,7 @@ let
     "psyclyx.cachix.org-1:UFwKXEDn3gLxIW9CeXGdFFUzCIjj8m6IdAQ7GA4XfCk="
     "nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs="
   ];
-in
-{
+in {
   options = {
     psyclyx.${moduleGroup}.system.nix = {
       enable = lib.mkEnableOption "Nix config";
@@ -53,18 +48,18 @@ in
 
         http-connections = 0;
         max-jobs = 4;
-        trusted-users = [ "@builders" ];
+        trusted-users = ["@builders"];
       };
 
       gc = {
         automatic = true;
-        dates = [ "05:00" ];
+        dates = ["05:00"];
         options = "--delete-older-than 7d";
       };
 
       optimise = {
         automatic = true;
-        dates = [ "06:00" ];
+        dates = ["06:00"];
       };
     };
   };

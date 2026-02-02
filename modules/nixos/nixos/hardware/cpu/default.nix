@@ -2,11 +2,9 @@
   config,
   lib,
   ...
-}:
-let
+}: let
   cfg = config.psyclyx.nixos.hardware.cpu;
-in
-{
+in {
   imports = [
     ./amd.nix
     ./intel.nix

@@ -3,17 +3,15 @@
   lib,
   pkgs,
   ...
-}:
-let
+}: let
   cfg = config.psyclyx.nixos.services.locate;
-in
-{
+in {
   options = {
     psyclyx.nixos.services.locate = {
       enable = lib.mkEnableOption "Locate service";
       users = lib.mkOption {
         type = lib.types.listOf lib.types.str;
-        default = [ ];
+        default = [];
         description = "Users to put in the mlocate group";
       };
     };

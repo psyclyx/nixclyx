@@ -2,11 +2,9 @@
   lib,
   config,
   ...
-}:
-let
+}: let
   cfg = config.psyclyx.home.programs.fastfetch;
-in
-{
+in {
   options = {
     psyclyx.home.programs.fastfetch = {
       enable = lib.mkEnableOption "Fastfetch system info";

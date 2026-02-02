@@ -1,5 +1,8 @@
-{ config, pkgs, ... }:
 {
+  config,
+  pkgs,
+  ...
+}: {
   imports = [
     ./hardware.nix
     ./network.nix
@@ -8,23 +11,21 @@
   config = {
     networking.hostName = "sigil";
 
-    environment.systemPackages =
-      let
-        inherit (pkgs.psyclyx) envs;
-      in
-      [
-        envs._3DPrinting
-        envs.forensics
-        envs.languages
-        envs.llm
-        envs.media
-        envs.shell
+    environment.systemPackages = let
+      inherit (pkgs.psyclyx) envs;
+    in [
+      envs._3DPrinting
+      envs.forensics
+      envs.languages
+      envs.llm
+      envs.media
+      envs.shell
 
-        pkgs.android-tools
-        pkgs.audacity
-        pkgs.gimp-with-plugins
-        pkgs.kicad
-      ];
+      pkgs.android-tools
+      pkgs.audacity
+      pkgs.gimp-with-plugins
+      pkgs.kicad
+    ];
 
     psyclyx = {
       nixos = {
@@ -68,7 +69,6 @@
           enable = true;
         };
       };
-
     };
 
     stylix = {

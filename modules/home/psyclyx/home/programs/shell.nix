@@ -1,8 +1,10 @@
-{ config, lib, ... }:
-let
-  cfg = config.psyclyx.home.programs.shell;
-in
 {
+  config,
+  lib,
+  ...
+}: let
+  cfg = config.psyclyx.home.programs.shell;
+in {
   options = {
     psyclyx.home.programs.shell = {
       enable = lib.mkEnableOption "generic shell configuration";

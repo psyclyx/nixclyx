@@ -2,11 +2,9 @@
   config,
   lib,
   ...
-}:
-let
+}: let
   cfg = config.psyclyx.nixos.boot.plymouth;
-in
-{
+in {
   options = {
     psyclyx.nixos.boot.plymouth = {
       enable = lib.mkEnableOption "graphical startup";

@@ -5,9 +5,7 @@
   home-manager,
   nvf,
   ...
-}@deps:
-{ lib, ... }:
-{
+} @ deps: {lib, ...}: {
   imports = [
     #    niri.nixosModules.niri
     stylix.nixosModules.stylix
@@ -27,13 +25,13 @@
     psyclyx.nixos = {
       deps = lib.mkOption {
         type = lib.types.attrsOf lib.types.unspecified;
-        default = { };
+        default = {};
       };
     };
   };
 
   config = {
-    psyclyx.nixos = { inherit deps; };
+    psyclyx.nixos = {inherit deps;};
     system.stateVersion = "25.11";
   };
 }

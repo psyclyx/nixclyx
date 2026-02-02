@@ -1,5 +1,8 @@
-{ config, pkgs, ... }:
 {
+  config,
+  pkgs,
+  ...
+}: {
   imports = [
     ./filesystems.nix
   ];
@@ -7,20 +10,18 @@
   config = {
     networking.hostName = "omen";
 
-    boot.kernelParams = [ "snd-intel-dspcfg.dsp_driver=1" ];
+    boot.kernelParams = ["snd-intel-dspcfg.dsp_driver=1"];
 
-    environment.systemPackages =
-      let
-        inherit (pkgs.psyclyx) envs;
-      in
-      [
-        envs.languages
-        envs.llm
-        envs.media
-        envs.shell
+    environment.systemPackages = let
+      inherit (pkgs.psyclyx) envs;
+    in [
+      envs.languages
+      envs.llm
+      envs.media
+      envs.shell
 
-        pkgs.android-tools
-      ];
+      pkgs.android-tools
+    ];
 
     psyclyx = {
       nixos = {
@@ -57,7 +58,6 @@
           psyc.enable = true;
         };
       };
-
     };
 
     stylix = {

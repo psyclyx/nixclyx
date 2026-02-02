@@ -1,8 +1,10 @@
-{ config, lib, ... }:
-let
-  cfg = config.psyclyx.nixos.hardware.presets.hpe.dl20-gen10;
-in
 {
+  config,
+  lib,
+  ...
+}: let
+  cfg = config.psyclyx.nixos.hardware.presets.hpe.dl20-gen10;
+in {
   options = {
     psyclyx.nixos.hardware.presets.hpe.dl20-gen10 = {
       enable = lib.mkEnableOption "HPE ProLiant DL20 Gen 10";

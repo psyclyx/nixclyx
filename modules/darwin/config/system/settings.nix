@@ -3,11 +3,9 @@
   lib,
   pkgs,
   ...
-}:
-let
+}: let
   cfg = config.psyclyx.system.settings;
-in
-{
+in {
   options = {
     psyclyx.system.settings = {
       enable = lib.mkEnableOption "macOS system settings";

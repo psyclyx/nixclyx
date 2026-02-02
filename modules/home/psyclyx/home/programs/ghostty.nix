@@ -2,11 +2,9 @@
   config,
   lib,
   ...
-}:
-let
+}: let
   cfg = config.psyclyx.home.programs.ghostty;
-in
-{
+in {
   options = {
     psyclyx.home.programs.ghostty = {
       enable = lib.mkEnableOption "ghostty terminal emulator";
@@ -29,10 +27,9 @@ in
     xdg.terminal-exec = {
       enable = true;
       settings.default =
-        if cfg.defaultTerminal then
-          lib.mkBefore [ "com.mitchellh.ghostty.desktop" ]
-        else
-          [ "com.mitchellh.ghostty.desktop" ];
+        if cfg.defaultTerminal
+        then lib.mkBefore ["com.mitchellh.ghostty.desktop"]
+        else ["com.mitchellh.ghostty.desktop"];
     };
   };
 }

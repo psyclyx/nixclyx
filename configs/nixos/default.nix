@@ -1,5 +1,8 @@
-{ nixpkgs, nixclyx, ... }@deps:
-let
+{
+  nixpkgs,
+  nixclyx,
+  ...
+} @ deps: let
   module = nixclyx.nixosModules.default;
 
   hosts = {
@@ -38,4 +41,4 @@ let
     ];
   };
 in
-builtins.mapAttrs (_: nixpkgs.lib.nixosSystem) hosts
+  builtins.mapAttrs (_: nixpkgs.lib.nixosSystem) hosts

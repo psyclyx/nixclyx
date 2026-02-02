@@ -3,11 +3,9 @@
   lib,
   pkgs,
   ...
-}:
-let
+}: let
   cfg = config.psyclyx.nixos.system.yubikey;
-in
-{
+in {
   options = {
     psyclyx.nixos.system.yubikey = {
       enable = lib.mkEnableOption "yubikey support";

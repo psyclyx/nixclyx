@@ -1,9 +1,11 @@
-{ config, lib, ... }:
-let
+{
+  config,
+  lib,
+  ...
+}: let
   cfg = config.psyclyx.nixos.services.gnome-keyring;
   greetdCfg = config.psyclyx.nixos.services.greetd;
-in
-{
+in {
   options = {
     psyclyx.nixos.services.gnome-keyring = {
       enable = lib.mkEnableOption "gnome-keyring";

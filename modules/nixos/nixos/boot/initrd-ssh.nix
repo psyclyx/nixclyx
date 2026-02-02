@@ -2,12 +2,10 @@
   config,
   lib,
   ...
-}:
-let
+}: let
   cfg = config.psyclyx.nixos.boot.initrd-ssh;
   portCfg = config.psyclyx.nixos.network.ports.initrd-ssh;
-in
-{
+in {
   options = {
     psyclyx.nixos = {
       boot.initrd-ssh = {
@@ -19,7 +17,7 @@ in
 
         hostKeyPaths = lib.mkOption {
           type = lib.types.listOf lib.types.str;
-          default = [ "/etc/secrets/initrd/ssh_host_ed25519_key" ];
+          default = ["/etc/secrets/initrd/ssh_host_ed25519_key"];
           description = "Paths to SSH host keys for initrd";
         };
       };

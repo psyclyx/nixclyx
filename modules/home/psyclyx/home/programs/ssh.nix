@@ -3,13 +3,11 @@
   lib,
   pkgs,
   ...
-}:
-let
+}: let
   inherit (lib) mkEnableOption mkIf optionalAttrs;
   inherit (pkgs.stdenv.hostPlatform) isDarwin isLinux;
   cfg = config.psyclyx.home.programs.ssh;
-in
-{
+in {
   options = {
     psyclyx.home.programs.ssh = {
       enable = mkEnableOption "SSH configuration";
@@ -22,15 +20,16 @@ in
         enable = true;
         enableDefaultConfig = false;
         matchBlocks = {
-          "*" = {
-            addKeysToAgent = "yes";
-            compression = true;
-            extraOptions = {
-              "UpdateHostKeys" = "no";
-            };
-            identityFile = config.sops.secrets."ssh/id_psyclyx".path or null;
-          }
-          // optionalAttrs isDarwin { "useKeychain" = "yes"; };
+          "*" =
+            {
+              addKeysToAgent = "yes";
+              compression = true;
+              extraOptions = {
+                "UpdateHostKeys" = "no";
+              };
+              identityFile = config.sops.secrets."ssh/id_psyclyx".path or null;
+            }
+            // optionalAttrs isDarwin {"useKeychain" = "yes";};
 
           "alice157.github.com" = {
             hostname = "github.com";

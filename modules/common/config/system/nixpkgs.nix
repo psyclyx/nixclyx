@@ -1,21 +1,16 @@
-{
-  moduleGroup ? "common",
-}:
-{
+{moduleGroup ? "common"}: {
   config,
   lib,
   ...
-}:
-let
+}: let
   cfg = config.psyclyx.${moduleGroup}.system.nixpkgs;
-in
-{
+in {
   options = {
     psyclyx.${moduleGroup}.system.nixpkgs.enable = lib.mkEnableOption "nixpkgs config (unfree, etc)";
   };
 
   config = lib.mkMerge [
-    { nixpkgs.overlays = [ config.psyclyx.common.deps.nixclyx.overlays.default ]; }
+    {nixpkgs.overlays = [config.psyclyx.common.deps.nixclyx.overlays.default];}
 
     (lib.mkIf cfg.enable {
       nixpkgs = {
@@ -26,5 +21,4 @@ in
       };
     })
   ];
-
 }

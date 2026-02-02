@@ -2,12 +2,10 @@
   config,
   lib,
   ...
-}:
-let
+}: let
   cfg = config.psyclyx.darwin.system.nix;
-in
-{
+in {
   config = lib.mkIf cfg.enable {
-    nix.settings.trusted-users = [ "@admin" ];
+    nix.settings.trusted-users = ["@admin"];
   };
 }

@@ -3,11 +3,9 @@
   lib,
   pkgs,
   ...
-}:
-let
+}: let
   cfg = config.psyclyx.nixos.programs.ssacli;
-in
-{
+in {
   options = {
     psyclyx.nixos.programs.ssacli = {
       enable = lib.mkEnableOption "HPE Smart Storage Array Command Line Interface";
@@ -15,7 +13,7 @@ in
   };
 
   config = lib.mkIf cfg.enable {
-    boot.kernelModules = [ "sg" ];
-    environment.systemPackages = [ pkgs.psyclyx.ssacli ];
+    boot.kernelModules = ["sg"];
+    environment.systemPackages = [pkgs.psyclyx.ssacli];
   };
 }

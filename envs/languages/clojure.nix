@@ -1,31 +1,30 @@
-pkgs:
-let
+pkgs: let
   # Clojure needs node for ClojureScript support
   nodeEnv = import ./node.nix pkgs;
 in
-pkgs.buildEnv {
-  name = "lang-clojure";
-  paths = [
-    # JDK
-    pkgs.temurin-bin
+  pkgs.buildEnv {
+    name = "lang-clojure";
+    paths = [
+      # JDK
+      pkgs.temurin-bin
 
-    # Runtime and build tools
-    pkgs.clojure
-    pkgs.leiningen
-    pkgs.babashka
+      # Runtime and build tools
+      pkgs.clojure
+      pkgs.leiningen
+      pkgs.babashka
 
-    # CLI tools
-    pkgs.neil
-    pkgs.jet
+      # CLI tools
+      pkgs.neil
+      pkgs.jet
 
-    # LSP
-    pkgs.clojure-lsp
+      # LSP
+      pkgs.clojure-lsp
 
-    # Linters
-    pkgs.clj-kondo
+      # Linters
+      pkgs.clj-kondo
 
-    # ClojureScript support via node
-    nodeEnv
-  ];
-  meta.description = "Clojure development environment - JDK, clojure, lein, babashka, graalvm, tooling, and node for ClojureScript";
-}
+      # ClojureScript support via node
+      nodeEnv
+    ];
+    meta.description = "Clojure development environment - JDK, clojure, lein, babashka, graalvm, tooling, and node for ClojureScript";
+  }

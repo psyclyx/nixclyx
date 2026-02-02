@@ -3,11 +3,9 @@
   lib,
   pkgs,
   ...
-}:
-let
+}: let
   cfg = config.psyclyx.nixos.programs.zsh;
-in
-{
+in {
   options = {
     psyclyx.nixos.programs.zsh = {
       defaultShell = lib.mkEnableOption "Zsh as the default shell";
@@ -16,7 +14,7 @@ in
   };
 
   config = lib.mkIf cfg.enable {
-    environment.pathsToLink = [ "/share/zsh" ];
+    environment.pathsToLink = ["/share/zsh"];
     programs.zsh = {
       enable = true;
       enableGlobalCompInit = false;

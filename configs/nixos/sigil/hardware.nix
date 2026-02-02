@@ -1,5 +1,4 @@
-{ ... }:
-{
+{...}: {
   config = {
     psyclyx.nixos.hardware = {
       cpu = {
@@ -39,9 +38,6 @@
           position.x = 3840;
         };
       };
-
     };
-
   };
-
 }

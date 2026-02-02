@@ -3,11 +3,9 @@
   lib,
   pkgs,
   ...
-}:
-let
+}: let
   cfg = config.psyclyx.nixos.programs.glasgow;
-in
-{
+in {
   options = {
     psyclyx.nixos.programs.glasgow = {
       enable = lib.mkEnableOption "Glasgow digital interface explorer";
@@ -21,7 +19,7 @@ in
   config = lib.mkIf cfg.enable {
     psyclyx.nixos.programs.glasgow.users = config.users.groups.wheel.members;
     users.groups.plugdev.members = cfg.users;
-    services.udev.packages = [ pkgs.glasgow ];
-    environment.systemPackages = [ pkgs.glasgow ];
+    services.udev.packages = [pkgs.glasgow];
+    environment.systemPackages = [pkgs.glasgow];
   };
 }

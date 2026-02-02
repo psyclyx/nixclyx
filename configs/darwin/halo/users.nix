@@ -1,9 +1,7 @@
-{ pkgs, ... }:
-let
+{pkgs, ...}: let
   userName = "psyc";
   userHome = "/Users/psyc";
-in
-{
+in {
   config = {
     users.users.psyc = {
       name = userName;
@@ -17,7 +15,7 @@ in
     nix-homebrew.user = userName;
 
     home-manager.users.psyc = {
-      imports = [ ../../home/psyc.nix ];
+      imports = [../../home/psyc.nix];
       psyclyx.configs.psyc = {
         enable = true;
         secrets = true;

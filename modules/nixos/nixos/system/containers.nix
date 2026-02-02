@@ -3,11 +3,9 @@
   lib,
   pkgs,
   ...
-}:
-let
+}: let
   cfg = config.psyclyx.nixos.system.containers;
-in
-{
+in {
   options = {
     psyclyx.nixos.system.containers = {
       enable = lib.mkEnableOption "Container config";
@@ -16,7 +14,7 @@ in
   };
 
   config = lib.mkIf cfg.enable {
-    environment.systemPackages = [ pkgs.distrobox ];
+    environment.systemPackages = [pkgs.distrobox];
     hardware.nvidia-container-toolkit.enable = cfg.nvidia;
     psyclyx.nixos.system.containers.nvidia = lib.mkDefault config.hardware.nvidia.enabled;
     virtualisation = {

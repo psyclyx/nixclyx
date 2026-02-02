@@ -2,11 +2,9 @@
   config,
   lib,
   ...
-}:
-let
+}: let
   cfg = config.psyclyx.nixos.system.swap;
-in
-{
+in {
   options = {
     psyclyx.nixos.system.swap = {
       enable = lib.mkEnableOption "swap config";
@@ -30,7 +28,7 @@ in
   config = lib.mkIf cfg.enable {
     boot = {
       kernel.sysctl."vm.swappiness" = cfg.swappiness;
-      kernelParams = lib.mkIf cfg.zswap [ "zswap.enabled=1" ];
+      kernelParams = lib.mkIf cfg.zswap ["zswap.enabled=1"];
     };
   };
 }

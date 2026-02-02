@@ -3,9 +3,9 @@
   lib,
   pkgs,
   ...
-}:
-let
-  inherit (lib)
+}: let
+  inherit
+    (lib)
     mkDefault
     mkEnableOption
     mkForce
@@ -14,8 +14,7 @@ let
 
   cfg = config.psyclyx.home.programs.sway;
   monitors = config.psyclyx.home.hardware.monitors;
-in
-{
+in {
   imports = [
     ./keybindings.nix
     ./swaylock.nix
@@ -88,17 +87,16 @@ in
       '';
 
       config = {
-        bars = [ { command = "${pkgs.waybar}/bin/waybar"; } ];
+        bars = [{command = "${pkgs.waybar}/bin/waybar";}];
         gaps = {
           smartBorders = "on";
           outer = 4;
           inner = 8;
         };
 
-        colors =
-          let
-            c = config.lib.stylix.colors.withHashtag;
-          in
+        colors = let
+          c = config.lib.stylix.colors.withHashtag;
+        in
           mkForce {
             background = c.base01;
             focused = {
@@ -136,7 +134,7 @@ in
         defaultWorkspace = "workspace number 1";
         floating = {
           criteria = [
-            { app_id = "xdg-desktop-portal-gtk"; }
+            {app_id = "xdg-desktop-portal-gtk";}
             {
               app_id = "firefox";
               title = "Library";
@@ -154,16 +152,25 @@ in
 
         workspaceAutoBackAndForth = true;
         output =
-          if monitors == { }
-          then { "*".scale = "1"; }
-          else lib.mapAttrs' (_: m: lib.nameValuePair m.identifier (
-            { position = "${toString m.position.x},${toString m.position.y}"; scale = toString m.scale; }
-            // lib.optionalAttrs (!m.enable) { enable = "disable"; }
-            // lib.optionalAttrs (m.mode != null) {
-              mode = "${toString m.mode.width}x${toString m.mode.height}"
-                + lib.optionalString (m.mode.refresh != null) "@${toString m.mode.refresh}";
-            }
-          )) monitors;
+          if monitors == {}
+          then {"*".scale = "1";}
+          else
+            lib.mapAttrs' (
+              _: m:
+                lib.nameValuePair m.identifier (
+                  {
+                    position = "${toString m.position.x},${toString m.position.y}";
+                    scale = toString m.scale;
+                  }
+                  // lib.optionalAttrs (!m.enable) {enable = "disable";}
+                  // lib.optionalAttrs (m.mode != null) {
+                    mode =
+                      "${toString m.mode.width}x${toString m.mode.height}"
+                      + lib.optionalString (m.mode.refresh != null) "@${toString m.mode.refresh}";
+                  }
+                )
+            )
+            monitors;
       };
     };
   };

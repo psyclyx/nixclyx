@@ -1,6 +1,9 @@
-{ config, lib, ... }:
 {
+  config,
+  lib,
+  ...
+}: {
   config = lib.mkIf config.psyclyx.nixos.system.nix.enable {
-    nix.settings.trusted-users = [ "@wheel" ];
+    nix.settings.trusted-users = ["@wheel"];
   };
 }

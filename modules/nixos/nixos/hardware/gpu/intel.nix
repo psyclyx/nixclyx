@@ -1,8 +1,10 @@
-{ config, lib, ... }:
-let
-  cfg = config.psyclyx.nixos.hardware.gpu.intel;
-in
 {
+  config,
+  lib,
+  ...
+}: let
+  cfg = config.psyclyx.nixos.hardware.gpu.intel;
+in {
   options = {
     psyclyx.nixos.hardware.gpu.intel = {
       enable = lib.mkEnableOption "Intel graphics (i915 driver, kaby lake)";
@@ -11,13 +13,13 @@ in
 
   config = lib.mkIf cfg.enable {
     boot = {
-      kernelModules = [ "kvm-intel" ];
+      kernelModules = ["kvm-intel"];
       kernelParams = [
         "i915.enable_guc=2"
         "i915.enable_fbc=1"
         "i915.enable_psr=0"
       ];
-      initrd.kernelModules = [ "i915" ];
+      initrd.kernelModules = ["i915"];
     };
   };
 }

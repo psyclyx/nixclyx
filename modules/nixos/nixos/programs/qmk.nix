@@ -3,11 +3,9 @@
   lib,
   pkgs,
   ...
-}:
-let
+}: let
   cfg = config.psyclyx.nixos.programs.qmk;
-in
-{
+in {
   options = {
     psyclyx.nixos.programs.qmk = {
       enable = lib.mkEnableOption "QMK";

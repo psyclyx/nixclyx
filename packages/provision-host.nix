@@ -5,7 +5,11 @@
 }:
 writeShellApplication {
   name = "provision-host";
-  runtimeInputs = [psyclyx.ensure-key psyclyx.sign-key jq];
+  runtimeInputs = [
+    psyclyx.ensure-key
+    psyclyx.sign-key
+    jq
+  ];
   text = ''
     set -euo pipefail
 

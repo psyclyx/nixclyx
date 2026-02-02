@@ -1,9 +1,11 @@
-{ config, lib, ... }:
-let
+{
+  config,
+  lib,
+  ...
+}: let
   cfg = config.psyclyx.nixos.services.home-assistant;
   port = config.psyclyx.nixos.network.ports.home-assistant;
-in
-{
+in {
   options = {
     psyclyx.nixos = {
       network = {
@@ -22,12 +24,12 @@ in
   };
 
   config = lib.mkIf cfg.enable {
-    networking.firewall.allowedTCPPorts = [ port ];
+    networking.firewall.allowedTCPPorts = [port];
     services = {
       home-assistant = {
         enable = true;
         config = {
-          default_config = { };
+          default_config = {};
           http.server_port = port;
         };
 

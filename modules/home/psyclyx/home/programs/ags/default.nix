@@ -3,9 +3,9 @@
   lib,
   pkgs,
   ...
-}:
-let
-  inherit (lib)
+}: let
+  inherit
+    (lib)
     mkEnableOption
     mkIf
     ;
@@ -14,8 +14,7 @@ let
   inherit (config.psyclyx.home.deps) astal;
 
   cfg = config.psyclyx.home.programs.ags;
-in
-{
+in {
   options = {
     psyclyx.home.programs.ags = {
       enable = mkEnableOption "AGS (Aylur's GTK Shell)";
@@ -27,19 +26,17 @@ in
       enable = true;
       systemd.enable = true;
       configDir = ./shell;
-      extraPackages =
-        let
-          astalPkgs = astal.packages.${system};
-        in
-        [
-          astalPkgs.tray
-          astalPkgs.battery
-          astalPkgs.wireplumber
-          astalPkgs.network
-          astalPkgs.apps
-          astalPkgs.powerprofiles
-          pkgs.swayfx
-        ];
+      extraPackages = let
+        astalPkgs = astal.packages.${system};
+      in [
+        astalPkgs.tray
+        astalPkgs.battery
+        astalPkgs.wireplumber
+        astalPkgs.network
+        astalPkgs.apps
+        astalPkgs.powerprofiles
+        pkgs.swayfx
+      ];
     };
   };
 }

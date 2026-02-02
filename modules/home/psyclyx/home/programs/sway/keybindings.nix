@@ -3,10 +3,9 @@
   lib,
   pkgs,
   ...
-}:
-let
+}: let
   # Applications
-  menus = import ./menus.nix { inherit config pkgs lib; };
+  menus = import ./menus.nix {inherit config pkgs lib;};
 
   launcher = lib.getExe config.programs.fuzzel.package;
   power-menu = lib.getExe menus.power-menu;
@@ -39,7 +38,7 @@ let
     lib.imap1 (idx: key: {
       name = "workspace number ${builtins.toString idx}";
       value = builtins.toString key;
-    }) (lib.range 1 9 ++ [ 0 ])
+    }) (lib.range 1 9 ++ [0])
   );
 
   # Configuration
@@ -57,15 +56,19 @@ let
   };
 
   # Binds
-  directionBinds = lib.concatMapAttrs (direction: key: {
-    "${leaderKey}+${key}" = "focus ${direction}";
-    "${leaderKey}+${moveKey}+${key}" = "move ${direction} ${steps.default}";
-  }) directionKeys;
+  directionBinds =
+    lib.concatMapAttrs (direction: key: {
+      "${leaderKey}+${key}" = "focus ${direction}";
+      "${leaderKey}+${moveKey}+${key}" = "move ${direction} ${steps.default}";
+    })
+    directionKeys;
 
-  workspaceBinds = lib.concatMapAttrs (workspace: key: {
-    "${leaderKey}+${key}" = workspace;
-    "${leaderKey}+${moveKey}+${key}" = "move container to ${workspace}";
-  }) workspaceKeys;
+  workspaceBinds =
+    lib.concatMapAttrs (workspace: key: {
+      "${leaderKey}+${key}" = workspace;
+      "${leaderKey}+${moveKey}+${key}" = "move container to ${workspace}";
+    })
+    workspaceKeys;
 
   layoutBinds = {
     "${leaderKey}+semicolon" = "focus mode_toggle";
@@ -114,21 +117,27 @@ let
   };
 
   ## Resize mode
-  resizeBinds = lib.concatMapAttrs (
-    direction: key: with steps; {
-      "${fineKey}+${key}" = "resize ${direction} ${fine}";
-      "${key}" = "resize ${direction} ${default}";
-      "${coarseKey}+${key}" = "resize ${direction} ${coarse}";
-    }
-  ) resizeKeys;
+  resizeBinds =
+    lib.concatMapAttrs (
+      direction: key:
+        with steps; {
+          "${fineKey}+${key}" = "resize ${direction} ${fine}";
+          "${key}" = "resize ${direction} ${default}";
+          "${coarseKey}+${key}" = "resize ${direction} ${coarse}";
+        }
+    )
+    resizeKeys;
 
-  moveBinds = lib.concatMapAttrs (
-    direction: key: with steps; {
-      "${moveKey}+${fineKey}+${key}" = "move ${direction} ${fine}";
-      "${moveKey}+${key}" = "move ${direction} ${default}";
-      "${moveKey}+${coarseKey}+${key}" = "move ${direction} ${coarse}";
-    }
-  ) directionKeys;
+  moveBinds =
+    lib.concatMapAttrs (
+      direction: key:
+        with steps; {
+          "${moveKey}+${fineKey}+${key}" = "move ${direction} ${fine}";
+          "${moveKey}+${key}" = "move ${direction} ${default}";
+          "${moveKey}+${coarseKey}+${key}" = "move ${direction} ${coarse}";
+        }
+    )
+    directionKeys;
 
   # Merged keybindings
   keybindings =
@@ -141,13 +150,12 @@ let
     // mediaBinds
     // controlBinds;
 
-  resizeModeKeybindings = resizeBinds // moveBinds // { "${exitModeKey}" = "mode default"; };
+  resizeModeKeybindings = resizeBinds // moveBinds // {"${exitModeKey}" = "mode default";};
 
   modes = {
     resize = resizeModeKeybindings;
   };
-in
-{
+in {
   wayland.windowManager.sway.config = {
     inherit keybindings modes;
   };

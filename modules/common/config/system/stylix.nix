@@ -1,25 +1,19 @@
-{
-  moduleGroup ? "common",
-}:
-{
+{moduleGroup ? "common"}: {
   config,
   lib,
   pkgs,
   ...
-}:
-let
-  flavours-palette-generator =
-    let
-      flavours = lib.getExe pkgs.flavours;
-      yq = lib.getExe pkgs.yq;
-    in
+}: let
+  flavours-palette-generator = let
+    flavours = lib.getExe pkgs.flavours;
+    yq = lib.getExe pkgs.yq;
+  in
     pkgs.writeShellScriptBin "palette-generator" ''
       ${flavours} generate "$1" "$2" --stdout | ${yq} > "$3"
     '';
 
   cfg = config.psyclyx.${moduleGroup}.system.stylix;
-in
-{
+in {
   options = {
     psyclyx.${moduleGroup}.system.stylix = {
       enable = lib.mkEnableOption "stylix configuration";

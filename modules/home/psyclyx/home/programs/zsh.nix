@@ -3,11 +3,9 @@
   lib,
   pkgs,
   ...
-}:
-let
+}: let
   cfg = config.psyclyx.home.programs.zsh;
-in
-{
+in {
   options = {
     psyclyx.home.programs.zsh = {
       enable = lib.mkEnableOption "Zsh shell with prezto";
@@ -67,7 +65,7 @@ in
 
         syntaxHighlighting = {
           enable = true;
-          highlighters = [ "brackets" ];
+          highlighters = ["brackets"];
         };
 
         initContent = ''

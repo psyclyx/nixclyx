@@ -1,6 +1,8 @@
-{ ags, sops-nix, ... }@deps:
-{ lib, ... }:
 {
+  ags,
+  sops-nix,
+  ...
+} @ deps: {lib, ...}: {
   imports = [
     ags.homeManagerModules.default
     sops-nix.homeManagerModules.sops
@@ -10,11 +12,11 @@
   options = {
     psyclyx.home.deps = lib.mkOption {
       type = lib.types.attrsOf lib.types.unspecified;
-      default = { };
+      default = {};
     };
   };
 
   config = {
-    psyclyx.home = { inherit deps; };
+    psyclyx.home = {inherit deps;};
   };
 }

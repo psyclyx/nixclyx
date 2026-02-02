@@ -4,9 +4,7 @@
   home-manager,
   nix-homebrew,
   ...
-}@deps:
-{ lib, ... }:
-{
+} @ deps: {lib, ...}: {
   imports = [
     stylix.darwinModules.stylix
     nixclyx.commonModules.darwin
@@ -21,11 +19,11 @@
   options = {
     psyclyx.darwin.deps = lib.mkOption {
       type = lib.types.attrsOf lib.types.unspecified;
-      default = { };
+      default = {};
     };
   };
 
   config = {
-    psyclyx.darwin = { inherit deps; };
+    psyclyx.darwin = {inherit deps;};
   };
 }

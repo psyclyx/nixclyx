@@ -1,8 +1,10 @@
-{ config, lib, ... }:
-let
-  cfg = config.psyclyx.nixos.services.sddm;
-in
 {
+  config,
+  lib,
+  ...
+}: let
+  cfg = config.psyclyx.nixos.services.sddm;
+in {
   options = {
     psyclyx.nixos.services.sddm = {
       enable = lib.mkEnableOption "Simple Desktop Display Manager";

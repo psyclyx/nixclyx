@@ -2,8 +2,7 @@
   config,
   lib,
   ...
-}:
-let
+}: let
   cfg = config.psyclyx.home.programs.niri;
   monitors = config.psyclyx.home.hardware.monitors;
 
@@ -18,22 +17,20 @@ let
         enable = monitor.enable;
       }
       // lib.optionalAttrs (monitor.mode != null) {
-        mode =
-          let
-            m = monitor.mode;
-          in
+        mode = let
+          m = monitor.mode;
+        in
           {
             width = m.width;
             height = m.height;
           }
-          // lib.optionalAttrs (m.refresh != null) { refresh = m.refresh; };
+          // lib.optionalAttrs (m.refresh != null) {refresh = m.refresh;};
       }
     );
   };
 
-  monitorOutputs = lib.foldl' (acc: m: acc // toNiriOutput m) { } (lib.attrValues monitors);
-in
-{
+  monitorOutputs = lib.foldl' (acc: m: acc // toNiriOutput m) {} (lib.attrValues monitors);
+in {
   options = {
     psyclyx.home.programs.niri = {
       enable = lib.mkEnableOption "Niri config";
@@ -53,20 +50,20 @@ in
 
         movement =
           lib.mapAttrs
-            (
-              dir: default:
+          (
+            dir: default:
               lib.mkOption {
                 type = lib.types.str;
                 inherit default;
                 description = "Key to move focus ${dir}.";
               }
-            )
-            {
-              left = "h";
-              down = "j";
-              up = "k";
-              right = "l";
-            };
+          )
+          {
+            left = "h";
+            down = "j";
+            up = "k";
+            right = "l";
+          };
       };
     };
   };
@@ -74,34 +71,33 @@ in
   config = lib.mkIf cfg.enable {
     programs.niri = {
       settings = {
-        outputs = lib.mkIf (monitors != { }) monitorOutputs;
-        binds =
-          let
-            inherit (cfg.binds) modifiers movement;
-            prefixBind = prefix: bind: args: {
-              name = "${prefix}+${bind}";
-              value = args;
-            };
-          in
+        outputs = lib.mkIf (monitors != {}) monitorOutputs;
+        binds = let
+          inherit (cfg.binds) modifiers movement;
+          prefixBind = prefix: bind: args: {
+            name = "${prefix}+${bind}";
+            value = args;
+          };
+        in
           lib.mapAttrs' (prefixBind modifiers.leader) {
             "Return".action.spawn = lib.getExe config.programs.fuzzel.package;
-            "Q".action.close-window = { };
-            "Shift+E".action.quit = { };
+            "Q".action.close-window = {};
+            "Shift+E".action.quit = {};
 
-            "${movement.left}".action.focus-column-left = { };
-            "${movement.down}".action.focus-window-or-workspace-down = { };
-            "${movement.up}".action.focus-window-or-workspace-up = { };
-            "${movement.right}".action.focus-column-right = { };
+            "${movement.left}".action.focus-column-left = {};
+            "${movement.down}".action.focus-window-or-workspace-down = {};
+            "${movement.up}".action.focus-window-or-workspace-up = {};
+            "${movement.right}".action.focus-column-right = {};
 
-            "${modifiers.move}+${movement.left}".action.move-column-left = { };
-            "${modifiers.move}+${movement.down}".action.move-window-down-or-to-workspace-down = { };
-            "${modifiers.move}+${movement.up}".action.move-window-up-or-to-workspace-up = { };
-            "${modifiers.move}+${movement.right}".action.move-column-right = { };
+            "${modifiers.move}+${movement.left}".action.move-column-left = {};
+            "${modifiers.move}+${movement.down}".action.move-window-down-or-to-workspace-down = {};
+            "${modifiers.move}+${movement.up}".action.move-window-up-or-to-workspace-up = {};
+            "${modifiers.move}+${movement.right}".action.move-column-right = {};
 
-            "N".action.focus-workspace-down = { };
-            "P".action.focus-workspace-up = { };
-            "${modifiers.move}+N".action.move-column-to-workspace-down = { };
-            "${modifiers.move}+P".action.move-column-to-workspace-up = { };
+            "N".action.focus-workspace-down = {};
+            "P".action.focus-workspace-up = {};
+            "${modifiers.move}+N".action.move-column-to-workspace-down = {};
+            "${modifiers.move}+P".action.move-column-to-workspace-up = {};
 
             "1".action.focus-workspace = 1;
             "2".action.focus-workspace = 2;
@@ -128,19 +124,19 @@ in
             "Shift+Minus".action.set-window-height = "-10%";
             "Shift+Equal".action.set-window-height = "+10%";
 
-            "R".action.switch-preset-column-width = { };
-            "F".action.maximize-column = { };
-            "Shift+F".action.fullscreen-window = { };
+            "R".action.switch-preset-column-width = {};
+            "F".action.maximize-column = {};
+            "Shift+F".action.fullscreen-window = {};
 
-            "Escape".action.toggle-keyboard-shortcuts-inhibit = { };
+            "Escape".action.toggle-keyboard-shortcuts-inhibit = {};
 
             "WheelScrollDown" = {
-              action.focus-workspace-down = { };
+              action.focus-workspace-down = {};
               cooldown-ms = 150;
             };
 
             "WheelScrollUp" = {
-              action.focus-workspace-up = { };
+              action.focus-workspace-up = {};
               cooldown-ms = 150;
             };
           };

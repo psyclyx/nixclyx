@@ -1,5 +1,4 @@
-{ lib, ... }:
-{
+{lib, ...}: {
   options.psyclyx.home.info = {
     name = lib.mkOption {
       type = lib.types.str;

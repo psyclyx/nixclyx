@@ -1,8 +1,10 @@
-{ config, lib, ... }:
-let
-  cfg = config.psyclyx.nixos.hardware.presets.hpe.dl360-gen9;
-in
 {
+  config,
+  lib,
+  ...
+}: let
+  cfg = config.psyclyx.nixos.hardware.presets.hpe.dl360-gen9;
+in {
   options = {
     psyclyx.nixos.hardware.presets.hpe.dl360-gen9 = {
       enable = lib.mkEnableOption "HPE ProLiant DL360 Gen 9";

@@ -1,10 +1,12 @@
-{ config, lib, ... }:
-let
+{
+  config,
+  lib,
+  ...
+}: let
   inherit (lib) mkAfter mkEnableOption mkIf;
   cfg = config.psyclyx.home.programs.waybar;
   opacity = builtins.toString config.stylix.opacity.desktop;
-in
-{
+in {
   options = {
     psyclyx.home.programs.waybar = {
       enable = mkEnableOption "Waybar status bar";

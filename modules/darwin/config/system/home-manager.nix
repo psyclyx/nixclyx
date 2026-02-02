@@ -2,11 +2,9 @@
   config,
   lib,
   ...
-}:
-let
+}: let
   cfg = config.psyclyx.system.home-manager;
-in
-{
+in {
   options = {
     psyclyx.system.home-manager = {
       enable = lib.mkEnableOption "home-manager config";
@@ -15,7 +13,7 @@ in
 
   config = lib.mkIf cfg.enable {
     home-manager = {
-      sharedModules = [ config.psyclyx.darwin.deps.nixclyx.homeManagerModules.default ];
+      sharedModules = [config.psyclyx.darwin.deps.nixclyx.homeManagerModules.default];
       useGlobalPkgs = true;
       useUserPackages = true;
     };

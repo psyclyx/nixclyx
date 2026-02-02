@@ -3,8 +3,7 @@
   lib,
   pkgs,
   ...
-}:
-let
+}: let
   cfg = config.psyclyx.services.aerospace;
 
   sb = "${pkgs.sketchybar}/bin/sketchybar";
@@ -26,9 +25,7 @@ let
 
   trigger-workspace-change = "${sb} --trigger aerospace_workspace_change";
   exec-twc = "exec-and-forget ${trigger-workspace-change}";
-
-in
-{
+in {
   options = {
     psyclyx.services.aerospace = {
       enable = lib.mkEnableOption "AeroSpace window manager";
@@ -60,7 +57,7 @@ in
           outer.bottom = 0;
           outer.top = [
             #{monitor."BenQ RD280U" = 38;}
-            { monitor."Built-in Retina Display" = 0; }
+            {monitor."Built-in Retina Display" = 0;}
             38
           ];
         };
@@ -78,97 +75,104 @@ in
           shift-semicolon = toService;
 
           #o = ["exec-and-forget ${pkgs.kitty}/bin/kitty --single-instance -d ~"] ++ toMain;
-          o = [ term ] ++ toMain;
+          o = [term] ++ toMain;
 
-          x = [ "close" ] ++ toMain;
+          x = ["close"] ++ toMain;
 
-          m = [ "fullscreen" ] ++ toMain;
-          comma = [ "layout floating tiling" ] ++ toMain;
-          period = [ "layout tiles horizontal vertical" ] ++ toMain;
-          slash = [ "layout accordion horizontal vertical" ] ++ toMain;
+          m = ["fullscreen"] ++ toMain;
+          comma = ["layout floating tiling"] ++ toMain;
+          period = ["layout tiles horizontal vertical"] ++ toMain;
+          slash = ["layout accordion horizontal vertical"] ++ toMain;
 
-          h = [ "focus left" ] ++ toMain;
-          j = [ "focus down" ] ++ toMain;
-          k = [ "focus up" ] ++ toMain;
-          l = [ "focus right" ] ++ toMain;
+          h = ["focus left"] ++ toMain;
+          j = ["focus down"] ++ toMain;
+          k = ["focus up"] ++ toMain;
+          l = ["focus right"] ++ toMain;
 
-          q = [ "workspace 1q" ] ++ toMain;
-          w = [ "workspace 2w" ] ++ toMain;
-          e = [ "workspace 3e" ] ++ toMain;
-          r = [ "workspace 4r" ] ++ toMain;
-          a = [ "workspace 5a" ] ++ toMain;
-          s = [ "workspace 6s" ] ++ toMain;
-          d = [ "workspace 7d" ] ++ toMain;
-          f = [ "workspace 8f" ] ++ toMain;
+          q = ["workspace 1q"] ++ toMain;
+          w = ["workspace 2w"] ++ toMain;
+          e = ["workspace 3e"] ++ toMain;
+          r = ["workspace 4r"] ++ toMain;
+          a = ["workspace 5a"] ++ toMain;
+          s = ["workspace 6s"] ++ toMain;
+          d = ["workspace 7d"] ++ toMain;
+          f = ["workspace 8f"] ++ toMain;
 
-          tab = [ "workspace-back-and-forth" ] ++ toMain;
-
+          tab = ["workspace-back-and-forth"] ++ toMain;
         };
 
         mode.move.binding = {
           esc = toMain;
 
-          enter = [ "move-workspace-to-monitor --wrap-around next" ] ++ toMain;
+          enter = ["move-workspace-to-monitor --wrap-around next"] ++ toMain;
 
           up = "resize smart -50";
           down = "resize smart +50";
 
-          q = [
-            "move-node-to-workspace 1q"
-            exec-twc
-          ]
-          ++ toMain;
-          w = [
-            "move-node-to-workspace 2w"
-            exec-twc
-          ]
-          ++ toMain;
-          e = [
-            "move-node-to-workspace 3e"
-            exec-twc
-          ]
-          ++ toMain;
-          r = [
-            "move-node-to-workspace 4r"
-            exec-twc
-          ]
-          ++ toMain;
-          a = [
-            "move-node-to-workspace 5a"
-            exec-twc
-          ]
-          ++ toMain;
-          s = [
-            "move-node-to-workspace 6s"
-            exec-twc
-          ]
-          ++ toMain;
-          d = [
-            "move-node-to-workspace 7d"
-            exec-twc
-          ]
-          ++ toMain;
-          f = [
-            "move-node-to-workspace 8f"
-            exec-twc
-          ]
-          ++ toMain;
+          q =
+            [
+              "move-node-to-workspace 1q"
+              exec-twc
+            ]
+            ++ toMain;
+          w =
+            [
+              "move-node-to-workspace 2w"
+              exec-twc
+            ]
+            ++ toMain;
+          e =
+            [
+              "move-node-to-workspace 3e"
+              exec-twc
+            ]
+            ++ toMain;
+          r =
+            [
+              "move-node-to-workspace 4r"
+              exec-twc
+            ]
+            ++ toMain;
+          a =
+            [
+              "move-node-to-workspace 5a"
+              exec-twc
+            ]
+            ++ toMain;
+          s =
+            [
+              "move-node-to-workspace 6s"
+              exec-twc
+            ]
+            ++ toMain;
+          d =
+            [
+              "move-node-to-workspace 7d"
+              exec-twc
+            ]
+            ++ toMain;
+          f =
+            [
+              "move-node-to-workspace 8f"
+              exec-twc
+            ]
+            ++ toMain;
 
-          h = [ "move left" ] ++ toMain;
-          j = [ "move down" ] ++ toMain;
-          k = [ "move up" ] ++ toMain;
-          l = [ "move right" ] ++ toMain;
+          h = ["move left"] ++ toMain;
+          j = ["move down"] ++ toMain;
+          k = ["move up"] ++ toMain;
+          l = ["move right"] ++ toMain;
 
-          shift-h = [ "join-with left" ] ++ toMain;
-          shift-j = [ "join-with down" ] ++ toMain;
-          shift-k = [ "join-with up" ] ++ toMain;
-          shift-l = [ "join-with right" ] ++ toMain;
+          shift-h = ["join-with left"] ++ toMain;
+          shift-j = ["join-with down"] ++ toMain;
+          shift-k = ["join-with up"] ++ toMain;
+          shift-l = ["join-with right"] ++ toMain;
         };
 
         mode.service.binding = {
-          esc = [ "reload-config" ] ++ toMain;
-          r = [ "flatten-workspace-tree" ] ++ toMain;
-          backspace = [ "close-all-windows-but-current" ] ++ toMain;
+          esc = ["reload-config"] ++ toMain;
+          r = ["flatten-workspace-tree"] ++ toMain;
+          backspace = ["close-all-windows-but-current"] ++ toMain;
         };
       };
     };
