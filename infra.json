@@ -1,0 +1,175 @@
+{
+  "domain": {
+    "internal": "psyclyx.net",
+    "external": "psyclyx.xyz"
+  },
+
+  "networks": {
+    "home": {
+      "cidr": "10.0.0.0/24",
+      "vlan": null,
+      "description": "apartment main"
+    },
+    "lab": {
+      "cidr": "10.1.1.0/24",
+      "vlan": 10,
+      "description": "apartment lab/rack"
+    },
+    "wg-mesh": {
+      "cidr": "10.10.0.0/24",
+      "description": "wireguard mesh — owned infrastructure"
+    },
+    "wg-guests": {
+      "cidr": "10.10.1.0/24",
+      "description": "wireguard — friends/guests"
+    },
+    "colo": {
+      "cidr": "10.20.0.0/24",
+      "description": "colo LAN, if applicable"
+    }
+  },
+
+  "hosts": {
+    "laptop": {
+      "roles": ["client"],
+      "mobile": true,
+      "interfaces": {
+        "wg-mesh": { "address": "10.10.0.10" }
+      }
+    },
+    "phone": {
+      "roles": ["client"],
+      "mobile": true,
+      "platform": "nix-on-droid",
+      "interfaces": {
+        "wg-mesh": { "address": "10.10.0.11" }
+      }
+    },
+    "desktop": {
+      "roles": ["workstation"],
+      "site": "apartment",
+      "interfaces": {
+        "home": { "address": "10.1.0.10" },
+        "wg-mesh": { "address": "10.10.0.12" }
+      }
+    },
+    "rack1": {
+      "roles": ["server"],
+      "site": "apartment",
+      "interfaces": {
+        "lab": { "address": "10.1.1.1" },
+        "home": { "address": "10.1.0.101" },
+        "wg-mesh": { "address": "10.10.0.20" }
+      }
+    },
+    "rack2": {
+      "roles": ["server"],
+      "site": "apartment",
+      "interfaces": {
+        "lab": { "address": "10.1.1.2" },
+        "home": { "address": "10.1.0.102" },
+        "wg-mesh": { "address": "10.10.0.21" }
+      }
+    },
+    "rack3": {
+      "roles": ["server"],
+      "site": "apartment",
+      "interfaces": {
+        "lab": { "address": "10.1.1.3" },
+        "home": { "address": "10.1.0.103" },
+        "wg-mesh": { "address": "10.10.0.22" }
+      }
+    },
+    "rack4": {
+      "roles": ["server"],
+      "site": "apartment",
+      "interfaces": {
+        "lab": { "address": "10.1.1.4" },
+        "home": { "address": "10.1.0.104" },
+        "wg-mesh": { "address": "10.10.0.23" }
+      }
+    },
+    "labgw": {
+      "roles": ["server", "router"],
+      "site": "apartment",
+      "description": "future subnet router for lab",
+      "interfaces": {
+        "lab": { "address": "10.1.1.254" },
+        "home": { "address": "10.1.0.105" },
+        "wg-mesh": { "address": "10.10.0.24" }
+      }
+    },
+    "tv": {
+      "roles": ["appliance"],
+      "site": "apartment",
+      "interfaces": {
+        "home": { "address": "10.1.0.50" },
+        "wg-mesh": { "address": "10.10.0.13" }
+      }
+    },
+    "colo": {
+      "roles": ["server", "wg-hub", "dns-authority"],
+      "site": "colo",
+      "publicAddress": "COLO_PUBLIC_IP",
+      "interfaces": {
+        "colo": { "address": "10.20.0.1" },
+        "wg-mesh": { "address": "10.10.0.1" },
+        "wg-guests": { "address": "10.10.1.1" }
+      }
+    }
+  },
+
+  "wireguard": {
+    "meshPort": 51820,
+    "guestsPort": 51821,
+    "hub": "colo",
+    "siteGateways": {
+      "apartment": {
+        "host": "labgw",
+        "routedNetworks": ["home", "lab"]
+      }
+    }
+  },
+
+  "dns": {
+    "authoritative": {
+      "server": "colo",
+      "zones": {
+        "psyclyx.xyz": {
+          "public": true
+        }
+      }
+    },
+    "internal": {
+      "domain": "psyclyx.net",
+      "splitHorizon": true,
+      "resolvers": {
+        "apartment": "labgw",
+        "colo": "colo",
+        "wireguard": "colo"
+      },
+      "autoRecords": {
+        "strategy": "interface-per-network",
+        "example": "{hostname}.{network}.psyclyx.net → interface address",
+        "shortname": "{hostname}.psyclyx.net → wg-mesh address (fallback: first interface)"
+      }
+    }
+  },
+
+  "guests": {
+    "alice": {
+      "interfaces": {
+        "wg-guests": { "address": "10.10.1.10" }
+      },
+      "allowedNetworks": ["wg-guests"]
+    }
+  },
+
+  "services": {
+    "example-web": {
+      "host": "rack1",
+      "port": 8080,
+      "dns": ["web.psyclyx.net", "web.psyclyx.xyz"]
+    }
+  }
+}
