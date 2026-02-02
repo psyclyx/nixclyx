@@ -1,5 +1,4 @@
-{ ... }:
-{
+{...}: {
   imports = [
     ./network.nix
   ];
@@ -15,7 +14,7 @@
       "/boot" = {
         device = "UUID=C8F3-8E47";
         fsType = "vfat";
-        options = [ "umask=0077" ];
+        options = ["umask=0077"];
       };
     };
 
@@ -23,7 +22,7 @@
       nixos = {
         hardware.presets.hpe.dl20-gen10.enable = true;
 
-        network.ports.ssh = [ 17891 ];
+        network.ports.ssh = [17891];
 
         roles = {
           base.enable = true;

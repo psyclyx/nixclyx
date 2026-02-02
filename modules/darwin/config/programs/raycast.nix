@@ -2,11 +2,9 @@
   config,
   lib,
   ...
-}:
-let
+}: let
   cfg = config.psyclyx.programs.raycast;
-in
-{
+in {
   options = {
     psyclyx.programs.raycast = {
       enable = lib.mkEnableOption "Raycast launcher";
@@ -14,6 +12,6 @@ in
   };
 
   config = lib.mkIf cfg.enable {
-    homebrew.casks = [ "raycast" ];
+    homebrew.casks = ["raycast"];
   };
 }

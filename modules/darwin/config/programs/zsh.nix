@@ -2,11 +2,9 @@
   config,
   lib,
   ...
-}:
-let
+}: let
   cfg = config.psyclyx.programs.zsh;
-in
-{
+in {
   options = {
     psyclyx.programs.zsh = {
       enable = lib.mkEnableOption "zsh shell";

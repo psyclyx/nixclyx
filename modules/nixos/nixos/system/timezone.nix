@@ -1,8 +1,10 @@
-{ config, lib, ... }:
-let
-  cfg = config.psyclyx.nixos.system.timezone;
-in
 {
+  config,
+  lib,
+  ...
+}: let
+  cfg = config.psyclyx.nixos.system.timezone;
+in {
   options = {
     psyclyx.nixos.system.timezone = {
       enable = lib.mkEnableOption "Timezone config";

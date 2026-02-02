@@ -1,5 +1,4 @@
-{ ... }:
-{
+{...}: {
   imports = [
     ./bcachefs.nix
     ./layouts

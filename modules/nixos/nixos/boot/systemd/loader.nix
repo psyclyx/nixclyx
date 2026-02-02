@@ -2,11 +2,9 @@
   config,
   lib,
   ...
-}:
-let
+}: let
   cfg = config.psyclyx.nixos.boot.systemd.loader;
-in
-{
+in {
   options = {
     psyclyx.nixos.boot.systemd.loader = {
       enable = lib.mkEnableOption "systemd-boot";

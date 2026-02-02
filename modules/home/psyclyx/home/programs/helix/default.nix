@@ -3,11 +3,9 @@
   lib,
   pkgs,
   ...
-}:
-let
+}: let
   cfg = config.psyclyx.home.programs.helix;
-in
-{
+in {
   options = {
     psyclyx.home.programs.helix = {
       enable = lib.mkEnableOption "helix text editor";
@@ -23,7 +21,7 @@ in
           auto-format = true;
           formatter = {
             command = lib.getExe pkgs.nixfmt;
-            args = [ "--strict" ];
+            args = ["--strict"];
           };
         }
       ];

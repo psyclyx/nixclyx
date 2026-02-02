@@ -3,12 +3,10 @@
   pkgs,
   lib,
   ...
-}:
-let
+}: let
   inherit (lib) mkEnableOption mkIf;
   cfg = config.psyclyx.home.services.mako;
-in
-{
+in {
   options = {
     psyclyx.home.services.mako = {
       enable = mkEnableOption "Mako notification daemon";
@@ -16,7 +14,7 @@ in
   };
 
   config = mkIf cfg.enable {
-    home.packages = [ pkgs.notify-desktop ];
+    home.packages = [pkgs.notify-desktop];
     services.mako = {
       enable = true;
       settings = {

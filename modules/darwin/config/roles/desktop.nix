@@ -3,11 +3,9 @@
   lib,
   pkgs,
   ...
-}:
-let
+}: let
   cfg = config.psyclyx.roles.desktop;
-in
-{
+in {
   options = {
     psyclyx.roles.desktop = {
       enable = lib.mkEnableOption "role for desktop/graphical darwin hosts";

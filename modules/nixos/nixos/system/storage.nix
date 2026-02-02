@@ -1,8 +1,10 @@
-{ config, lib, ... }:
-let
-  cfg = config.psyclyx.nixos.system.storage;
-in
 {
+  config,
+  lib,
+  ...
+}: let
+  cfg = config.psyclyx.nixos.system.storage;
+in {
   options = {
     psyclyx.nixos.system.storage = {
       enable = lib.mkEnableOption "storage config";

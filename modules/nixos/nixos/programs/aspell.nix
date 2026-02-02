@@ -3,11 +3,9 @@
   lib,
   pkgs,
   ...
-}:
-let
+}: let
   cfg = config.psyclyx.nixos.programs.aspell;
-in
-{
+in {
   options = {
     psyclyx.nixos.programs.aspell = {
       enable = lib.mkEnableOption "aspell + english dicts";
@@ -23,7 +21,7 @@ in
         defaultText = "dicts: [dicts.en dicts.en-computers dicts.en-science]";
       };
 
-      finalPackage = lib.mkPackageOption pkgs "aspell-with-dicts" { };
+      finalPackage = lib.mkPackageOption pkgs "aspell-with-dicts" {};
     };
   };
 
@@ -31,7 +29,7 @@ in
     psyclyx.nixos.programs.aspell.finalPackage = lib.mkDefault (pkgs.aspellWithDicts cfg.dictionaries);
     environment = {
       wordlist.enable = true;
-      systemPackages = [ cfg.finalPackage ];
+      systemPackages = [cfg.finalPackage];
     };
   };
 }

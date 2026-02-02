@@ -3,11 +3,9 @@
   lib,
   pkgs,
   ...
-}:
-let
+}: let
   cfg = config.psyclyx.nixos.roles.graphical;
-in
-{
+in {
   options = {
     psyclyx.nixos.roles.graphical = {
       enable = lib.mkEnableOption "role for hosts intended to be used primarily through graphical sessions";

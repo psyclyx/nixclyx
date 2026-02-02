@@ -1,8 +1,10 @@
-{ config, lib, ... }:
-let
-  cfg = config.psyclyx.home.programs.zoxide;
-in
 {
+  config,
+  lib,
+  ...
+}: let
+  cfg = config.psyclyx.home.programs.zoxide;
+in {
   options = {
     psyclyx.home.programs.zoxide = {
       enable = lib.mkEnableOption "zoxide (enhanced cd)";

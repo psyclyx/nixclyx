@@ -3,11 +3,9 @@
   lib,
   pkgs,
   ...
-}:
-let
+}: let
   cfg = config.psyclyx.nixos.programs.niri;
-in
-{
+in {
   options = {
     psyclyx.nixos.programs.niri = {
       enable = lib.mkEnableOption "Scrolling Wayland compositor";
@@ -19,6 +17,6 @@ in
       enable = true;
       package = pkgs.niri;
     };
-    environment.systemPackages = [ pkgs.xwayland-satellite ];
+    environment.systemPackages = [pkgs.xwayland-satellite];
   };
 }

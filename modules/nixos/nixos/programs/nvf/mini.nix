@@ -55,7 +55,11 @@ in {
         (mkLuaInline "require('mini.starter').sections.sessions(5, true)")
         (mkLuaInline "require('mini.starter').sections.recent_files(5, false, false)")
         (mkLuaInline "require('mini.starter').sections.builtin_actions()")
-        {name = "File explorer"; action = "lua MiniFiles.open()"; section = "Actions";}
+        {
+          name = "File explorer";
+          action = "lua MiniFiles.open()";
+          section = "Actions";
+        }
       ];
     };
     mini.notify.enable = true;
@@ -68,21 +72,66 @@ in {
       enable = true;
       setupOpts = {
         triggers = [
-          {mode = "n"; keys = "<Leader>";}
-          {mode = "x"; keys = "<Leader>";}
-          {mode = "n"; keys = "g";}
-          {mode = "x"; keys = "g";}
-          {mode = "n"; keys = "'";}
-          {mode = "x"; keys = "'";}
-          {mode = "n"; keys = "`";}
-          {mode = "x"; keys = "`";}
-          {mode = "n"; keys = "\"";}
-          {mode = "x"; keys = "\"";}
-          {mode = "i"; keys = "<C-r>";}
-          {mode = "c"; keys = "<C-r>";}
-          {mode = "n"; keys = "<C-w>";}
-          {mode = "n"; keys = "z";}
-          {mode = "x"; keys = "z";}
+          {
+            mode = "n";
+            keys = "<Leader>";
+          }
+          {
+            mode = "x";
+            keys = "<Leader>";
+          }
+          {
+            mode = "n";
+            keys = "g";
+          }
+          {
+            mode = "x";
+            keys = "g";
+          }
+          {
+            mode = "n";
+            keys = "'";
+          }
+          {
+            mode = "x";
+            keys = "'";
+          }
+          {
+            mode = "n";
+            keys = "`";
+          }
+          {
+            mode = "x";
+            keys = "`";
+          }
+          {
+            mode = "n";
+            keys = "\"";
+          }
+          {
+            mode = "x";
+            keys = "\"";
+          }
+          {
+            mode = "i";
+            keys = "<C-r>";
+          }
+          {
+            mode = "c";
+            keys = "<C-r>";
+          }
+          {
+            mode = "n";
+            keys = "<C-w>";
+          }
+          {
+            mode = "n";
+            keys = "z";
+          }
+          {
+            mode = "x";
+            keys = "z";
+          }
         ];
         clues = [
           (mkLuaInline "require('mini.clue').gen_clues.builtin_completion()")
@@ -91,19 +140,65 @@ in {
           (mkLuaInline "require('mini.clue').gen_clues.registers()")
           (mkLuaInline "require('mini.clue').gen_clues.windows()")
           (mkLuaInline "require('mini.clue').gen_clues.z()")
-          {mode = "n"; keys = "<Leader>b"; desc = "+buffer";}
-          {mode = "n"; keys = "<Leader>c"; desc = "+code";}
-          {mode = "n"; keys = "<Leader>f"; desc = "+file";}
-          {mode = "n"; keys = "<Leader>g"; desc = "+git";}
-          {mode = "n"; keys = "<Leader>h"; desc = "+help";}
-          {mode = "n"; keys = "<Leader>p"; desc = "+project";}
-          {mode = "n"; keys = "<Leader>q"; desc = "+quit";}
-          {mode = "n"; keys = "<Leader>s"; desc = "+search";}
-          {mode = "n"; keys = "<Leader>t"; desc = "+toggle";}
-          {mode = "n"; keys = "<Leader>w"; desc = "+window";}
-          {mode = "n"; keys = "<Leader>x"; desc = "+extras";}
+          {
+            mode = "n";
+            keys = "<Leader>b";
+            desc = "+buffer";
+          }
+          {
+            mode = "n";
+            keys = "<Leader>c";
+            desc = "+code";
+          }
+          {
+            mode = "n";
+            keys = "<Leader>f";
+            desc = "+file";
+          }
+          {
+            mode = "n";
+            keys = "<Leader>g";
+            desc = "+git";
+          }
+          {
+            mode = "n";
+            keys = "<Leader>h";
+            desc = "+help";
+          }
+          {
+            mode = "n";
+            keys = "<Leader>p";
+            desc = "+project";
+          }
+          {
+            mode = "n";
+            keys = "<Leader>q";
+            desc = "+quit";
+          }
+          {
+            mode = "n";
+            keys = "<Leader>s";
+            desc = "+search";
+          }
+          {
+            mode = "n";
+            keys = "<Leader>t";
+            desc = "+toggle";
+          }
+          {
+            mode = "n";
+            keys = "<Leader>w";
+            desc = "+window";
+          }
+          {
+            mode = "n";
+            keys = "<Leader>x";
+            desc = "+extras";
+          }
         ];
-        window = {delay = 200;};
+        window = {
+          delay = 200;
+        };
       };
     };
 
@@ -111,10 +206,22 @@ in {
       enable = true;
       setupOpts = {
         highlighters = {
-          fixme = {pattern = "%f[%w]()FIXME()%f[%W]"; group = "MiniHipatternsFixme";};
-          hack = {pattern = "%f[%w]()HACK()%f[%W]"; group = "MiniHipatternsHack";};
-          todo = {pattern = "%f[%w]()TODO()%f[%W]"; group = "MiniHipatternsTodo";};
-          note = {pattern = "%f[%w]()NOTE()%f[%W]"; group = "MiniHipatternsNote";};
+          fixme = {
+            pattern = "%f[%w]()FIXME()%f[%W]";
+            group = "MiniHipatternsFixme";
+          };
+          hack = {
+            pattern = "%f[%w]()HACK()%f[%W]";
+            group = "MiniHipatternsHack";
+          };
+          todo = {
+            pattern = "%f[%w]()TODO()%f[%W]";
+            group = "MiniHipatternsTodo";
+          };
+          note = {
+            pattern = "%f[%w]()NOTE()%f[%W]";
+            group = "MiniHipatternsNote";
+          };
           hex_color = mkLuaInline "require('mini.hipatterns').gen_highlighter.hex_color()";
         };
       };
@@ -132,9 +239,20 @@ in {
     mini.basics = {
       enable = true;
       setupOpts = {
-        options = {basic = true; extra_ui = true; win_borders = "default";};
-        mappings = {basic = true; option_toggle_prefix = "\\"; windows = false; move_with_alt = false;};
-        autocommands = {basic = true;};
+        options = {
+          basic = true;
+          extra_ui = true;
+          win_borders = "default";
+        };
+        mappings = {
+          basic = true;
+          option_toggle_prefix = "\\";
+          windows = false;
+          move_with_alt = false;
+        };
+        autocommands = {
+          basic = true;
+        };
       };
     };
 

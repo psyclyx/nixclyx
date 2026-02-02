@@ -2,8 +2,7 @@
   config,
   pkgs,
   lib,
-}:
-let
+}: let
   swaymsg = "swaymsg";
 
   fuzzel = lib.getExe config.programs.fuzzel.package;
@@ -15,8 +14,7 @@ let
   slurp = lib.getExe pkgs.slurp;
   wayland-logout = lib.getExe pkgs.wayland-logout;
   wl-copy = lib.getExe' pkgs.wl-clipboard "wl-copy";
-in
-{
+in {
   power-menu = pkgs.writeShellScriptBin "power-menu" ''
     options="Lock\nLogout\nSuspend\nReboot\nShutdown"
     chosen=$(echo -e "$options" | ${fuzzel} \

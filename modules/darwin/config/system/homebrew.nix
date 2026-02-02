@@ -3,13 +3,11 @@
   lib,
   pkgs,
   ...
-}:
-let
+}: let
   inherit (pkgs.stdenv) hostPlatform;
 
   cfg = config.psyclyx.system.homebrew;
-in
-{
+in {
   options = {
     psyclyx.system.homebrew = {
       enable = lib.mkEnableOption "homebrew config";

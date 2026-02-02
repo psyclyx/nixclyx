@@ -1,5 +1,3 @@
-args:
-{ lib, ... }:
-{
-  imports = [ (lib.modules.importApply ./system args) ];
+args: {lib, ...}: {
+  imports = [(lib.modules.importApply ./system args)];
 }

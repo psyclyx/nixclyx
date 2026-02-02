@@ -3,11 +3,9 @@
   lib,
   pkgs,
   ...
-}:
-let
+}: let
   cfg = config.psyclyx.roles.base;
-in
-{
+in {
   options = {
     psyclyx.roles.base = {
       enable = lib.mkEnableOption "role for baseline darwin config";

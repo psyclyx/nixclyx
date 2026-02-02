@@ -1,8 +1,10 @@
-{ config, lib, ... }:
-let
-  cfg = config.psyclyx.nixos.system.documentation;
-in
 {
+  config,
+  lib,
+  ...
+}: let
+  cfg = config.psyclyx.nixos.system.documentation;
+in {
   options = {
     psyclyx.nixos.system.documentation = {
       enable = lib.mkEnableOption "documentation generation";

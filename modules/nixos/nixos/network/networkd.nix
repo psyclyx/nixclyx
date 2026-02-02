@@ -2,11 +2,9 @@
   config,
   lib,
   ...
-}:
-let
+}: let
   cfg = config.psyclyx.nixos.network.networkd;
-in
-{
+in {
   options = {
     psyclyx.nixos.network.networkd = {
       enable = lib.mkEnableOption "systemd-networkd";

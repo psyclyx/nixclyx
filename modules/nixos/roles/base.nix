@@ -2,12 +2,9 @@
   config,
   lib,
   ...
-}:
-let
+}: let
   cfg = config.psyclyx.nixos.roles.base;
-in
-
-{
+in {
   options = {
     psyclyx.nixos.roles.base = {
       enable = lib.mkEnableOption "role for baseline config, likely applicable to all hosts";

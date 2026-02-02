@@ -3,11 +3,9 @@
   lib,
   pkgs,
   ...
-}:
-let
+}: let
   cfg = config.psyclyx.home.roles.graphical;
-in
-{
+in {
   options = {
     psyclyx.home.roles.graphical = {
       enable = lib.mkEnableOption "Graphical session programs and configuration";

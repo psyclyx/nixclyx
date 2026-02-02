@@ -1,13 +1,11 @@
 let
   pins = import ./npins;
-  loadFlake =
-    src:
+  loadFlake = src:
     (import pins.flake-compat {
       inherit src;
       copySourceTreeToStore = false;
     }).outputs;
-in
-{
+in {
   zsh-pure = pins.zsh-pure;
 
   nixpkgs = loadFlake pins.nixpkgs;

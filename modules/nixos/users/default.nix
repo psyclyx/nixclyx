@@ -1,4 +1,3 @@
-{ ... }:
-{
-  imports = [ ./psyc.nix ];
+{...}: {
+  imports = [./psyc.nix];
 }

@@ -1,9 +1,11 @@
-{ config, lib, ... }:
-let
+{
+  config,
+  lib,
+  ...
+}: let
   inherit (lib) mkEnableOption mkIf;
   cfg = config.psyclyx.home.programs.fuzzel;
-in
-{
+in {
   options = {
     psyclyx.home.programs.fuzzel = {
       enable = mkEnableOption "Fuzzel application launcher";

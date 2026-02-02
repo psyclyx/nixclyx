@@ -2,11 +2,9 @@
   config,
   lib,
   ...
-}:
-let
+}: let
   cfg = config.psyclyx.nixos.services.greetd;
-in
-{
+in {
   options = {
     psyclyx.nixos.services.greetd = {
       enable = lib.mkEnableOption "greetd+regreet";

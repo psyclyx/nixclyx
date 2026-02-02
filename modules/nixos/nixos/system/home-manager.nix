@@ -2,11 +2,9 @@
   config,
   lib,
   ...
-}:
-let
+}: let
   cfg = config.psyclyx.nixos.system.home-manager;
-in
-{
+in {
   options = {
     psyclyx.nixos.system.home-manager = {
       enable = lib.mkEnableOption "home-manager config";

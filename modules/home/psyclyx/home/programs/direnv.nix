@@ -1,8 +1,10 @@
-{ config, lib, ... }:
-let
-  cfg = config.psyclyx.home.programs.direnv;
-in
 {
+  config,
+  lib,
+  ...
+}: let
+  cfg = config.psyclyx.home.programs.direnv;
+in {
   options = {
     psyclyx.home.programs.direnv = {
       enable = lib.mkEnableOption "direnv";

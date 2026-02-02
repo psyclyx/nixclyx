@@ -1,5 +1,4 @@
-{ nixclyx, ... }:
-{
+{nixclyx, ...}: {
   imports = [
     nixclyx.darwinModules.psyclyx
     ./users.nix

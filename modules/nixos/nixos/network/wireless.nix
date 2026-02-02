@@ -2,11 +2,9 @@
   config,
   lib,
   ...
-}:
-let
+}: let
   cfg = config.psyclyx.nixos.network.wireless;
-in
-{
+in {
   options = {
     psyclyx.nixos.network.wireless = {
       enable = lib.mkEnableOption "wireless network support";

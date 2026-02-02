@@ -1,10 +1,12 @@
-{ config, lib, ... }:
-let
+{
+  config,
+  lib,
+  ...
+}: let
   inherit (lib) mkOption types;
 
   monitorType = types.submodule (
-    { name, ... }:
-    {
+    {name, ...}: {
       options = {
         identifier = mkOption {
           type = types.str;
@@ -17,8 +19,8 @@ let
           type = types.nullOr (
             types.submodule {
               options = {
-                width = mkOption { type = types.int; };
-                height = mkOption { type = types.int; };
+                width = mkOption {type = types.int;};
+                height = mkOption {type = types.int;};
                 refresh = mkOption {
                   type = types.nullOr types.number;
                   default = null;
@@ -49,23 +51,22 @@ let
               };
             };
           };
-          default = { };
+          default = {};
         };
       };
     }
   );
 
   cfg = config.psyclyx.nixos.hardware.monitors;
-in
-{
+in {
   options.psyclyx.nixos.hardware.monitors = mkOption {
     type = types.attrsOf monitorType;
-    default = { };
+    default = {};
   };
 
-  config = lib.mkIf (cfg != { }) {
+  config = lib.mkIf (cfg != {}) {
     home-manager.sharedModules = [
-      { psyclyx.home.hardware.monitors = lib.mkDefault cfg; }
+      {psyclyx.home.hardware.monitors = lib.mkDefault cfg;}
     ];
   };
 }

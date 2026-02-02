@@ -3,18 +3,16 @@
   pkgs,
   lib,
   ...
-}:
-let
+}: let
   inherit (config.psyclyx.nixos.deps) nixclyx;
   cfg = config.psyclyx.nixos.users.psyc;
-in
-{
+in {
   options = {
     psyclyx.nixos.users.psyc = {
       enable = lib.mkEnableOption "psyc user";
       server = lib.mkEnableOption "roles for server";
       hmImport = lib.mkOption {
-        default = { };
+        default = {};
       };
     };
   };

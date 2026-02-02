@@ -1,5 +1,4 @@
-{ ... }:
-{
+{...}: {
   imports = [
     ./homebrew.nix
     ./home-manager.nix

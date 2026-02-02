@@ -1,6 +1,5 @@
-{ ... }:
-{
-  imports = [ ./base.nix ];
+{...}: {
+  imports = [./base.nix];
 
   config = {
     networking.hostName = "lab-4";

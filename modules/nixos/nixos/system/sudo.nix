@@ -1,8 +1,10 @@
-{ config, lib, ... }:
-let
-  cfg = config.psyclyx.nixos.system.sudo;
-in
 {
+  config,
+  lib,
+  ...
+}: let
+  cfg = config.psyclyx.nixos.system.sudo;
+in {
   options = {
     psyclyx.nixos.system.sudo = {
       enable = lib.mkEnableOption "privilege escalation via sudo";

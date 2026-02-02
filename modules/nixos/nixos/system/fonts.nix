@@ -2,11 +2,9 @@
   config,
   lib,
   ...
-}:
-let
+}: let
   cfg = config.psyclyx.nixos.system.fonts;
-in
-{
+in {
   options = {
     psyclyx.nixos.system.fonts = {
       enable = lib.mkEnableOption "Configure fonts.";

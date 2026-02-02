@@ -6,7 +6,13 @@
 }:
 writeShellApplication {
   name = "pki-manage";
-  runtimeInputs = [psyclyx.provision-host psyclyx.ensure-key psyclyx.sign-key jq openssh];
+  runtimeInputs = [
+    psyclyx.provision-host
+    psyclyx.ensure-key
+    psyclyx.sign-key
+    jq
+    openssh
+  ];
   text = ''
     set -euo pipefail
 

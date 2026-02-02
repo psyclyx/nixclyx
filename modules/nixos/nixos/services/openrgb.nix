@@ -3,11 +3,9 @@
   lib,
   pkgs,
   ...
-}:
-let
+}: let
   cfg = config.psyclyx.nixos.services.openrgb;
-in
-{
+in {
   options = {
     psyclyx.nixos.services.openrgb = {
       enable = lib.mkEnableOption "OpenRGB";

@@ -2,11 +2,9 @@
   config,
   lib,
   ...
-}:
-let
+}: let
   cfg = config.psyclyx.nixos.hardware.gpu.nvidia;
-in
-{
+in {
   options = {
     psyclyx.nixos.hardware.gpu.nvidia = {
       enable = lib.mkEnableOption "Nvidia GPU (currently 3090)";
@@ -26,6 +24,6 @@ in
       powerManagement.enable = true;
     };
 
-    services.xserver.videoDrivers = [ "nvidia" ];
+    services.xserver.videoDrivers = ["nvidia"];
   };
 }

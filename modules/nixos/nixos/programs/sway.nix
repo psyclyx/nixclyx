@@ -3,11 +3,9 @@
   lib,
   pkgs,
   ...
-}:
-let
+}: let
   cfg = config.psyclyx.nixos.programs.sway;
-in
-{
+in {
   options = {
     psyclyx.nixos.programs.sway = {
       enable = lib.mkEnableOption "swayfx wm";
@@ -43,7 +41,7 @@ in
       sway = {
         enable = true;
         package = pkgs.swayfx;
-        extraOptions = [ "--unsupported-gpu" ];
+        extraOptions = ["--unsupported-gpu"];
         wrapperFeatures.gtk = true;
         extraPackages = [
           pkgs.wev

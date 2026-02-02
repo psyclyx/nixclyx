@@ -2,12 +2,10 @@
   config,
   lib,
   ...
-}:
-let
+}: let
   inherit (lib) mkDefault mkEnableOption mkIf;
   cfg = config.psyclyx.home.roles.shell;
-in
-{
+in {
   options = {
     psyclyx.home.roles.shell = {
       enable = mkEnableOption "Basic shell configuration and utilities";

@@ -3,11 +3,9 @@
   lib,
   pkgs,
   ...
-}:
-let
+}: let
   cfg = config.psyclyx.nixos.roles.utility;
-in
-{
+in {
   options = {
     psyclyx.nixos.roles.utility = {
       enable = lib.mkEnableOption "role with various system utilities";

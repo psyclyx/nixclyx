@@ -1,8 +1,10 @@
-{ config, lib, ... }:
-let
-  cfg = config.psyclyx.home.programs.kitty;
-in
 {
+  config,
+  lib,
+  ...
+}: let
+  cfg = config.psyclyx.home.programs.kitty;
+in {
   options = {
     psyclyx.home.programs.kitty = {
       enable = lib.mkEnableOption "Kitty terminal emulator";
@@ -34,7 +36,9 @@ in
     xdg.terminal-exec = {
       enable = true;
       settings.default =
-        if cfg.defaultTerminal then lib.mkBefore [ "kitty.desktop" ] else [ "kitty.desktop" ];
+        if cfg.defaultTerminal
+        then lib.mkBefore ["kitty.desktop"]
+        else ["kitty.desktop"];
     };
   };
 }

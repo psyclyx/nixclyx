@@ -3,11 +3,9 @@
   lib,
   pkgs,
   ...
-}:
-let
+}: let
   cfg = config.psyclyx.home.programs.alacritty;
-in
-{
+in {
   options = {
     psyclyx.home.programs.alacritty = {
       enable = lib.mkEnableOption "Alacritty terminal emulator";
@@ -33,7 +31,9 @@ in
     xdg.terminal-exec = {
       enable = true;
       settings.default =
-        if cfg.defaultTerminal then lib.mkBefore [ "Alacritty.desktop" ] else [ "Alacritty.desktop" ];
+        if cfg.defaultTerminal
+        then lib.mkBefore ["Alacritty.desktop"]
+        else ["Alacritty.desktop"];
     };
   };
 }

@@ -3,11 +3,9 @@
   lib,
   pkgs,
   ...
-}:
-let
+}: let
   cfg = config.psyclyx.nixos.services.printing;
-in
-{
+in {
   options = {
     psyclyx.nixos.services.printing = {
       enable = lib.mkEnableOption "Enable printing.";
@@ -17,7 +15,7 @@ in
   config = lib.mkIf cfg.enable {
     services.printing = {
       enable = true;
-      drivers = [ pkgs.brlaser ];
+      drivers = [pkgs.brlaser];
     };
   };
 }

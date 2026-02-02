@@ -3,11 +3,9 @@
   lib,
   pkgs,
   ...
-}:
-let
+}: let
   cfg = config.psyclyx.services.tailscale;
-in
-{
+in {
   options = {
     psyclyx.services.tailscale = {
       enable = lib.mkEnableOption "Tailscale VPN";
@@ -15,7 +13,7 @@ in
   };
 
   config = lib.mkIf cfg.enable {
-    environment.systemPackages = with pkgs; [ tailscale ];
+    environment.systemPackages = with pkgs; [tailscale];
     services.tailscale = {
       enable = true;
     };

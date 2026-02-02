@@ -1,5 +1,4 @@
-pkgs:
-let
+pkgs: let
   # Import individual environment groups
   coreEnv = import ./core.nix pkgs;
   modernEnv = import ./modern.nix pkgs;
@@ -24,14 +23,14 @@ let
     meta.description = "Complete shell environment with all groups";
   };
 in
-# Return the full shell derivation with individual groups as attributes
-fullShell
-// {
-  core = coreEnv;
-  modern = modernEnv;
-  compression = compressionEnv;
-  network = networkEnv;
-  network-admin = networkAdminEnv;
-  monitoring = monitoringEnv;
-  tty = ttyEnv;
-}
+  # Return the full shell derivation with individual groups as attributes
+  fullShell
+  // {
+    core = coreEnv;
+    modern = modernEnv;
+    compression = compressionEnv;
+    network = networkEnv;
+    network-admin = networkAdminEnv;
+    monitoring = monitoringEnv;
+    tty = ttyEnv;
+  }

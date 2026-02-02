@@ -3,12 +3,10 @@
   lib,
   pkgs,
   ...
-}:
-let
+}: let
   inherit (lib) mkIf;
   cfg = config.psyclyx.home.programs.sway;
-in
-{
+in {
   config = mkIf cfg.enable {
     programs.swaylock = {
       enable = true;

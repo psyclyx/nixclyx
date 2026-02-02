@@ -3,18 +3,20 @@
   pkgs,
   lib,
   ...
-}:
-let
+}: let
   cfg = config.psyclyx.services.sketchybar;
 
-  padHex = s: if lib.stringLength s == 1 then "0${s}" else s;
-  mkThemeEnv =
-    colors:
+  padHex = s:
+    if lib.stringLength s == 1
+    then "0${s}"
+    else s;
+  mkThemeEnv = colors:
     lib.listToAttrs (
       lib.lists.imap0 (i: rgb: {
         name = "BASE${padHex (builtins.toString i)}";
         value = "#FF${rgb}";
-      }) colors
+      })
+      colors
     );
   themeEnv = lib.debug.traceVal mkThemeEnv config.lib.stylix.colors.toList;
 
@@ -31,7 +33,7 @@ let
   appNamePlugin = pkgs.writeShellApplication rec {
     name = "app_name_plugin";
     text = builtins.readFile ./app_name_plugin.sh;
-    derivationArgs.buildInputs = [ pkgs.sketchybar ];
+    derivationArgs.buildInputs = [pkgs.sketchybar];
   };
 
   clockPlugin = pkgs.writeShellApplication rec {
@@ -74,8 +76,7 @@ let
     runtimeInputs = derivationArgs.buildInputs;
     runtimeEnv = themeEnv;
   };
-in
-{
+in {
   options = {
     psyclyx.services.sketchybar = {
       enable = lib.mkEnableOption "Sketchybar status bar";

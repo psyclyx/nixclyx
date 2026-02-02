@@ -1,11 +1,9 @@
-{ ... }:
-let
+{...}: let
   prefix6 = "2606:7940:32:26::";
   prefix4 = "199.255.18.171";
 
   spaceSep = builtins.concatStringsSep " ";
-in
-{
+in {
   systemd = {
     network = {
       wait-online.enable = true;

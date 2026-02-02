@@ -1,8 +1,10 @@
-{ config, lib, ... }:
-let
-  cfg = config.psyclyx.nixos.filesystems.layouts.bcachefs-pool;
-in
 {
+  config,
+  lib,
+  ...
+}: let
+  cfg = config.psyclyx.nixos.filesystems.layouts.bcachefs-pool;
+in {
   options = {
     # TODO: Not the best abstraction, some sort of simpler wrapper around
     # fileSystems with a spot to compose bcachefs-specific stuff would be nicer
@@ -15,7 +17,7 @@ in
           "/dev/disk/by-id/foo"
           "/dev/disk/by-id/bar"
         ];
-        default = [ ];
+        default = [];
       };
 
       UUID = {
@@ -39,15 +41,14 @@ in
       "/" = {
         device = "UUID=${cfg.UUID.root}";
         fsType = "bcachefs";
-        options = lib.mkIf (cfg.wants != [ ]) (builtins.map (x: "x-systemd.wants=${x}") cfg.wants);
+        options = lib.mkIf (cfg.wants != []) (builtins.map (x: "x-systemd.wants=${x}") cfg.wants);
       };
 
       "/boot" = {
         device = "UUID=${cfg.UUID.boot}";
         fsType = "vfat";
-        options = [ "umask=0077" ];
+        options = ["umask=0077"];
       };
     };
   };
-
 }
