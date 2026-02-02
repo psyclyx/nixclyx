@@ -30,6 +30,7 @@ in {
         programs = {
           sway.enable = lib.mkDefault true;
           qmk.enable = lib.mkDefault true;
+          nvf.enable = lib.mkDefault true;
         };
 
         services = {
