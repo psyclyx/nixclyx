@@ -1,19 +1,16 @@
 {
   config,
   lib,
-  pkgs,
   ...
 }: let
-  cfg = config.psyclyx.roles.desktop;
+  cfg = config.psyclyx.darwin.config.roles.desktop;
 in {
-  options = {
-    psyclyx.roles.desktop = {
-      enable = lib.mkEnableOption "role for desktop/graphical darwin hosts";
-    };
+  options.psyclyx.darwin.config.roles.desktop = {
+    enable = lib.mkEnableOption "desktop darwin role";
   };
 
   config = lib.mkIf cfg.enable {
-    psyclyx = {
+    psyclyx.darwin = {
       programs = {
         firefox.enable = lib.mkDefault true;
         raycast.enable = lib.mkDefault true;
@@ -21,9 +18,6 @@ in {
       services = {
         aerospace.enable = lib.mkDefault true;
         sketchybar.enable = lib.mkDefault true;
-      };
-      stylix = {
-        enable = lib.mkDefault true;
       };
     };
   };
