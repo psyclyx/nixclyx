@@ -1,54 +1,71 @@
 let
-  inputs = import ./inputs.nix;
-  inherit (inputs) nixpkgs colmena;
+  sources = import ./npins;
+  loadFlake = import ./loadFlake.nix;
+  lib = import ./lib;
+  assets = import ./assets;
+  overlay = import ./overlay.nix;
+  packages = import ./packages;
 
-  psyclib = import ./lib {inherit (nixpkgs) lib;};
+  modules = {
+    nixos = {
+      options = import ./modules/nixos/options;
+      config = import ./modules/nixos/config;
+    };
+    darwin = {
+      options = import ./modules/darwin/options;
+      config = import ./modules/darwin/config;
+    };
+    home = {
+      options = import ./modules/home/options;
+      config = ./modules/home/config;
+    };
+    common = {
+      options = ./modules/common/options;
+      psyclyx = ./modules/common/psyclyx;
+    };
+  };
 
-  deps =
-    inputs
-    // {
-      inherit nixclyx;
+  nixclyx = {
+    inherit sources modules lib assets loadFlake;
+    overlays.default = overlay;
+  };
+
+  evalConfig = import (sources.nixpkgs + "/nixos/lib/eval-config.nix");
+
+  mkHost = name:
+    evalConfig {
+      system = "x86_64-linux";
+      modules = [
+        (modules.nixos.options {inherit nixclyx;})
+        (modules.nixos.config {inherit nixclyx;})
+        {config.psyclyx.nixos.config.hosts.${name}.enable = true;}
+      ];
     };
 
-  nixclyx = psyclib.mkFlakeOutputs {
-    systems = [
-      "x86_64-linux"
-      "aarch64-linux"
-      "x86_64-darwin"
-      "aarch64-darwin"
-    ];
+  configurations = builtins.mapAttrs (name: _: mkHost name) {
+    sigil = {};
+    omen = {};
+    vigil = {};
+    tleilax = {};
+    lab-1 = {};
+    lab-2 = {};
+    lab-3 = {};
+    lab-4 = {};
+  };
 
-    perSystemArgs = {system, ...}: {
-      inherit
-        colmena
-        nixclyx
-        system
-        ;
-      pkgs = import nixpkgs {
-        inherit system;
-        config = {
-          allowUnfree = true;
-          nvidia.acceptLicense = true;
-        };
-        overlays = [nixclyx.overlays.default];
-      };
+  darwinSystem = (loadFlake sources.nix-darwin).lib.darwinSystem;
+
+  mkDarwinHost = name:
+    darwinSystem {
+      modules = [
+        (modules.darwin.options {inherit nixclyx;})
+        (modules.darwin.config {inherit nixclyx;})
+        {config.psyclyx.darwin.config.hosts.${name}.enable = true;}
+      ];
     };
 
-    perSystemOutputs = {
-      packages = import ./packages;
-      devShells = import ./devShells;
-      envs = import ./envs;
-    };
-
-    commonOutputs =
-      {
-        assets = import ./assets deps;
-        lib = psyclib;
-        overlays = import ./overlays deps;
-        passthrough = inputs;
-      }
-      // (import ./configs deps)
-      // (import ./modules deps);
+  darwinConfigurations = builtins.mapAttrs (name: _: mkDarwinHost name) {
+    halo = {};
   };
 in
-  nixclyx
+  nixclyx // {inherit configurations darwinConfigurations;}
