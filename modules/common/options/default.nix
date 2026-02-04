@@ -1,5 +1,3 @@
-{...}: {
-  imports = [
-    ./system
-  ];
+{nixclyx}: {
+  imports = nixclyx.lib.fs.collectModules ./.;
 }

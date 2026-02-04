@@ -17,11 +17,11 @@ let
     };
     home = {
       options = import ./modules/home/options;
-      config = ./modules/home/config;
+      config = import ./modules/home/config;
     };
     common = {
-      options = ./modules/common/options;
-      psyclyx = ./modules/common/psyclyx;
+      options = import ./modules/common/options;
+      psyclyx = import ./modules/common/psyclyx;
     };
   };
 

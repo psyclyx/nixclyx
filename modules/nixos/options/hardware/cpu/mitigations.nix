@@ -5,11 +5,6 @@
 }: let
   cfg = config.psyclyx.nixos.hardware.cpu;
 in {
-  imports = [
-    ./amd.nix
-    ./intel.nix
-  ];
-
   options = {
     psyclyx.nixos.hardware.cpu = {
       enableMitigations =

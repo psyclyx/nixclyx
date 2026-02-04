@@ -1,6 +1,0 @@
-{
-  imports = [
-    ./secrets
-    ./xdg.nix
-  ];
-}
