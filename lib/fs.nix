@@ -115,6 +115,28 @@ in rec {
             }
         ) (spec.children path entry);
     };
+  # Recursively collect module-importable paths from a directory tree.
+  # Returns .nix files (except default.nix) as imports, and directories
+  # with a default.nix as leaf imports (the module system loads default.nix).
+  # Directories without default.nix are recursed into transparently.
+  collectModules = root:
+    tree.mkTree (
+      tree.filterChildren
+      (_: name: type:
+        type == "directory" || (hasSuffix ".nix" name && name != "default.nix"))
+      ((fsSpec root)
+        // {
+          branch = path: type:
+            type == "directory"
+            && (path == [] || !(builtins.pathExists (toPath root path + "/default.nix")));
+          onBranch = _: _: kids:
+            builtins.concatLists
+            (map ({result, ...}:
+                if builtins.isList result then result else [result])
+              kids);
+        })
+    );
+
   # --- String helpers (no nixpkgs dependency) ---
 
   hasSuffix = suffix: str: let

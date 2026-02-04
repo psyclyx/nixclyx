@@ -1,7 +1,3 @@
 {nixclyx}: {
-  imports = [
-    ./roles
-    ./users
-    ./hosts
-  ];
+  imports = nixclyx.lib.fs.collectModules ./.;
 }

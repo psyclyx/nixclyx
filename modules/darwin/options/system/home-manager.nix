@@ -16,7 +16,7 @@ in {
       useUserPackages = true;
       sharedModules = [
         (nixclyx.modules.home.options {inherit nixclyx;})
-        nixclyx.modules.home.config
+        (nixclyx.modules.home.config {inherit nixclyx;})
       ];
     };
   };

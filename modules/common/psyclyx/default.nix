@@ -1,3 +1,3 @@
-{...}: {
-  imports = [./keys.nix ./packageGroups];
+{nixclyx}: {
+  imports = nixclyx.lib.fs.collectModules ./.;
 }

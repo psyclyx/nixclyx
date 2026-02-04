@@ -1,3 +1,0 @@
-{
-  imports = [./bcachefs-pool.nix];
-}

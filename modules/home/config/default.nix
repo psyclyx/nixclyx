@@ -1,5 +1,3 @@
-{
-  imports = [
-    ./homes/psyc
-  ];
+{nixclyx}: {
+  imports = nixclyx.lib.fs.collectModules ./.;
 }
