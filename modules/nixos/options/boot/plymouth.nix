@@ -1,5 +1,4 @@
-{nixclyx, ...} @ args:
-nixclyx.lib.modules.mkModule {
+{
   path = ["psyclyx" "nixos" "boot" "plymouth"];
   description = "graphical startup";
   config = _: {
@@ -13,4 +12,4 @@ nixclyx.lib.modules.mkModule {
       ];
     };
   };
-} args
+}

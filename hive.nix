@@ -7,11 +7,11 @@ in {
 
   sigil = {...}: {
     imports = [
-      (nixclyx.modules.nixos.options {inherit nixclyx;})
-      (nixclyx.modules.nixos.config {inherit nixclyx;})
+      nixclyx.modules.nixos.options
+      nixclyx.modules.nixos.config
     ];
     config = {
-      psyclyx.nixos.config.hosts.sigil.enable = true;
+      psyclyx.nixos.host = "sigil";
       deployment = {
         tags = [
           "workstation"
@@ -27,11 +27,11 @@ in {
 
   omen = {...}: {
     imports = [
-      (nixclyx.modules.nixos.options {inherit nixclyx;})
-      (nixclyx.modules.nixos.config {inherit nixclyx;})
+      nixclyx.modules.nixos.options
+      nixclyx.modules.nixos.config
     ];
     config = {
-      psyclyx.nixos.config.hosts.omen.enable = true;
+      psyclyx.nixos.host = "omen";
       deployment = {
         tags = [
           "workstation"
@@ -44,11 +44,11 @@ in {
 
   vigil = {...}: {
     imports = [
-      (nixclyx.modules.nixos.options {inherit nixclyx;})
-      (nixclyx.modules.nixos.config {inherit nixclyx;})
+      nixclyx.modules.nixos.options
+      nixclyx.modules.nixos.config
     ];
     config = {
-      psyclyx.nixos.config.hosts.vigil.enable = true;
+      psyclyx.nixos.host = "vigil";
       deployment = {
         tags = [
           "server"
@@ -63,11 +63,11 @@ in {
 
   lab-1 = {...}: {
     imports = [
-      (nixclyx.modules.nixos.options {inherit nixclyx;})
-      (nixclyx.modules.nixos.config {inherit nixclyx;})
+      nixclyx.modules.nixos.options
+      nixclyx.modules.nixos.config
     ];
     config = {
-      psyclyx.nixos.config.hosts.lab-1.enable = true;
+      psyclyx.nixos.host = "lab-1";
       deployment = {
         tags = [
           "server"
@@ -82,11 +82,11 @@ in {
 
   lab-2 = {...}: {
     imports = [
-      (nixclyx.modules.nixos.options {inherit nixclyx;})
-      (nixclyx.modules.nixos.config {inherit nixclyx;})
+      nixclyx.modules.nixos.options
+      nixclyx.modules.nixos.config
     ];
     config = {
-      psyclyx.nixos.config.hosts.lab-2.enable = true;
+      psyclyx.nixos.host = "lab-2";
       deployment = {
         tags = [
           "server"
@@ -101,11 +101,11 @@ in {
 
   lab-3 = {...}: {
     imports = [
-      (nixclyx.modules.nixos.options {inherit nixclyx;})
-      (nixclyx.modules.nixos.config {inherit nixclyx;})
+      nixclyx.modules.nixos.options
+      nixclyx.modules.nixos.config
     ];
     config = {
-      psyclyx.nixos.config.hosts.lab-3.enable = true;
+      psyclyx.nixos.host = "lab-3";
       deployment = {
         tags = [
           "server"
@@ -120,11 +120,11 @@ in {
 
   lab-4 = {...}: {
     imports = [
-      (nixclyx.modules.nixos.options {inherit nixclyx;})
-      (nixclyx.modules.nixos.config {inherit nixclyx;})
+      nixclyx.modules.nixos.options
+      nixclyx.modules.nixos.config
     ];
     config = {
-      psyclyx.nixos.config.hosts.lab-4.enable = true;
+      psyclyx.nixos.host = "lab-4";
       deployment = {
         tags = [
           "server"

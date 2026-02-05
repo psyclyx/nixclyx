@@ -1,15 +1,14 @@
-{nixclyx, lib, pkgs, ...} @ args:
-nixclyx.lib.modules.mkModule {
+{
   path = ["psyclyx" "nixos" "services" "locate"];
   description = "Locate service";
-  options = {
+  options = {lib, ...}: {
     users = lib.mkOption {
       type = lib.types.listOf lib.types.str;
       default = [];
       description = "Users to put in the mlocate group";
     };
   };
-  config = {cfg, config, ...}: {
+  config = {cfg, config, pkgs, ...}: {
     services.locate = {
       enable = true;
       interval = "hourly";
@@ -27,4 +26,4 @@ nixclyx.lib.modules.mkModule {
     psyclyx.nixos.services.locate.users = config.users.groups.wheel.members;
     users.groups.mlocate.members = cfg.users;
   };
-} args
+}

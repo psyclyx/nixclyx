@@ -1,8 +1,7 @@
-{nixclyx, lib, ...} @ args:
-nixclyx.lib.modules.mkModule {
+{
   path = ["psyclyx" "nixos" "hardware" "drivers" "usb"];
   description = "USB drivers";
-  options = {
+  options = {lib, ...}: {
     hid =
       lib.mkEnableOption "USB HID"
       // {
@@ -37,4 +36,4 @@ nixclyx.lib.modules.mkModule {
       ++ (lib.optionals cfg.ehci ["ehci_pci"])
       ++ (lib.optionals cfg.uhci ["uhci_hcd"]);
   };
-} args
+}

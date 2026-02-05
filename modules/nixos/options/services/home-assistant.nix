@@ -1,8 +1,7 @@
-{nixclyx, lib, ...} @ args:
-nixclyx.lib.modules.mkModule {
+{
   path = ["psyclyx" "nixos" "services" "home-assistant"];
   description = "Enables Home Assistant, with @psyclyx's config";
-  extraOptions = {
+  extraOptions = {lib, ...}: {
     psyclyx.nixos.network.ports.home-assistant = lib.mkOption {
       type = lib.types.port;
       default = 8123;
@@ -30,4 +29,4 @@ nixclyx.lib.modules.mkModule {
       };
     };
   };
-} args
+}

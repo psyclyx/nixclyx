@@ -1,5 +1,4 @@
-{nixclyx, ...} @ args:
-nixclyx.lib.modules.mkModule {
+{
   path = ["psyclyx" "nixos" "hardware" "gpu" "intel"];
   description = "Intel graphics (i915 driver, kaby lake)";
   config = _: {
@@ -13,4 +12,4 @@ nixclyx.lib.modules.mkModule {
       initrd.kernelModules = ["i915"];
     };
   };
-} args
+}

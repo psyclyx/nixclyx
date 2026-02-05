@@ -1,19 +1,8 @@
 {
-  config,
-  lib,
-  ...
-}: let
-  cfg = config.psyclyx.nixos.config.hosts.tleilax;
-in {
-  imports = [
-    ./network.nix
-  ];
-
-  options.psyclyx.nixos.config.hosts.tleilax = {
-    enable = lib.mkEnableOption "tleilax host";
-  };
-
-  config = lib.mkIf cfg.enable {
+  path = ["psyclyx" "nixos" "config" "hosts" "tleilax"];
+  variant = ["psyclyx" "nixos" "host"];
+  imports = [./network.nix];
+  config = {lib, ...}: {
     networking.hostName = "tleilax";
 
     fileSystems = {
@@ -28,19 +17,15 @@ in {
       };
     };
 
-    psyclyx = {
-      nixos = {
-        hardware.presets.hpe.dl20-gen10.enable = true;
+    psyclyx.nixos = {
+      hardware.presets.hpe.dl20-gen10.enable = true;
 
-        network.ports.ssh = [17891];
+      network.ports.ssh = [17891];
 
-        config = {
-          roles.server.enable = true;
-        };
+      role = "server";
 
-        services = {
-          tailscale.exitNode = true;
-        };
+      services = {
+        tailscale.exitNode = true;
       };
     };
   };

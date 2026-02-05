@@ -1,5 +1,4 @@
-{nixclyx, ...} @ args:
-nixclyx.lib.modules.mkModule {
+{
   path = ["psyclyx" "nixos" "hardware" "storage" "p408i-a-g10"];
   description = "HPE P408i-a-G10 storage controller";
   config = _: {
@@ -9,4 +8,4 @@ nixclyx.lib.modules.mkModule {
       programs.ssacli.enable = true;
     };
   };
-} args
+}

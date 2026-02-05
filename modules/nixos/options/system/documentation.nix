@@ -1,5 +1,4 @@
-{nixclyx, ...} @ args:
-nixclyx.lib.modules.mkModule {
+{
   path = ["psyclyx" "nixos" "system" "documentation"];
   description = "documentation generation";
   config = _: {
@@ -10,9 +9,7 @@ nixclyx.lib.modules.mkModule {
       info.enable = true;
       nixos = {
         enable = true;
-        # Workaround: https://github.com/nix-community/stylix/issues/47
-        # includeAllModules = true;
       };
     };
   };
-} args
+}

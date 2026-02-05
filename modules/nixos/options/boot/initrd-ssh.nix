@@ -1,8 +1,7 @@
-{nixclyx, lib, ...} @ args:
-nixclyx.lib.modules.mkModule {
+{
   path = ["psyclyx" "nixos" "boot" "initrd-ssh"];
   description = "SSH access to initrd for remote disk unlocking";
-  options = {
+  options = {lib, ...}: {
     authorizedKeys = lib.mkOption {
       type = lib.types.listOf lib.types.str;
       description = "SSH public keys authorized to connect to initrd";
@@ -14,7 +13,7 @@ nixclyx.lib.modules.mkModule {
       description = "Paths to SSH host keys for initrd";
     };
   };
-  extraOptions = {
+  extraOptions = {lib, ...}: {
     psyclyx.nixos.network.ports.initrd-ssh = lib.mkOption {
       type = lib.types.port;
       default = 8022;
@@ -33,4 +32,4 @@ nixclyx.lib.modules.mkModule {
       };
     };
   };
-} args
+}

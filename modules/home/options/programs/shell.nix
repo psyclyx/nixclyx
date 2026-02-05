@@ -1,5 +1,4 @@
-{nixclyx, ...} @ args:
-nixclyx.lib.modules.mkModule {
+{
   path = ["psyclyx" "home" "programs" "shell"];
   description = "generic shell configuration";
   config = _: {
@@ -17,4 +16,4 @@ nixclyx.lib.modules.mkModule {
       zoxide.enable = true;
     };
   };
-} args
+}

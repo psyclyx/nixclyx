@@ -1,8 +1,7 @@
-{nixclyx, lib, pkgs, ...} @ args:
-nixclyx.lib.modules.mkModule {
+{
   path = ["psyclyx" "common" "system" "nix"];
   description = "nix configuration";
-  config = _: let
+  config = {pkgs, ...}: let
     substituters = [
       "https://nix-community.cachix.org?priority=1"
     ];
@@ -44,4 +43,4 @@ nixclyx.lib.modules.mkModule {
       };
     };
   };
-} args
+}

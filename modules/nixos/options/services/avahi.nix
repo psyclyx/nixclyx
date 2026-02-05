@@ -1,5 +1,4 @@
-{nixclyx, ...} @ args:
-nixclyx.lib.modules.mkModule {
+{
   path = ["psyclyx" "nixos" "services" "avahi"];
   description = "Service discovery / MDNS";
   config = _: {
@@ -9,4 +8,4 @@ nixclyx.lib.modules.mkModule {
       publish.enable = true;
     };
   };
-} args
+}

@@ -1,8 +1,7 @@
-{nixclyx, pkgs, ...} @ args:
-nixclyx.lib.modules.mkModule {
+{
   path = ["psyclyx" "home" "services" "mako"];
   description = "Mako notification daemon";
-  config = _: {
+  config = {pkgs, ...}: {
     home.packages = [pkgs.notify-desktop];
     services.mako = {
       enable = true;
@@ -15,4 +14,4 @@ nixclyx.lib.modules.mkModule {
       };
     };
   };
-} args
+}

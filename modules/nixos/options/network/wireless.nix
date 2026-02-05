@@ -1,5 +1,4 @@
-{nixclyx, ...} @ args:
-nixclyx.lib.modules.mkModule {
+{
   path = ["psyclyx" "nixos" "network" "wireless"];
   description = "wireless network support";
   config = _: {
@@ -8,4 +7,4 @@ nixclyx.lib.modules.mkModule {
       settings.Settings.AutoConnect = true;
     };
   };
-} args
+}

@@ -1,13 +1,11 @@
-{nixclyx, lib, pkgs, ...} @ args:
-nixclyx.lib.modules.mkModule {
+{
   path = ["psyclyx" "home" "programs" "sway"];
   description = "Sway window manager";
   imports = [
     ./keybindings.nix
     ./swaylock.nix
-    ./waybar.nix
   ];
-  config = {config, ...}: let
+  config = {config, lib, pkgs, ...}: let
     monitors = config.psyclyx.home.hardware.monitors;
   in {
     home.packages = with pkgs; [
@@ -156,4 +154,4 @@ nixclyx.lib.modules.mkModule {
       };
     };
   };
-} args
+}

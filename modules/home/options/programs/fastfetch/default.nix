@@ -1,5 +1,4 @@
-{nixclyx, ...} @ args:
-nixclyx.lib.modules.mkModule {
+{
   path = ["psyclyx" "home" "programs" "fastfetch"];
   description = "Fastfetch system info";
   config = _: {
@@ -36,4 +35,4 @@ nixclyx.lib.modules.mkModule {
       };
     };
   };
-} args
+}

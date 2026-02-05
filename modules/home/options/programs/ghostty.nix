@@ -1,11 +1,10 @@
-{nixclyx, lib, ...} @ args:
-nixclyx.lib.modules.mkModule {
+{
   path = ["psyclyx" "home" "programs" "ghostty"];
   description = "ghostty terminal emulator";
-  options = {
+  options = {lib, ...}: {
     defaultTerminal = lib.mkEnableOption "setting as default terminal via TERMINAL environment variable";
   };
-  config = {cfg, config, ...}: {
+  config = {cfg, config, lib, ...}: {
     programs.ghostty = {
       enable = true;
       settings = {
@@ -25,4 +24,4 @@ nixclyx.lib.modules.mkModule {
         else ["com.mitchellh.ghostty.desktop"];
     };
   };
-} args
+}

@@ -1,5 +1,4 @@
-{nixclyx, ...} @ args:
-nixclyx.lib.modules.mkModule {
+{
   path = ["psyclyx" "nixos" "services" "greetd"];
   description = "greetd+regreet";
   config = _: {
@@ -12,4 +11,4 @@ nixclyx.lib.modules.mkModule {
       ];
     };
   };
-} args
+}

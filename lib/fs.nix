@@ -115,6 +115,40 @@ in rec {
             }
         ) (spec.children path entry);
     };
+  # Like collectModules, but imports each path as a spec, handles
+  # variant grouping (auto-generating enum options), wraps with mkModule,
+  # and returns the resulting NixOS modules.
+  collectSpecs = mkModule: root: let
+    last = l: builtins.elemAt l (builtins.length l - 1);
+    init = l: builtins.genList (builtins.elemAt l) (builtins.length l - 1);
+    groupBy = f: builtins.foldl' (acc: x: let k = f x;
+      in acc // {${k} = (acc.${k} or []) ++ [x];}) {};
+
+    specs = map import (collectModules root);
+
+    variantSpecs = builtins.filter (s: s ? variant) specs;
+    regularSpecs = builtins.filter (s: !(s ? variant)) specs;
+
+    groups = groupBy (s: builtins.concatStringsSep "." s.variant) variantSpecs;
+
+    enumSpecs = map (key: let
+      group = groups.${key};
+      variant = (builtins.head group).variant;
+      parentPath = init variant;
+      optName = last variant;
+      names = map (s: last s.path) group;
+    in {
+      path = parentPath;
+      gate = false;
+      options = {lib, ...}: {
+        ${optName} = lib.mkOption {
+          type = lib.types.enum names;
+        };
+      };
+    }) (builtins.attrNames groups);
+
+  in map mkModule (regularSpecs ++ variantSpecs ++ enumSpecs);
+
   # Recursively collect module-importable paths from a directory tree.
   # Returns .nix files (except default.nix) as imports, and directories
   # with a default.nix as leaf imports (the module system loads default.nix).

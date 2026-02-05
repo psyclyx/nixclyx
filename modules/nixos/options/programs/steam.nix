@@ -1,8 +1,7 @@
-{nixclyx, pkgs, ...} @ args:
-nixclyx.lib.modules.mkModule {
+{
   path = ["psyclyx" "nixos" "programs" "steam"];
   description = "Enable steam.";
-  config = _: {
+  config = {pkgs, ...}: {
     programs.gamescope.enable = true;
     programs.steam = {
       enable = true;
@@ -15,4 +14,4 @@ nixclyx.lib.modules.mkModule {
       ];
     };
   };
-} args
+}

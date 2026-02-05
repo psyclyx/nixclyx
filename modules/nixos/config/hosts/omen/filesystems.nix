@@ -2,10 +2,8 @@
   config,
   lib,
   ...
-}: let
-  cfg = config.psyclyx.nixos.config.hosts.omen;
-in {
-  config = lib.mkIf cfg.enable {
+}: {
+  config = lib.mkIf (config.psyclyx.nixos.host == "omen") {
     boot = {
       initrd = {
         luks = {

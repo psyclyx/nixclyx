@@ -1,18 +1,7 @@
 {
-  config,
-  lib,
-  pkgs,
-  ...
-}: let
-  cfg = config.psyclyx.home.config.workstation;
-in {
-  options.psyclyx.home.config.workstation = {
-    enable = lib.mkEnableOption "psyc workstation home config";
-  };
-
-  config = lib.mkIf cfg.enable {
-    psyclyx.home.config.base.enable = true;
-
+  path = ["psyclyx" "home" "config" "homes" "psyc" "workstation"];
+  variant = ["psyclyx" "home" "variant"];
+  config = {lib, pkgs, ...}: {
     home.packages = [
       pkgs.element-desktop
       pkgs.firefox-bin

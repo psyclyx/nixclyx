@@ -1,3 +1,3 @@
 {nixclyx}: {
-  imports = nixclyx.lib.fs.collectModules ./.;
+  imports = nixclyx.lib.fs.collectSpecs nixclyx.lib.modules.mkModule ./.;
 }

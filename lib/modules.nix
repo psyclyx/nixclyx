@@ -1,6 +1,8 @@
 rec {
+  last = l: builtins.elemAt l (builtins.length l - 1);
+
   mkModule = spec:
-    moduleArgs @ {config, lib, ...}: let
+    moduleArgs @ {config, lib, pkgs, nixclyx ? null, ...}: let
       cfg = lib.attrByPath spec.path {} config;
       args = moduleArgs // {inherit cfg;};
       eval = x:
@@ -8,17 +10,27 @@ rec {
         then x args
         else x;
 
-      hasEnable = spec.description or null != null;
-      gate = spec.gate or true;
+      hasVariant = spec ? variant;
+      variantName = if hasVariant then last spec.path else null;
+
+      hasEnable = !hasVariant && spec.description or null != null;
+      gate =
+        if hasVariant
+        then (a: lib.getAttrFromPath spec.variant a.config == variantName)
+        else spec.gate or true;
+
+      pathOptions = eval (spec.options or {});
     in {
       imports = spec.imports or [];
 
       options = lib.recursiveUpdate
-        (lib.setAttrByPath spec.path (
+        (if pathOptions == {} && !hasEnable
+         then {}
+         else lib.setAttrByPath spec.path (
           (lib.optionalAttrs hasEnable {
             enable = lib.mkEnableOption spec.description;
           })
-          // eval (spec.options or {})
+          // pathOptions
         ))
         (eval (spec.extraOptions or {}));
 

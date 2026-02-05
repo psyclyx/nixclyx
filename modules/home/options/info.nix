@@ -1,7 +1,6 @@
-{nixclyx, lib, ...} @ args:
-nixclyx.lib.modules.mkModule {
+{
   path = ["psyclyx" "home" "info"];
-  options = {
+  options = {lib, ...}: {
     name = lib.mkOption {
       type = lib.types.str;
       description = "User's full name";
@@ -11,4 +10,4 @@ nixclyx.lib.modules.mkModule {
       description = "User's email";
     };
   };
-} args
+}

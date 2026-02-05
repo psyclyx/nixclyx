@@ -1,5 +1,4 @@
-{nixclyx, ...} @ args:
-nixclyx.lib.modules.mkModule {
+{
   path = ["psyclyx" "nixos" "programs" "nvf"];
   description = "nvf (neovim)";
   imports = [
@@ -11,7 +10,6 @@ nixclyx.lib.modules.mkModule {
     programs.nvf = {
       enable = true;
       settings.vim = {
-        # ── Core options ──────────────────────────────────────────────
         globals = {
           mapleader = " ";
           maplocalleader = " m";
@@ -51,11 +49,10 @@ nixclyx.lib.modules.mkModule {
         lineNumberMode = "relNumber";
         spellcheck.enable = true;
 
-        # ── Theme ─────────────────────────────────────────────────────
         theme = {
           enable = true;
         };
       };
     };
   };
-} args
+}

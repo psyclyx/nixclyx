@@ -1,5 +1,4 @@
-{nixclyx, ...} @ args:
-nixclyx.lib.modules.mkModule {
+{
   path = ["psyclyx" "darwin" "system" "settings"];
   description = "macOS system settings";
   config = _: {
@@ -65,4 +64,4 @@ nixclyx.lib.modules.mkModule {
       };
     };
   };
-} args
+}

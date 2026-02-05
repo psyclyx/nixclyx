@@ -1,8 +1,7 @@
-{nixclyx, lib, ...} @ args:
-nixclyx.lib.modules.mkModule {
+{
   path = ["psyclyx" "nixos" "hardware" "drivers" "scsi"];
   description = "SCSI drivers";
-  options = {
+  options = {lib, ...}: {
     cdRom =
       lib.mkEnableOption "SCSI CD_ROM"
       // {
@@ -25,4 +24,4 @@ nixclyx.lib.modules.mkModule {
       ++ (lib.optionals cfg.disk ["sd_mod"])
       ++ (lib.optionals cfg.generic ["sg"]);
   };
-} args
+}

@@ -1,11 +1,10 @@
-{nixclyx, lib, pkgs, ...} @ args:
-nixclyx.lib.modules.mkModule {
+{
   path = ["psyclyx" "nixos" "services" "tailscale"];
   description = "Enable tailscale service and related settings";
-  options = {
+  options = {lib, ...}: {
     exitNode = lib.mkEnableOption "Configure tailscale client as an exit node";
   };
-  config = {cfg, config, ...}: let
+  config = {cfg, config, pkgs, ...}: let
     tsCfg = config.services.tailscale;
   in {
     environment.systemPackages = [pkgs.tailscale];
@@ -21,4 +20,4 @@ nixclyx.lib.modules.mkModule {
 
     systemd.network.wait-online.ignoredInterfaces = [tsCfg.interfaceName];
   };
-} args
+}

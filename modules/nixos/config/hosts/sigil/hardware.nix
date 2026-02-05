@@ -2,10 +2,8 @@
   config,
   lib,
   ...
-}: let
-  cfg = config.psyclyx.nixos.config.hosts.sigil;
-in {
-  config = lib.mkIf cfg.enable {
+}: {
+  config = lib.mkIf (config.psyclyx.nixos.host == "sigil") {
     psyclyx.nixos.hardware = {
       cpu = {
         amd.enable = true;

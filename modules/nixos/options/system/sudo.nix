@@ -1,8 +1,7 @@
-{nixclyx, lib, ...} @ args:
-nixclyx.lib.modules.mkModule {
+{
   path = ["psyclyx" "nixos" "system" "sudo"];
   description = "privilege escalation via sudo";
-  options = {
+  options = {lib, ...}: {
     timestampTimeout = lib.mkOption {
       type = lib.types.ints.unsigned;
       default = 30;
@@ -16,4 +15,4 @@ nixclyx.lib.modules.mkModule {
       '';
     };
   };
-} args
+}

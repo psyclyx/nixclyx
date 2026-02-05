@@ -1,9 +1,8 @@
-{nixclyx, lib, ...} @ args:
-nixclyx.lib.modules.mkModule {
+{
   path = ["psyclyx" "common" "system" "nixpkgs"];
   description = "nixpkgs config (unfree, etc)";
   gate = false;
-  config = {cfg, lib, ...}: lib.mkMerge [
+  config = {cfg, lib, nixclyx, ...}: lib.mkMerge [
     {nixpkgs.overlays = [nixclyx.overlays.default];}
 
     (lib.mkIf cfg.enable {
@@ -13,4 +12,4 @@ nixclyx.lib.modules.mkModule {
       };
     })
   ];
-} args
+}

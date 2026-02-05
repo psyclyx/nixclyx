@@ -1,14 +1,14 @@
-{nixclyx, lib, pkgs, ...} @ args:
-nixclyx.lib.modules.mkModule {
+{
   path = ["psyclyx" "home" "programs" "zsh"];
   description = "Zsh shell with prezto";
-  options = {
+  options = {lib, nixclyx, ...}: {
     pureSrc = lib.mkOption {
       type = lib.types.package;
       description = "Source package for the Pure zsh prompt theme";
+      default = nixclyx.sources.zsh-pure;
     };
   };
-  config = {cfg, config, lib, ...}: {
+  config = {cfg, config, lib, pkgs, ...}: {
     programs = {
       fzf.enable = true;
       zsh = {
@@ -74,4 +74,4 @@ nixclyx.lib.modules.mkModule {
 
     psyclyx.home.programs.shell.enable = lib.mkDefault true;
   };
-} args
+}

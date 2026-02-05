@@ -1,8 +1,7 @@
-{nixclyx, pkgs, ...} @ args:
-nixclyx.lib.modules.mkModule {
+{
   path = ["psyclyx" "home" "programs" "ags"];
   description = "AGS (Aylur's GTK Shell)";
-  config = _: {
+  config = {pkgs, ...}: {
     programs.ags = {
       enable = true;
       systemd.enable = true;
@@ -18,4 +17,4 @@ nixclyx.lib.modules.mkModule {
       ];
     };
   };
-} args
+}

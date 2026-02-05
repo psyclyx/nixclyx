@@ -1,33 +1,21 @@
 {
-  config,
-  lib,
-  ...
-}: let
-  cfg = config.psyclyx.home.config.base;
-in {
-  options.psyclyx.home.config.base = {
-    enable = lib.mkEnableOption "psyc base home config";
-  };
-
-  config = lib.mkIf cfg.enable {
-    psyclyx = {
-      home = {
-        info = {
-          name = "psyclyx";
-          email = "me@psyclyx.xyz";
-        };
-
-        programs = {
-          fastfetch.enable = true;
-          git.enable = true;
-        };
-
-        roles = {
-          shell.enable = true;
-        };
-
-        xdg.enable = true;
+  path = ["psyclyx" "home" "config" "homes" "psyc" "base"];
+  description = "psyc base home config";
+  config = {lib, ...}: {
+    psyclyx.home = {
+      info = {
+        name = "psyclyx";
+        email = "me@psyclyx.xyz";
       };
+
+      programs = {
+        fastfetch.enable = true;
+        git.enable = true;
+        ssh.enable = lib.mkDefault true;
+        zsh.enable = lib.mkDefault true;
+      };
+
+      xdg.enable = true;
     };
   };
 }

@@ -1,16 +1,7 @@
 {
-  config,
-  lib,
-  nixclyx,
-  ...
-}: let
-  cfg = config.psyclyx.darwin.config.hosts.halo;
-in {
-  options.psyclyx.darwin.config.hosts.halo = {
-    enable = lib.mkEnableOption "halo host";
-  };
-
-  config = lib.mkIf cfg.enable {
+  path = ["psyclyx" "darwin" "config" "hosts" "halo"];
+  variant = ["psyclyx" "darwin" "host"];
+  config = {lib, nixclyx, ...}: {
     nixpkgs.hostPlatform = "aarch64-darwin";
 
     networking.hostName = "halo";
@@ -20,7 +11,7 @@ in {
         base.enable = true;
         desktop.enable = true;
       };
-      users.psyc.base.enable = true;
+      users.psyc.enable = true;
     };
 
     psyclyx.darwin.services.tailscale.enable = true;

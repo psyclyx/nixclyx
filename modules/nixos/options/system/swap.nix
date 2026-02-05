@@ -1,8 +1,7 @@
-{nixclyx, lib, ...} @ args:
-nixclyx.lib.modules.mkModule {
+{
   path = ["psyclyx" "nixos" "system" "swap"];
   description = "swap config";
-  options = {
+  options = {lib, ...}: {
     swappiness = lib.mkOption {
       type = lib.types.ints.between 0 200;
       default = 60;
@@ -24,4 +23,4 @@ nixclyx.lib.modules.mkModule {
       kernelParams = lib.mkIf cfg.zswap ["zswap.enabled=1"];
     };
   };
-} args
+}

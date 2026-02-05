@@ -6,11 +6,12 @@ in {
       "${sources.home-manager}/nixos"
       (import sources.nvf).nixosModules.default
       (loadFlake sources.stylix).nixosModules.stylix
-      (modules.common.options {inherit nixclyx;})
+      modules.common.options
     ]
-    ++ nixclyx.lib.fs.collectModules ./.;
+    ++ nixclyx.lib.fs.collectSpecs nixclyx.lib.modules.mkModule ./.;
 
   config = {
+    _module.args.nixclyx = nixclyx;
     system.stateVersion = "25.11";
   };
 }
