@@ -1,19 +1,10 @@
-{
-  config,
-  lib,
-  ...
-}: let
-  cfg = config.psyclyx.nixos.services.gdm;
-in {
-  options = {
-    psyclyx.nixos.services.gdm = {
-      enable = lib.mkEnableOption "GNOME DIsplay Manager";
-    };
-  };
-
-  config = lib.mkIf cfg.enable {
+{nixclyx, ...} @ args:
+nixclyx.lib.modules.mkModule {
+  path = ["psyclyx" "nixos" "services" "gdm"];
+  description = "GNOME DIsplay Manager";
+  config = _: {
     services.displayManager.gdm = {
       enable = true;
     };
   };
-}
+} args

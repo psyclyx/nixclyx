@@ -1,15 +1,8 @@
-{
-  config,
-  lib,
-  ...
-}: let
-  cfg = config.psyclyx.darwin.programs.firefox;
-in {
-  options.psyclyx.darwin.programs.firefox = {
-    enable = lib.mkEnableOption "Firefox browser";
-  };
-
-  config = lib.mkIf cfg.enable {
+{nixclyx, ...} @ args:
+nixclyx.lib.modules.mkModule {
+  path = ["psyclyx" "darwin" "programs" "firefox"];
+  description = "Firefox browser";
+  config = _: {
     homebrew.casks = ["firefox"];
   };
-}
+} args

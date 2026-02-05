@@ -1,17 +1,8 @@
-{
-  config,
-  lib,
-  ...
-}: let
-  cfg = config.psyclyx.nixos.hardware.cpu.intel;
-in {
-  options = {
-    psyclyx.nixos.hardware.cpu.intel = {
-      enable = lib.mkEnableOption "Intel CPU config (tested on i5-8350U)";
-    };
-  };
-
-  config = lib.mkIf cfg.enable {
+{nixclyx, ...} @ args:
+nixclyx.lib.modules.mkModule {
+  path = ["psyclyx" "nixos" "hardware" "cpu" "intel"];
+  description = "Intel CPU config (tested on i5-8350U)";
+  config = _: {
     nixpkgs.hostPlatform = "x86_64-linux";
 
     boot.kernelModules = ["kvm-intel"];
@@ -21,4 +12,4 @@ in {
       enableRedistributableFirmware = true;
     };
   };
-}
+} args

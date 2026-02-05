@@ -1,16 +1,9 @@
-{
-  config,
-  lib,
-  ...
-}: let
-  cfg = config.psyclyx.darwin.system.nix;
-in {
-  options.psyclyx.darwin.system.nix = {
-    enable = lib.mkEnableOption "nix config";
-  };
-
-  config = lib.mkIf cfg.enable {
+{nixclyx, ...} @ args:
+nixclyx.lib.modules.mkModule {
+  path = ["psyclyx" "darwin" "system" "nix"];
+  description = "nix config";
+  config = _: {
     psyclyx.common.system.nix.enable = true;
     nix.settings.trusted-users = ["@admin"];
   };
-}
+} args

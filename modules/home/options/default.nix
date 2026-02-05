@@ -11,6 +11,5 @@ in
 
     config = {
       home.stateVersion = "25.11";
-      _module.args = {inherit nixclyx;};
     };
   }

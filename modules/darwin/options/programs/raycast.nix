@@ -1,15 +1,8 @@
-{
-  config,
-  lib,
-  ...
-}: let
-  cfg = config.psyclyx.darwin.programs.raycast;
-in {
-  options.psyclyx.darwin.programs.raycast = {
-    enable = lib.mkEnableOption "Raycast launcher";
-  };
-
-  config = lib.mkIf cfg.enable {
+{nixclyx, ...} @ args:
+nixclyx.lib.modules.mkModule {
+  path = ["psyclyx" "darwin" "programs" "raycast"];
+  description = "Raycast launcher";
+  config = _: {
     homebrew.casks = ["raycast"];
   };
-}
+} args

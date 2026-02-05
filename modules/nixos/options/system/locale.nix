@@ -1,22 +1,15 @@
-{
-  config,
-  lib,
-  ...
-}: let
-  cfg = config.psyclyx.nixos.system.locale;
-in {
+{nixclyx, lib, ...} @ args:
+nixclyx.lib.modules.mkModule {
+  path = ["psyclyx" "nixos" "system" "locale"];
+  description = "Locale config";
   options = {
-    psyclyx.nixos.system.locale = {
-      enable = lib.mkEnableOption "Locale config";
-      default = lib.mkOption {
-        type = lib.types.str;
-        default = "en_US.UTF-8";
-        description = "Default locale.";
-      };
+    default = lib.mkOption {
+      type = lib.types.str;
+      default = "en_US.UTF-8";
+      description = "Default locale.";
     };
   };
-
-  config = lib.mkIf cfg.enable {
+  config = {cfg, ...}: {
     i18n.defaultLocale = cfg.default;
   };
-}
+} args

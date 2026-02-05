@@ -1,20 +1,6 @@
-{
-  config,
-  lib,
-  ...
-}: let
-  inherit (lib) mkEnableOption mkIf;
-  cfg = config.psyclyx.home.programs.fuzzel;
-in {
-  options = {
-    psyclyx.home.programs.fuzzel = {
-      enable = mkEnableOption "Fuzzel application launcher";
-    };
-  };
-
-  config = mkIf cfg.enable {
-    programs.fuzzel = {
-      enable = true;
-    };
-  };
-}
+{nixclyx, ...} @ args:
+nixclyx.lib.modules.mkModule {
+  path = ["psyclyx" "home" "programs" "fuzzel"];
+  description = "Fuzzel application launcher";
+  config = _: {programs.fuzzel.enable = true;};
+} args

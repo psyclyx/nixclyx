@@ -1,19 +1,11 @@
-{
-  config,
-  lib,
-  pkgs,
-  ...
-}: let
-  cfg = config.psyclyx.home.programs.alacritty;
-in {
+{nixclyx, lib, pkgs, ...} @ args:
+nixclyx.lib.modules.mkModule {
+  path = ["psyclyx" "home" "programs" "alacritty"];
+  description = "Alacritty terminal emulator";
   options = {
-    psyclyx.home.programs.alacritty = {
-      enable = lib.mkEnableOption "Alacritty terminal emulator";
-      defaultTerminal = lib.mkEnableOption "setting as default terminal via TERMINAL environment variable";
-    };
+    defaultTerminal = lib.mkEnableOption "setting as default terminal via TERMINAL environment variable";
   };
-
-  config = lib.mkIf cfg.enable {
+  config = {cfg, config, ...}: {
     programs.alacritty = {
       enable = true;
       package = pkgs.alacritty-graphics;
@@ -36,4 +28,4 @@ in {
         else ["Alacritty.desktop"];
     };
   };
-}
+} args

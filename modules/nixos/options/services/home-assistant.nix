@@ -1,29 +1,16 @@
-{
-  config,
-  lib,
-  ...
-}: let
-  cfg = config.psyclyx.nixos.services.home-assistant;
-  port = config.psyclyx.nixos.network.ports.home-assistant;
-in {
-  options = {
-    psyclyx.nixos = {
-      network = {
-        ports = {
-          home-assistant = lib.mkOption {
-            type = lib.types.port;
-            default = 8123;
-          };
-        };
-      };
-
-      services.home-assistant = {
-        enable = lib.mkEnableOption "Enables Home Assistant, with @psyclyx's config";
-      };
+{nixclyx, lib, ...} @ args:
+nixclyx.lib.modules.mkModule {
+  path = ["psyclyx" "nixos" "services" "home-assistant"];
+  description = "Enables Home Assistant, with @psyclyx's config";
+  extraOptions = {
+    psyclyx.nixos.network.ports.home-assistant = lib.mkOption {
+      type = lib.types.port;
+      default = 8123;
     };
   };
-
-  config = lib.mkIf cfg.enable {
+  config = {config, ...}: let
+    port = config.psyclyx.nixos.network.ports.home-assistant;
+  in {
     networking.firewall.allowedTCPPorts = [port];
     services = {
       home-assistant = {
@@ -43,4 +30,4 @@ in {
       };
     };
   };
-}
+} args

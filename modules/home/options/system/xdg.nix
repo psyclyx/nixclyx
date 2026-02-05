@@ -1,18 +1,8 @@
-{
-  config,
-  lib,
-  ...
-}: let
-  inherit (lib) mkEnableOption mkIf;
-  cfg = config.psyclyx.home.xdg;
-in {
-  options = {
-    psyclyx.home.xdg = {
-      enable = mkEnableOption "XDG directories and MIME associations";
-    };
-  };
-
-  config = mkIf cfg.enable {
+{nixclyx, ...} @ args:
+nixclyx.lib.modules.mkModule {
+  path = ["psyclyx" "home" "xdg"];
+  description = "XDG directories and MIME associations";
+  config = _: {
     xdg = {
       userDirs = {
         enable = true;
@@ -76,4 +66,4 @@ in {
       };
     };
   };
-}
+} args

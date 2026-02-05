@@ -1,26 +1,15 @@
-{
-  config,
-  lib,
-  pkgs,
-  ...
-}: let
-  cfg = config.psyclyx.nixos.programs.nvf;
-in {
+{nixclyx, ...} @ args:
+nixclyx.lib.modules.mkModule {
+  path = ["psyclyx" "nixos" "programs" "nvf"];
+  description = "nvf (neovim)";
   imports = [
     ./languages.nix
     ./mini.nix
     ./keymaps.nix
   ];
-
-  options = {
-    psyclyx.nixos.programs.nvf = {
-      enable = lib.mkEnableOption "nvf (neovim)";
-    };
-  };
-
-  config = {
+  config = {cfg, lib, ...}: {
     programs.nvf = {
-      enable = lib.mkIf cfg.enable true;
+      enable = true;
       settings.vim = {
         # ── Core options ──────────────────────────────────────────────
         globals = {
@@ -69,4 +58,4 @@ in {
       };
     };
   };
-}
+} args

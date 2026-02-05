@@ -1,21 +1,12 @@
-{
-  config,
-  lib,
-  ...
-}: let
-  cfg = config.psyclyx.nixos.services.avahi;
-in {
-  options = {
-    psyclyx.nixos.services.avahi = {
-      enable = lib.mkEnableOption "Service discovery / MDNS";
-    };
-  };
-
-  config = lib.mkIf cfg.enable {
+{nixclyx, ...} @ args:
+nixclyx.lib.modules.mkModule {
+  path = ["psyclyx" "nixos" "services" "avahi"];
+  description = "Service discovery / MDNS";
+  config = _: {
     services.avahi = {
       enable = true;
       nssmdns4 = true;
       publish.enable = true;
     };
   };
-}
+} args

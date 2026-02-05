@@ -1,19 +1,11 @@
-{
-  config,
-  lib,
-  pkgs,
-  ...
-}: let
-  cfg = config.psyclyx.nixos.system.containers;
-in {
+{nixclyx, lib, pkgs, ...} @ args:
+nixclyx.lib.modules.mkModule {
+  path = ["psyclyx" "nixos" "system" "containers"];
+  description = "Container config";
   options = {
-    psyclyx.nixos.system.containers = {
-      enable = lib.mkEnableOption "Container config";
-      nvidia = lib.mkEnableOption "nvidia-container-tools for gpu-accelerated container support";
-    };
+    nvidia = lib.mkEnableOption "nvidia-container-tools for gpu-accelerated container support";
   };
-
-  config = lib.mkIf cfg.enable {
+  config = {cfg, config, ...}: {
     environment.systemPackages = [pkgs.distrobox];
     hardware.nvidia-container-toolkit.enable = cfg.nvidia;
     psyclyx.nixos.system.containers.nvidia = lib.mkDefault config.hardware.nvidia.enabled;
@@ -27,4 +19,4 @@ in {
       };
     };
   };
-}
+} args

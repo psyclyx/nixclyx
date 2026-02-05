@@ -1,37 +1,29 @@
-{
-  config,
-  lib,
-  pkgs,
-  ...
-}: let
+{nixclyx, pkgs, ...} @ args: let
   inherit (pkgs.stdenv) hostPlatform;
+in
+  nixclyx.lib.modules.mkModule {
+    path = ["psyclyx" "darwin" "system" "homebrew"];
+    description = "homebrew config";
+    config = _: {
+      homebrew = {
+        enable = true;
 
-  cfg = config.psyclyx.darwin.system.homebrew;
-in {
-  options.psyclyx.darwin.system.homebrew = {
-    enable = lib.mkEnableOption "homebrew config";
-  };
+        caskArgs.no_quarantine = true;
 
-  config = lib.mkIf cfg.enable {
-    homebrew = {
-      enable = true;
+        global.autoUpdate = true;
 
-      caskArgs.no_quarantine = true;
+        onActivation = {
+          upgrade = false;
+          autoUpdate = false;
+          cleanup = "zap";
+        };
+      };
 
-      global.autoUpdate = true;
-
-      onActivation = {
-        upgrade = false;
-        autoUpdate = false;
-        cleanup = "zap";
+      nix-homebrew = {
+        enable = true;
+        autoMigrate = true;
+        enableRosetta = hostPlatform.isAarch64;
+        mutableTaps = true;
       };
     };
-
-    nix-homebrew = {
-      enable = true;
-      autoMigrate = true;
-      enableRosetta = hostPlatform.isAarch64;
-      mutableTaps = true;
-    };
-  };
-}
+  } args

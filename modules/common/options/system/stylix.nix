@@ -1,32 +1,23 @@
-{
-  config,
-  lib,
-  pkgs,
-  ...
-}: let
-  flavours-palette-generator = let
-    flavours = lib.getExe pkgs.flavours;
-    yq = lib.getExe pkgs.yq;
-  in
-    pkgs.writeShellScriptBin "palette-generator" ''
-      ${flavours} generate "$1" "$2" --stdout | ${yq} > "$3"
-    '';
-
-  cfg = config.psyclyx.common.system.stylix;
-in {
+{nixclyx, lib, pkgs, ...} @ args:
+nixclyx.lib.modules.mkModule {
+  path = ["psyclyx" "common" "system" "stylix"];
+  description = "stylix configuration";
   options = {
-    psyclyx.common.system.stylix = {
-      enable = lib.mkEnableOption "stylix configuration";
-
-      flavours = lib.mkOption {
-        description = "replace stylix's palette generator with flavours";
-        default = true;
-        type = lib.types.bool;
-      };
+    flavours = lib.mkOption {
+      description = "replace stylix's palette generator with flavours";
+      default = true;
+      type = lib.types.bool;
     };
   };
-
-  config = lib.mkIf cfg.enable {
+  config = {cfg, config, ...}: let
+    flavours-palette-generator = let
+      flavours = lib.getExe pkgs.flavours;
+      yq = lib.getExe pkgs.yq;
+    in
+      pkgs.writeShellScriptBin "palette-generator" ''
+        ${flavours} generate "$1" "$2" --stdout | ${yq} > "$3"
+      '';
+  in {
     stylix = {
       enable = true;
 
@@ -66,4 +57,4 @@ in {
       };
     };
   };
-}
+} args

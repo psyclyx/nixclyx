@@ -1,18 +1,8 @@
-{
-  config,
-  lib,
-  pkgs,
-  ...
-}: let
-  cfg = config.psyclyx.home.programs.helix;
-in {
-  options = {
-    psyclyx.home.programs.helix = {
-      enable = lib.mkEnableOption "helix text editor";
-    };
-  };
-
-  config = lib.mkIf cfg.enable {
+{nixclyx, lib, pkgs, ...} @ args:
+nixclyx.lib.modules.mkModule {
+  path = ["psyclyx" "home" "programs" "helix"];
+  description = "helix text editor";
+  config = _: {
     programs.helix = {
       enable = true;
       languages.language = [
@@ -27,4 +17,4 @@ in {
       ];
     };
   };
-}
+} args

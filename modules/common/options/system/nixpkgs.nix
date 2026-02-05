@@ -1,16 +1,9 @@
-{
-  config,
-  lib,
-  nixclyx,
-  ...
-}: let
-  cfg = config.psyclyx.common.system.nixpkgs;
-in {
-  options = {
-    psyclyx.common.system.nixpkgs.enable = lib.mkEnableOption "nixpkgs config (unfree, etc)";
-  };
-
-  config = lib.mkMerge [
+{nixclyx, lib, ...} @ args:
+nixclyx.lib.modules.mkModule {
+  path = ["psyclyx" "common" "system" "nixpkgs"];
+  description = "nixpkgs config (unfree, etc)";
+  gate = false;
+  config = {cfg, lib, ...}: lib.mkMerge [
     {nixpkgs.overlays = [nixclyx.overlays.default];}
 
     (lib.mkIf cfg.enable {
@@ -20,4 +13,4 @@ in {
       };
     })
   ];
-}
+} args

@@ -1,11 +1,4 @@
-{
-  config,
-  lib,
-  pkgs,
-  ...
-}: let
-  cfg = config.psyclyx.darwin.services.aerospace;
-
+{nixclyx, pkgs, ...} @ args: let
   sb = "${pkgs.sketchybar}/bin/sketchybar";
   modeBadge = icon: drawing: "exec-and-forget ${sb} --set mode icon=${icon} drawing=${drawing}";
 
@@ -25,153 +18,152 @@
 
   trigger-workspace-change = "${sb} --trigger aerospace_workspace_change";
   exec-twc = "exec-and-forget ${trigger-workspace-change}";
-in {
-  options.psyclyx.darwin.services.aerospace = {
-    enable = lib.mkEnableOption "AeroSpace window manager";
-  };
+in
+  nixclyx.lib.modules.mkModule {
+    path = ["psyclyx" "darwin" "services" "aerospace"];
+    description = "AeroSpace window manager";
+    config = _: {
+      services.aerospace = {
+        enable = true;
+        settings = {
+          enable-normalization-flatten-containers = true;
+          enable-normalization-opposite-orientation-for-nested-containers = false;
 
-  config = lib.mkIf cfg.enable {
-    services.aerospace = {
-      enable = true;
-      settings = {
-        enable-normalization-flatten-containers = true;
-        enable-normalization-opposite-orientation-for-nested-containers = false;
+          default-root-container-layout = "tiles";
+          default-root-container-orientation = "auto";
 
-        default-root-container-layout = "tiles";
-        default-root-container-orientation = "auto";
-
-        exec-on-workspace-change = [
-          "/bin/bash"
-          "-c"
-          "${trigger-workspace-change} FOCUSED_WORKSPACE=$AEROSPACE_FOCUSED_WORKSPACE"
-        ];
-
-        automatically-unhide-macos-hidden-apps = true;
-
-        gaps = {
-          inner.horizontal = 0;
-          inner.vertical = 0;
-          outer.left = 0;
-          outer.bottom = 0;
-          outer.top = [
-            #{monitor."BenQ RD280U" = 38;}
-            {monitor."Built-in Retina Display" = 0;}
-            38
+          exec-on-workspace-change = [
+            "/bin/bash"
+            "-c"
+            "${trigger-workspace-change} FOCUSED_WORKSPACE=$AEROSPACE_FOCUSED_WORKSPACE"
           ];
-        };
 
-        key-mapping.preset = "qwerty";
+          automatically-unhide-macos-hidden-apps = true;
 
-        mode.main.binding = {
-          alt-enter = toCommand;
-        };
+          gaps = {
+            inner.horizontal = 0;
+            inner.vertical = 0;
+            outer.left = 0;
+            outer.bottom = 0;
+            outer.top = [
+              #{monitor."BenQ RD280U" = 38;}
+              {monitor."Built-in Retina Display" = 0;}
+              38
+            ];
+          };
 
-        mode.command.binding = {
-          esc = toMain;
-          enter = toMove;
+          key-mapping.preset = "qwerty";
 
-          shift-semicolon = toService;
+          mode.main.binding = {
+            alt-enter = toCommand;
+          };
 
-          o = [term] ++ toMain;
+          mode.command.binding = {
+            esc = toMain;
+            enter = toMove;
 
-          x = ["close"] ++ toMain;
+            shift-semicolon = toService;
 
-          m = ["fullscreen"] ++ toMain;
-          comma = ["layout floating tiling"] ++ toMain;
-          period = ["layout tiles horizontal vertical"] ++ toMain;
-          slash = ["layout accordion horizontal vertical"] ++ toMain;
+            o = [term] ++ toMain;
 
-          h = ["focus left"] ++ toMain;
-          j = ["focus down"] ++ toMain;
-          k = ["focus up"] ++ toMain;
-          l = ["focus right"] ++ toMain;
+            x = ["close"] ++ toMain;
 
-          q = ["workspace 1q"] ++ toMain;
-          w = ["workspace 2w"] ++ toMain;
-          e = ["workspace 3e"] ++ toMain;
-          r = ["workspace 4r"] ++ toMain;
-          a = ["workspace 5a"] ++ toMain;
-          s = ["workspace 6s"] ++ toMain;
-          d = ["workspace 7d"] ++ toMain;
-          f = ["workspace 8f"] ++ toMain;
+            m = ["fullscreen"] ++ toMain;
+            comma = ["layout floating tiling"] ++ toMain;
+            period = ["layout tiles horizontal vertical"] ++ toMain;
+            slash = ["layout accordion horizontal vertical"] ++ toMain;
 
-          tab = ["workspace-back-and-forth"] ++ toMain;
-        };
+            h = ["focus left"] ++ toMain;
+            j = ["focus down"] ++ toMain;
+            k = ["focus up"] ++ toMain;
+            l = ["focus right"] ++ toMain;
 
-        mode.move.binding = {
-          esc = toMain;
+            q = ["workspace 1q"] ++ toMain;
+            w = ["workspace 2w"] ++ toMain;
+            e = ["workspace 3e"] ++ toMain;
+            r = ["workspace 4r"] ++ toMain;
+            a = ["workspace 5a"] ++ toMain;
+            s = ["workspace 6s"] ++ toMain;
+            d = ["workspace 7d"] ++ toMain;
+            f = ["workspace 8f"] ++ toMain;
 
-          enter = ["move-workspace-to-monitor --wrap-around next"] ++ toMain;
+            tab = ["workspace-back-and-forth"] ++ toMain;
+          };
 
-          up = "resize smart -50";
-          down = "resize smart +50";
+          mode.move.binding = {
+            esc = toMain;
 
-          q =
-            [
-              "move-node-to-workspace 1q"
-              exec-twc
-            ]
-            ++ toMain;
-          w =
-            [
-              "move-node-to-workspace 2w"
-              exec-twc
-            ]
-            ++ toMain;
-          e =
-            [
-              "move-node-to-workspace 3e"
-              exec-twc
-            ]
-            ++ toMain;
-          r =
-            [
-              "move-node-to-workspace 4r"
-              exec-twc
-            ]
-            ++ toMain;
-          a =
-            [
-              "move-node-to-workspace 5a"
-              exec-twc
-            ]
-            ++ toMain;
-          s =
-            [
-              "move-node-to-workspace 6s"
-              exec-twc
-            ]
-            ++ toMain;
-          d =
-            [
-              "move-node-to-workspace 7d"
-              exec-twc
-            ]
-            ++ toMain;
-          f =
-            [
-              "move-node-to-workspace 8f"
-              exec-twc
-            ]
-            ++ toMain;
+            enter = ["move-workspace-to-monitor --wrap-around next"] ++ toMain;
 
-          h = ["move left"] ++ toMain;
-          j = ["move down"] ++ toMain;
-          k = ["move up"] ++ toMain;
-          l = ["move right"] ++ toMain;
+            up = "resize smart -50";
+            down = "resize smart +50";
 
-          shift-h = ["join-with left"] ++ toMain;
-          shift-j = ["join-with down"] ++ toMain;
-          shift-k = ["join-with up"] ++ toMain;
-          shift-l = ["join-with right"] ++ toMain;
-        };
+            q =
+              [
+                "move-node-to-workspace 1q"
+                exec-twc
+              ]
+              ++ toMain;
+            w =
+              [
+                "move-node-to-workspace 2w"
+                exec-twc
+              ]
+              ++ toMain;
+            e =
+              [
+                "move-node-to-workspace 3e"
+                exec-twc
+              ]
+              ++ toMain;
+            r =
+              [
+                "move-node-to-workspace 4r"
+                exec-twc
+              ]
+              ++ toMain;
+            a =
+              [
+                "move-node-to-workspace 5a"
+                exec-twc
+              ]
+              ++ toMain;
+            s =
+              [
+                "move-node-to-workspace 6s"
+                exec-twc
+              ]
+              ++ toMain;
+            d =
+              [
+                "move-node-to-workspace 7d"
+                exec-twc
+              ]
+              ++ toMain;
+            f =
+              [
+                "move-node-to-workspace 8f"
+                exec-twc
+              ]
+              ++ toMain;
 
-        mode.service.binding = {
-          esc = ["reload-config"] ++ toMain;
-          r = ["flatten-workspace-tree"] ++ toMain;
-          backspace = ["close-all-windows-but-current"] ++ toMain;
+            h = ["move left"] ++ toMain;
+            j = ["move down"] ++ toMain;
+            k = ["move up"] ++ toMain;
+            l = ["move right"] ++ toMain;
+
+            shift-h = ["join-with left"] ++ toMain;
+            shift-j = ["join-with down"] ++ toMain;
+            shift-k = ["join-with up"] ++ toMain;
+            shift-l = ["join-with right"] ++ toMain;
+          };
+
+          mode.service.binding = {
+            esc = ["reload-config"] ++ toMain;
+            r = ["flatten-workspace-tree"] ++ toMain;
+            backspace = ["close-all-windows-but-current"] ++ toMain;
+          };
         };
       };
     };
-  };
-}
+  } args

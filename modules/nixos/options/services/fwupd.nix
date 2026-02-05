@@ -1,17 +1,8 @@
-{
-  config,
-  lib,
-  ...
-}: let
-  cfg = config.psyclyx.nixos.services.fwupd;
-in {
-  options = {
-    psyclyx.nixos.services.fwupd = {
-      enable = lib.mkEnableOption "fwupd";
-    };
-  };
-
-  config = lib.mkIf cfg.enable {
+{nixclyx, ...} @ args:
+nixclyx.lib.modules.mkModule {
+  path = ["psyclyx" "nixos" "services" "fwupd"];
+  description = "fwupd";
+  config = _: {
     services.fwupd.enable = true;
   };
-}
+} args

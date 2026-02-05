@@ -2,6 +2,7 @@
   config,
   pkgs,
   lib,
+  nixclyx,
   ...
 }: let
   cfg = config.psyclyx.nixos.config.users.psyc.base;
@@ -19,11 +20,11 @@ in {
         ];
 
         isNormalUser = true;
-        openssh.authorizedKeys.keys = config.psyclyx.keys.psyc.openssh;
+        openssh.authorizedKeys.keys = nixclyx.keys.psyc.openssh;
         shell = pkgs.zsh;
       };
 
-      root.openssh.authorizedKeys.keys = config.psyclyx.keys.psyc.openssh;
+      root.openssh.authorizedKeys.keys = nixclyx.keys.psyc.openssh;
     };
   };
 }

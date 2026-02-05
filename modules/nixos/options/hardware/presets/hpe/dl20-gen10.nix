@@ -1,17 +1,8 @@
-{
-  config,
-  lib,
-  ...
-}: let
-  cfg = config.psyclyx.nixos.hardware.presets.hpe.dl20-gen10;
-in {
-  options = {
-    psyclyx.nixos.hardware.presets.hpe.dl20-gen10 = {
-      enable = lib.mkEnableOption "HPE ProLiant DL20 Gen 10";
-    };
-  };
-
-  config = lib.mkIf cfg.enable {
+{nixclyx, lib, ...} @ args:
+nixclyx.lib.modules.mkModule {
+  path = ["psyclyx" "nixos" "hardware" "presets" "hpe" "dl20-gen10"];
+  description = "HPE ProLiant DL20 Gen 10";
+  config = _: {
     psyclyx.nixos = {
       hardware = {
         cpu.intel.enable = true;
@@ -25,4 +16,4 @@ in {
       };
     };
   };
-}
+} args

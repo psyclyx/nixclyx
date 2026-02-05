@@ -1,17 +1,8 @@
-{
-  config,
-  lib,
-  ...
-}: let
-  cfg = config.psyclyx.nixos.services.kanata;
-in {
-  options = {
-    psyclyx.nixos.services.kanata = {
-      enable = lib.mkEnableOption "Kanata (keyboard remapper)";
-    };
-  };
-
-  config = lib.mkIf cfg.enable {
+{nixclyx, ...} @ args:
+nixclyx.lib.modules.mkModule {
+  path = ["psyclyx" "nixos" "services" "kanata"];
+  description = "Kanata (keyboard remapper)";
+  config = _: {
     services.kanata = {
       enable = true;
       keyboards.default = {
@@ -26,4 +17,4 @@ in {
       };
     };
   };
-}
+} args

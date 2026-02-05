@@ -1,17 +1,8 @@
-{
-  config,
-  lib,
-  ...
-}: let
-  cfg = config.psyclyx.nixos.services.resolved;
-in {
-  options = {
-    psyclyx.nixos.services.resolved = {
-      enable = lib.mkEnableOption "systemd-resolved dns resolver";
-    };
-  };
-
-  config = lib.mkIf cfg.enable {
+{nixclyx, ...} @ args:
+nixclyx.lib.modules.mkModule {
+  path = ["psyclyx" "nixos" "services" "resolved"];
+  description = "systemd-resolved dns resolver";
+  config = _: {
     services.resolved = {
       enable = true;
       settings.Resolve = {
@@ -19,4 +10,4 @@ in {
       };
     };
   };
-}
+} args

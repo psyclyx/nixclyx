@@ -1,18 +1,8 @@
-{
-  config,
-  lib,
-  pkgs,
-  ...
-}: let
-  cfg = config.psyclyx.nixos.programs.qmk;
-in {
-  options = {
-    psyclyx.nixos.programs.qmk = {
-      enable = lib.mkEnableOption "QMK";
-    };
-  };
-
-  config = lib.mkIf cfg.enable {
+{nixclyx, pkgs, ...} @ args:
+nixclyx.lib.modules.mkModule {
+  path = ["psyclyx" "nixos" "programs" "qmk"];
+  description = "QMK";
+  config = _: {
     environment.systemPackages = [
       pkgs.qmk
       pkgs.via
@@ -20,4 +10,4 @@ in {
 
     hardware.keyboard.qmk.enable = true;
   };
-}
+} args

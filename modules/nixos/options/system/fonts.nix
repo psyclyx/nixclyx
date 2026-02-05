@@ -1,17 +1,8 @@
-{
-  config,
-  lib,
-  ...
-}: let
-  cfg = config.psyclyx.nixos.system.fonts;
-in {
-  options = {
-    psyclyx.nixos.system.fonts = {
-      enable = lib.mkEnableOption "Configure fonts.";
-    };
-  };
-
-  config = lib.mkIf cfg.enable {
+{nixclyx, ...} @ args:
+nixclyx.lib.modules.mkModule {
+  path = ["psyclyx" "nixos" "system" "fonts"];
+  description = "Configure fonts.";
+  config = _: {
     fonts = {
       # font choice is handled in stylix
       fontconfig = {
@@ -23,4 +14,4 @@ in {
       };
     };
   };
-}
+} args

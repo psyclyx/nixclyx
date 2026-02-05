@@ -1,20 +1,11 @@
-{
-  config,
-  lib,
-  ...
-}: let
-  cfg = config.psyclyx.nixos.services.sddm;
-in {
-  options = {
-    psyclyx.nixos.services.sddm = {
-      enable = lib.mkEnableOption "Simple Desktop Display Manager";
-    };
-  };
-
-  config = lib.mkIf cfg.enable {
+{nixclyx, ...} @ args:
+nixclyx.lib.modules.mkModule {
+  path = ["psyclyx" "nixos" "services" "sddm"];
+  description = "Simple Desktop Display Manager";
+  config = _: {
     services.displayManager.sddm = {
       enable = true;
       wayland.enable = true;
     };
   };
-}
+} args

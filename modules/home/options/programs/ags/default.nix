@@ -1,24 +1,8 @@
-{
-  config,
-  lib,
-  pkgs,
-  ...
-}: let
-  inherit
-    (lib)
-    mkEnableOption
-    mkIf
-    ;
-
-  cfg = config.psyclyx.home.programs.ags;
-in {
-  options = {
-    psyclyx.home.programs.ags = {
-      enable = mkEnableOption "AGS (Aylur's GTK Shell)";
-    };
-  };
-
-  config = mkIf cfg.enable {
+{nixclyx, pkgs, ...} @ args:
+nixclyx.lib.modules.mkModule {
+  path = ["psyclyx" "home" "programs" "ags"];
+  description = "AGS (Aylur's GTK Shell)";
+  config = _: {
     programs.ags = {
       enable = true;
       systemd.enable = true;
@@ -34,4 +18,4 @@ in {
       ];
     };
   };
-}
+} args

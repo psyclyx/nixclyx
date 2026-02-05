@@ -1,19 +1,10 @@
-{
-  config,
-  lib,
-  ...
-}: let
-  cfg = config.psyclyx.nixos.services.gnupg-agent;
-in {
-  options = {
-    psyclyx.nixos.services.gnupg-agent = {
-      enable = lib.mkEnableOption "gnupg agent (for pinentry)";
-    };
-  };
-
-  config = lib.mkIf cfg.enable {
+{nixclyx, ...} @ args:
+nixclyx.lib.modules.mkModule {
+  path = ["psyclyx" "nixos" "services" "gnupg-agent"];
+  description = "gnupg agent (for pinentry)";
+  config = _: {
     programs.gnupg.agent = {
       enable = true;
     };
   };
-}
+} args

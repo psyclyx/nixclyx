@@ -1,15 +1,8 @@
-{
-  config,
-  lib,
-  ...
-}: let
-  cfg = config.psyclyx.darwin.system.settings;
-in {
-  options.psyclyx.darwin.system.settings = {
-    enable = lib.mkEnableOption "macOS system settings";
-  };
-
-  config = lib.mkIf cfg.enable {
+{nixclyx, ...} @ args:
+nixclyx.lib.modules.mkModule {
+  path = ["psyclyx" "darwin" "system" "settings"];
+  description = "macOS system settings";
+  config = _: {
     system = {
       defaults = {
         NSGlobalDomain = {
@@ -72,4 +65,4 @@ in {
       };
     };
   };
-}
+} args

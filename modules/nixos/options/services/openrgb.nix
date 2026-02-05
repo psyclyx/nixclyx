@@ -1,18 +1,8 @@
-{
-  config,
-  lib,
-  pkgs,
-  ...
-}: let
-  cfg = config.psyclyx.nixos.services.openrgb;
-in {
-  options = {
-    psyclyx.nixos.services.openrgb = {
-      enable = lib.mkEnableOption "OpenRGB";
-    };
-  };
-
-  config = lib.mkIf cfg.enable {
+{nixclyx, pkgs, ...} @ args:
+nixclyx.lib.modules.mkModule {
+  path = ["psyclyx" "nixos" "services" "openrgb"];
+  description = "OpenRGB";
+  config = _: {
     environment.systemPackages = [
       pkgs.i2c-tools
       pkgs.openrgb-with-all-plugins
@@ -20,4 +10,4 @@ in {
 
     services.hardware.openrgb.enable = true;
   };
-}
+} args

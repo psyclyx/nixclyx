@@ -1,28 +1,18 @@
-{
-  config,
-  lib,
-  pkgs,
-  ...
-}: let
-  inherit (lib) mkIf mkEnableOption optionals;
-  configHome = config.xdg.configHome;
-  home = config.home.homeDirectory;
-  isDarwin = pkgs.stdenv.hostPlatform.isDarwin;
-  cfg = config.psyclyx.home.secrets;
-in {
-  options = {
-    psyclyx.home.secrets = {
-      enable = mkEnableOption "Runtime secret decryption with sops-nix";
-    };
-  };
-
-  config = mkIf cfg.enable {
+{nixclyx, lib, pkgs, ...} @ args:
+nixclyx.lib.modules.mkModule {
+  path = ["psyclyx" "home" "secrets"];
+  description = "Runtime secret decryption with sops-nix";
+  config = {config, ...}: let
+    configHome = config.xdg.configHome;
+    home = config.home.homeDirectory;
+    isDarwin = pkgs.stdenv.hostPlatform.isDarwin;
+  in {
     home.packages =
       [
         pkgs.bitwarden-cli
         pkgs.rbw
       ]
-      ++ optionals config.psyclyx.home.programs.fuzzel.enable [pkgs.rofi-rbw];
+      ++ lib.optionals config.psyclyx.home.programs.fuzzel.enable [pkgs.rofi-rbw];
 
     sops = {
       age.keyFile =
@@ -41,4 +31,4 @@ in {
       };
     };
   };
-}
+} args

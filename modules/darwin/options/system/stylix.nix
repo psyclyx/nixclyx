@@ -1,15 +1,8 @@
-{
-  config,
-  lib,
-  ...
-}: let
-  cfg = config.psyclyx.darwin.system.stylix;
-in {
-  options.psyclyx.darwin.system.stylix = {
-    enable = lib.mkEnableOption "stylix config";
-  };
-
-  config = lib.mkIf cfg.enable {
+{nixclyx, ...} @ args:
+nixclyx.lib.modules.mkModule {
+  path = ["psyclyx" "darwin" "system" "stylix"];
+  description = "stylix config";
+  config = _: {
     psyclyx.common.system.stylix.enable = true;
   };
-}
+} args

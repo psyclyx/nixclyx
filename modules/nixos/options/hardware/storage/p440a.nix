@@ -1,21 +1,12 @@
-{
-  config,
-  lib,
-  ...
-}: let
-  cfg = config.psyclyx.nixos.hardware.storage.p440a;
-in {
-  options = {
-    psyclyx.nixos.hardware.storage.p440a = {
-      enable = lib.mkEnableOption "HPE P440a(r) storage controller";
-    };
-  };
-
-  config = lib.mkIf cfg.enable {
+{nixclyx, ...} @ args:
+nixclyx.lib.modules.mkModule {
+  path = ["psyclyx" "nixos" "hardware" "storage" "p440a"];
+  description = "HPE P440a(r) storage controller";
+  config = _: {
     boot.initrd.availableKernelModules = ["hpsa"];
     psyclyx.nixos = {
       hardware.drivers.scsi.enable = true;
       programs.ssacli.enable = true;
     };
   };
-}
+} args

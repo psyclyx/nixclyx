@@ -1,21 +1,11 @@
-{
-  config,
-  lib,
-  ...
-}: let
-  inherit (lib) mkDefault mkEnableOption mkIf;
-  cfg = config.psyclyx.home.roles.dev;
-in {
-  options = {
-    psyclyx.home.roles.dev = {
-      enable = mkEnableOption "Development tools and configuration";
-    };
-  };
-
-  config = mkIf cfg.enable {
+{nixclyx, ...} @ args:
+nixclyx.lib.modules.mkModule {
+  path = ["psyclyx" "home" "roles" "dev"];
+  description = "Development tools and configuration";
+  config = _: {
     psyclyx = {
       home = {
       };
     };
   };
-}
+} args

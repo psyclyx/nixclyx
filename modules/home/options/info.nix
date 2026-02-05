@@ -1,5 +1,7 @@
-{lib, ...}: {
-  options.psyclyx.home.info = {
+{nixclyx, lib, ...} @ args:
+nixclyx.lib.modules.mkModule {
+  path = ["psyclyx" "home" "info"];
+  options = {
     name = lib.mkOption {
       type = lib.types.str;
       description = "User's full name";
@@ -9,4 +11,4 @@
       description = "User's email";
     };
   };
-}
+} args

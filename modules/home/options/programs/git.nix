@@ -1,18 +1,10 @@
-{
-  config,
-  lib,
-  ...
-}: let
-  cfg = config.psyclyx.home.programs.git;
-  info = config.psyclyx.home.info;
-in {
-  options = {
-    psyclyx.home.programs.git = {
-      enable = lib.mkEnableOption "git version control";
-    };
-  };
-
-  config = lib.mkIf cfg.enable {
+{nixclyx, lib, ...} @ args:
+nixclyx.lib.modules.mkModule {
+  path = ["psyclyx" "home" "programs" "git"];
+  description = "git version control";
+  config = {config, ...}: let
+    info = config.psyclyx.home.info;
+  in {
     programs = {
       git = {
         enable = true;
@@ -24,4 +16,4 @@ in {
       };
     };
   };
-}
+} args

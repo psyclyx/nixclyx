@@ -1,15 +1,8 @@
-{
-  config,
-  lib,
-  ...
-}: let
-  cfg = config.psyclyx.darwin.system.nixpkgs;
-in {
-  options.psyclyx.darwin.system.nixpkgs = {
-    enable = lib.mkEnableOption "nixpkgs config";
-  };
-
-  config = lib.mkIf cfg.enable {
+{nixclyx, ...} @ args:
+nixclyx.lib.modules.mkModule {
+  path = ["psyclyx" "darwin" "system" "nixpkgs"];
+  description = "nixpkgs config";
+  config = _: {
     psyclyx.common.system.nixpkgs.enable = true;
   };
-}
+} args

@@ -1,21 +1,12 @@
-{
-  config,
-  lib,
-  ...
-}: let
-  cfg = config.psyclyx.nixos.hardware.storage.p408i-a-g10;
-in {
-  options = {
-    psyclyx.nixos.hardware.storage.p408i-a-g10 = {
-      enable = lib.mkEnableOption "HPE P408i-a-G10 storage controller";
-    };
-  };
-
-  config = lib.mkIf cfg.enable {
+{nixclyx, ...} @ args:
+nixclyx.lib.modules.mkModule {
+  path = ["psyclyx" "nixos" "hardware" "storage" "p408i-a-g10"];
+  description = "HPE P408i-a-G10 storage controller";
+  config = _: {
     boot.initrd.availableKernelModules = ["smartpqi"];
     psyclyx.nixos = {
       hardware.drivers.scsi.enable = true;
       programs.ssacli.enable = true;
     };
   };
-}
+} args

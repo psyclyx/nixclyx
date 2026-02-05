@@ -1,18 +1,14 @@
-{
-  config,
-  lib,
-  pkgs,
-  ...
-}: let
-  cfg = config.psyclyx.home.programs.zsh;
-in {
+{nixclyx, lib, pkgs, ...} @ args:
+nixclyx.lib.modules.mkModule {
+  path = ["psyclyx" "home" "programs" "zsh"];
+  description = "Zsh shell with prezto";
   options = {
-    psyclyx.home.programs.zsh = {
-      enable = lib.mkEnableOption "Zsh shell with prezto";
+    pureSrc = lib.mkOption {
+      type = lib.types.package;
+      description = "Source package for the Pure zsh prompt theme";
     };
   };
-
-  config = lib.mkIf cfg.enable {
+  config = {cfg, config, lib, ...}: {
     programs = {
       fzf.enable = true;
       zsh = {
@@ -43,7 +39,7 @@ in {
           }
           {
             name = "pure";
-            src = config.psyclyx.home.deps.zsh-pure;
+            src = cfg.pureSrc;
           }
         ];
 
@@ -78,4 +74,4 @@ in {
 
     psyclyx.home.programs.shell.enable = lib.mkDefault true;
   };
-}
+} args

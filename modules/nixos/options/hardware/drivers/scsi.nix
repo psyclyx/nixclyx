@@ -1,35 +1,28 @@
-{
-  config,
-  lib,
-  ...
-}: let
-  cfg = config.psyclyx.nixos.hardware.drivers.scsi;
-in {
+{nixclyx, lib, ...} @ args:
+nixclyx.lib.modules.mkModule {
+  path = ["psyclyx" "nixos" "hardware" "drivers" "scsi"];
+  description = "SCSI drivers";
   options = {
-    psyclyx.nixos.hardware.drivers.scsi = {
-      enable = lib.mkEnableOption "SCSI drivers";
-      cdRom =
-        lib.mkEnableOption "SCSI CD_ROM"
-        // {
-          default = true;
-        };
-      disk =
-        lib.mkEnableOption "SCSI Disk"
-        // {
-          default = true;
-        };
-      generic =
-        lib.mkEnableOption "SCSI Generic"
-        // {
-          default = true;
-        };
-    };
+    cdRom =
+      lib.mkEnableOption "SCSI CD_ROM"
+      // {
+        default = true;
+      };
+    disk =
+      lib.mkEnableOption "SCSI Disk"
+      // {
+        default = true;
+      };
+    generic =
+      lib.mkEnableOption "SCSI Generic"
+      // {
+        default = true;
+      };
   };
-
-  config = lib.mkIf cfg.enable {
+  config = {cfg, lib, ...}: {
     boot.initrd.availableKernelModules =
       (lib.optionals cfg.cdRom ["sr_mod"])
       ++ (lib.optionals cfg.disk ["sd_mod"])
       ++ (lib.optionals cfg.generic ["sg"]);
   };
-}
+} args

@@ -1,21 +1,12 @@
-{
-  config,
-  lib,
-  ...
-}: let
-  cfg = config.psyclyx.nixos.network.networkd;
-in {
-  options = {
-    psyclyx.nixos.network.networkd = {
-      enable = lib.mkEnableOption "systemd-networkd";
-    };
-  };
-
-  config = lib.mkIf cfg.enable {
+{nixclyx, lib, ...} @ args:
+nixclyx.lib.modules.mkModule {
+  path = ["psyclyx" "nixos" "network" "networkd"];
+  description = "systemd-networkd";
+  config = _: {
     networking.useNetworkd = true;
     systemd.network = {
       enable = true;
       wait-online.enable = lib.mkDefault false;
     };
   };
-}
+} args
