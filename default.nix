@@ -67,5 +67,7 @@ let
   darwinConfigurations = builtins.mapAttrs (name: _: mkDarwinHost name) {
     halo = {};
   };
+
+  docs = import ./docs {inherit nixclyx;};
 in
-  nixclyx // {inherit configurations darwinConfigurations;}
+  nixclyx // {inherit configurations darwinConfigurations docs;}
