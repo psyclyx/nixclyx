@@ -1,15 +1,8 @@
-{
-  config,
-  lib,
-  ...
-}: let
-  cfg = config.psyclyx.darwin.programs.zsh;
-in {
-  options.psyclyx.darwin.programs.zsh = {
-    enable = lib.mkEnableOption "zsh shell";
-  };
-
-  config = lib.mkIf cfg.enable {
+{nixclyx, ...} @ args:
+nixclyx.lib.modules.mkModule {
+  path = ["psyclyx" "darwin" "programs" "zsh"];
+  description = "zsh shell";
+  config = _: {
     programs = {
       zsh = {
         enable = true;
@@ -17,4 +10,4 @@ in {
       };
     };
   };
-}
+} args

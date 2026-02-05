@@ -1,21 +1,11 @@
-{
-  config,
-  lib,
-  pkgs,
-  ...
-}: let
-  cfg = config.psyclyx.nixos.services.printing;
-in {
-  options = {
-    psyclyx.nixos.services.printing = {
-      enable = lib.mkEnableOption "Enable printing.";
-    };
-  };
-
-  config = lib.mkIf cfg.enable {
+{nixclyx, pkgs, ...} @ args:
+nixclyx.lib.modules.mkModule {
+  path = ["psyclyx" "nixos" "services" "printing"];
+  description = "Enable printing.";
+  config = _: {
     services.printing = {
       enable = true;
       drivers = [pkgs.brlaser];
     };
   };
-}
+} args

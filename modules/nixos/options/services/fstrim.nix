@@ -1,17 +1,8 @@
-{
-  config,
-  lib,
-  ...
-}: let
-  cfg = config.psyclyx.nixos.services.fstrim;
-in {
-  options = {
-    psyclyx.nixos.services.fstrim = {
-      enable = lib.mkEnableOption "TRIM daemon for SSDs";
-    };
-  };
-
-  config = lib.mkIf cfg.enable {
+{nixclyx, ...} @ args:
+nixclyx.lib.modules.mkModule {
+  path = ["psyclyx" "nixos" "services" "fstrim"];
+  description = "TRIM daemon for SSDs";
+  config = _: {
     services.fstrim.enable = true;
   };
-}
+} args

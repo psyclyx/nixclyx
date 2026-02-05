@@ -1,17 +1,8 @@
-{
-  config,
-  lib,
-  ...
-}: let
-  cfg = config.psyclyx.nixos.services.thermald;
-in {
-  options = {
-    psyclyx.nixos.services.thermald = {
-      enable = lib.mkEnableOption "thermal throttling daemon for intel cpus";
-    };
-  };
-
-  config = lib.mkIf cfg.enable {
+{nixclyx, ...} @ args:
+nixclyx.lib.modules.mkModule {
+  path = ["psyclyx" "nixos" "services" "thermald"];
+  description = "thermal throttling daemon for intel cpus";
+  config = _: {
     services.thermald.enable = true;
   };
-}
+} args

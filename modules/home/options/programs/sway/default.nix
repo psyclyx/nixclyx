@@ -1,33 +1,15 @@
-{
-  config,
-  lib,
-  pkgs,
-  ...
-}: let
-  inherit
-    (lib)
-    mkDefault
-    mkEnableOption
-    mkForce
-    mkIf
-    ;
-
-  cfg = config.psyclyx.home.programs.sway;
-  monitors = config.psyclyx.home.hardware.monitors;
-in {
+{nixclyx, lib, pkgs, ...} @ args:
+nixclyx.lib.modules.mkModule {
+  path = ["psyclyx" "home" "programs" "sway"];
+  description = "Sway window manager";
   imports = [
     ./keybindings.nix
     ./swaylock.nix
     ./waybar.nix
   ];
-
-  options = {
-    psyclyx.home.programs.sway = {
-      enable = mkEnableOption "Sway window manager";
-    };
-  };
-
-  config = mkIf cfg.enable {
+  config = {config, ...}: let
+    monitors = config.psyclyx.home.hardware.monitors;
+  in {
     home.packages = with pkgs; [
       pulseaudio
     ];
@@ -35,12 +17,12 @@ in {
     psyclyx = {
       home = {
         programs = {
-          alacritty.enable = mkDefault true;
-          fuzzel.enable = mkDefault true;
-          waybar.enable = mkDefault true;
+          alacritty.enable = lib.mkDefault true;
+          fuzzel.enable = lib.mkDefault true;
+          waybar.enable = lib.mkDefault true;
         };
         services = {
-          mako.enable = mkDefault true;
+          mako.enable = lib.mkDefault true;
         };
       };
     };
@@ -97,7 +79,7 @@ in {
         colors = let
           c = config.lib.stylix.colors.withHashtag;
         in
-          mkForce {
+          lib.mkForce {
             background = c.base01;
             focused = {
               background = c.base02;
@@ -174,4 +156,4 @@ in {
       };
     };
   };
-}
+} args

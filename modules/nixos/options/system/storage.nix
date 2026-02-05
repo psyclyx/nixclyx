@@ -1,36 +1,29 @@
-{
-  config,
-  lib,
-  ...
-}: let
-  cfg = config.psyclyx.nixos.system.storage;
-in {
+{nixclyx, lib, ...} @ args:
+nixclyx.lib.modules.mkModule {
+  path = ["psyclyx" "nixos" "system" "storage"];
+  description = "storage config";
   options = {
-    psyclyx.nixos.system.storage = {
-      enable = lib.mkEnableOption "storage config";
-      tune = {
-        hdd = lib.mkOption {
-          default = true;
-          type = lib.types.bool;
-          description = "udev rules for rotational disk perf";
-        };
+    tune = {
+      hdd = lib.mkOption {
+        default = true;
+        type = lib.types.bool;
+        description = "udev rules for rotational disk perf";
+      };
 
-        ssd = lib.mkOption {
-          default = true;
-          type = lib.types.bool;
-          description = "udev rules for ssd perf";
-        };
+      ssd = lib.mkOption {
+        default = true;
+        type = lib.types.bool;
+        description = "udev rules for ssd perf";
+      };
 
-        nvme = lib.mkOption {
-          default = true;
-          type = lib.types.bool;
-          description = "udev rules and kernel params for nvme disk perf";
-        };
+      nvme = lib.mkOption {
+        default = true;
+        type = lib.types.bool;
+        description = "udev rules and kernel params for nvme disk perf";
       };
     };
   };
-
-  config = lib.mkIf cfg.enable (
+  config = {cfg, lib, ...}:
     lib.mkMerge [
       (lib.mkIf cfg.tune.hdd {
         services.udev.extraRules = ''
@@ -62,6 +55,5 @@ in {
           ACTION=="add|change", KERNEL=="nvme[0-9]*n[0-9]*", ENV{DEVTYPE}!="partition", ATTR{queue/rq_affinity}="2"
         '';
       })
-    ]
-  );
-}
+    ];
+} args

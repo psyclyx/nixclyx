@@ -1,17 +1,8 @@
-{
-  config,
-  lib,
-  ...
-}: let
-  cfg = config.psyclyx.nixos.system.documentation;
-in {
-  options = {
-    psyclyx.nixos.system.documentation = {
-      enable = lib.mkEnableOption "documentation generation";
-    };
-  };
-
-  config = lib.mkIf cfg.enable {
+{nixclyx, ...} @ args:
+nixclyx.lib.modules.mkModule {
+  path = ["psyclyx" "nixos" "system" "documentation"];
+  description = "documentation generation";
+  config = _: {
     documentation = {
       enable = true;
       dev.enable = true;
@@ -24,4 +15,4 @@ in {
       };
     };
   };
-}
+} args

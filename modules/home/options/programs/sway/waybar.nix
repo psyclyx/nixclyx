@@ -1,25 +1,16 @@
-{
-  config,
-  lib,
-  ...
-}: let
-  inherit (lib) mkAfter mkEnableOption mkIf;
-  cfg = config.psyclyx.home.programs.waybar;
-  opacity = builtins.toString config.stylix.opacity.desktop;
-in {
-  options = {
-    psyclyx.home.programs.waybar = {
-      enable = mkEnableOption "Waybar status bar";
-    };
-  };
-
-  config = mkIf cfg.enable {
+{nixclyx, lib, ...} @ args:
+nixclyx.lib.modules.mkModule {
+  path = ["psyclyx" "home" "programs" "waybar"];
+  description = "Waybar status bar";
+  config = {config, ...}: let
+    opacity = builtins.toString config.stylix.opacity.desktop;
+  in {
     stylix.targets.waybar.addCss = false;
     programs.waybar = {
       enable = true;
       style =
         # css
-        mkAfter ''
+        lib.mkAfter ''
           * {
               border: none;
               border-radius: 0;
@@ -126,4 +117,4 @@ in {
       };
     };
   };
-}
+} args

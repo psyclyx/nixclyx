@@ -1,17 +1,8 @@
-{
-  config,
-  lib,
-  ...
-}: let
-  cfg = config.psyclyx.nixos.hardware.ipmi.ilo;
-in {
-  options = {
-    psyclyx.nixos.hardware.ipmi.ilo = {
-      enable = lib.mkEnableOption "HPE Integrated Lights Out";
-    };
-  };
-
-  config = lib.mkIf cfg.enable {
+{nixclyx, ...} @ args:
+nixclyx.lib.modules.mkModule {
+  path = ["psyclyx" "nixos" "hardware" "ipmi" "ilo"];
+  description = "HPE Integrated Lights Out";
+  config = _: {
     boot.initrd.availableKernelModules = ["hpilo"];
   };
-}
+} args

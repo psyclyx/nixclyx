@@ -1,18 +1,8 @@
-{
-  config,
-  lib,
-  pkgs,
-  ...
-}: let
-  cfg = config.psyclyx.home.roles.graphical;
-in {
-  options = {
-    psyclyx.home.roles.graphical = {
-      enable = lib.mkEnableOption "Graphical session programs and configuration";
-    };
-  };
-
-  config = lib.mkIf cfg.enable (
+{nixclyx, lib, pkgs, ...} @ args:
+nixclyx.lib.modules.mkModule {
+  path = ["psyclyx" "home" "roles" "graphical"];
+  description = "Graphical session programs and configuration";
+  config = _:
     lib.mkMerge [
       (lib.mkIf pkgs.stdenv.isLinux {
         home.packages = [
@@ -39,6 +29,5 @@ in {
       (lib.mkIf pkgs.stdenv.isDarwin {
         psyclyx.home.programs.kitty.enable = lib.mkDefault true;
       })
-    ]
-  );
-}
+    ];
+} args

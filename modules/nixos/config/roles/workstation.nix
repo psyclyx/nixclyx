@@ -2,6 +2,7 @@
   config,
   lib,
   pkgs,
+  nixclyx,
   ...
 }: let
   cfg = config.psyclyx.nixos.config.roles.workstation;
@@ -15,7 +16,7 @@ in {
       kernelPackages = pkgs.linuxPackages_zen;
     };
 
-    environment.systemPackages = config.psyclyx.packageGroups.dev pkgs;
+    environment.systemPackages = nixclyx.packageGroups.dev pkgs;
 
     psyclyx.nixos = {
       config = {

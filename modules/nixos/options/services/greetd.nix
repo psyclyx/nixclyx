@@ -1,17 +1,8 @@
-{
-  config,
-  lib,
-  ...
-}: let
-  cfg = config.psyclyx.nixos.services.greetd;
-in {
-  options = {
-    psyclyx.nixos.services.greetd = {
-      enable = lib.mkEnableOption "greetd+regreet";
-    };
-  };
-
-  config = lib.mkIf cfg.enable {
+{nixclyx, ...} @ args:
+nixclyx.lib.modules.mkModule {
+  path = ["psyclyx" "nixos" "services" "greetd"];
+  description = "greetd+regreet";
+  config = _: {
     programs.regreet = {
       enable = true;
       cageArgs = [
@@ -21,4 +12,4 @@ in {
       ];
     };
   };
-}
+} args

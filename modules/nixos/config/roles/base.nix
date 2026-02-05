@@ -2,6 +2,7 @@
   config,
   lib,
   pkgs,
+  nixclyx,
   ...
 }: let
   cfg = config.psyclyx.nixos.config.roles.base;
@@ -11,7 +12,7 @@ in {
   };
 
   config = lib.mkIf cfg.enable {
-    environment.systemPackages = config.psyclyx.packageGroups.shell pkgs;
+    environment.systemPackages = nixclyx.packageGroups.shell pkgs;
 
     psyclyx = {
       common = {

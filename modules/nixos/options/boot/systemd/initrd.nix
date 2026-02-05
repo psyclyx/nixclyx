@@ -1,17 +1,8 @@
-{
-  config,
-  lib,
-  ...
-}: let
-  cfg = config.psyclyx.nixos.boot.systemd.initrd;
-in {
-  options = {
-    psyclyx.nixos.boot.systemd.initrd = {
-      enable = lib.mkEnableOption "systemd initrd";
-    };
-  };
-
-  config = lib.mkIf cfg.enable {
+{nixclyx, ...} @ args:
+nixclyx.lib.modules.mkModule {
+  path = ["psyclyx" "nixos" "boot" "systemd" "initrd"];
+  description = "systemd initrd";
+  config = _: {
     boot.initrd = {
       systemd = {
         enable = true;
@@ -20,4 +11,4 @@ in {
       };
     };
   };
-}
+} args

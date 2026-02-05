@@ -1,38 +1,28 @@
-{
-  config,
-  lib,
-  ...
-}: let
-  inherit (config.psyclyx.nixos.deps) nixclyx;
-  cfg = config.psyclyx.nixos.services.openssh;
-  ports = config.psyclyx.nixos.network.ports.ssh;
-in {
+{nixclyx, lib, ...} @ args:
+nixclyx.lib.modules.mkModule {
+  path = ["psyclyx" "nixos" "services" "openssh"];
+  description = "Enable OpenSSH.";
   options = {
-    psyclyx.nixos = {
-      network.ports.ssh = lib.mkOption {
-        type = lib.types.listOf lib.types.port;
-        default = [22];
-        description = "Ports for OpenSSH to listen on.";
-      };
-
-      services.openssh = {
-        enable = lib.mkEnableOption "Enable OpenSSH.";
-        agentAuth = {
-          enable = lib.mkOption {
-            type = lib.types.bool;
-            default = true;
-            description = "Respect SSH Agent authentication in PAM.";
-          };
-        };
+    agentAuth = {
+      enable = lib.mkOption {
+        type = lib.types.bool;
+        default = true;
+        description = "Respect SSH Agent authentication in PAM.";
       };
     };
   };
-
-  config = lib.mkIf cfg.enable {
+  extraOptions = {
+    psyclyx.nixos.network.ports.ssh = lib.mkOption {
+      type = lib.types.listOf lib.types.port;
+      default = [22];
+      description = "Ports for OpenSSH to listen on.";
+    };
+  };
+  config = {cfg, config, lib, ...}: {
     security.pam.sshAgentAuth.enable = lib.mkIf cfg.agentAuth.enable cfg.agentAuth.enable;
     services.openssh = {
       enable = true;
-      inherit ports;
+      ports = config.psyclyx.nixos.network.ports.ssh;
       hostKeys = [
         {
           type = "ed25519";
@@ -54,9 +44,9 @@ in {
       '';
     };
     environment.etc = {
-      "ssh/ca_user.pub".text = nixclyx.common.keys.ca.user;
+      "ssh/ca_user.pub".text = nixclyx.keys.ca.user;
       "ssh/auth_principals/psyc".text = "admin";
       "ssh/auth_principals/root".text = "admin";
     };
   };
-}
+} args

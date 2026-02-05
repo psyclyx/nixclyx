@@ -1,11 +1,4 @@
-{
-  config,
-  pkgs,
-  lib,
-  ...
-}: let
-  cfg = config.psyclyx.darwin.services.sketchybar;
-
+{nixclyx, pkgs, lib, ...} @ args: let
   padHex = s:
     if lib.stringLength s == 1
     then "0${s}"
@@ -18,7 +11,6 @@
       })
       colors
     );
-  themeEnv = lib.debug.traceVal mkThemeEnv config.lib.stylix.colors.toList;
 
   aerospacePlugin = pkgs.writeShellApplication rec {
     name = "aerospace_plugin";
@@ -57,46 +49,49 @@
 
     runtimeInputs = derivationArgs.buildInputs;
   };
-
-  rc = pkgs.writeShellApplication rec {
-    name = "sketchybarrc";
-    text = builtins.readFile ./sketchybarrc.sh;
-    derivationArgs.buildInputs =
-      (with pkgs; [
-        aerospace
-        sketchybar
-        gnugrep
-      ])
-      ++ [
-        aerospacePlugin
-        appNamePlugin
-        clockPlugin
-        batteryPlugin
-      ];
-    runtimeInputs = derivationArgs.buildInputs;
-    runtimeEnv = themeEnv;
-  };
-in {
-  options.psyclyx.darwin.services.sketchybar = {
-    enable = lib.mkEnableOption "Sketchybar status bar";
-    yOffset = lib.mkOption {
-      type = lib.types.ints.unsigned;
-      default = 8;
+in
+  nixclyx.lib.modules.mkModule {
+    path = ["psyclyx" "darwin" "services" "sketchybar"];
+    description = "Sketchybar status bar";
+    options = {
+      yOffset = lib.mkOption {
+        type = lib.types.ints.unsigned;
+        default = 8;
+      };
     };
-  };
+    config = {config, ...}: let
+      themeEnv = lib.debug.traceVal mkThemeEnv config.lib.stylix.colors.toList;
 
-  config = lib.mkIf cfg.enable {
-    services.sketchybar = {
-      enable = true;
-      config = "sketchybarrc";
-      extraPackages = [
-        aerospacePlugin
-        appNamePlugin
-        batteryPlugin
-        clockPlugin
-        pkgs.gnugrep
-        rc
-      ];
+      rc = pkgs.writeShellApplication rec {
+        name = "sketchybarrc";
+        text = builtins.readFile ./sketchybarrc.sh;
+        derivationArgs.buildInputs =
+          (with pkgs; [
+            aerospace
+            sketchybar
+            gnugrep
+          ])
+          ++ [
+            aerospacePlugin
+            appNamePlugin
+            clockPlugin
+            batteryPlugin
+          ];
+        runtimeInputs = derivationArgs.buildInputs;
+        runtimeEnv = themeEnv;
+      };
+    in {
+      services.sketchybar = {
+        enable = true;
+        config = "sketchybarrc";
+        extraPackages = [
+          aerospacePlugin
+          appNamePlugin
+          batteryPlugin
+          clockPlugin
+          pkgs.gnugrep
+          rc
+        ];
+      };
     };
-  };
-}
+  } args

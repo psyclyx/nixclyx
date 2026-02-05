@@ -1,18 +1,8 @@
-{
-  config,
-  lib,
-  pkgs,
-  ...
-}: let
-  cfg = config.psyclyx.nixos.system.yubikey;
-in {
-  options = {
-    psyclyx.nixos.system.yubikey = {
-      enable = lib.mkEnableOption "yubikey support";
-    };
-  };
-
-  config = lib.mkIf cfg.enable {
+{nixclyx, pkgs, ...} @ args:
+nixclyx.lib.modules.mkModule {
+  path = ["psyclyx" "nixos" "system" "yubikey"];
+  description = "yubikey support";
+  config = _: {
     services.pcscd.enable = true;
     environment.systemPackages = [
       pkgs.yubikey-manager
@@ -21,4 +11,4 @@ in {
       pkgs.ssh-agents
     ];
   };
-}
+} args

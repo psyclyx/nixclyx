@@ -1,19 +1,11 @@
-{
-  config,
-  lib,
-  pkgs,
-  ...
-}: let
-  cfg = config.psyclyx.nixos.programs.zsh;
-in {
+{nixclyx, lib, pkgs, ...} @ args:
+nixclyx.lib.modules.mkModule {
+  path = ["psyclyx" "nixos" "programs" "zsh"];
+  description = "Zsh config";
   options = {
-    psyclyx.nixos.programs.zsh = {
-      defaultShell = lib.mkEnableOption "Zsh as the default shell";
-      enable = lib.mkEnableOption "Zsh config";
-    };
+    defaultShell = lib.mkEnableOption "Zsh as the default shell";
   };
-
-  config = lib.mkIf cfg.enable {
+  config = {cfg, ...}: {
     environment.pathsToLink = ["/share/zsh"];
     programs.zsh = {
       enable = true;
@@ -22,4 +14,4 @@ in {
 
     users.defaultUserShell = lib.mkIf cfg.defaultShell pkgs.zsh;
   };
-}
+} args

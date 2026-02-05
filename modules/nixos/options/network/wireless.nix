@@ -1,20 +1,11 @@
-{
-  config,
-  lib,
-  ...
-}: let
-  cfg = config.psyclyx.nixos.network.wireless;
-in {
-  options = {
-    psyclyx.nixos.network.wireless = {
-      enable = lib.mkEnableOption "wireless network support";
-    };
-  };
-
-  config = lib.mkIf cfg.enable {
+{nixclyx, ...} @ args:
+nixclyx.lib.modules.mkModule {
+  path = ["psyclyx" "nixos" "network" "wireless"];
+  description = "wireless network support";
+  config = _: {
     networking.wireless.iwd = {
       enable = true;
       settings.Settings.AutoConnect = true;
     };
   };
-}
+} args

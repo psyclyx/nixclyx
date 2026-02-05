@@ -1,16 +1,8 @@
-{
-  config,
-  lib,
-  ...
-}: let
-  cfg = config.psyclyx.nixos.hardware.gpu.nvidia;
-in {
-  options = {
-    psyclyx.nixos.hardware.gpu.nvidia = {
-      enable = lib.mkEnableOption "Nvidia GPU (currently 3090)";
-    };
-  };
-  config = lib.mkIf cfg.enable {
+{nixclyx, ...} @ args:
+nixclyx.lib.modules.mkModule {
+  path = ["psyclyx" "nixos" "hardware" "gpu" "nvidia"];
+  description = "Nvidia GPU (currently 3090)";
+  config = {config, ...}: {
     environment.variables = {
       __GLX_VENDOR_LIBRARY_NAME = "nvidia";
       LIBVA_DRIVER_NAME = "nvidia";
@@ -26,4 +18,4 @@ in {
 
     services.xserver.videoDrivers = ["nvidia"];
   };
-}
+} args

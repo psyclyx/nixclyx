@@ -1,18 +1,8 @@
-{
-  config,
-  lib,
-  pkgs,
-  ...
-}: let
-  cfg = config.psyclyx.nixos.hardware.cpu.amd;
-in {
-  options = {
-    psyclyx.nixos.hardware.cpu.amd = {
-      enable = lib.mkEnableOption "AMD CPU config (currently only Ryzen 5950x)";
-    };
-  };
-
-  config = lib.mkIf cfg.enable {
+{nixclyx, pkgs, ...} @ args:
+nixclyx.lib.modules.mkModule {
+  path = ["psyclyx" "nixos" "hardware" "cpu" "amd"];
+  description = "AMD CPU config (currently only Ryzen 5950x)";
+  config = {config, ...}: {
     nixpkgs.hostPlatform = "x86_64-linux";
 
     boot = {
@@ -41,4 +31,4 @@ in {
 
     powerManagement.cpuFreqGovernor = "performance";
   };
-}
+} args

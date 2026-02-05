@@ -1,19 +1,9 @@
-{
-  config,
-  lib,
-  pkgs,
-  ...
-}: let
-  cfg = config.psyclyx.darwin.services.tailscale;
-in {
-  options.psyclyx.darwin.services.tailscale = {
-    enable = lib.mkEnableOption "Tailscale VPN";
-  };
-
-  config = lib.mkIf cfg.enable {
+{nixclyx, pkgs, ...} @ args:
+nixclyx.lib.modules.mkModule {
+  path = ["psyclyx" "darwin" "services" "tailscale"];
+  description = "Tailscale VPN";
+  config = _: {
     environment.systemPackages = [pkgs.tailscale];
-    services.tailscale = {
-      enable = true;
-    };
+    services.tailscale.enable = true;
   };
-}
+} args

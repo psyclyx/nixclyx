@@ -1,17 +1,10 @@
-{
-  config,
-  lib,
-  ...
-}: let
-  cfg = config.psyclyx.darwin.system.security;
-in {
-  options.psyclyx.darwin.system.security = {
-    enable = lib.mkEnableOption "security settings";
-  };
-
-  config = lib.mkIf cfg.enable {
+{nixclyx, ...} @ args:
+nixclyx.lib.modules.mkModule {
+  path = ["psyclyx" "darwin" "system" "security"];
+  description = "security settings";
+  config = _: {
     security = {
       pam.services.sudo_local.touchIdAuth = true;
     };
   };
-}
+} args

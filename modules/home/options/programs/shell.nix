@@ -1,17 +1,8 @@
-{
-  config,
-  lib,
-  ...
-}: let
-  cfg = config.psyclyx.home.programs.shell;
-in {
-  options = {
-    psyclyx.home.programs.shell = {
-      enable = lib.mkEnableOption "generic shell configuration";
-    };
-  };
-
-  config = lib.mkIf cfg.enable {
+{nixclyx, ...} @ args:
+nixclyx.lib.modules.mkModule {
+  path = ["psyclyx" "home" "programs" "shell"];
+  description = "generic shell configuration";
+  config = _: {
     home.shellAliases = {
       "ns" = "nix search nixpkgs";
       "nsp" = "nix-shell --run $SHELL -p";
@@ -26,4 +17,4 @@ in {
       zoxide.enable = true;
     };
   };
-}
+} args

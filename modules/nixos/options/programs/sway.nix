@@ -1,18 +1,8 @@
-{
-  config,
-  lib,
-  pkgs,
-  ...
-}: let
-  cfg = config.psyclyx.nixos.programs.sway;
-in {
-  options = {
-    psyclyx.nixos.programs.sway = {
-      enable = lib.mkEnableOption "swayfx wm";
-    };
-  };
-
-  config = lib.mkIf cfg.enable {
+{nixclyx, pkgs, ...} @ args:
+nixclyx.lib.modules.mkModule {
+  path = ["psyclyx" "nixos" "programs" "sway"];
+  description = "swayfx wm";
+  config = _: {
     # dbus service is started by nixpkgs module
     environment.systemPackages = [
       pkgs.dbus
@@ -58,4 +48,4 @@ in {
       };
     };
   };
-}
+} args

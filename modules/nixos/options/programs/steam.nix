@@ -1,18 +1,8 @@
-{
-  config,
-  lib,
-  pkgs,
-  ...
-}: let
-  cfg = config.psyclyx.nixos.programs.steam;
-in {
-  options = {
-    psyclyx.nixos.programs.steam = {
-      enable = lib.mkEnableOption "Enable steam.";
-    };
-  };
-
-  config = lib.mkIf cfg.enable {
+{nixclyx, pkgs, ...} @ args:
+nixclyx.lib.modules.mkModule {
+  path = ["psyclyx" "nixos" "programs" "steam"];
+  description = "Enable steam.";
+  config = _: {
     programs.gamescope.enable = true;
     programs.steam = {
       enable = true;
@@ -25,4 +15,4 @@ in {
       ];
     };
   };
-}
+} args

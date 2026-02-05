@@ -1,17 +1,8 @@
-{
-  config,
-  lib,
-  ...
-}: let
-  cfg = config.psyclyx.nixos.boot.systemd.loader;
-in {
-  options = {
-    psyclyx.nixos.boot.systemd.loader = {
-      enable = lib.mkEnableOption "systemd-boot";
-    };
-  };
-
-  config = lib.mkIf cfg.enable {
+{nixclyx, ...} @ args:
+nixclyx.lib.modules.mkModule {
+  path = ["psyclyx" "nixos" "boot" "systemd" "loader"];
+  description = "systemd-boot";
+  config = _: {
     boot = {
       loader = {
         efi.canTouchEfiVariables = true;
@@ -25,4 +16,4 @@ in {
       };
     };
   };
-}
+} args

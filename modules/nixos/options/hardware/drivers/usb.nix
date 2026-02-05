@@ -1,42 +1,35 @@
-{
-  config,
-  lib,
-  ...
-}: let
-  cfg = config.psyclyx.nixos.hardware.drivers.usb;
-in {
+{nixclyx, lib, ...} @ args:
+nixclyx.lib.modules.mkModule {
+  path = ["psyclyx" "nixos" "hardware" "drivers" "usb"];
+  description = "USB drivers";
   options = {
-    psyclyx.nixos.hardware.drivers.usb = {
-      enable = lib.mkEnableOption "USB drivers";
-      hid =
-        lib.mkEnableOption "USB HID"
-        // {
-          default = true;
-        };
-      storage =
-        lib.mkEnableOption "USB storage"
-        // {
-          default = true;
-        };
-      xhci =
-        lib.mkEnableOption "USB XHCI controller (USB 3, 2, 1)"
-        // {
-          default = true;
-        };
-      ehci =
-        lib.mkEnableOption "USB EHCI controller (USB 2)"
-        // {
-          default = true;
-        };
-      uhci =
-        lib.mkEnableOption "USB UHCI controller (USB 1)"
-        // {
-          default = true;
-        };
-    };
+    hid =
+      lib.mkEnableOption "USB HID"
+      // {
+        default = true;
+      };
+    storage =
+      lib.mkEnableOption "USB storage"
+      // {
+        default = true;
+      };
+    xhci =
+      lib.mkEnableOption "USB XHCI controller (USB 3, 2, 1)"
+      // {
+        default = true;
+      };
+    ehci =
+      lib.mkEnableOption "USB EHCI controller (USB 2)"
+      // {
+        default = true;
+      };
+    uhci =
+      lib.mkEnableOption "USB UHCI controller (USB 1)"
+      // {
+        default = true;
+      };
   };
-
-  config = lib.mkIf cfg.enable {
+  config = {cfg, lib, ...}: {
     boot.initrd.availableKernelModules =
       (lib.optionals cfg.hid ["xhci_pci"])
       ++ (lib.optionals cfg.storage ["xhci_pci"])
@@ -44,4 +37,4 @@ in {
       ++ (lib.optionals cfg.ehci ["ehci_pci"])
       ++ (lib.optionals cfg.uhci ["uhci_hcd"]);
   };
-}
+} args

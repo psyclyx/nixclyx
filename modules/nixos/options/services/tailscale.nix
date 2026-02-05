@@ -1,20 +1,13 @@
-{
-  config,
-  pkgs,
-  lib,
-  ...
-}: let
-  cfg = config.psyclyx.nixos.services.tailscale;
-  tsCfg = config.services.tailscale;
-in {
+{nixclyx, lib, pkgs, ...} @ args:
+nixclyx.lib.modules.mkModule {
+  path = ["psyclyx" "nixos" "services" "tailscale"];
+  description = "Enable tailscale service and related settings";
   options = {
-    psyclyx.nixos.services.tailscale = {
-      enable = lib.mkEnableOption "Enable tailscale service and related settings";
-      exitNode = lib.mkEnableOption "Configure tailscale client as an exit node";
-    };
+    exitNode = lib.mkEnableOption "Configure tailscale client as an exit node";
   };
-
-  config = lib.mkIf cfg.enable {
+  config = {cfg, config, ...}: let
+    tsCfg = config.services.tailscale;
+  in {
     environment.systemPackages = [pkgs.tailscale];
     networking.firewall.trustedInterfaces = [tsCfg.interfaceName];
     services.tailscale = {
@@ -28,4 +21,4 @@ in {
 
     systemd.network.wait-online.ignoredInterfaces = [tsCfg.interfaceName];
   };
-}
+} args

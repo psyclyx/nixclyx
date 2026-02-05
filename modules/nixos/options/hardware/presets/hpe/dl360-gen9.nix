@@ -1,17 +1,8 @@
-{
-  config,
-  lib,
-  ...
-}: let
-  cfg = config.psyclyx.nixos.hardware.presets.hpe.dl360-gen9;
-in {
-  options = {
-    psyclyx.nixos.hardware.presets.hpe.dl360-gen9 = {
-      enable = lib.mkEnableOption "HPE ProLiant DL360 Gen 9";
-    };
-  };
-
-  config = lib.mkIf cfg.enable {
+{nixclyx, lib, ...} @ args:
+nixclyx.lib.modules.mkModule {
+  path = ["psyclyx" "nixos" "hardware" "presets" "hpe" "dl360-gen9"];
+  description = "HPE ProLiant DL360 Gen 9";
+  config = _: {
     boot.initrd.availableKernelModules = [
       "mlx4_core"
       "tg3"
@@ -28,4 +19,4 @@ in {
       storage.p440a.enable = lib.mkDefault true;
     };
   };
-}
+} args

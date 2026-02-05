@@ -21,13 +21,14 @@ let
     };
     common = {
       options = import ./modules/common/options;
-      psyclyx = import ./modules/common/psyclyx;
     };
   };
 
   nixclyx = {
     inherit sources modules lib assets loadFlake;
     overlays.default = overlay;
+    keys = import ./data/keys.nix;
+    packageGroups = import ./data/packageGroups.nix;
   };
 
   evalConfig = import (sources.nixpkgs + "/nixos/lib/eval-config.nix");
@@ -35,6 +36,7 @@ let
   mkHost = name:
     evalConfig {
       system = "x86_64-linux";
+      specialArgs = {inherit nixclyx;};
       modules = [
         (modules.nixos.options {inherit nixclyx;})
         (modules.nixos.config {inherit nixclyx;})
@@ -57,6 +59,7 @@ let
 
   mkDarwinHost = name:
     darwinSystem {
+      specialArgs = {inherit nixclyx;};
       modules = [
         (modules.darwin.options {inherit nixclyx;})
         (modules.darwin.config {inherit nixclyx;})

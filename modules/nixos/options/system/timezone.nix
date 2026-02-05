@@ -1,22 +1,15 @@
-{
-  config,
-  lib,
-  ...
-}: let
-  cfg = config.psyclyx.nixos.system.timezone;
-in {
+{nixclyx, lib, ...} @ args:
+nixclyx.lib.modules.mkModule {
+  path = ["psyclyx" "nixos" "system" "timezone"];
+  description = "Timezone config";
   options = {
-    psyclyx.nixos.system.timezone = {
-      enable = lib.mkEnableOption "Timezone config";
-      default = lib.mkOption {
-        type = lib.types.str;
-        default = "America/Los_Angeles";
-        description = "Default timezone";
-      };
+    default = lib.mkOption {
+      type = lib.types.str;
+      default = "America/Los_Angeles";
+      description = "Default timezone";
     };
   };
-
-  config = lib.mkIf cfg.enable {
+  config = {cfg, ...}: {
     time.timeZone = cfg.default;
   };
-}
+} args
