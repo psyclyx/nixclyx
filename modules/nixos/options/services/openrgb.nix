@@ -1,8 +1,7 @@
-{nixclyx, pkgs, ...} @ args:
-nixclyx.lib.modules.mkModule {
+{
   path = ["psyclyx" "nixos" "services" "openrgb"];
   description = "OpenRGB";
-  config = _: {
+  config = {pkgs, ...}: {
     environment.systemPackages = [
       pkgs.i2c-tools
       pkgs.openrgb-with-all-plugins
@@ -10,4 +9,4 @@ nixclyx.lib.modules.mkModule {
 
     services.hardware.openrgb.enable = true;
   };
-} args
+}

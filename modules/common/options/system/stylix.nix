@@ -1,15 +1,14 @@
-{nixclyx, lib, pkgs, ...} @ args:
-nixclyx.lib.modules.mkModule {
+{
   path = ["psyclyx" "common" "system" "stylix"];
   description = "stylix configuration";
-  options = {
+  options = {lib, ...}: {
     flavours = lib.mkOption {
       description = "replace stylix's palette generator with flavours";
       default = true;
       type = lib.types.bool;
     };
   };
-  config = {cfg, config, ...}: let
+  config = {cfg, config, lib, pkgs, ...}: let
     flavours-palette-generator = let
       flavours = lib.getExe pkgs.flavours;
       yq = lib.getExe pkgs.yq;
@@ -57,4 +56,4 @@ nixclyx.lib.modules.mkModule {
       };
     };
   };
-} args
+}

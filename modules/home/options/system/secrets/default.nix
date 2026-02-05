@@ -1,8 +1,7 @@
-{nixclyx, lib, pkgs, ...} @ args:
-nixclyx.lib.modules.mkModule {
+{
   path = ["psyclyx" "home" "secrets"];
   description = "Runtime secret decryption with sops-nix";
-  config = {config, ...}: let
+  config = {config, lib, pkgs, ...}: let
     configHome = config.xdg.configHome;
     home = config.home.homeDirectory;
     isDarwin = pkgs.stdenv.hostPlatform.isDarwin;
@@ -31,4 +30,4 @@ nixclyx.lib.modules.mkModule {
       };
     };
   };
-} args
+}

@@ -1,10 +1,7 @@
-{nixclyx, lib, ...} @ args:
-nixclyx.lib.modules.mkModule {
+{
   path = ["psyclyx" "nixos" "filesystems" "layouts" "bcachefs-pool"];
   description = "@psyclyx's bcachefs-pool disk layout";
-  options = {
-    # TODO: Not the best abstraction, some sort of simpler wrapper around
-    # fileSystems with a spot to compose bcachefs-specific stuff would be nicer
+  options = {lib, ...}: {
     wants = lib.mkOption {
       type = lib.types.listOf lib.types.str;
       description = "list of devices to weakly depend on via x-systemd.wants";
@@ -44,4 +41,4 @@ nixclyx.lib.modules.mkModule {
       };
     };
   };
-} args
+}

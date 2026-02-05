@@ -1,17 +1,7 @@
 {
-  config,
-  pkgs,
-  lib,
-  nixclyx,
-  ...
-}: let
-  cfg = config.psyclyx.nixos.config.users.psyc.base;
-in {
-  options.psyclyx.nixos.config.users.psyc.base = {
-    enable = lib.mkEnableOption "psyc base user";
-  };
-
-  config = lib.mkIf cfg.enable {
+  path = ["psyclyx" "nixos" "config" "users" "psyc"];
+  description = "psyc user";
+  config = {pkgs, nixclyx, ...}: {
     users.users = {
       psyc = {
         extraGroups = [
@@ -26,5 +16,7 @@ in {
 
       root.openssh.authorizedKeys.keys = nixclyx.keys.psyc.openssh;
     };
+
+    home-manager.users.psyc.psyclyx.home.config.homes.psyc.base.enable = true;
   };
 }

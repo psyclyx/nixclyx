@@ -1,5 +1,4 @@
-{nixclyx, ...} @ args:
-nixclyx.lib.modules.mkModule {
+{
   path = ["psyclyx" "nixos" "services" "gdm"];
   description = "GNOME DIsplay Manager";
   config = _: {
@@ -7,4 +6,4 @@ nixclyx.lib.modules.mkModule {
       enable = true;
     };
   };
-} args
+}

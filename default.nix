@@ -8,19 +8,19 @@ let
 
   modules = {
     nixos = {
-      options = import ./modules/nixos/options;
-      config = import ./modules/nixos/config;
+      options = import ./modules/nixos/options {inherit nixclyx;};
+      config = import ./modules/nixos/config {inherit nixclyx;};
     };
     darwin = {
-      options = import ./modules/darwin/options;
-      config = import ./modules/darwin/config;
+      options = import ./modules/darwin/options {inherit nixclyx;};
+      config = import ./modules/darwin/config {inherit nixclyx;};
     };
     home = {
-      options = import ./modules/home/options;
-      config = import ./modules/home/config;
+      options = import ./modules/home/options {inherit nixclyx;};
+      config = import ./modules/home/config {inherit nixclyx;};
     };
     common = {
-      options = import ./modules/common/options;
+      options = import ./modules/common/options {inherit nixclyx;};
     };
   };
 
@@ -36,34 +36,31 @@ let
   mkHost = name:
     evalConfig {
       system = "x86_64-linux";
-      specialArgs = {inherit nixclyx;};
       modules = [
-        (modules.nixos.options {inherit nixclyx;})
-        (modules.nixos.config {inherit nixclyx;})
-        {config.psyclyx.nixos.config.hosts.${name}.enable = true;}
+        modules.nixos.options
+        modules.nixos.config
+        {config.psyclyx.nixos.host = name;}
       ];
     };
 
-  configurations = builtins.mapAttrs (name: _: mkHost name) {
-    sigil = {};
-    omen = {};
-    vigil = {};
-    tleilax = {};
-    lab-1 = {};
-    lab-2 = {};
-    lab-3 = {};
-    lab-4 = {};
-  };
+  hostEntries = builtins.readDir ./modules/nixos/config/hosts;
+  hostNames = builtins.filter
+    (n: hostEntries.${n} == "directory")
+    (builtins.attrNames hostEntries);
+
+  configurations = builtins.listToAttrs (map (name: {
+    inherit name;
+    value = mkHost name;
+  }) hostNames);
 
   darwinSystem = (loadFlake sources.nix-darwin).lib.darwinSystem;
 
   mkDarwinHost = name:
     darwinSystem {
-      specialArgs = {inherit nixclyx;};
       modules = [
-        (modules.darwin.options {inherit nixclyx;})
-        (modules.darwin.config {inherit nixclyx;})
-        {config.psyclyx.darwin.config.hosts.${name}.enable = true;}
+        modules.darwin.options
+        modules.darwin.config
+        {config.psyclyx.darwin.host = name;}
       ];
     };
 

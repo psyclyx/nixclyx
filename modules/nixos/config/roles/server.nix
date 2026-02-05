@@ -1,18 +1,11 @@
 {
-  config,
-  lib,
-  ...
-}: let
-  cfg = config.psyclyx.nixos.config.roles.server;
-in {
-  options.psyclyx.nixos.config.roles.server = {
-    enable = lib.mkEnableOption "server NixOS role";
-  };
-
-  config = lib.mkIf cfg.enable {
+  path = ["psyclyx" "nixos" "config" "roles" "server"];
+  variant = ["psyclyx" "nixos" "role"];
+  config = {lib, ...}: {
     psyclyx.nixos.config = {
       roles.base.enable = true;
-      users.psyc.server.enable = true;
+      users.psyc.enable = true;
     };
+    home-manager.users.psyc.psyclyx.home.variant = "server";
   };
 }

@@ -1,8 +1,7 @@
-{nixclyx, lib, ...} @ args:
-nixclyx.lib.modules.mkModule {
+{
   path = ["psyclyx" "nixos" "hardware" "presets" "hpe" "dl20-gen10"];
   description = "HPE ProLiant DL20 Gen 10";
-  config = _: {
+  config = {lib, ...}: {
     psyclyx.nixos = {
       hardware = {
         cpu.intel.enable = true;
@@ -16,4 +15,4 @@ nixclyx.lib.modules.mkModule {
       };
     };
   };
-} args
+}

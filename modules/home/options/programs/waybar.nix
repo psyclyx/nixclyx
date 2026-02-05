@@ -1,5 +1,4 @@
-{nixclyx, lib, ...} @ args:
-nixclyx.lib.modules.mkModule {
+{
   path = ["psyclyx" "home" "programs" "waybar"];
   description = "Waybar status bar";
   config = {config, ...}: let
@@ -10,7 +9,7 @@ nixclyx.lib.modules.mkModule {
       enable = true;
       style =
         # css
-        lib.mkAfter ''
+        ''
           * {
               border: none;
               border-radius: 0;
@@ -117,4 +116,4 @@ nixclyx.lib.modules.mkModule {
       };
     };
   };
-} args
+}

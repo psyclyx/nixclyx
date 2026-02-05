@@ -1,11 +1,10 @@
-{nixclyx, lib, pkgs, ...} @ args:
-nixclyx.lib.modules.mkModule {
+{
   path = ["psyclyx" "home" "programs" "alacritty"];
   description = "Alacritty terminal emulator";
-  options = {
+  options = {lib, ...}: {
     defaultTerminal = lib.mkEnableOption "setting as default terminal via TERMINAL environment variable";
   };
-  config = {cfg, config, ...}: {
+  config = {cfg, config, lib, pkgs, ...}: {
     programs.alacritty = {
       enable = true;
       package = pkgs.alacritty-graphics;
@@ -28,4 +27,4 @@ nixclyx.lib.modules.mkModule {
         else ["Alacritty.desktop"];
     };
   };
-} args
+}

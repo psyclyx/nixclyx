@@ -1,15 +1,12 @@
-{nixclyx, pkgs, ...} @ args:
-nixclyx.lib.modules.mkModule {
+{
   path = ["psyclyx" "nixos" "programs" "sway"];
   description = "swayfx wm";
-  config = _: {
-    # dbus service is started by nixpkgs module
+  config = {pkgs, ...}: {
     environment.systemPackages = [
       pkgs.dbus
       pkgs.qt5.qtwayland
     ];
 
-    # https://nixos.wiki/wiki/Sway#Inferior_performance_compared_to_other_distributions
     security = {
       rtkit.enable = true;
 
@@ -48,4 +45,4 @@ nixclyx.lib.modules.mkModule {
       };
     };
   };
-} args
+}

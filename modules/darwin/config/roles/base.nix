@@ -1,15 +1,9 @@
 {
-  config,
-  lib,
-  ...
-}: let
-  cfg = config.psyclyx.darwin.config.roles.base;
-in {
-  options.psyclyx.darwin.config.roles.base = {
-    enable = lib.mkEnableOption "base darwin role";
-  };
+  path = ["psyclyx" "darwin" "config" "roles" "base"];
+  description = "base darwin role";
+  config = {lib, pkgs, nixclyx, ...}: {
+    environment.systemPackages = nixclyx.packageGroups.shell pkgs;
 
-  config = lib.mkIf cfg.enable {
     psyclyx = {
       common.system.nixpkgs.enable = lib.mkDefault true;
 

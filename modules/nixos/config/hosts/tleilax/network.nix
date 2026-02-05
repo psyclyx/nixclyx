@@ -3,14 +3,12 @@
   lib,
   ...
 }: let
-  cfg = config.psyclyx.nixos.config.hosts.tleilax;
-
   prefix6 = "2606:7940:32:26::";
   prefix4 = "199.255.18.171";
 
   spaceSep = builtins.concatStringsSep " ";
 in {
-  config = lib.mkIf cfg.enable {
+  config = lib.mkIf (config.psyclyx.nixos.host == "tleilax") {
     systemd = {
       network = {
         wait-online.enable = true;

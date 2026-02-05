@@ -1,8 +1,7 @@
-{nixclyx, lib, pkgs, ...} @ args:
-nixclyx.lib.modules.mkModule {
+{
   path = ["psyclyx" "home" "programs" "helix"];
   description = "helix text editor";
-  config = _: {
+  config = {lib, pkgs, ...}: {
     programs.helix = {
       enable = true;
       languages.language = [
@@ -17,4 +16,4 @@ nixclyx.lib.modules.mkModule {
       ];
     };
   };
-} args
+}

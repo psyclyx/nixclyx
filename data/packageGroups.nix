@@ -52,6 +52,10 @@
     pkgs.git
     pkgs.lazygit
     pkgs.yazi
+
+    # Encoding tools
+    pkgs.ffmpeg
+    pkgs.imagemagick
   ];
 
   dev = pkgs: [
@@ -123,5 +127,11 @@
     # Zig
     pkgs.zig
     pkgs.zls
+
+    # AI
+    pkgs.claude-code
+
+    # Mobile
+    pkgs.android-tools
   ];
 }

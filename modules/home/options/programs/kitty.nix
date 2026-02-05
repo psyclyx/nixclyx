@@ -1,11 +1,10 @@
-{nixclyx, lib, ...} @ args:
-nixclyx.lib.modules.mkModule {
+{
   path = ["psyclyx" "home" "programs" "kitty"];
   description = "Kitty terminal emulator";
-  options = {
+  options = {lib, ...}: {
     defaultTerminal = lib.mkEnableOption "setting as default terminal via TERMINAL environment variable";
   };
-  config = {cfg, config, ...}: {
+  config = {cfg, config, lib, ...}: {
     programs = {
       kitty = {
         enable = true;
@@ -34,4 +33,4 @@ nixclyx.lib.modules.mkModule {
         else ["kitty.desktop"];
     };
   };
-} args
+}

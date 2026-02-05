@@ -1,5 +1,4 @@
-{nixclyx, ...} @ args:
-nixclyx.lib.modules.mkModule {
+{
   path = ["psyclyx" "nixos" "services" "kanata"];
   description = "Kanata (keyboard remapper)";
   config = _: {
@@ -17,4 +16,4 @@ nixclyx.lib.modules.mkModule {
       };
     };
   };
-} args
+}

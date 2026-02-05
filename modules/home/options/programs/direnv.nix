@@ -1,5 +1,4 @@
-{nixclyx, ...} @ args:
-nixclyx.lib.modules.mkModule {
+{
   path = ["psyclyx" "home" "programs" "direnv"];
   description = "direnv";
   config = _: {
@@ -9,4 +8,4 @@ nixclyx.lib.modules.mkModule {
       nix-direnv.enable = true;
     };
   };
-} args
+}

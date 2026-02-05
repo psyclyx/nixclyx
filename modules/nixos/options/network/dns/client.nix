@@ -1,5 +1,4 @@
-{nixclyx, ...} @ args:
-nixclyx.lib.modules.mkModule {
+{
   path = ["psyclyx" "nixos" "network" "dns" "client"];
   description = "avahi+systemd-resolved";
   config = _: {
@@ -8,4 +7,4 @@ nixclyx.lib.modules.mkModule {
       resolved.enable = true;
     };
   };
-} args
+}

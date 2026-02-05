@@ -1,8 +1,7 @@
-{nixclyx, lib, ...} @ args:
-nixclyx.lib.modules.mkModule {
+{
   path = ["psyclyx" "nixos" "system" "timezone"];
   description = "Timezone config";
-  options = {
+  options = {lib, ...}: {
     default = lib.mkOption {
       type = lib.types.str;
       default = "America/Los_Angeles";
@@ -12,4 +11,4 @@ nixclyx.lib.modules.mkModule {
   config = {cfg, ...}: {
     time.timeZone = cfg.default;
   };
-} args
+}

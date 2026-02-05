@@ -1,5 +1,4 @@
-{nixclyx, ...} @ args:
-nixclyx.lib.modules.mkModule {
+{
   path = ["psyclyx" "nixos" "hardware" "storage" "p440a"];
   description = "HPE P440a(r) storage controller";
   config = _: {
@@ -9,4 +8,4 @@ nixclyx.lib.modules.mkModule {
       programs.ssacli.enable = true;
     };
   };
-} args
+}

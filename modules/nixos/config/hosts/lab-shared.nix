@@ -1,16 +1,7 @@
 {
-  config,
-  lib,
-  pkgs,
-  ...
-}: let
-  anyLab =
-    config.psyclyx.nixos.config.hosts.lab-1.enable
-    || config.psyclyx.nixos.config.hosts.lab-2.enable
-    || config.psyclyx.nixos.config.hosts.lab-3.enable
-    || config.psyclyx.nixos.config.hosts.lab-4.enable;
-in {
-  config = lib.mkIf anyLab {
+  path = ["psyclyx" "nixos" "config" "hosts" "lab" "shared"];
+  gate = {config, lib, ...}: lib.hasPrefix "lab-" config.psyclyx.nixos.host;
+  config = {lib, ...}: {
     boot = {
       initrd = {
         systemd = {
@@ -25,10 +16,6 @@ in {
       };
     };
 
-    environment.systemPackages = [
-      pkgs.psyclyx.envs.forensics
-    ];
-
     psyclyx.nixos = {
       boot = {
         initrd-ssh.enable = true;
@@ -38,9 +25,7 @@ in {
 
       hardware.presets.hpe.dl360-gen9.enable = true;
 
-      config = {
-        roles.server.enable = true;
-      };
+      role = "server";
     };
   };
 }

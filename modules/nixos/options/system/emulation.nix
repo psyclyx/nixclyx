@@ -1,8 +1,7 @@
-{nixclyx, lib, pkgs, ...} @ args:
-nixclyx.lib.modules.mkModule {
+{
   path = ["psyclyx" "nixos" "system" "emulation"];
   description = "Architecture emulation config";
-  options = let
+  options = {lib, pkgs, ...}: let
     inherit (pkgs.stdenv.hostPlatform) system;
     defaultSystems =
       {
@@ -26,4 +25,4 @@ nixclyx.lib.modules.mkModule {
   config = {cfg, ...}: {
     boot.binfmt.emulatedSystems = cfg.emulatedSystems;
   };
-} args
+}

@@ -1,8 +1,7 @@
-{nixclyx, lib, ...} @ args:
-nixclyx.lib.modules.mkModule {
+{
   path = ["psyclyx" "nixos" "system" "storage"];
   description = "storage config";
-  options = {
+  options = {lib, ...}: {
     tune = {
       hdd = lib.mkOption {
         default = true;
@@ -56,4 +55,4 @@ nixclyx.lib.modules.mkModule {
         '';
       })
     ];
-} args
+}

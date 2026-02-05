@@ -1,5 +1,4 @@
-{nixclyx, ...} @ args:
-nixclyx.lib.modules.mkModule {
+{
   path = ["psyclyx" "nixos" "services" "sddm"];
   description = "Simple Desktop Display Manager";
   config = _: {
@@ -8,4 +7,4 @@ nixclyx.lib.modules.mkModule {
       wayland.enable = true;
     };
   };
-} args
+}

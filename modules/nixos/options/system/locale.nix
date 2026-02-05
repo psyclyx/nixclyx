@@ -1,8 +1,7 @@
-{nixclyx, lib, ...} @ args:
-nixclyx.lib.modules.mkModule {
+{
   path = ["psyclyx" "nixos" "system" "locale"];
   description = "Locale config";
-  options = {
+  options = {lib, ...}: {
     default = lib.mkOption {
       type = lib.types.str;
       default = "en_US.UTF-8";
@@ -12,4 +11,4 @@ nixclyx.lib.modules.mkModule {
   config = {cfg, ...}: {
     i18n.defaultLocale = cfg.default;
   };
-} args
+}

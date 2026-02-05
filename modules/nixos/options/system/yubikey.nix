@@ -1,8 +1,7 @@
-{nixclyx, pkgs, ...} @ args:
-nixclyx.lib.modules.mkModule {
+{
   path = ["psyclyx" "nixos" "system" "yubikey"];
   description = "yubikey support";
-  config = _: {
+  config = {pkgs, ...}: {
     services.pcscd.enable = true;
     environment.systemPackages = [
       pkgs.yubikey-manager
@@ -11,4 +10,4 @@ nixclyx.lib.modules.mkModule {
       pkgs.ssh-agents
     ];
   };
-} args
+}

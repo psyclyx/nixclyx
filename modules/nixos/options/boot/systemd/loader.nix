@@ -1,5 +1,4 @@
-{nixclyx, ...} @ args:
-nixclyx.lib.modules.mkModule {
+{
   path = ["psyclyx" "nixos" "boot" "systemd" "loader"];
   description = "systemd-boot";
   config = _: {
@@ -16,4 +15,4 @@ nixclyx.lib.modules.mkModule {
       };
     };
   };
-} args
+}

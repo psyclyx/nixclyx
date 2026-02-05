@@ -1,5 +1,4 @@
-{nixclyx, ...} @ args:
-nixclyx.lib.modules.mkModule {
+{
   path = ["psyclyx" "nixos" "hardware" "gpu" "nvidia"];
   description = "Nvidia GPU (currently 3090)";
   config = {config, ...}: {
@@ -18,4 +17,4 @@ nixclyx.lib.modules.mkModule {
 
     services.xserver.videoDrivers = ["nvidia"];
   };
-} args
+}

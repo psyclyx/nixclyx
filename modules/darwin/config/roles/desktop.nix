@@ -1,15 +1,9 @@
 {
-  config,
-  lib,
-  ...
-}: let
-  cfg = config.psyclyx.darwin.config.roles.desktop;
-in {
-  options.psyclyx.darwin.config.roles.desktop = {
-    enable = lib.mkEnableOption "desktop darwin role";
-  };
+  path = ["psyclyx" "darwin" "config" "roles" "desktop"];
+  description = "desktop darwin role";
+  config = {lib, pkgs, nixclyx, ...}: {
+    environment.systemPackages = nixclyx.packageGroups.dev pkgs;
 
-  config = lib.mkIf cfg.enable {
     psyclyx.darwin = {
       programs = {
         firefox.enable = lib.mkDefault true;

@@ -1,5 +1,4 @@
-{nixclyx, ...} @ args:
-nixclyx.lib.modules.mkModule {
+{
   path = ["psyclyx" "nixos" "services" "resolved"];
   description = "systemd-resolved dns resolver";
   config = _: {
@@ -10,4 +9,4 @@ nixclyx.lib.modules.mkModule {
       };
     };
   };
-} args
+}

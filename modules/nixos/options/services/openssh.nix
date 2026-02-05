@@ -1,8 +1,7 @@
-{nixclyx, lib, ...} @ args:
-nixclyx.lib.modules.mkModule {
+{
   path = ["psyclyx" "nixos" "services" "openssh"];
   description = "Enable OpenSSH.";
-  options = {
+  options = {lib, ...}: {
     agentAuth = {
       enable = lib.mkOption {
         type = lib.types.bool;
@@ -11,14 +10,14 @@ nixclyx.lib.modules.mkModule {
       };
     };
   };
-  extraOptions = {
+  extraOptions = {lib, ...}: {
     psyclyx.nixos.network.ports.ssh = lib.mkOption {
       type = lib.types.listOf lib.types.port;
       default = [22];
       description = "Ports for OpenSSH to listen on.";
     };
   };
-  config = {cfg, config, lib, ...}: {
+  config = {cfg, config, lib, nixclyx, ...}: {
     security.pam.sshAgentAuth.enable = lib.mkIf cfg.agentAuth.enable cfg.agentAuth.enable;
     services.openssh = {
       enable = true;
@@ -49,4 +48,4 @@ nixclyx.lib.modules.mkModule {
       "ssh/auth_principals/root".text = "admin";
     };
   };
-} args
+}

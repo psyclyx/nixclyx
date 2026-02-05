@@ -1,8 +1,7 @@
-{nixclyx, lib, pkgs, ...} @ args:
-nixclyx.lib.modules.mkModule {
+{
   path = ["psyclyx" "home" "programs" "ssh"];
   description = "SSH configuration";
-  config = {config, ...}: let
+  config = {config, lib, pkgs, ...}: let
     inherit (pkgs.stdenv.hostPlatform) isDarwin isLinux;
   in {
     programs = {
@@ -53,4 +52,4 @@ nixclyx.lib.modules.mkModule {
       };
     };
   };
-} args
+}

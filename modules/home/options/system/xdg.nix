@@ -1,5 +1,4 @@
-{nixclyx, ...} @ args:
-nixclyx.lib.modules.mkModule {
+{
   path = ["psyclyx" "home" "xdg"];
   description = "XDG directories and MIME associations";
   config = _: {
@@ -66,4 +65,4 @@ nixclyx.lib.modules.mkModule {
       };
     };
   };
-} args
+}

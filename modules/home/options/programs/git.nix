@@ -1,8 +1,7 @@
-{nixclyx, lib, ...} @ args:
-nixclyx.lib.modules.mkModule {
+{
   path = ["psyclyx" "home" "programs" "git"];
   description = "git version control";
-  config = {config, ...}: let
+  config = {config, lib, ...}: let
     info = config.psyclyx.home.info;
   in {
     programs = {
@@ -16,4 +15,4 @@ nixclyx.lib.modules.mkModule {
       };
     };
   };
-} args
+}

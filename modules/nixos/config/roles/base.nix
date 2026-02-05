@@ -1,17 +1,7 @@
 {
-  config,
-  lib,
-  pkgs,
-  nixclyx,
-  ...
-}: let
-  cfg = config.psyclyx.nixos.config.roles.base;
-in {
-  options.psyclyx.nixos.config.roles.base = {
-    enable = lib.mkEnableOption "base NixOS role";
-  };
-
-  config = lib.mkIf cfg.enable {
+  path = ["psyclyx" "nixos" "config" "roles" "base"];
+  description = "base NixOS role";
+  config = {lib, pkgs, nixclyx, ...}: {
     environment.systemPackages = nixclyx.packageGroups.shell pkgs;
 
     psyclyx = {

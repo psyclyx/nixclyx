@@ -6,11 +6,12 @@ in {
       "${sources.home-manager}/nix-darwin"
       (loadFlake sources.stylix).darwinModules.stylix
       (loadFlake sources.nix-homebrew).darwinModules.nix-homebrew
-      (modules.common.options {inherit nixclyx;})
+      modules.common.options
     ]
-    ++ nixclyx.lib.fs.collectModules ./.;
+    ++ nixclyx.lib.fs.collectSpecs nixclyx.lib.modules.mkModule ./.;
 
   config = {
+    _module.args.nixclyx = nixclyx;
     system.stateVersion = 5;
   };
 }
