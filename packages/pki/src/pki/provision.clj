@@ -73,9 +73,8 @@
         dest (make-ssh-dest peer jump port)
 
         ensure-key-path (get-ensure-key-path)
-        _ (when-not check
-            (println "Copying ensure-key to" dest)
-            (sh/nix-copy-closure! dest (get-ensure-key-store-path)))
+        _ (do (println "Copying ensure-key to" dest)
+              (sh/nix-copy-closure! dest (get-ensure-key-store-path)))
 
         _ (println (if check "Checking" "Generating") "keys on" dest)
 
