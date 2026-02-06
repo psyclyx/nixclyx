@@ -36,6 +36,7 @@ CA keys (override with env vars):
 
 Provision options:
   -J, --jump HOST   SSH jump host (e.g. 'user@jumphost')
+  -p, --port PORT   SSH port (default: 22)
   -r, --rotate      Rotate keys before provisioning
 
 wg-quick options:
@@ -87,13 +88,15 @@ Enroll options:
    {:peer-names args
     :check false
     :rotate (:rotate opts)
-    :jump (:jump opts)}))
+    :jump (:jump opts)
+    :port (:port opts)}))
 
 (defn cmd-check [opts args]
   (provision/provision-peers!
    {:peer-names args
     :check true
-    :jump (:jump opts)}))
+    :jump (:jump opts)
+    :port (:port opts)}))
 
 (defn cmd-add-peer [_opts args]
   (when (empty? args)
@@ -301,6 +304,7 @@ Enroll options:
    :host {:alias :h :coerce :boolean :desc "Also enroll host key"}
    :rotate {:alias :r :coerce :boolean :desc "Rotate keys before provisioning"}
    :jump {:alias :J :desc "SSH jump host (passed to -J)"}
+   :port {:alias :p :coerce :int :desc "SSH port (passed to -p)"}
    :gen-key {:coerce :boolean :desc "Generate new WireGuard keypair"}
    :private-key {:desc "Existing WireGuard private key"}
    :help {:coerce :boolean :desc "Show help"}})
