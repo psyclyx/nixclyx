@@ -29,7 +29,7 @@
       "site": "cofractal",
       "ip4": "10.100.0.1",
       "ip6": "fd10:100::1",
-      "endpoint": null,
+      "endpoint": "199.255.18.171",
       "fqdn": "tleilax.cofractal-sea.psyclyx.net"
     },
     "sigil": {
