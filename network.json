@@ -1,0 +1,82 @@
+{
+  "port": 51820,
+  "rootHub": "tleilax",
+  "sites": {
+    "cofractal": {
+      "subnet4": "10.100.0.0/24",
+      "subnet6": "fd10:100::/64",
+      "hub": "tleilax"
+    },
+    "apartment": {
+      "subnet4": "10.100.10.0/24",
+      "subnet6": "fd10:100:10::/64",
+      "hub": null
+    },
+    "friend": {
+      "subnet4": "10.100.20.0/24",
+      "subnet6": "fd10:100:20::/64",
+      "hub": "friend-router",
+      "upstream": "cofractal"
+    },
+    "roam": {
+      "subnet4": "10.100.1.0/24",
+      "subnet6": "fd10:100:1::/64",
+      "hub": null
+    }
+  },
+  "peers": {
+    "tleilax": {
+      "site": "cofractal",
+      "ip4": "10.100.0.1",
+      "ip6": "fd10:100::1",
+      "endpoint": null,
+      "fqdn": "tleilax.cofractal-sea.psyclyx.net"
+    },
+    "sigil": {
+      "site": "apartment",
+      "ip4": "10.100.10.1",
+      "ip6": "fd10:100:10::1",
+      "fqdn": "sigil.home.psyclyx.net"
+    },
+    "vigil": {
+      "site": "apartment",
+      "ip4": "10.100.10.2",
+      "ip6": "fd10:100:10::2",
+      "fqdn": "vigil.home.psyclyx.net"
+    },
+    "lab-1": {
+      "site": "apartment",
+      "ip4": "10.100.10.11",
+      "ip6": "fd10:100:10::b",
+      "fqdn": "lab-1.lab.psyclyx.net",
+      "connect": {"jump": "sigil"}
+    },
+    "lab-2": {
+      "site": "apartment",
+      "ip4": "10.100.10.12",
+      "ip6": "fd10:100:10::c",
+      "fqdn": "lab-2.lab.psyclyx.net",
+      "connect": {"jump": "sigil"}
+    },
+    "lab-3": {
+      "site": "apartment",
+      "ip4": "10.100.10.13",
+      "ip6": "fd10:100:10::d",
+      "fqdn": "lab-3.lab.psyclyx.net",
+      "connect": {"jump": "sigil"}
+    },
+    "lab-4": {
+      "site": "apartment",
+      "ip4": "10.100.10.14",
+      "ip6": "fd10:100:10::e",
+      "fqdn": "lab-4.lab.psyclyx.net",
+      "connect": {"jump": "sigil"}
+    },
+    "omen": {
+      "site": "roam",
+      "ip4": "10.100.1.1",
+      "ip6": "fd10:100:1::1",
+      "fqdn": "omen.roam.psyclyx.net"
+    }
+  }
+}

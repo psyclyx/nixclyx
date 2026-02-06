@@ -59,8 +59,7 @@
      :jump      - SSH jump host override (passed to -J)
    Returns map of provisioned data."
   [{:keys [peer-name check rotate jump]}]
-  (let [state (core/read-state)
-        peer (core/get-peer state peer-name)
+  (let [peer (core/get-peer peer-name)
         _ (when-not peer
             (throw (ex-info "Peer not found" {:peer peer-name})))
 
@@ -97,23 +96,22 @@
                  :wireguard wg-pub}}
 
       ;; Full provision: sign and deploy
-      (let [config (core/read-config)
-            [s1 s2 s3] (core/allocate-serials! 3)
+      (let [[s1 s2 s3] (core/allocate-serials! 3)
 
             _ (println "Signing keys (serials" s1 s2 s3 ")")
 
             host-cert (sign/sign-host-key!
                        {:hostname peer-name :fqdn fqdn :pubkey host-pub
-                        :serial s1 :ca-path (core/ca-path config :host)})
+                        :serial s1 :ca-path (core/ca-path :host)})
 
             initrd-cert (sign/sign-initrd-key!
                          {:hostname peer-name :fqdn fqdn :pubkey initrd-pub
-                          :serial s2 :ca-path (core/ca-path config :initrd)})
+                          :serial s2 :ca-path (core/ca-path :initrd)})
 
             user-cert (sign/sign-user-key!
                        {:principal "root" :identity (str "root@" fqdn)
                         :pubkey root-pub :serial s3
-                        :ca-path (core/ca-path config :user)})
+                        :ca-path (core/ca-path :user)})
 
             _ (println "Deploying certs to" dest)
             _ (push-cert! dest (:cert host-cert)
@@ -123,12 +121,12 @@
             _ (push-cert! dest (:cert user-cert)
                           "/root/.ssh/id_ed25519-cert.pub")
 
-            ;; Update peer in state
-            _ (core/update-peer! peer-name
-                                 {:publicKey wg-pub
-                                  :ssh_host host-pub
-                                  :ssh_host_initrd initrd-pub
-                                  :ssh_user_root root-pub})]
+            ;; Update peer credentials in state.json
+            _ (core/update-peer-state! peer-name
+                                       {:publicKey wg-pub
+                                        :ssh_host host-pub
+                                        :ssh_host_initrd initrd-pub
+                                        :ssh_user_root root-pub})]
 
         (println "Done. Next serial:" (:serial (core/read-state)))
 
@@ -145,10 +143,9 @@
 (defn provision-peers!
   "Provision multiple peers. If peer-names is empty, provision all."
   [{:keys [peer-names check rotate jump]}]
-  (let [state (core/read-state)
-        names (if (seq peer-names)
+  (let [names (if (seq peer-names)
                 peer-names
-                (map name (core/peer-names state)))]
+                (map name (core/peer-names)))]
     (doseq [peer-name names]
       (println "==>" (if check "Checking" "Provisioning") peer-name)
       (try

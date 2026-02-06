@@ -23,8 +23,7 @@
   (when-not pubkey
     (throw (ex-info "Public key required for signing" {})))
 
-  (let [config (core/read-config)
-        ca (or ca-path (core/ca-path config (or ca-type :host)))
+  (let [ca (or ca-path (core/ca-path (or ca-type :host)))
         serial (or serial (core/allocate-serial!))
         sign-type (if (= ca-type :user) "user" "host")
 

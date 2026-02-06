@@ -25,8 +25,14 @@ Commands:
   generate-krl          Generate KRL files from revoked serials
   status                Show current state summary
 
-Global options:
-  --pki PATH      PKI file (default: $REPO_ROOT/pki.json)
+Files:
+  network.json   Network topology config (peers, sites, port)
+  state.json     Operational state (credentials, serials, certs)
+
+Environment (for CA paths):
+  PKI_HOST_CA    Path to host CA key
+  PKI_USER_CA    Path to user CA key
+  PKI_INITRD_CA  Path to initrd CA key
 
 Provision options:
   -J, --jump HOST   SSH jump host (e.g. 'user@jumphost')
@@ -50,22 +56,25 @@ Enroll options:
 ;; --- Commands ---
 
 (defn cmd-status [_opts _args]
-  (let [state (core/read-state)
-        serial (:serial state 0)
-        peer-count (count (:peers state))
+  (let [network (core/read-network)
+        state (core/read-state)
+        merged (core/read-merged)
+        peer-count (count (:peers network))
+        provisioned-count (count (filter #(:publicKey (val %)) (:peers merged)))
         cert-count (count (:certs state))
         revoked-count (count (:revoked_serials state))]
-    (println "serial:  " serial)
-    (println "peers:   " peer-count)
-    (println "certs:   " cert-count)
-    (println "revoked: " revoked-count)
+    (println "serial:     " (:serial state 0))
+    (println "peers:      " peer-count (str "(" provisioned-count " provisioned)"))
+    (println "certs:      " cert-count)
+    (println "revoked:    " revoked-count)
 
     (when (pos? peer-count)
       (println)
       (println "peers:")
-      (doseq [[name peer] (:peers state)]
-        (println (str "  " (clojure.core/name name) ": "
-                      (:ip4 peer) " (" (:fqdn peer) ")"))))
+      (doseq [[name peer] (:peers merged)]
+        (let [status (if (:publicKey peer) "✓" "○")]
+          (println (str "  " status " " (clojure.core/name name) ": "
+                        (:ip4 peer) " (" (:site peer) ")")))))
 
     (when (pos? revoked-count)
       (println)
@@ -91,8 +100,8 @@ Enroll options:
     (die! "add-peer requires a peer name"))
 
   (let [peer-name (first args)
-        config (core/read-config)
-        sites (keys (get-in config [:wireguard :sites]))]
+        network (core/read-network)
+        sites (keys (:sites network))]
 
     (println "Available sites:" (str/join ", " (map name sites)))
     (print "Site: ")
@@ -103,8 +112,7 @@ Enroll options:
       (when-not ((set (map name sites)) site)
         (die! (str "Unknown site: " site)))
 
-      (let [state (core/read-state)
-            suffix (core/next-available-ip state site)
+      (let [suffix (core/next-available-ip site)
             ips (core/make-peer-ips site suffix)]
 
         (print (str "FQDN for " peer-name " (e.g., device.roam.psyclyx.net): "))
@@ -113,18 +121,14 @@ Enroll options:
           (when (str/blank? fqdn)
             (die! "FQDN required"))
 
-          (print "WireGuard public key (or empty to set later): ")
-          (flush)
-          (let [pubkey (str/trim (read-line))
-                peer-data (merge ips
-                                 {:site site
-                                  :fqdn fqdn
-                                  :publicKey (when-not (str/blank? pubkey) pubkey)
-                                  :ssh_host nil
-                                  :ssh_host_initrd nil
-                                  :ssh_user_root nil})]
+          ;; Config only - no credentials (those go in state.json via provision)
+          (let [peer-data (merge ips {:site site :fqdn fqdn})]
             (core/add-peer! peer-name peer-data)
-            (println (str "Added peer " peer-name " to site " site ": " (:ip4 ips) " / " (:ip6 ips)))))))))
+            (println (str "Added peer " peer-name " to network.json"))
+            (println (str "  Site: " site))
+            (println (str "  IPs:  " (:ip4 ips) " / " (:ip6 ips)))
+            (println)
+            (println "Run 'pki provision" peer-name "' to generate keys and credentials")))))))
 
 (defn cmd-sign [opts args]
   (when (empty? args)
@@ -165,8 +169,7 @@ Enroll options:
         revoked (core/revoked-serials state)]
     (if (empty? revoked)
       (println "No revoked serials, nothing to do")
-      (let [config (core/read-config)
-            version (:serial state)
+      (let [version (:serial state)
             pki-dir core/*repo-root*]
         (doseq [ca-type [:host :initrd :user]]
           (let [ca-serials (->> (:certs state)
@@ -175,7 +178,7 @@ Enroll options:
                                 (filter (set revoked)))]
             (if (empty? ca-serials)
               (println (str "No revoked serials for " (name ca-type) " CA, skipping"))
-              (let [ca-key (core/ca-path config ca-type)
+              (let [ca-key (core/ca-path ca-type)
                     krl-path (str pki-dir "/krl-" (name ca-type) ".krl")
                     spec-content (str/join "\n" (map #(str "serial: " %) ca-serials))
                     spec-file (str (babashka.fs/create-temp-file) ".spec")]
@@ -189,8 +192,7 @@ Enroll options:
         current-hostname (str/trim (pki.shell/run-out! "hostname" "-s"))
         current-fqdn (str/trim (pki.shell/run-out! "hostname" "-f"))
         principal (or (:principal opts) current-user)
-        identity (or (:identity opts) (str current-user "@" current-fqdn))
-        config (core/read-config)]
+        identity (or (:identity opts) (str current-user "@" current-fqdn))]
 
     ;; Enroll user key
     (println "==> Ensuring user key")
@@ -229,20 +231,18 @@ Enroll options:
     (die! "wg-quick requires a peer name"))
 
   (let [peer-name (first args)
-        state (core/read-state)
-        peer (core/get-peer state peer-name)
+        network (core/read-network)
+        peer (core/get-peer-with-state peer-name)
         _ (when-not peer (die! (str "Peer not found: " peer-name)))
 
-        config (core/read-config)
-        wg-config (:wireguard config)
-        root-hub-name (:rootHub wg-config)
-        root-hub (core/get-peer state root-hub-name)
+        root-hub-name (:rootHub network)
+        root-hub (core/get-peer-with-state root-hub-name)
 
         ;; Determine which hub this peer connects to
-        peer-site (get-in wg-config [:sites (keyword (:site peer))])
+        peer-site (get-in network [:sites (keyword (:site peer))])
         site-hub (:hub peer-site)
         hub-name (or site-hub root-hub-name)
-        hub (core/get-peer state hub-name)
+        hub (core/get-peer-with-state hub-name)
 
         ;; Get or generate private key, or use placeholder
         private-key (cond
@@ -255,12 +255,12 @@ Enroll options:
             (let [public-key (str/trim (:out (pki.shell/run!
                                                {:in private-key}
                                                "wg" "pubkey")))]
-              (core/update-peer! peer-name {:publicKey public-key})
+              (core/update-peer-state! peer-name {:publicKey public-key})
               (binding [*out* *err*]
                 (println "Updated" peer-name "publicKey in state.json"))))
 
         ;; Build AllowedIPs - all subnets
-        all-subnets (->> (:sites wg-config)
+        all-subnets (->> (:sites network)
                          vals
                          (mapcat (fn [s] [(:subnet4 s) (:subnet6 s)])))
 
@@ -277,7 +277,7 @@ Enroll options:
                           "[Peer]\n"
                           "PublicKey = " (or (:publicKey hub) "<HUB_PUBLIC_KEY>") "\n"
                           "AllowedIPs = " (str/join ", " all-subnets) "\n"
-                          "Endpoint = " hub-endpoint ":" (:port wg-config) "\n"
+                          "Endpoint = " hub-endpoint ":" (:port network) "\n"
                           "PersistentKeepalive = 25\n")]
 
     (println wg-quick-conf)
@@ -294,10 +294,9 @@ Enroll options:
 ;; --- Main ---
 
 (def cli-spec
-  {:pki {:alias :p :desc "PKI file path (default: $REPO_ROOT/pki.json)"}
-   :principals {:alias :n :desc "Comma-separated principals"}
+  {:principals {:alias :n :desc "Comma-separated principals"}
    :identity {:alias :i :desc "Certificate identity"}
-   :ca {:desc "CA key path"}
+   :ca {:desc "CA key path (overrides env var)"}
    :principal {:desc "User principal for enroll"}
    :host {:alias :h :coerce :boolean :desc "Also enroll host key"}
    :rotate {:alias :r :coerce :boolean :desc "Rotate keys before provisioning"}
@@ -310,8 +309,8 @@ Enroll options:
   (let [{:keys [opts args]} (cli/parse-args args {:spec cli-spec})
         [cmd & cmd-args] args]
 
-    ;; Initialize paths
-    (core/init-paths! {:pki (:pki opts)})
+    ;; Initialize paths (finds repo root automatically)
+    (core/init-paths!)
 
     (when (or (:help opts) (nil? cmd))
       (print-usage!)
