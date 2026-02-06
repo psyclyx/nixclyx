@@ -61,6 +61,22 @@ in {
     };
   };
 
+  tleilax = {...}: {
+    imports = [
+      nixclyx.modules.nixos.options
+      nixclyx.modules.nixos.config
+    ];
+    config = {
+      psyclyx.nixos.host = "tleilax";
+      deployment = {
+        tags = ["server"];
+        targetHost = "tleilax.psyclyx.xyz";
+        targetPort = 17891;
+        targetUser = "root";
+      };
+    };
+  };
+
   lab-1 = {...}: {
     imports = [
       nixclyx.modules.nixos.options
