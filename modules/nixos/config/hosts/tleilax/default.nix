@@ -23,15 +23,10 @@
     psyclyx.nixos = {
       hardware.presets.hpe.dl20-gen10.enable = true;
 
-      network.ports.ssh = [17891];
-
-      role = "server";
-
-      services = {
-        tailscale.exitNode = true;
+      network = {
+        ports.ssh = [17891];
 
         dns = {
-          enable = true;
           authoritative.zones = {
             "psyclyx.net" = { peerRecords = true; };
             "psyclyx.xyz" = {
@@ -47,6 +42,10 @@
           };
         };
       };
+
+      role = "server";
+
+      services.tailscale.exitNode = true;
     };
   };
 }
