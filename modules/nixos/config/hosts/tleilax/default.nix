@@ -27,13 +27,17 @@
         ports.ssh = [17891];
 
         dns = {
-          authoritative.zones = {
-            "psyclyx.net" = { peerRecords = true; };
-            "psyclyx.xyz" = {
-              ttl = 3600;
-              extraRecords = ''
-                vpn    IN A     ${hub.endpoint}
-              '';
+          authoritative = {
+            interfaces = ["0.0.0.0" "::"];  # Public interfaces
+            port = 53;
+            zones = {
+              "psyclyx.net" = { peerRecords = true; };
+              "psyclyx.xyz" = {
+                ttl = 3600;
+                extraRecords = ''
+                  vpn    IN A     ${hub.endpoint}
+                '';
+              };
             };
           };
           resolver = {
