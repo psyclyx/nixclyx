@@ -1,11 +1,12 @@
 (ns pki.core
-  "State management for PKI: reading/writing JSON, serial tracking, peer registry."
+  "State management for PKI: reading/writing network config and state."
   (:require [babashka.fs :as fs]
             [cheshire.core :as json]
             [clojure.string :as str]))
 
 (def ^:dynamic *repo-root* nil)
-(def ^:dynamic *pki-path* nil)
+(def ^:dynamic *network-path* nil)
+(def ^:dynamic *state-path* nil)
 
 (defn find-repo-root
   "Find git repository root, or current directory if not in a repo."
@@ -21,57 +22,106 @@
   "Initialize paths based on repo root. Call once at startup."
   ([]
    (init-paths! {}))
-  ([{:keys [pki]}]
+  ([{:keys [network state]}]
    (let [root (find-repo-root)]
      (alter-var-root #'*repo-root* (constantly root))
-     (alter-var-root #'*pki-path* (constantly (or pki (str root "/pki.json")))))))
+     (alter-var-root #'*network-path* (constantly (or network (str root "/network.json"))))
+     (alter-var-root #'*state-path* (constantly (or state (str root "/state.json")))))))
 
-;; --- PKI data (single file) ---
+;; --- Network config (read-only from CLI perspective) ---
 
-(def empty-pki
-  {:ca {}
-   :wireguard {}
-   :dns {}
-   :serial 0
+(def empty-network
+  {:port 51820
+   :rootHub nil
+   :sites {}
+   :peers {}})
+
+(defn read-network
+  "Read network config."
+  []
+  (if (fs/exists? *network-path*)
+    (json/parse-string (slurp *network-path*) true)
+    empty-network))
+
+(defn write-network!
+  "Write network config atomically."
+  [data]
+  (let [tmp (str *network-path* ".tmp")]
+    (spit tmp (json/generate-string data {:pretty true}))
+    (fs/move tmp *network-path* {:replace-existing true})))
+
+(defn update-network!
+  "Read network, apply function, write back."
+  [f & args]
+  (let [old-data (read-network)
+        new-data (apply f old-data args)]
+    (write-network! new-data)
+    new-data))
+
+;; --- State (credentials, serials, certs) ---
+
+(def empty-state
+  {:serial 0
    :peers {}
    :certs {}
    :revoked_serials []})
 
-(defn read-pki
-  "Read the PKI file, creating if it doesn't exist."
+(defn read-state
+  "Read state, returning empty state if file doesn't exist."
   []
-  (if (fs/exists? *pki-path*)
-    (json/parse-string (slurp *pki-path*) true)
-    empty-pki))
+  (if (fs/exists? *state-path*)
+    (json/parse-string (slurp *state-path*) true)
+    empty-state))
 
-(defn write-pki!
-  "Write PKI data to file atomically."
+(defn write-state!
+  "Write state atomically."
   [data]
-  (let [tmp (str *pki-path* ".tmp")]
+  (let [tmp (str *state-path* ".tmp")]
     (spit tmp (json/generate-string data {:pretty true}))
-    (fs/move tmp *pki-path* {:replace-existing true})))
+    (fs/move tmp *state-path* {:replace-existing true})))
 
-(defn update-pki!
-  "Read PKI, apply function, write back. Returns new data."
+(defn update-state!
+  "Read state, apply function, write back."
   [f & args]
-  (let [old-data (read-pki)
+  (let [old-data (read-state)
         new-data (apply f old-data args)]
-    (write-pki! new-data)
+    (write-state! new-data)
     new-data))
 
-;; Aliases for backwards compatibility
-(def read-config read-pki)
-(def read-state read-pki)
+;; --- Merged view (config + state) ---
+
+(defn read-merged
+  "Read network config with state merged into peers."
+  []
+  (let [network (read-network)
+        state (read-state)
+        peers (reduce-kv
+               (fn [acc name peer]
+                 (assoc acc name (merge peer (get-in state [:peers name] {}))))
+               {}
+               (:peers network))]
+    (assoc network :peers peers :state state)))
+
+;; Backwards compatibility aliases
+(def read-config read-network)
+
+;; --- CA paths (from environment) ---
 
 (defn ca-path
-  "Get CA key path for a given type (:host, :user, :initrd)."
-  [pki ca-type]
-  (let [path (get-in pki [:ca (keyword ca-type)])]
+  "Get CA key path for a given type (:host, :user, :initrd).
+   Reads from PKI_HOST_CA, PKI_USER_CA, PKI_INITRD_CA environment variables."
+  [ca-type]
+  (let [env-var (case (keyword ca-type)
+                  :host "PKI_HOST_CA"
+                  :user "PKI_USER_CA"
+                  :initrd "PKI_INITRD_CA"
+                  (throw (ex-info "Unknown CA type" {:type ca-type})))
+        path (System/getenv env-var)]
     (when-not path
-      (throw (ex-info "Unknown CA type" {:type ca-type})))
+      (throw (ex-info (str "Environment variable " env-var " not set") {:type ca-type})))
     (str/replace path #"^~" (System/getenv "HOME"))))
 
-;; --- Serial management ---
+;; --- Serial management (state) ---
 
 (defn current-serial
   "Get current serial number from state."
@@ -79,64 +129,71 @@
   (:serial state 0))
 
 (defn allocate-serial!
-  "Allocate and return the next serial number, updating pki.json."
+  "Allocate and return the next serial number, updating state.json."
   []
-  (let [pki (update-pki! (fn [s] (update s :serial inc)))]
-    (dec (:serial pki))))
+  (let [state (update-state! (fn [s] (update s :serial inc)))]
+    (dec (:serial state))))
 
 (defn allocate-serials!
   "Allocate n serial numbers, returning vector of serials."
   [n]
-  (let [start (:serial (read-pki))
+  (let [start (:serial (read-state))
         serials (vec (range start (+ start n)))]
-    (update-pki! (fn [s] (update s :serial + n)))
+    (update-state! (fn [s] (update s :serial + n)))
     serials))
 
 ;; --- Peer management ---
 
 (defn get-peer
-  "Get peer by name, or nil if not found."
-  [state peer-name]
-  (get-in state [:peers (keyword peer-name)]))
+  "Get peer config by name (from network.json), or nil if not found."
+  [peer-name]
+  (get-in (read-network) [:peers (keyword peer-name)]))
+
+(defn get-peer-with-state
+  "Get peer config merged with state."
+  [peer-name]
+  (let [network (read-network)
+        state (read-state)
+        peer (get-in network [:peers (keyword peer-name)])]
+    (when peer
+      (merge peer (get-in state [:peers (keyword peer-name)] {})))))
 
 (defn peer-names
-  "Get list of all peer names."
-  [state]
-  (keys (:peers state)))
+  "Get list of all peer names (from network.json)."
+  []
+  (keys (:peers (read-network))))
 
 (defn add-peer!
-  "Add a new peer to pki.json."
+  "Add a new peer to network.json (config only, no credentials)."
   [peer-name peer-data]
-  (update-pki!
-   (fn [s]
-     (if (get-in s [:peers (keyword peer-name)])
+  (update-network!
+   (fn [n]
+     (if (get-in n [:peers (keyword peer-name)])
        (throw (ex-info "Peer already exists" {:peer peer-name}))
-       (assoc-in s [:peers (keyword peer-name)] peer-data)))))
+       (assoc-in n [:peers (keyword peer-name)] peer-data)))))
 
-(defn update-peer!
-  "Update an existing peer."
+(defn update-peer-state!
+  "Update peer credentials in state.json."
   [peer-name updates]
-  (update-pki!
+  (update-state!
    (fn [s]
-     (if-not (get-in s [:peers (keyword peer-name)])
-       (throw (ex-info "Peer not found" {:peer peer-name}))
-       (update-in s [:peers (keyword peer-name)] merge updates)))))
+     (update-in s [:peers (keyword peer-name)] merge updates))))
 
-;; --- Certificate tracking ---
+;; --- Certificate tracking (state) ---
 
 (defn record-cert!
-  "Record a certificate in pki.json."
+  "Record a certificate in state.json."
   [serial cert-info]
-  (update-pki!
+  (update-state!
    (fn [s]
      (assoc-in s [:certs (str serial)] cert-info))))
 
-;; --- Revocation ---
+;; --- Revocation (state) ---
 
 (defn revoke-serials!
   "Add serials to revocation list."
   [serials]
-  (update-pki!
+  (update-state!
    (fn [s]
      (update s :revoked_serials
              (fn [rs]
@@ -168,11 +225,11 @@
 
 (defn next-available-ip
   "Find next available IP suffix for a site."
-  [state site-name]
-  (let [config (read-config)
-        site (get-in config [:wireguard :sites (keyword site-name)])
+  [site-name]
+  (let [network (read-network)
+        site (get-in network [:sites (keyword site-name)])
         subnet-base (parse-subnet-base (:subnet4 site))
-        site-peers (->> (:peers state)
+        site-peers (->> (:peers network)
                         (filter (fn [[_ p]] (= (:site p) site-name)))
                         vals)
         suffixes (->> site-peers
@@ -186,8 +243,8 @@
 (defn make-peer-ips
   "Generate IP addresses for a new peer in a site."
   [site-name suffix]
-  (let [config (read-config)
-        site (get-in config [:wireguard :sites (keyword site-name)])
+  (let [network (read-network)
+        site (get-in network [:sites (keyword site-name)])
         base4 (parse-subnet-base (:subnet4 site))
         base6 (parse-subnet6-base (:subnet6 site))]
     {:ip4 (str base4 "." suffix)

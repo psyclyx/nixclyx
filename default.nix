@@ -29,16 +29,21 @@ let
     overlays.default = overlay;
     keys = import ./data/keys.nix;
     packageGroups = import ./data/packageGroups.nix;
-    pki = builtins.fromJSON (builtins.readFile ./pki.json);
-    wireguard = let
-      p = builtins.fromJSON (builtins.readFile ./pki.json);
-      sites = p.wireguard.sites;
-      allSubnets4 = builtins.map (s: s.subnet4) (builtins.attrValues sites);
-      allSubnets6 = builtins.map (s: s.subnet6) (builtins.attrValues sites);
-    in p.wireguard // {
-      peers = p.peers;
-      inherit sites allSubnets4 allSubnets6;
-    };
+    network = let
+      config = builtins.fromJSON (builtins.readFile ./network.json);
+      stateFile = ./state.json;
+      emptyState = { serial = 0; peers = {}; certs = {}; revoked_serials = []; };
+      state =
+        if builtins.pathExists stateFile
+        then builtins.fromJSON (builtins.readFile stateFile)
+        else emptyState;
+      # Merge credentials from state into peers
+      peers = builtins.mapAttrs (name: peer:
+        peer // (state.peers.${name} or {})
+      ) config.peers;
+      allSubnets4 = builtins.map (s: s.subnet4) (builtins.attrValues config.sites);
+      allSubnets6 = builtins.map (s: s.subnet6) (builtins.attrValues config.sites);
+    in config // { inherit peers state allSubnets4 allSubnets6; };
   };
 
   evalConfig = import (sources.nixpkgs + "/nixos/lib/eval-config.nix");
