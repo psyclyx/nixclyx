@@ -28,7 +28,7 @@
 
         dns = {
           authoritative = {
-            interfaces = ["0.0.0.0" "::"];  # Public interfaces
+            interfaces = ["199.255.18.171" "2606:7940:32:26::10"];  # Public IPs only
             port = 53;
             zones = {
               "psyclyx.net" = { peerRecords = true; };
