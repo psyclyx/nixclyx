@@ -29,10 +29,10 @@ Files:
   network.json   Network topology config (peers, sites, port)
   state.json     Operational state (credentials, serials, certs)
 
-Environment (for CA paths):
-  PKI_HOST_CA    Path to host CA key
-  PKI_USER_CA    Path to user CA key
-  PKI_INITRD_CA  Path to initrd CA key
+CA keys (override with env vars):
+  ~/.ssh/ca/host_ca      (or PKI_HOST_CA)
+  ~/.ssh/ca/user_ca      (or PKI_USER_CA)
+  ~/.ssh/ca/initrd_ca    (or PKI_INITRD_CA)
 
 Provision options:
   -J, --jump HOST   SSH jump host (e.g. 'user@jumphost')
