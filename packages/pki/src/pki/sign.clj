@@ -40,7 +40,7 @@
               "--serial" (str serial)
               pubkey-file]
 
-        result (apply sh/run! args)
+        result (apply sh/run! {:continue false} args)
         cert (str/trim (:out result))]
 
     ;; Cleanup
