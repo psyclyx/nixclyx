@@ -4,7 +4,7 @@
     "tleilax": {
       "ip4": "10.100.0.1",
       "ip6": "fd10:100::1",
-      "endpoint": "199.255.18.171",
+      "endpoint": null,
       "fqdn": "tleilax.cofractal-sea.psyclyx.net",
       "publicKey": null,
       "ssh_host": null,

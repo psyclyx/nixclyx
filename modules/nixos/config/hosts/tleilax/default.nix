@@ -26,13 +26,7 @@
 
       services = {
         tailscale.exitNode = true;
-        nsd = {
-          enable = true;
-          publicRecords = ''
-            @    IN A     199.255.18.171
-            @    IN AAAA  2606:7940:32:26::10
-          '';
-        };
+        nsd.enable = true;
         unbound.enable = true;
       };
     };
