@@ -29,6 +29,21 @@ let
     overlays.default = overlay;
     keys = import ./data/keys.nix;
     packageGroups = import ./data/packageGroups.nix;
+    pki = {
+      config = builtins.fromJSON (builtins.readFile ./pki/config.json);
+      state = builtins.fromJSON (builtins.readFile ./pki/state.json);
+    };
+    wireguard = let
+      cfg = builtins.fromJSON (builtins.readFile ./pki/config.json);
+      state = builtins.fromJSON (builtins.readFile ./pki/state.json);
+      subnets = cfg.wireguard.subnets;
+      allSubnets4 = builtins.map (s: s.v4) (builtins.attrValues subnets);
+      allSubnets6 = builtins.map (s: s.v6) (builtins.attrValues subnets);
+    in cfg.wireguard // {
+      peers = state.peers;
+      allSubnets4 = allSubnets4;
+      allSubnets6 = allSubnets6;
+    };
   };
 
   evalConfig = import (sources.nixpkgs + "/nixos/lib/eval-config.nix");

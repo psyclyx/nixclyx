@@ -23,7 +23,10 @@
           bcachefs.enable = lib.mkDefault true;
         };
 
-        network.networkd.enable = true;
+        network = {
+          networkd.enable = true;
+          wireguard.enable = lib.mkDefault true;
+        };
 
         programs = {
           zsh.enable = lib.mkDefault true;
