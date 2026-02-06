@@ -63,7 +63,10 @@
       };
     };
 
-    # Disable systemd-resolved stub listener when running our own resolver
-    services.resolved.settings.Resolve.DNSStubListener = false;
+    # Disable systemd-resolved stub listener and mDNS when running our own resolver
+    services.resolved.settings.Resolve = {
+      DNSStubListener = false;
+      MulticastDNS = false;
+    };
   };
 }
