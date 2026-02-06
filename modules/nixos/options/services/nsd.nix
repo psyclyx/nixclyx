@@ -30,8 +30,8 @@
   };
   config = {cfg, lib, nixclyx, ...}: let
     wg = nixclyx.wireguard;
-    pkiCfg = nixclyx.pki.config;
-    hub = wg.peers.${wg.hub};
+    pki = nixclyx.pki;
+    hub = wg.peers.${wg.rootHub};
     publicEndpoint = if cfg.publicEndpoint != null then cfg.publicEndpoint else hub.endpoint;
 
     privateZone = let
@@ -51,20 +51,20 @@
     '';
 
     publicZone = ''
-      $ORIGIN ${pkiCfg.dns.domain}.
+      $ORIGIN ${pki.dns.domain}.
       $TTL 3600
-      @    IN SOA  ns.${pkiCfg.dns.domain}. admin.${pkiCfg.dns.domain}. (
+      @    IN SOA  ns.${pki.dns.domain}. admin.${pki.dns.domain}. (
                    1 3600 900 604800 300 )
-      @    IN NS   ns.${pkiCfg.dns.domain}.
+      @    IN NS   ns.${pki.dns.domain}.
       ns   IN A    ${publicEndpoint}
       ns   IN AAAA ${hub.ip6}
-      ${pkiCfg.dns.vpnSubdomain}   IN A     ${publicEndpoint}
+      ${pki.dns.vpnSubdomain}   IN A     ${publicEndpoint}
       ${cfg.publicRecords}
     '';
 
     builtinZones = {
       "psyclyx.net".data = privateZone;
-      "${pkiCfg.dns.domain}".data = publicZone;
+      "${pki.dns.domain}".data = publicZone;
     };
 
     additionalZones = lib.mapAttrs (name: data: { inherit data; }) cfg.additionalZones;

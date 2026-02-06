@@ -29,18 +29,14 @@ let
     overlays.default = overlay;
     keys = import ./data/keys.nix;
     packageGroups = import ./data/packageGroups.nix;
-    pki = {
-      config = builtins.fromJSON (builtins.readFile ./pki/config.json);
-      state = builtins.fromJSON (builtins.readFile ./pki/state.json);
-    };
+    pki = builtins.fromJSON (builtins.readFile ./pki.json);
     wireguard = let
-      cfg = builtins.fromJSON (builtins.readFile ./pki/config.json);
-      state = builtins.fromJSON (builtins.readFile ./pki/state.json);
-      sites = cfg.wireguard.sites;
+      p = builtins.fromJSON (builtins.readFile ./pki.json);
+      sites = p.wireguard.sites;
       allSubnets4 = builtins.map (s: s.subnet4) (builtins.attrValues sites);
       allSubnets6 = builtins.map (s: s.subnet6) (builtins.attrValues sites);
-    in cfg.wireguard // {
-      peers = state.peers;
+    in p.wireguard // {
+      peers = p.peers;
       inherit sites allSubnets4 allSubnets6;
     };
   };
