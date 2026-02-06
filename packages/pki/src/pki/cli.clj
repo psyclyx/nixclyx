@@ -18,6 +18,7 @@ Commands:
   provision [peer...]   Provision peers (all if none specified)
   check [peer...]       Check mode (no signing)
   add-peer <name>       Add a new peer interactively
+  wg-quick <peer>       Generate wg-quick config for a peer
   sign <type>           Sign pubkey from stdin (type: host|user|initrd)
   enroll [options]      Enroll local workstation
   revoke <serial...>    Add serials to revocation list
@@ -27,6 +28,15 @@ Commands:
 Global options:
   --config PATH   Config file (default: $REPO_ROOT/pki/config.json)
   --state PATH    State file (default: $REPO_ROOT/pki/state.json)
+
+Provision options:
+  -J, --jump HOST   SSH jump host (e.g. 'user@jumphost')
+  -r, --rotate      Rotate keys before provisioning
+
+wg-quick options:
+  --gen-key         Generate new keypair (updates state.json with pubkey)
+  --private-key K   Use existing private key
+  (no key option)   Output with __PRIVATE_KEY__ placeholder for updates
 
 Sign options:
   --principals LIST   Comma-separated principals (required)
@@ -68,39 +78,54 @@ Enroll options:
   (provision/provision-peers!
    {:peer-names args
     :check false
-    :rotate (:rotate opts)}))
+    :rotate (:rotate opts)
+    :jump (:jump opts)}))
 
-(defn cmd-check [_opts args]
+(defn cmd-check [opts args]
   (provision/provision-peers!
    {:peer-names args
-    :check true}))
+    :check true
+    :jump (:jump opts)}))
 
 (defn cmd-add-peer [_opts args]
   (when (empty? args)
     (die! "add-peer requires a peer name"))
 
   (let [peer-name (first args)
-        state (core/read-state)
-        suffix (core/next-available-ip state)
-        ips (core/make-peer-ips suffix)]
+        config (core/read-config)
+        sites (keys (get-in config [:wireguard :sites]))]
 
-    (print (str "FQDN for " peer-name " (e.g., device.roam.psyclyx.net): "))
+    (println "Available sites:" (str/join ", " (map name sites)))
+    (print "Site: ")
     (flush)
-    (let [fqdn (str/trim (read-line))]
-      (when (str/blank? fqdn)
-        (die! "FQDN required"))
+    (let [site (str/trim (read-line))]
+      (when (str/blank? site)
+        (die! "Site required"))
+      (when-not ((set (map name sites)) site)
+        (die! (str "Unknown site: " site)))
 
-      (print "WireGuard public key (or empty to set later): ")
-      (flush)
-      (let [pubkey (str/trim (read-line))
-            peer-data (merge ips
-                             {:fqdn fqdn
-                              :publicKey (when-not (str/blank? pubkey) pubkey)
-                              :ssh_host nil
-                              :ssh_host_initrd nil
-                              :ssh_user_root nil})]
-        (core/add-peer! peer-name peer-data)
-        (println (str "Added peer " peer-name ": " (:ip4 ips) " / " (:ip6 ips)))))))
+      (let [state (core/read-state)
+            suffix (core/next-available-ip state site)
+            ips (core/make-peer-ips site suffix)]
+
+        (print (str "FQDN for " peer-name " (e.g., device.roam.psyclyx.net): "))
+        (flush)
+        (let [fqdn (str/trim (read-line))]
+          (when (str/blank? fqdn)
+            (die! "FQDN required"))
+
+          (print "WireGuard public key (or empty to set later): ")
+          (flush)
+          (let [pubkey (str/trim (read-line))
+                peer-data (merge ips
+                                 {:site site
+                                  :fqdn fqdn
+                                  :publicKey (when-not (str/blank? pubkey) pubkey)
+                                  :ssh_host nil
+                                  :ssh_host_initrd nil
+                                  :ssh_user_root nil})]
+            (core/add-peer! peer-name peer-data)
+            (println (str "Added peer " peer-name " to site " site ": " (:ip4 ips) " / " (:ip6 ips)))))))))
 
 (defn cmd-sign [opts args]
   (when (empty? args)
@@ -201,6 +226,73 @@ Enroll options:
 
     (println (str "==> Enroll complete (next serial: " (:serial (core/read-state)) ")"))))
 
+(defn cmd-wg-quick [opts args]
+  (when (empty? args)
+    (die! "wg-quick requires a peer name"))
+
+  (let [peer-name (first args)
+        state (core/read-state)
+        peer (core/get-peer state peer-name)
+        _ (when-not peer (die! (str "Peer not found: " peer-name)))
+
+        config (core/read-config)
+        wg-config (:wireguard config)
+        root-hub-name (:rootHub wg-config)
+        root-hub (core/get-peer state root-hub-name)
+
+        ;; Determine which hub this peer connects to
+        peer-site (get-in wg-config [:sites (keyword (:site peer))])
+        site-hub (:hub peer-site)
+        hub-name (or site-hub root-hub-name)
+        hub (core/get-peer state hub-name)
+
+        ;; Get or generate private key, or use placeholder
+        private-key (cond
+                      (:private-key opts) (:private-key opts)
+                      (:gen-key opts) (str/trim (pki.shell/run-out! "wg" "genkey"))
+                      :else "__PRIVATE_KEY__")
+
+        ;; Calculate public key and update state if generating
+        _ (when (:gen-key opts)
+            (let [public-key (str/trim (:out (pki.shell/run!
+                                               {:in private-key}
+                                               "wg" "pubkey")))]
+              (core/update-peer! peer-name {:publicKey public-key})
+              (binding [*out* *err*]
+                (println "Updated" peer-name "publicKey in state.json"))))
+
+        ;; Build AllowedIPs - all subnets
+        all-subnets (->> (:sites wg-config)
+                         vals
+                         (mapcat (fn [s] [(:subnet4 s) (:subnet6 s)])))
+
+        ;; Hub endpoint
+        hub-endpoint (or (:endpoint hub)
+                         (die! (str "Hub " hub-name " has no endpoint")))
+
+        ;; Generate config
+        wg-quick-conf (str "[Interface]\n"
+                          "PrivateKey = " private-key "\n"
+                          "Address = " (:ip4 peer) "/24, " (:ip6 peer) "/64\n"
+                          "DNS = " (:ip4 root-hub) "\n"
+                          "\n"
+                          "[Peer]\n"
+                          "PublicKey = " (or (:publicKey hub) "<HUB_PUBLIC_KEY>") "\n"
+                          "AllowedIPs = " (str/join ", " all-subnets) "\n"
+                          "Endpoint = " hub-endpoint ":" (:port wg-config) "\n"
+                          "PersistentKeepalive = 25\n")]
+
+    (println wg-quick-conf)
+
+    ;; If using placeholder, print update instructions to stderr
+    (when (= private-key "__PRIVATE_KEY__")
+      (binding [*out* *err*]
+        (println)
+        (println "# Update existing config (preserves private key):")
+        (println "# KEY=$(grep PrivateKey /etc/wireguard/wg0.conf | awk '{print $3}')")
+        (println "# <above output> | sed \"s/__PRIVATE_KEY__/$KEY/\" > /etc/wireguard/wg0.conf")
+        (println "# wg syncconf wg0 <(wg-quick strip /etc/wireguard/wg0.conf)")))))
+
 ;; --- Main ---
 
 (def cli-spec
@@ -212,6 +304,9 @@ Enroll options:
    :principal {:desc "User principal for enroll"}
    :host {:alias :h :coerce :boolean :desc "Also enroll host key"}
    :rotate {:alias :r :coerce :boolean :desc "Rotate keys before provisioning"}
+   :jump {:alias :J :desc "SSH jump host (passed to -J)"}
+   :gen-key {:coerce :boolean :desc "Generate new WireGuard keypair"}
+   :private-key {:desc "Existing WireGuard private key"}
    :help {:coerce :boolean :desc "Show help"}})
 
 (defn -main [& args]
@@ -235,6 +330,7 @@ Enroll options:
       "revoke" (cmd-revoke opts cmd-args)
       "generate-krl" (cmd-generate-krl opts cmd-args)
       "enroll" (cmd-enroll opts cmd-args)
+      "wg-quick" (cmd-wg-quick opts cmd-args)
       (die! (str "Unknown command: " cmd)))))
 
 ;; Entry point when run directly

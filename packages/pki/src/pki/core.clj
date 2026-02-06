@@ -157,11 +157,29 @@
 
 ;; --- IP allocation ---
 
+(defn- parse-subnet-base
+  "Extract base from subnet like '10.100.10.0/24' -> '10.100.10'"
+  [subnet]
+  (-> subnet
+      (str/replace #"/\d+$" "")
+      (str/replace #"\.\d+$" "")))
+
+(defn- parse-subnet6-base
+  "Extract base from IPv6 subnet like 'fd10:100:10::/64' -> 'fd10:100:10'"
+  [subnet]
+  (-> subnet
+      (str/replace #"::/\d+$" "")))
+
 (defn next-available-ip
-  "Find next available IP suffix in a subnet."
-  [state]
-  (let [suffixes (->> (:peers state)
-                      vals
+  "Find next available IP suffix for a site."
+  [state site-name]
+  (let [config (read-config)
+        site (get-in config [:wireguard :sites (keyword site-name)])
+        subnet-base (parse-subnet-base (:subnet4 site))
+        site-peers (->> (:peers state)
+                        (filter (fn [[_ p]] (= (:site p) site-name)))
+                        vals)
+        suffixes (->> site-peers
                       (map :ip4)
                       (keep #(when % (last (str/split % #"\."))))
                       (map parse-long))]
@@ -170,7 +188,11 @@
       (inc (apply max suffixes)))))
 
 (defn make-peer-ips
-  "Generate IP addresses for a new peer."
-  [suffix]
-  {:ip4 (str "10.100.0." suffix)
-   :ip6 (str "fd10:100::" (format "%x" suffix))})
+  "Generate IP addresses for a new peer in a site."
+  [site-name suffix]
+  (let [config (read-config)
+        site (get-in config [:wireguard :sites (keyword site-name)])
+        base4 (parse-subnet-base (:subnet4 site))
+        base6 (parse-subnet6-base (:subnet6 site))]
+    {:ip4 (str base4 "." suffix)
+     :ip6 (str base6 "::" (format "%x" suffix))}))

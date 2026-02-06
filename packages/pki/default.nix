@@ -6,6 +6,7 @@
   psyclyx,
   openssh,
   git,
+  wireguard-tools,
 }:
 stdenv.mkDerivation {
   pname = "pki";
@@ -21,6 +22,7 @@ stdenv.mkDerivation {
     psyclyx.sign-key
     openssh
     git
+    wireguard-tools
   ];
 
   installPhase = ''
@@ -34,6 +36,7 @@ stdenv.mkDerivation {
         psyclyx.sign-key
         openssh
         git
+        wireguard-tools
       ]} \
       --add-flags "-cp $out/share/pki/src" \
       --add-flags "-m pki.cli"
