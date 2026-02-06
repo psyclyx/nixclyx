@@ -1,40 +1,40 @@
 {
-  path = ["psyclyx" "nixos" "services" "dns"];
-  description = "DNS (authoritative + resolver)";
+  path = ["psyclyx" "nixos" "network" "dns"];
+  description = "Network DNS configuration";
+  # Auto-enable when any DNS config is present
+  gate = {cfg, ...}: cfg.client.enable || cfg.authoritative.zones != {} || cfg.resolver.enable;
   options = {lib, ...}: {
+    client = {
+      enable = lib.mkOption {
+        type = lib.types.bool;
+        default = false;
+        description = "Enable client DNS (avahi + systemd-resolved).";
+      };
+    };
+
     authoritative = {
-      interfaces = lib.mkOption {
-        type = lib.types.listOf lib.types.str;
-        default = ["127.0.0.1" "::1"];
-        description = "Interfaces for authoritative DNS (NSD).";
-      };
-      port = lib.mkOption {
-        type = lib.types.port;
-        default = 5353;
-        description = "Port for authoritative DNS.";
-      };
       zones = lib.mkOption {
         type = lib.types.attrsOf (lib.types.submodule {
           options = {
             peerRecords = lib.mkOption {
               type = lib.types.bool;
               default = false;
-              description = "Auto-generate A/AAAA records from pki.json peers.";
+              description = "Auto-generate A/AAAA records from network.json peers.";
             };
             data = lib.mkOption {
               type = lib.types.nullOr lib.types.lines;
               default = null;
-              description = "Raw zone data. Mutually exclusive with peerRecords.";
+              description = "Raw zone data. If null, auto-generates SOA/NS.";
             };
             extraRecords = lib.mkOption {
               type = lib.types.lines;
               default = "";
-              description = "Additional records (appended to auto-generated or data).";
+              description = "Additional records appended to zone.";
             };
             ttl = lib.mkOption {
               type = lib.types.int;
               default = 300;
-              description = "Default TTL for the zone.";
+              description = "Default TTL.";
             };
             ns = lib.mkOption {
               type = lib.types.nullOr lib.types.str;
@@ -49,7 +49,17 @@
           };
         });
         default = {};
-        description = "Authoritative zones.";
+        description = "Authoritative zones to serve.";
+      };
+      interfaces = lib.mkOption {
+        type = lib.types.listOf lib.types.str;
+        default = ["127.0.0.1" "::1"];
+        description = "Interfaces for authoritative DNS.";
+      };
+      port = lib.mkOption {
+        type = lib.types.port;
+        default = 5353;
+        description = "Port for authoritative DNS.";
       };
     };
 
@@ -57,32 +67,17 @@
       enable = lib.mkOption {
         type = lib.types.bool;
         default = false;
-        description = "Enable resolver (Unbound).";
+        description = "Enable DNS resolver.";
       };
       interfaces = lib.mkOption {
         type = lib.types.listOf lib.types.str;
         default = [];
         description = "Interfaces for resolver. Use interface names (wg0) or IPs.";
       };
-      upstream = lib.mkOption {
-        type = lib.types.listOf lib.types.str;
-        default = ["1.1.1.1@853#cloudflare-dns.com" "1.0.0.1@853#cloudflare-dns.com"];
-        description = "Upstream DNS servers.";
-      };
-      upstreamTls = lib.mkOption {
-        type = lib.types.bool;
-        default = true;
-        description = "Use TLS for upstream queries.";
-      };
       extraStubZones = lib.mkOption {
         type = lib.types.listOf lib.types.str;
         default = [];
-        description = "Additional zones to stub to authoritative (beyond auto-detected).";
-      };
-      accessControl = lib.mkOption {
-        type = lib.types.listOf lib.types.str;
-        default = [];
-        description = "Additional access-control entries. VPN subnets added automatically.";
+        description = "Additional zones to stub (beyond authoritative zones).";
       };
     };
   };
@@ -92,15 +87,14 @@
     hub = net.peers.${net.rootHub};
     hasZones = cfg.authoritative.zones != {};
 
-    # Resolve interface names to IPs where needed
+    # Resolve interface names to IPs
     resolveInterfaces = ifaces: let
-      # For resolver, we need to also include hub IPs if wg0 is specified
       expandWg = iface:
         if iface == "wg0" then [hub.ip4 hub.ip6]
         else [iface];
     in lib.flatten (map expandWg ifaces);
 
-    # Generate zone data
+    # Generate zone data from config
     mkZoneData = name: zoneCfg: let
       ns = if zoneCfg.ns != null then zoneCfg.ns else "ns.${name}";
       admin = if zoneCfg.admin != null then zoneCfg.admin else "admin.${name}";
@@ -124,58 +118,43 @@
       '';
     in baseData + zoneCfg.extraRecords;
 
-    # Build NSD zones
-    nsdZones = lib.mapAttrs (name: zoneCfg: {
-      data = mkZoneData name zoneCfg;
-    }) cfg.authoritative.zones;
-
-    # Stub zones for unbound = all authoritative zones + extras
+    # Stub zone names for resolver
     stubZoneNames = (lib.attrNames cfg.authoritative.zones) ++ cfg.resolver.extraStubZones;
-    stubZones = map (name: {
-      inherit name;
-      stub-addr = "127.0.0.1@${toString cfg.authoritative.port}";
-    }) stubZoneNames;
 
-    # Access control for unbound
+    # VPN subnet ACLs
     subnetAcl = map (s: "${s} allow") (net.allSubnets4 ++ net.allSubnets6);
 
-    resolverInterfaces = resolveInterfaces cfg.resolver.interfaces;
-
   in lib.mkMerge [
-    # Authoritative DNS (NSD)
-    (lib.mkIf hasZones {
-      services.nsd = {
-        enable = true;
-        interfaces = cfg.authoritative.interfaces;
-        port = cfg.authoritative.port;
-        zones = nsdZones;
+    # Client mode: avahi + resolved
+    (lib.mkIf cfg.client.enable {
+      psyclyx.nixos.services = {
+        avahi.enable = true;
+        resolved.enable = true;
       };
     })
 
-    # Resolver (Unbound)
-    (lib.mkIf cfg.resolver.enable {
-      services.unbound = {
-        enable = true;
-        settings = {
-          server = {
-            interface = ["127.0.0.1" "::1"] ++ resolverInterfaces;
-            access-control = [
-              "127.0.0.0/8 allow"
-              "::1/128 allow"
-            ] ++ subnetAcl ++ cfg.resolver.accessControl;
-            do-not-query-localhost = false;
-          };
-          stub-zone = stubZones;
-          forward-zone = [{
-            name = ".";
-            forward-tls-upstream = cfg.resolver.upstreamTls;
-            forward-addr = cfg.resolver.upstream;
-          }];
-        };
+    # Authoritative DNS via NSD (auto-enabled by gate when zones != {})
+    (lib.mkIf hasZones {
+      psyclyx.nixos.services.nsd = {
+        interfaces = cfg.authoritative.interfaces;
+        port = cfg.authoritative.port;
+        zones = lib.mapAttrs (name: zoneCfg: {
+          data = mkZoneData name zoneCfg;
+        }) cfg.authoritative.zones;
       };
+    })
 
-      # Disable systemd-resolved stub listener
-      services.resolved.settings.Resolve.DNSStubListener = false;
+    # Resolver via Unbound
+    (lib.mkIf cfg.resolver.enable {
+      psyclyx.nixos.services.unbound = {
+        enable = true;
+        interfaces = resolveInterfaces cfg.resolver.interfaces;
+        accessControl = subnetAcl;
+        stubZones = map (name: {
+          inherit name;
+          stub-addr = "127.0.0.1@${toString cfg.authoritative.port}";
+        }) stubZoneNames;
+      };
     })
   ];
 }
