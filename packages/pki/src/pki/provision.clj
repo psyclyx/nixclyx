@@ -40,14 +40,17 @@
   (sh/pipe-to-ssh! cert dest (str "cat > " remote-path)))
 
 (defn- make-ssh-dest
-  "Build SSH destination from peer data and optional jump override.
-   Returns string or map with :host and :jump keys."
-  [peer jump-override]
+  "Build SSH destination from peer data and optional jump/port override.
+   Returns string or map with :host, :jump, and :port keys."
+  [peer jump-override port-override]
   (let [connect (:connect peer)
         host (or (:endpoint peer) (:fqdn peer))
-        jump (or jump-override (:jump connect))]
-    (if jump
-      {:host host :jump jump}
+        jump (or jump-override (:jump connect))
+        port (or port-override (:port connect))]
+    (if (or jump port)
+      (cond-> {:host host}
+        jump (assoc :jump jump)
+        port (assoc :port port))
       (str "root@" host))))
 
 (defn provision-peer!
@@ -57,16 +60,17 @@
      :check     - check only, don't generate or sign
      :rotate    - rotate all keys before generating
      :jump      - SSH jump host override (passed to -J)
+     :port      - SSH port override (passed to -p)
    Returns map of provisioned data."
-  [{:keys [peer-name check rotate jump]}]
+  [{:keys [peer-name check rotate jump port]}]
   (let [peer (core/get-peer peer-name)
         _ (when-not peer
             (throw (ex-info "Peer not found" {:peer peer-name})))
 
         fqdn (:fqdn peer)
 
-        ;; Determine SSH destination (handles jump hosts)
-        dest (make-ssh-dest peer jump)
+        ;; Determine SSH destination (handles jump hosts and ports)
+        dest (make-ssh-dest peer jump port)
 
         ensure-key-path (get-ensure-key-path)
         _ (when-not check
@@ -142,13 +146,13 @@
 
 (defn provision-peers!
   "Provision multiple peers. If peer-names is empty, provision all."
-  [{:keys [peer-names check rotate jump]}]
+  [{:keys [peer-names check rotate jump port]}]
   (let [names (if (seq peer-names)
                 peer-names
                 (map name (core/peer-names)))]
     (doseq [peer-name names]
       (println "==>" (if check "Checking" "Provisioning") peer-name)
       (try
-        (provision-peer! {:peer-name peer-name :check check :rotate rotate :jump jump})
+        (provision-peer! {:peer-name peer-name :check check :rotate rotate :jump jump :port port})
         (catch Exception e
           (println "Error provisioning" peer-name ":" (ex-message e)))))))
