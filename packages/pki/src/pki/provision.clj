@@ -28,7 +28,7 @@
                comment (concat ["--comment" comment])
                check   (conj "--check")
                rotate  (conj "--rotate"))
-        result (apply sh/ssh! dest (concat args [{:continue true}]))]
+        result (apply sh/ssh! {:continue true} dest args)]
     (when (and (not check) (not (zero? (:exit result))))
       (throw (ex-info "Failed to ensure key on remote"
                       {:dest dest :type key-type :std std-name :err (:err result)})))

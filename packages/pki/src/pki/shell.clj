@@ -5,13 +5,14 @@
 
 (defn run!
   "Run a shell command, returning {:out :err :exit}.
+   Options map (if any) should be first argument.
    Throws on non-zero exit unless :continue true."
   [& args]
-  (let [opts (if (map? (last args))
-               (last args)
+  (let [opts (if (map? (first args))
+               (first args)
                {})
-        cmd (if (map? (last args))
-              (butlast args)
+        cmd (if (map? (first args))
+              (rest args)
               args)
         result (apply p/shell
                       (merge {:out :string :err :string :continue true} opts)
@@ -30,23 +31,28 @@
 
 (defn ssh!
   "Run command on remote host via SSH.
+   Options map (if any) should be first argument.
    dest can be a string or a map with :host and optional :jump/:port
    :jump is passed directly to -J (e.g. 'user@host' or just 'host')
    :port is passed directly to -p"
-  [dest & cmd]
-  (let [[dest-str ssh-opts] (if (map? dest)
+  [& args]
+  (let [opts (when (map? (first args)) (first args))
+        [dest & cmd] (if opts (rest args) args)
+        [dest-str ssh-opts] (if (map? dest)
                                [(str "root@" (:host dest))
                                 (concat
                                  (when-let [j (:jump dest)] ["-J" j])
                                  (when-let [p (:port dest)] ["-p" (str p)]))]
                                [dest nil])
-        args (concat ["ssh"] ssh-opts [dest-str] (map str cmd))]
-    (apply run! args)))
+        cmd-args (concat ["ssh"] ssh-opts [dest-str] (map str cmd))]
+    (if opts
+      (apply run! opts cmd-args)
+      (apply run! cmd-args))))
 
 (defn ssh-out!
   "Run command on remote host, return stdout."
   [dest & cmd]
-  (-> (apply ssh! (concat [dest] cmd [{:continue false}]))
+  (-> (apply ssh! {:continue false} dest cmd)
       :out
       str/trim))
 
