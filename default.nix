@@ -84,5 +84,6 @@ let
   };
 
   docs = import ./docs {inherit nixclyx;};
+  hive = import ./hive.nix;
 in
-  nixclyx // {inherit configurations darwinConfigurations docs;}
+  nixclyx // {inherit configurations darwinConfigurations docs hive;}
