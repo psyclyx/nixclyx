@@ -109,10 +109,8 @@
                      1 3600 900 604800 300 )
         @    IN NS   ${ns1}.
         @    IN NS   ${ns2}.
-        ns1  IN A    ${hub.ip4}
-        ns1  IN AAAA ${hub.ip6}
-        ns2  IN A    ${hub.ip4}
-        ns2  IN AAAA ${hub.ip6}
+        ns1  IN A    ${hub.endpoint}
+        ns2  IN A    ${hub.endpoint}
         ${peerRecords}
       '';
     in baseData + zoneCfg.extraRecords;
