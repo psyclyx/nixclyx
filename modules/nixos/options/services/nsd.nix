@@ -27,12 +27,18 @@
     };
   };
 
-  config = {cfg, ...}: {
+  config = {cfg, lib, ...}: {
     services.nsd = {
       enable = true;
       interfaces = cfg.interfaces;
       port = cfg.port;
       zones = cfg.zones;
+    };
+
+    # Open firewall for public DNS
+    networking.firewall = lib.mkIf (cfg.port == 53) {
+      allowedTCPPorts = [53];
+      allowedUDPPorts = [53];
     };
   };
 }
