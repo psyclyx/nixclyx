@@ -36,11 +36,6 @@
               default = 300;
               description = "Default TTL.";
             };
-            ns = lib.mkOption {
-              type = lib.types.nullOr lib.types.str;
-              default = null;
-              description = "Nameserver hostname. Defaults to ns.<zone>.";
-            };
             admin = lib.mkOption {
               type = lib.types.nullOr lib.types.str;
               default = null;
@@ -96,7 +91,8 @@
 
     # Generate zone data from config
     mkZoneData = name: zoneCfg: let
-      ns = if zoneCfg.ns != null then zoneCfg.ns else "ns.${name}";
+      ns1 = "ns1.${name}";
+      ns2 = "ns2.${name}";
       admin = if zoneCfg.admin != null then zoneCfg.admin else "admin.${name}";
 
       peerRecords = lib.optionalString zoneCfg.peerRecords (
@@ -109,11 +105,14 @@
       baseData = if zoneCfg.data != null then zoneCfg.data else ''
         $ORIGIN ${name}.
         $TTL ${toString zoneCfg.ttl}
-        @    IN SOA  ${ns}. ${admin}. (
+        @    IN SOA  ${ns1}. ${admin}. (
                      1 3600 900 604800 300 )
-        @    IN NS   ${ns}.
-        ns   IN A    ${hub.ip4}
-        ns   IN AAAA ${hub.ip6}
+        @    IN NS   ${ns1}.
+        @    IN NS   ${ns2}.
+        ns1  IN A    ${hub.ip4}
+        ns1  IN AAAA ${hub.ip6}
+        ns2  IN A    ${hub.ip4}
+        ns2  IN AAAA ${hub.ip6}
         ${peerRecords}
       '';
     in baseData + zoneCfg.extraRecords;
