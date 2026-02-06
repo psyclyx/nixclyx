@@ -105,21 +105,21 @@
 ;; Backwards compatibility aliases
 (def read-config read-network)
 
-;; --- CA paths (from environment) ---
+;; --- CA paths (from environment with defaults) ---
 
 (defn ca-path
   "Get CA key path for a given type (:host, :user, :initrd).
-   Reads from PKI_HOST_CA, PKI_USER_CA, PKI_INITRD_CA environment variables."
+   Reads from PKI_HOST_CA, PKI_USER_CA, PKI_INITRD_CA environment variables.
+   Defaults to ~/.ssh/ca/{host,user,initrd}_ca if not set."
   [ca-type]
-  (let [env-var (case (keyword ca-type)
-                  :host "PKI_HOST_CA"
-                  :user "PKI_USER_CA"
-                  :initrd "PKI_INITRD_CA"
-                  (throw (ex-info "Unknown CA type" {:type ca-type})))
-        path (System/getenv env-var)]
-    (when-not path
-      (throw (ex-info (str "Environment variable " env-var " not set") {:type ca-type})))
-    (str/replace path #"^~" (System/getenv "HOME"))))
+  (let [home (System/getenv "HOME")
+        [env-var default-path] (case (keyword ca-type)
+                                 :host ["PKI_HOST_CA" (str home "/.ssh/ca/host_ca")]
+                                 :user ["PKI_USER_CA" (str home "/.ssh/ca/user_ca")]
+                                 :initrd ["PKI_INITRD_CA" (str home "/.ssh/ca/initrd_ca")]
+                                 (throw (ex-info "Unknown CA type" {:type ca-type})))
+        path (or (System/getenv env-var) default-path)]
+    (str/replace path #"^~" home)))
 
 ;; --- Serial management (state) ---
 
