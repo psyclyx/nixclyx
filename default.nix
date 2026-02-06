@@ -29,6 +29,7 @@ let
     overlays.default = overlay;
     keys = import ./data/keys.nix;
     packageGroups = import ./data/packageGroups.nix;
+    docs = import ./docs {inherit nixclyx;};
     network = let
       config = builtins.fromJSON (builtins.readFile ./network.json);
       stateFile = ./state.json;
@@ -83,7 +84,6 @@ let
     halo = {};
   };
 
-  docs = import ./docs {inherit nixclyx;};
   hive = import ./hive.nix;
 in
-  nixclyx // {inherit configurations darwinConfigurations docs hive;}
+  nixclyx // {inherit configurations darwinConfigurations hive;}
