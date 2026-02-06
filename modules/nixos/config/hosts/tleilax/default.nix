@@ -45,7 +45,17 @@
 
       role = "server";
 
-      services.tailscale.exitNode = true;
+      services = {
+        tailscale.exitNode = true;
+
+        nginx = {
+          enable = true;
+          acme.email = "me@psyclyx.xyz";
+          virtualHosts."docs.psyclyx.xyz" = {
+            root = nixclyx.docs;
+          };
+        };
+      };
     };
   };
 }
