@@ -39,26 +39,35 @@
   [dest cert remote-path]
   (sh/pipe-to-ssh! cert dest (str "cat > " remote-path)))
 
+(defn- make-ssh-dest
+  "Build SSH destination from peer data and optional jump override.
+   Returns string or map with :host and :jump keys."
+  [peer jump-override]
+  (let [connect (:connect peer)
+        host (or (:endpoint peer) (:fqdn peer))
+        jump (or jump-override (:jump connect))]
+    (if jump
+      {:host host :jump jump}
+      (str "root@" host))))
+
 (defn provision-peer!
   "Provision a peer: generate keys, sign, deploy certs.
    Options:
      :peer-name - peer name (required)
      :check     - check only, don't generate or sign
      :rotate    - rotate all keys before generating
+     :jump      - SSH jump host override (passed to -J)
    Returns map of provisioned data."
-  [{:keys [peer-name check rotate]}]
+  [{:keys [peer-name check rotate jump]}]
   (let [state (core/read-state)
         peer (core/get-peer state peer-name)
         _ (when-not peer
             (throw (ex-info "Peer not found" {:peer peer-name})))
 
         fqdn (:fqdn peer)
-        endpoint (:endpoint peer)
 
-        ;; Determine SSH destination
-        dest (if endpoint
-               (str "root@" endpoint)
-               (str "root@" fqdn))
+        ;; Determine SSH destination (handles jump hosts)
+        dest (make-ssh-dest peer jump)
 
         ensure-key-path (get-ensure-key-path)
         _ (when-not check
@@ -135,7 +144,7 @@
 
 (defn provision-peers!
   "Provision multiple peers. If peer-names is empty, provision all."
-  [{:keys [peer-names check rotate]}]
+  [{:keys [peer-names check rotate jump]}]
   (let [state (core/read-state)
         names (if (seq peer-names)
                 peer-names
@@ -143,6 +152,6 @@
     (doseq [peer-name names]
       (println "==>" (if check "Checking" "Provisioning") peer-name)
       (try
-        (provision-peer! {:peer-name peer-name :check check :rotate rotate})
+        (provision-peer! {:peer-name peer-name :check check :rotate rotate :jump jump})
         (catch Exception e
           (println "Error provisioning" peer-name ":" (ex-message e)))))))

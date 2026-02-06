@@ -29,9 +29,17 @@
       str/trim))
 
 (defn ssh!
-  "Run command on remote host via SSH."
+  "Run command on remote host via SSH.
+   dest can be a string or a map with :host and optional :jump
+   :jump is passed directly to -J (e.g. 'user@host' or just 'host')"
   [dest & cmd]
-  (apply run! "ssh" dest (map str cmd)))
+  (let [[dest-str jump-args] (if (map? dest)
+                                [(str "root@" (:host dest))
+                                 (when-let [j (:jump dest)]
+                                   ["-J" j])]
+                                [dest nil])
+        args (concat ["ssh"] jump-args [dest-str] (map str cmd))]
+    (apply run! args)))
 
 (defn ssh-out!
   "Run command on remote host, return stdout."
@@ -48,10 +56,22 @@
 (defn pipe-to-ssh!
   "Pipe string content to a command on remote host."
   [content dest remote-cmd]
-  (p/shell {:in content :out :string :err :string}
-           "ssh" dest remote-cmd))
+  (let [[dest-str jump-args] (if (map? dest)
+                                [(str "root@" (:host dest))
+                                 (when-let [j (:jump dest)]
+                                   ["-J" j])]
+                                [dest nil])
+        args (concat ["ssh"] jump-args [dest-str remote-cmd])]
+    (apply p/shell {:in content :out :string :err :string} args)))
 
 (defn nix-copy-closure!
-  "Copy nix store path to remote host."
+  "Copy nix store path to remote host.
+   dest can be a string or map with :host/:jump"
   [dest store-path]
-  (run! "nix-copy-closure" "--to" dest store-path))
+  (let [dest-str (if (map? dest)
+                   (str "root@" (:host dest))
+                   dest)
+        ;; nix-copy-closure uses NIX_SSHOPTS for ssh options
+        env (when (and (map? dest) (:jump dest))
+              {"NIX_SSHOPTS" (str "-J " (:jump dest))})]
+    (run! {:extra-env env} "nix-copy-closure" "--to" dest-str store-path)))
