@@ -26,8 +26,7 @@ Commands:
   status                Show current state summary
 
 Global options:
-  --config PATH   Config file (default: $REPO_ROOT/pki/config.json)
-  --state PATH    State file (default: $REPO_ROOT/pki/state.json)
+  --pki PATH      PKI file (default: $REPO_ROOT/pki.json)
 
 Provision options:
   -J, --jump HOST   SSH jump host (e.g. 'user@jumphost')
@@ -168,8 +167,7 @@ Enroll options:
       (println "No revoked serials, nothing to do")
       (let [config (core/read-config)
             version (:serial state)
-            pki-dir (-> core/*config-path*
-                        (str/replace #"/[^/]+$" ""))]
+            pki-dir core/*repo-root*]
         (doseq [ca-type [:host :initrd :user]]
           (let [ca-serials (->> (:certs state)
                                 (filter (fn [[_ cert]] (= (name ca-type) (:ca cert))))
@@ -296,8 +294,7 @@ Enroll options:
 ;; --- Main ---
 
 (def cli-spec
-  {:config {:alias :c :desc "Config file path"}
-   :state {:alias :s :desc "State file path"}
+  {:pki {:alias :p :desc "PKI file path (default: $REPO_ROOT/pki.json)"}
    :principals {:alias :n :desc "Comma-separated principals"}
    :identity {:alias :i :desc "Certificate identity"}
    :ca {:desc "CA key path"}
@@ -314,8 +311,7 @@ Enroll options:
         [cmd & cmd-args] args]
 
     ;; Initialize paths
-    (core/init-paths! {:config (:config opts)
-                       :state (:state opts)})
+    (core/init-paths! {:pki (:pki opts)})
 
     (when (or (:help opts) (nil? cmd))
       (print-usage!)

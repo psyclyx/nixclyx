@@ -13,8 +13,7 @@ in
       pkgs.colmena.colmena
       pkgs.psyclyx.ensure-key
       pkgs.psyclyx.sign-key
-      pkgs.psyclyx.provision-host
-      pkgs.psyclyx.pki-manage
+      pkgs.psyclyx.pki
       nixfmt
       nixd
       nix-tree

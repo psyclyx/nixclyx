@@ -1,4 +1,41 @@
 {
+  "ca": {
+    "host": "~/.ssh/host_ca",
+    "user": "~/.ssh/user_ca",
+    "initrd": "~/.ssh/initrd_host_ca"
+  },
+  "wireguard": {
+    "port": 51820,
+    "interface": "wg0",
+    "rootHub": "tleilax",
+    "sites": {
+      "cofractal": {
+        "subnet4": "10.100.0.0/24",
+        "subnet6": "fd10:100::/64",
+        "hub": "tleilax"
+      },
+      "apartment": {
+        "subnet4": "10.100.10.0/24",
+        "subnet6": "fd10:100:10::/64",
+        "hub": null
+      },
+      "friend": {
+        "subnet4": "10.100.20.0/24",
+        "subnet6": "fd10:100:20::/64",
+        "hub": "friend-router",
+        "upstream": "cofractal"
+      },
+      "roam": {
+        "subnet4": "10.100.1.0/24",
+        "subnet6": "fd10:100:1::/64",
+        "hub": null
+      }
+    }
+  },
+  "dns": {
+    "domain": "psyclyx.xyz",
+    "vpnSubdomain": "vpn"
+  },
   "serial": 0,
   "peers": {
     "tleilax": {

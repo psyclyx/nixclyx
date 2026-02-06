@@ -5,8 +5,7 @@
             [clojure.string :as str]))
 
 (def ^:dynamic *repo-root* nil)
-(def ^:dynamic *config-path* nil)
-(def ^:dynamic *state-path* nil)
+(def ^:dynamic *pki-path* nil)
 
 (defn find-repo-root
   "Find git repository root, or current directory if not in a repo."
@@ -22,58 +21,55 @@
   "Initialize paths based on repo root. Call once at startup."
   ([]
    (init-paths! {}))
-  ([{:keys [config state]}]
+  ([{:keys [pki]}]
    (let [root (find-repo-root)]
      (alter-var-root #'*repo-root* (constantly root))
-     (alter-var-root #'*config-path* (constantly (or config (str root "/pki/config.json"))))
-     (alter-var-root #'*state-path* (constantly (or state (str root "/pki/state.json")))))))
+     (alter-var-root #'*pki-path* (constantly (or pki (str root "/pki.json")))))))
 
-;; --- Config (read-only) ---
+;; --- PKI data (single file) ---
 
-(defn read-config
-  "Read the PKI config file."
-  []
-  (when-not (fs/exists? *config-path*)
-    (throw (ex-info "Config file not found" {:path *config-path*})))
-  (json/parse-string (slurp *config-path*) true))
-
-(defn ca-path
-  "Get CA key path for a given type (:host, :user, :initrd)."
-  [config ca-type]
-  (let [path (get-in config [:ca (keyword ca-type)])]
-    (when-not path
-      (throw (ex-info "Unknown CA type" {:type ca-type})))
-    (str/replace path #"^~" (System/getenv "HOME"))))
-
-;; --- State (read-write) ---
-
-(def empty-state
-  {:serial 0
+(def empty-pki
+  {:ca {}
+   :wireguard {}
+   :dns {}
+   :serial 0
    :peers {}
    :certs {}
    :revoked_serials []})
 
-(defn read-state
-  "Read the PKI state file, creating if it doesn't exist."
+(defn read-pki
+  "Read the PKI file, creating if it doesn't exist."
   []
-  (if (fs/exists? *state-path*)
-    (json/parse-string (slurp *state-path*) true)
-    empty-state))
+  (if (fs/exists? *pki-path*)
+    (json/parse-string (slurp *pki-path*) true)
+    empty-pki))
 
-(defn write-state!
-  "Write state to file atomically."
-  [state]
-  (let [tmp (str *state-path* ".tmp")]
-    (spit tmp (json/generate-string state {:pretty true}))
-    (fs/move tmp *state-path* {:replace-existing true})))
+(defn write-pki!
+  "Write PKI data to file atomically."
+  [data]
+  (let [tmp (str *pki-path* ".tmp")]
+    (spit tmp (json/generate-string data {:pretty true}))
+    (fs/move tmp *pki-path* {:replace-existing true})))
 
-(defn update-state!
-  "Read state, apply function, write back. Returns new state."
+(defn update-pki!
+  "Read PKI, apply function, write back. Returns new data."
   [f & args]
-  (let [old-state (read-state)
-        new-state (apply f old-state args)]
-    (write-state! new-state)
-    new-state))
+  (let [old-data (read-pki)
+        new-data (apply f old-data args)]
+    (write-pki! new-data)
+    new-data))
+
+;; Aliases for backwards compatibility
+(def read-config read-pki)
+(def read-state read-pki)
+
+(defn ca-path
+  "Get CA key path for a given type (:host, :user, :initrd)."
+  [pki ca-type]
+  (let [path (get-in pki [:ca (keyword ca-type)])]
+    (when-not path
+      (throw (ex-info "Unknown CA type" {:type ca-type})))
+    (str/replace path #"^~" (System/getenv "HOME"))))
 
 ;; --- Serial management ---
 
@@ -83,17 +79,17 @@
   (:serial state 0))
 
 (defn allocate-serial!
-  "Allocate and return the next serial number, updating state."
+  "Allocate and return the next serial number, updating pki.json."
   []
-  (let [state (update-state! (fn [s] (update s :serial inc)))]
-    (dec (:serial state))))
+  (let [pki (update-pki! (fn [s] (update s :serial inc)))]
+    (dec (:serial pki))))
 
 (defn allocate-serials!
   "Allocate n serial numbers, returning vector of serials."
   [n]
-  (let [start (:serial (read-state))
+  (let [start (:serial (read-pki))
         serials (vec (range start (+ start n)))]
-    (update-state! (fn [s] (update s :serial + n)))
+    (update-pki! (fn [s] (update s :serial + n)))
     serials))
 
 ;; --- Peer management ---
@@ -109,9 +105,9 @@
   (keys (:peers state)))
 
 (defn add-peer!
-  "Add a new peer to state."
+  "Add a new peer to pki.json."
   [peer-name peer-data]
-  (update-state!
+  (update-pki!
    (fn [s]
      (if (get-in s [:peers (keyword peer-name)])
        (throw (ex-info "Peer already exists" {:peer peer-name}))
@@ -120,7 +116,7 @@
 (defn update-peer!
   "Update an existing peer."
   [peer-name updates]
-  (update-state!
+  (update-pki!
    (fn [s]
      (if-not (get-in s [:peers (keyword peer-name)])
        (throw (ex-info "Peer not found" {:peer peer-name}))
@@ -129,9 +125,9 @@
 ;; --- Certificate tracking ---
 
 (defn record-cert!
-  "Record a certificate in state."
+  "Record a certificate in pki.json."
   [serial cert-info]
-  (update-state!
+  (update-pki!
    (fn [s]
      (assoc-in s [:certs (str serial)] cert-info))))
 
@@ -140,7 +136,7 @@
 (defn revoke-serials!
   "Add serials to revocation list."
   [serials]
-  (update-state!
+  (update-pki!
    (fn [s]
      (update s :revoked_serials
              (fn [rs]
