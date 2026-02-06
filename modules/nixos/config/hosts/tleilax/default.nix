@@ -2,7 +2,10 @@
   path = ["psyclyx" "nixos" "config" "hosts" "tleilax"];
   variant = ["psyclyx" "nixos" "host"];
   imports = [./network.nix];
-  config = {lib, ...}: {
+  config = {lib, nixclyx, ...}: let
+    net = nixclyx.network;
+    hub = net.peers.${net.rootHub};
+  in {
     networking.hostName = "tleilax";
 
     fileSystems = {
@@ -26,8 +29,23 @@
 
       services = {
         tailscale.exitNode = true;
-        nsd.enable = true;
-        unbound.enable = true;
+
+        dns = {
+          enable = true;
+          authoritative.zones = {
+            "psyclyx.net" = { peerRecords = true; };
+            "psyclyx.xyz" = {
+              ttl = 3600;
+              extraRecords = ''
+                vpn    IN A     ${hub.endpoint}
+              '';
+            };
+          };
+          resolver = {
+            enable = true;
+            interfaces = ["wg0"];
+          };
+        };
       };
     };
   };
