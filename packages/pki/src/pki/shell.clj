@@ -18,7 +18,7 @@
                       (merge {:out :string :err :string :continue true} opts)
                       cmd)]
     (when (and (not (:continue opts)) (not (zero? (:exit result))))
-      (throw (ex-info (str "Command failed: " (str/join " " cmd))
+      (throw (ex-info (str "Command failed: " (str/join " " cmd) "\n" (:err result))
                       {:cmd cmd :exit (:exit result) :err (:err result)})))
     result))
 
