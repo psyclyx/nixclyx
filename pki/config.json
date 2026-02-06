@@ -4,13 +4,17 @@
     "user": "~/.ssh/user_ca",
     "initrd": "~/.ssh/initrd_host_ca"
   },
-  "hosts": {
-    "sigil":  { "fqdn": "sigil.home.psyclyx.net" },
-    "omen":   { "fqdn": "omen.home.psyclyx.net" },
-    "vigil":  { "fqdn": "vigil.home.psyclyx.net" },
-    "lab-1":  { "fqdn": "lab-1.home.psyclyx.net" },
-    "lab-2":  { "fqdn": "lab-2.home.psyclyx.net" },
-    "lab-3":  { "fqdn": "lab-3.home.psyclyx.net" },
-    "lab-4":  { "fqdn": "lab-4.home.psyclyx.net" }
+  "wireguard": {
+    "port": 51820,
+    "interface": "wg0",
+    "hub": "tleilax",
+    "subnets": {
+      "core": { "v4": "10.100.0.0/24", "v6": "fd10:100::/64" },
+      "lab": { "v4": "10.100.1.0/24", "v6": "fd10:100:1::/64" }
+    }
+  },
+  "dns": {
+    "domain": "psyclyx.xyz",
+    "vpnSubdomain": "vpn"
   }
 }
