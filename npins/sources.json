@@ -26,6 +26,22 @@
       "url": "https://github.com/aylur/astal/archive/eb235f8813bdea2a4a38ac228f2efc4e2a8a90af.tar.gz",
       "hash": "sha256-8Ve6VdUpcYbl8bS5oyDwVnnNobyPxdPmUHGgSDyOazQ="
     },
+    "clj-nix": {
+      "type": "GitRelease",
+      "repository": {
+        "type": "GitHub",
+        "owner": "jlesquembre",
+        "repo": "clj-nix"
+      },
+      "pre_releases": false,
+      "version_upper_bound": null,
+      "release_prefix": null,
+      "submodules": false,
+      "version": "0.4.0",
+      "revision": "45afcc46c0ca191093ced33728802f279bcbff5c",
+      "url": "https://api.github.com/repos/jlesquembre/clj-nix/tarball/refs/tags/0.4.0",
+      "hash": "sha256-6z9KTXwDQN14vljs5USgb4Pr8BYk46Q2yhkcdNx9QEE="
+    },
     "colmena": {
       "type": "Git",
       "repository": {
