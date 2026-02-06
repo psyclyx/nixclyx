@@ -142,6 +142,8 @@
           data = mkZoneData name zoneCfg;
         }) cfg.authoritative.zones;
       };
+      # Disable avahi when NSD is using port 5353 (mDNS port conflict)
+      services.avahi.enable = lib.mkIf (cfg.authoritative.port == 5353) (lib.mkForce false);
     })
 
     # Resolver via Unbound
