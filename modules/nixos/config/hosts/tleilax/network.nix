@@ -3,11 +3,22 @@
   lib,
   ...
 }: let
-  prefix6 = "2606:7940:32:26::";
-  prefix4 = "199.255.18.171";
-
+  cfg = config.psyclyx.nixos.hosts.tleilax.network;
   spaceSep = builtins.concatStringsSep " ";
 in {
+  options.psyclyx.nixos.hosts.tleilax.network = {
+    ipv4 = lib.mkOption {
+      type = lib.types.str;
+      default = "192.0.2.1";  # TEST-NET-1 placeholder
+      description = "Public IPv4 address.";
+    };
+    ipv6Prefix = lib.mkOption {
+      type = lib.types.str;
+      default = "2001:db8::";  # Documentation prefix placeholder
+      description = "IPv6 prefix (e.g., '2001:db8::').";
+    };
+  };
+
   config = lib.mkIf (config.psyclyx.nixos.host == "tleilax") {
     systemd = {
       network = {
@@ -50,8 +61,8 @@ in {
             linkConfig.RequiredForOnline = "routable";
 
             address = [
-              "${prefix4}/32"
-              "${prefix6}10/120"
+              "${cfg.ipv4}/32"
+              "${cfg.ipv6Prefix}10/120"
             ];
 
             networkConfig = {
@@ -61,11 +72,11 @@ in {
             routes = [
               {
                 Destination = "::/0";
-                Gateway = "${prefix6}1";
+                Gateway = "${cfg.ipv6Prefix}1";
               }
               {
                 Destination = "0.0.0.0/0";
-                Gateway = "${prefix6}1";
+                Gateway = "${cfg.ipv6Prefix}1";
               }
             ];
 
