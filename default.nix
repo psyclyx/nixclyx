@@ -36,13 +36,12 @@ let
     wireguard = let
       cfg = builtins.fromJSON (builtins.readFile ./pki/config.json);
       state = builtins.fromJSON (builtins.readFile ./pki/state.json);
-      subnets = cfg.wireguard.subnets;
-      allSubnets4 = builtins.map (s: s.v4) (builtins.attrValues subnets);
-      allSubnets6 = builtins.map (s: s.v6) (builtins.attrValues subnets);
+      sites = cfg.wireguard.sites;
+      allSubnets4 = builtins.map (s: s.subnet4) (builtins.attrValues sites);
+      allSubnets6 = builtins.map (s: s.subnet6) (builtins.attrValues sites);
     in cfg.wireguard // {
       peers = state.peers;
-      allSubnets4 = allSubnets4;
-      allSubnets6 = allSubnets6;
+      inherit sites allSubnets4 allSubnets6;
     };
   };
 

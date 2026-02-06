@@ -7,10 +7,29 @@
   "wireguard": {
     "port": 51820,
     "interface": "wg0",
-    "hub": "tleilax",
-    "subnets": {
-      "core": { "v4": "10.100.0.0/24", "v6": "fd10:100::/64" },
-      "lab": { "v4": "10.100.1.0/24", "v6": "fd10:100:1::/64" }
+    "rootHub": "tleilax",
+    "sites": {
+      "cofractal": {
+        "subnet4": "10.100.0.0/24",
+        "subnet6": "fd10:100::/64",
+        "hub": "tleilax"
+      },
+      "apartment": {
+        "subnet4": "10.100.10.0/24",
+        "subnet6": "fd10:100:10::/64",
+        "hub": null
+      },
+      "friend": {
+        "subnet4": "10.100.20.0/24",
+        "subnet6": "fd10:100:20::/64",
+        "hub": "friend-router",
+        "upstream": "cofractal"
+      },
+      "roam": {
+        "subnet4": "10.100.1.0/24",
+        "subnet6": "fd10:100:1::/64",
+        "hub": null
+      }
     }
   },
   "dns": {
