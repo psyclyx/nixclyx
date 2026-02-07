@@ -28,7 +28,18 @@
           };
           "40-bond0" = {
             matchConfig.Name = "bond0";
-            networkConfig.DHCP = true;
+            networkConfig = {
+              DHCP = "yes";
+              Domains = ["~."];
+            };
+            dhcpV4Config = {
+              UseDNS = true;
+              UseRoutes = true;
+              RouteMetric = 100;
+            };
+            dhcpV6Config = {
+              UseDNS = true;
+            };
           };
         };
       };
