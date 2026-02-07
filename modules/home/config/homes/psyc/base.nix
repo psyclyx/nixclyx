@@ -1,7 +1,9 @@
 {
   path = ["psyclyx" "home" "config" "homes" "psyc" "base"];
   description = "psyc base home config";
-  config = {lib, ...}: {
+  config = {lib, pkgs, ...}: {
+    home.packages = [pkgs.gh];
+
     psyclyx.home = {
       info = {
         name = "psyclyx";
