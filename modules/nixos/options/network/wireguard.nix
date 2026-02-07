@@ -130,5 +130,11 @@
     };
 
     systemd.network.wait-online.ignoredInterfaces = ["wg0"];
+
+    # Ensure private key is readable by systemd-networkd
+    systemd.tmpfiles.rules = [
+      "d /etc/secrets/wireguard 0750 root systemd-network -"
+      "z /etc/secrets/wireguard/private.key 0640 root systemd-network -"
+    ];
   };
 }
