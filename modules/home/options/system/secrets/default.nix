@@ -1,7 +1,14 @@
 {
   path = ["psyclyx" "home" "secrets"];
   description = "Runtime secret decryption with sops-nix";
-  config = {config, lib, pkgs, ...}: let
+  options = {lib, ...}: {
+    defaultSopsFile = lib.mkOption {
+      type = lib.types.nullOr lib.types.path;
+      default = null;
+      description = "Default sops file for home secrets";
+    };
+  };
+  config = {cfg, config, lib, pkgs, ...}: let
     configHome = config.xdg.configHome;
     home = config.home.homeDirectory;
     isDarwin = pkgs.stdenv.hostPlatform.isDarwin;
@@ -13,21 +20,11 @@
       ]
       ++ lib.optionals config.psyclyx.home.programs.fuzzel.enable [pkgs.rofi-rbw];
 
-    sops = {
-      age.keyFile =
-        if isDarwin
-        then "${home}/Library/Application Support/sops/age/keys.txt"
-        else "${configHome}/sops/age/keys.txt";
+    sops.age.keyFile =
+      if isDarwin
+      then "${home}/Library/Application Support/sops/age/keys.txt"
+      else "${configHome}/sops/age/keys.txt";
 
-      defaultSopsFile = ./secrets.json;
-
-      secrets = {
-        "ssh/id_psyclyx".path = "${configHome}/.ssh/id_psyclyx";
-        "ssh/id_alice157".path = "${configHome}/.ssh/id_alice157";
-        github = {};
-        openrouter.path = ".tokens/openrouter";
-        replicate.path = ".tokens/replicate";
-      };
-    };
+    sops.defaultSopsFile = lib.mkIf (cfg.defaultSopsFile != null) cfg.defaultSopsFile;
   };
 }
