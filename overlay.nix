@@ -14,7 +14,7 @@ in
 
     bitwig-studio4 = prev.bitwig-studio4.overrideAttrs (old: rec {
       version = "4.1.6";
-      src = pkgs.fetchurl {
+      src = prev.fetchurl {
         url = "https://downloads.bitwig.com/stable/${version}/${old.pname}-${version}.deb";
         sha256 = "sha256-Q4YYdMUd/T8tGGcakhoLdHvWsHwOq7LgIb77sr2OWuQ=";
       };
