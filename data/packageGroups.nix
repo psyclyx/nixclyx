@@ -128,9 +128,6 @@
     pkgs.zig
     pkgs.zls
 
-    # AI
-    pkgs.claude-code
-
     # Mobile
     pkgs.android-tools
   ];
