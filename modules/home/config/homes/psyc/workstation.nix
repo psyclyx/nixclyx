@@ -11,6 +11,7 @@
     psyclyx.home = {
       programs = {
         alacritty.enable = true;
+        claude-code.enable = true;
         ghostty = {
           enable = true;
           defaultTerminal = true;
