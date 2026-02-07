@@ -2,11 +2,17 @@
   path = ["psyclyx" "nixos" "config" "hosts" "sigil"];
   variant = ["psyclyx" "nixos" "host"];
   imports = [./hardware.nix ./network.nix];
-  config = {lib, pkgs, nixclyx, ...}: {
+  config = {
+    lib,
+    pkgs,
+    nixclyx,
+    ...
+  }: {
     networking.hostName = "sigil";
 
     environment.systemPackages = [
       pkgs.audacity
+      pkgs.bitwig-studio4
       pkgs.gimp-with-plugins
       pkgs.kicad
       pkgs.orca-slicer
