@@ -23,6 +23,7 @@
       visuals.fidget-nvim.enable = true;
       visuals.rainbow-delimiters.enable = true;
       visuals.highlight-undo.enable = true;
+      visuals.hlargs-nvim.enable = true;
 
       diagnostics.enable = true;
 
@@ -50,6 +51,7 @@
         rust = {
           enable = true;
           crates.enable = true;
+          dap.enable = true;
         };
         clojure.enable = true;
         zig = {
@@ -60,7 +62,10 @@
         ts.enable = true;
         clang.enable = true;
         bash.enable = true;
-        markdown.enable = true;
+        markdown = {
+          enable = true;
+          extensions.render-markdown-nvim.enable = true;
+        };
         css.enable = true;
         html.enable = true;
       };
@@ -82,6 +87,7 @@
       };
       git.gitlinker-nvim.enable = true;
 
+      utility.mkdir.enable = true;
       utility.direnv.enable = true;
       utility.sleuth.enable = true;
       utility.diffview-nvim.enable = true;
