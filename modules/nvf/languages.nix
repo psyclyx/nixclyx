@@ -17,6 +17,7 @@
         lspSignature.enable = true;
         lightbulb.enable = true;
         inlayHints.enable = true;
+        trouble.enable = true;
       };
 
       visuals.fidget-nvim.enable = true;
@@ -65,6 +66,7 @@
       utility.direnv.enable = true;
       utility.sleuth.enable = true;
       utility.diffview-nvim.enable = true;
+      utility.outline.aerial-nvim.enable = true;
 
       terminal.toggleterm = {
         enable = true;
