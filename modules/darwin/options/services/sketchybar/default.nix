@@ -7,7 +7,12 @@
       default = 8;
     };
   };
-  config = {config, lib, pkgs, ...}: let
+  config = {
+    config,
+    lib,
+    pkgs,
+    ...
+  }: let
     padHex = s:
       if lib.stringLength s == 1
       then "0${s}"

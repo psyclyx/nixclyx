@@ -1,7 +1,11 @@
 {
   path = ["psyclyx" "nixos" "programs" "aspell"];
   description = "aspell + english dicts";
-  options = {lib, pkgs, ...}: {
+  options = {
+    lib,
+    pkgs,
+    ...
+  }: {
     dictionaries = lib.mkOption {
       description = "Function returning dictionaries to include with aspell.";
       type = lib.types.functionTo (lib.types.listOf lib.types.package);
@@ -16,7 +20,12 @@
 
     finalPackage = lib.mkPackageOption pkgs "aspell-with-dicts" {};
   };
-  config = {cfg, lib, pkgs, ...}: {
+  config = {
+    cfg,
+    lib,
+    pkgs,
+    ...
+  }: {
     psyclyx.nixos.programs.aspell.finalPackage = lib.mkDefault (pkgs.aspellWithDicts cfg.dictionaries);
     environment = {
       wordlist.enable = true;

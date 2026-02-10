@@ -121,8 +121,11 @@ in rec {
   collectSpecs = mkModule: root: let
     last = l: builtins.elemAt l (builtins.length l - 1);
     init = l: builtins.genList (builtins.elemAt l) (builtins.length l - 1);
-    groupBy = f: builtins.foldl' (acc: x: let k = f x;
-      in acc // {${k} = (acc.${k} or []) ++ [x];}) {};
+    groupBy = f:
+      builtins.foldl' (acc: x: let
+        k = f x;
+      in
+        acc // {${k} = (acc.${k} or []) ++ [x];}) {};
 
     specs = map import (collectModules root);
 
@@ -146,8 +149,8 @@ in rec {
         };
       };
     }) (builtins.attrNames groups);
-
-  in map mkModule (regularSpecs ++ variantSpecs ++ enumSpecs);
+  in
+    map mkModule (regularSpecs ++ variantSpecs ++ enumSpecs);
 
   # Recursively collect module-importable paths from a directory tree.
   # Returns .nix files (except default.nix) as imports, and directories
@@ -161,13 +164,16 @@ in rec {
       ((fsSpec root)
         // {
           branch = path: type:
-            type == "directory"
+            type
+            == "directory"
             && (path == [] || !(builtins.pathExists (toPath root path + "/default.nix")));
           onBranch = _: _: kids:
             builtins.concatLists
             (map ({result, ...}:
-                if builtins.isList result then result else [result])
-              kids);
+              if builtins.isList result
+              then result
+              else [result])
+            kids);
         })
     );
 

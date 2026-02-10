@@ -1,7 +1,12 @@
 {
   path = ["psyclyx" "darwin" "config" "roles" "desktop"];
   description = "desktop darwin role";
-  config = {lib, pkgs, nixclyx, ...}: {
+  config = {
+    lib,
+    pkgs,
+    nixclyx,
+    ...
+  }: {
     environment.systemPackages = nixclyx.packageGroups.dev pkgs;
 
     psyclyx.darwin = {

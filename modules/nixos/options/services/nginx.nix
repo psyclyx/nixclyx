@@ -40,7 +40,12 @@
       description = "Virtual hosts to configure (keys are domain names)";
     };
   };
-  config = {cfg, config, lib, ...}: let
+  config = {
+    cfg,
+    config,
+    lib,
+    ...
+  }: let
     domains = builtins.attrNames cfg.virtualHosts;
   in {
     networking.firewall.allowedTCPPorts = [80 443];
@@ -57,15 +62,19 @@
       recommendedProxySettings = true;
       recommendedTlsSettings = true;
 
-      virtualHosts = builtins.mapAttrs (domain: hostCfg: {
-        enableACME = true;
-        forceSSL = true;
-        root = hostCfg.root;
-        locations = builtins.mapAttrs (path: locCfg: {
-          proxyPass = locCfg.proxyPass;
-          root = locCfg.root;
-        }) hostCfg.locations;
-      }) cfg.virtualHosts;
+      virtualHosts =
+        builtins.mapAttrs (domain: hostCfg: {
+          enableACME = true;
+          forceSSL = true;
+          root = hostCfg.root;
+          locations =
+            builtins.mapAttrs (path: locCfg: {
+              proxyPass = locCfg.proxyPass;
+              root = locCfg.root;
+            })
+            hostCfg.locations;
+        })
+        cfg.virtualHosts;
     };
   };
 }

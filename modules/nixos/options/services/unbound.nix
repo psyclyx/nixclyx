@@ -42,24 +42,32 @@
     };
   };
 
-  config = {cfg, lib, ...}: {
+  config = {
+    cfg,
+    lib,
+    ...
+  }: {
     services.unbound = {
       enable = true;
       settings = {
         server = {
           interface = ["127.0.0.1" "::1"] ++ cfg.interfaces;
-          access-control = [
-            "127.0.0.0/8 allow"
-            "::1/128 allow"
-          ] ++ cfg.accessControl;
+          access-control =
+            [
+              "127.0.0.0/8 allow"
+              "::1/128 allow"
+            ]
+            ++ cfg.accessControl;
           do-not-query-localhost = false;
         };
         stub-zone = cfg.stubZones;
-        forward-zone = [{
-          name = ".";
-          forward-tls-upstream = cfg.forward.tls;
-          forward-addr = cfg.forward.upstream;
-        }];
+        forward-zone = [
+          {
+            name = ".";
+            forward-tls-upstream = cfg.forward.tls;
+            forward-addr = cfg.forward.upstream;
+          }
+        ];
       };
     };
 

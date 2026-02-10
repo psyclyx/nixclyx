@@ -1,7 +1,11 @@
 {
   path = ["psyclyx" "nixos" "services" "gnome-keyring"];
   description = "gnome-keyring";
-  config = {config, lib, ...}: let
+  config = {
+    config,
+    lib,
+    ...
+  }: let
     greetdCfg = config.psyclyx.nixos.services.greetd;
   in {
     services.gnome.gnome-keyring.enable = true;

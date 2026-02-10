@@ -8,7 +8,13 @@
       type = lib.types.bool;
     };
   };
-  config = {cfg, config, lib, pkgs, ...}: let
+  config = {
+    cfg,
+    config,
+    lib,
+    pkgs,
+    ...
+  }: let
     flavours-palette-generator = let
       flavours = lib.getExe pkgs.flavours;
       yq = lib.getExe pkgs.yq;

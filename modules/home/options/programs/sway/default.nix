@@ -5,7 +5,12 @@
     ./keybindings.nix
     ./swaylock.nix
   ];
-  config = {config, lib, pkgs, ...}: let
+  config = {
+    config,
+    lib,
+    pkgs,
+    ...
+  }: let
     monitors = config.psyclyx.home.hardware.monitors;
   in {
     home.packages = with pkgs; [

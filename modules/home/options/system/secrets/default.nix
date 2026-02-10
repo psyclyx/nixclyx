@@ -8,7 +8,13 @@
       description = "Default sops file for home secrets";
     };
   };
-  config = {cfg, config, lib, pkgs, ...}: let
+  config = {
+    cfg,
+    config,
+    lib,
+    pkgs,
+    ...
+  }: let
     configHome = config.xdg.configHome;
     home = config.home.homeDirectory;
     isDarwin = pkgs.stdenv.hostPlatform.isDarwin;

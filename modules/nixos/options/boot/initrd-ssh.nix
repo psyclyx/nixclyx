@@ -20,7 +20,11 @@
       description = "SSH port to listen on in initrd";
     };
   };
-  config = {cfg, config, ...}: {
+  config = {
+    cfg,
+    config,
+    ...
+  }: {
     psyclyx.nixos.boot.initrd-ssh.authorizedKeys = config.users.users.root.openssh.authorizedKeys.keys;
     boot.initrd = {
       systemd.network.enable = true;

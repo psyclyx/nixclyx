@@ -1,7 +1,12 @@
 {
   path = ["psyclyx" "nixos" "config" "roles" "base"];
   description = "base NixOS role";
-  config = {lib, pkgs, nixclyx, ...}: {
+  config = {
+    lib,
+    pkgs,
+    nixclyx,
+    ...
+  }: {
     environment.systemPackages = nixclyx.packageGroups.shell pkgs;
 
     psyclyx = {

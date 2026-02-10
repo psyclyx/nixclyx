@@ -1,6 +1,11 @@
 {
   path = ["psyclyx" "nixos" "config" "hosts" "lab" "shared"];
-  gate = {config, lib, ...}: lib.hasPrefix "lab-" config.psyclyx.nixos.host;
+  gate = {
+    config,
+    lib,
+    ...
+  }:
+    lib.hasPrefix "lab-" config.psyclyx.nixos.host;
   config = {lib, ...}: {
     boot = {
       initrd = {

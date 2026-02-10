@@ -1,7 +1,11 @@
 {
   path = ["psyclyx" "darwin" "config" "hosts" "halo"];
   variant = ["psyclyx" "darwin" "host"];
-  config = {lib, nixclyx, ...}: {
+  config = {
+    lib,
+    nixclyx,
+    ...
+  }: {
     nixpkgs.hostPlatform = "aarch64-darwin";
 
     networking.hostName = "halo";

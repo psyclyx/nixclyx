@@ -17,7 +17,13 @@
       description = "Ports for OpenSSH to listen on.";
     };
   };
-  config = {cfg, config, lib, nixclyx, ...}: {
+  config = {
+    cfg,
+    config,
+    lib,
+    nixclyx,
+    ...
+  }: {
     security.pam.sshAgentAuth.enable = lib.mkIf cfg.agentAuth.enable cfg.agentAuth.enable;
     services.openssh = {
       enable = true;

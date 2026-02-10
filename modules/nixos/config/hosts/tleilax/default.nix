@@ -2,7 +2,11 @@
   path = ["psyclyx" "nixos" "config" "hosts" "tleilax"];
   variant = ["psyclyx" "nixos" "host"];
   imports = [./network.nix];
-  config = {lib, nixclyx, ...}: let
+  config = {
+    lib,
+    nixclyx,
+    ...
+  }: let
     net = nixclyx.network;
     hub = net.peers.${net.rootHub};
   in {
@@ -28,10 +32,10 @@
 
         dns = {
           authoritative = {
-            interfaces = ["199.255.18.171" "2606:7940:32:26::10"];  # Public IPs only
+            interfaces = ["199.255.18.171" "2606:7940:32:26::10"]; # Public IPs only
             port = 53;
             zones = {
-              "psyclyx.net" = { peerRecords = true; };
+              "psyclyx.net" = {peerRecords = true;};
               "psyclyx.xyz" = {
                 ttl = 3600;
                 extraRecords = ''

@@ -1,7 +1,11 @@
 {
   path = ["psyclyx" "nixos" "config" "users" "psyc"];
   description = "psyc user";
-  config = {pkgs, nixclyx, ...}: {
+  config = {
+    pkgs,
+    nixclyx,
+    ...
+  }: {
     users.users = {
       psyc = {
         extraGroups = [
