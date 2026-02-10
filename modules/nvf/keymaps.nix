@@ -153,9 +153,44 @@
         {
           key = "<leader>gg";
           mode = ["n"];
+          action = "<cmd>Git<CR>";
+          silent = true;
+          desc = "Fugitive status";
+        }
+        {
+          key = "<leader>gG";
+          mode = ["n"];
           action = "<cmd>lua MiniGit.show_at_cursor()<CR>";
           silent = true;
           desc = "Show git info";
+        }
+        {
+          key = "<leader>gl";
+          mode = ["n"];
+          action = "<cmd>Git log --oneline<CR>";
+          silent = true;
+          desc = "Git log";
+        }
+        {
+          key = "<leader>gp";
+          mode = ["n"];
+          action = "<cmd>Git push<CR>";
+          silent = true;
+          desc = "Git push";
+        }
+        {
+          key = "<leader>gP";
+          mode = ["n"];
+          action = "<cmd>Git pull<CR>";
+          silent = true;
+          desc = "Git pull";
+        }
+        {
+          key = "<leader>gB";
+          mode = ["n"];
+          action = "<cmd>Git blame<CR>";
+          silent = true;
+          desc = "Git blame";
         }
         {
           key = "<leader>gd";
@@ -176,7 +211,7 @@
           mode = ["n"];
           action = "<cmd>Pick git_files<CR>";
           silent = true;
-          desc = "Git status";
+          desc = "Git status (picker)";
         }
         {
           key = "<leader>gc";
