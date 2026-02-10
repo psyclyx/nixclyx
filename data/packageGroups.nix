@@ -31,6 +31,7 @@
     pkgs.traceroute
     pkgs.iperf3
     pkgs.iproute2
+    pkgs.wireguard-tools
 
     # System monitoring
     pkgs.btop
