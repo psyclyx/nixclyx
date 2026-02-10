@@ -18,7 +18,10 @@
         pkgs.vlc
       ];
 
-    home-manager.users.psyc.psyclyx.home.variant = "workstation";
+    home-manager.users.psyc = {
+      psyclyx.home.variant = "workstation";
+      psyclyx.home.programs.nvf.enable = lib.mkDefault true;
+    };
 
     psyclyx.nixos = {
       config = {
@@ -31,7 +34,6 @@
       programs = {
         sway.enable = lib.mkDefault true;
         qmk.enable = lib.mkDefault true;
-        nvf.enable = lib.mkDefault true;
       };
 
       services = {

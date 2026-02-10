@@ -5,6 +5,7 @@ in
     imports =
       [
         (loadFlake sources.ags).homeManagerModules.ags
+        (import sources.nvf).homeManagerModules.default
         "${sources.sops-nix}/modules/home-manager/sops.nix"
       ]
       ++ nixclyx.lib.fs.collectSpecs nixclyx.lib.modules.mkModule ./.;

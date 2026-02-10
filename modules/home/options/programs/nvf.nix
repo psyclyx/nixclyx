@@ -1,5 +1,5 @@
 {
-  path = ["psyclyx" "nixos" "programs" "nvf"];
+  path = ["psyclyx" "home" "programs" "nvf"];
   description = "nvf (neovim)";
   config = {nixclyx, ...}: {
     programs.nvf = {
