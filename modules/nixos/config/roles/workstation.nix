@@ -1,15 +1,22 @@
 {
   path = ["psyclyx" "nixos" "config" "roles" "workstation"];
   variant = ["psyclyx" "nixos" "role"];
-  config = {lib, pkgs, nixclyx, ...}: {
+  config = {
+    lib,
+    pkgs,
+    nixclyx,
+    ...
+  }: {
     boot = {
       kernelPackages = pkgs.linuxPackages_zen;
     };
 
-    environment.systemPackages = nixclyx.packageGroups.dev pkgs ++ [
-      pkgs.mpv
-      pkgs.vlc
-    ];
+    environment.systemPackages =
+      nixclyx.packageGroups.dev pkgs
+      ++ [
+        pkgs.mpv
+        pkgs.vlc
+      ];
 
     home-manager.users.psyc.psyclyx.home.variant = "workstation";
 
@@ -18,6 +25,8 @@
         roles.base.enable = true;
         users.psyc.enable = true;
       };
+
+      network.dns.client.enable = true;
 
       programs = {
         sway.enable = lib.mkDefault true;
