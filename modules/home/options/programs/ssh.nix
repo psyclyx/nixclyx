@@ -1,7 +1,12 @@
 {
   path = ["psyclyx" "home" "programs" "ssh"];
   description = "SSH configuration";
-  config = {config, lib, pkgs, ...}: let
+  config = {
+    config,
+    lib,
+    pkgs,
+    ...
+  }: let
     inherit (pkgs.stdenv.hostPlatform) isDarwin isLinux;
   in {
     programs = {
@@ -38,7 +43,7 @@
           };
 
           "tleilax" = {
-            hostname = "tleilax.psyclyx.xyz";
+            # hostname = "tleilax.psyclyx.xyz";
             port = 17891;
             forwardAgent = true;
           };
