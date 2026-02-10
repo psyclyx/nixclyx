@@ -235,6 +235,66 @@
           desc = "Git hunks";
         }
 
+        # ── Git hunks (gitsigns) ──
+        {
+          key = "<leader>ga";
+          mode = ["n" "v"];
+          action = "<cmd>Gitsigns stage_hunk<CR>";
+          silent = true;
+          desc = "Stage hunk";
+        }
+        {
+          key = "<leader>gr";
+          mode = ["n" "v"];
+          action = "<cmd>Gitsigns reset_hunk<CR>";
+          silent = true;
+          desc = "Reset hunk";
+        }
+        {
+          key = "<leader>gu";
+          mode = ["n"];
+          action = "<cmd>Gitsigns undo_stage_hunk<CR>";
+          silent = true;
+          desc = "Undo stage hunk";
+        }
+        {
+          key = "<leader>gH";
+          mode = ["n"];
+          action = "<cmd>Gitsigns preview_hunk<CR>";
+          silent = true;
+          desc = "Preview hunk";
+        }
+        {
+          key = "<leader>gR";
+          mode = ["n"];
+          action = "<cmd>Gitsigns reset_buffer<CR>";
+          silent = true;
+          desc = "Reset buffer";
+        }
+
+        # ── Diffview ──
+        {
+          key = "<leader>gv";
+          mode = ["n"];
+          action = "<cmd>DiffviewOpen<CR>";
+          silent = true;
+          desc = "Diffview open";
+        }
+        {
+          key = "<leader>gV";
+          mode = ["n"];
+          action = "<cmd>DiffviewClose<CR>";
+          silent = true;
+          desc = "Diffview close";
+        }
+        {
+          key = "<leader>gf";
+          mode = ["n"];
+          action = "<cmd>DiffviewFileHistory %<CR>";
+          silent = true;
+          desc = "File history (diffview)";
+        }
+
         # ── Help (h) ──
         {
           key = "<leader>hh";
@@ -403,6 +463,13 @@
           silent = true;
           desc = "Resume last search";
         }
+        {
+          key = "<leader>st";
+          mode = ["n"];
+          action = "<cmd>TodoQuickFix<CR>";
+          silent = true;
+          desc = "Search TODOs";
+        }
 
         # ── Quit (q) ──
         {
@@ -476,6 +543,22 @@
           action = "<cmd>lua MiniMap.toggle()<CR>";
           silent = true;
           desc = "Toggle minimap";
+        }
+        {
+          key = "<leader>tb";
+          mode = ["n"];
+          action = "<cmd>Gitsigns toggle_current_line_blame<CR>";
+          silent = true;
+          desc = "Toggle line blame";
+        }
+
+        # ── Open (o) ──
+        {
+          key = "<leader>ot";
+          mode = ["n"];
+          action = "<cmd>ToggleTerm<CR>";
+          silent = true;
+          desc = "Toggle terminal";
         }
 
         # ── Windows (w) ──
