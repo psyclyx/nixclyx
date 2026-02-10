@@ -1,6 +1,4 @@
-let
-  nixclyx = import ./.;
-in {
+{nixclyx ? import ./.}: {
   meta = {
     nixpkgs = import ./nixpkgs.nix {};
   };

@@ -62,7 +62,7 @@ let
       halo = {};
     };
 
-    hive = import ./hive.nix;
+    hive = import ./hive.nix {inherit nixclyx;};
 
     nixclyx = {
       inherit sources modules lib assets loadFlake;
