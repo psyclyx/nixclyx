@@ -83,13 +83,6 @@
           silent = true;
           desc = "New buffer";
         }
-        {
-          key = "<leader>bs";
-          mode = ["n"];
-          action = "<cmd>Pick buf_lines<CR>";
-          silent = true;
-          desc = "Search in buffer";
-        }
 
         # ── Files (f) ──
         {
@@ -126,13 +119,6 @@
           action = "<cmd>wa<CR>";
           silent = true;
           desc = "Save all files";
-        }
-        {
-          key = "<leader>ft";
-          mode = ["n"];
-          action = "<cmd>lua MiniFiles.open()<CR>";
-          silent = true;
-          desc = "File tree";
         }
         {
           key = "<leader>fe";
@@ -191,20 +177,6 @@
           action = "<cmd>Git blame<CR>";
           silent = true;
           desc = "Git blame";
-        }
-        {
-          key = "<leader>gd";
-          mode = ["n"];
-          action = "<cmd>lua MiniDiff.toggle_overlay()<CR>";
-          silent = true;
-          desc = "Toggle diff overlay";
-        }
-        {
-          key = "<leader>gD";
-          mode = ["n"];
-          action = "<cmd>lua MiniDiff.toggle()<CR>";
-          silent = true;
-          desc = "Toggle diff signs";
         }
         {
           key = "<leader>gs";
@@ -420,29 +392,6 @@
           desc = "Next diagnostic";
         }
 
-        # ── Project (p) ──
-        {
-          key = "<leader>pf";
-          mode = ["n"];
-          action = "<cmd>Pick files<CR>";
-          silent = true;
-          desc = "Find file in project";
-        }
-        {
-          key = "<leader>pg";
-          mode = ["n"];
-          action = "<cmd>Pick grep_live<CR>";
-          silent = true;
-          desc = "Grep in project";
-        }
-        {
-          key = "<leader>ps";
-          mode = ["n"];
-          action = "<cmd>Pick grep pattern=\"<cword>\"<CR>";
-          silent = true;
-          desc = "Search word in project";
-        }
-
         # ── Search (s) ──
         {
           key = "<leader>ss";
@@ -538,13 +487,6 @@
           action = "<cmd>set spell!<CR>";
           silent = true;
           desc = "Toggle spell check";
-        }
-        {
-          key = "<leader>td";
-          mode = ["n"];
-          action = "<cmd>lua MiniDiff.toggle()<CR>";
-          silent = true;
-          desc = "Toggle diff signs";
         }
         {
           key = "<leader>tm";
