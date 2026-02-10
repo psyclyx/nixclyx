@@ -42,13 +42,6 @@
 
         # ── Buffers (b) ──
         {
-          key = "<leader>bb";
-          mode = ["n"];
-          action = "<cmd>Pick buffers<CR>";
-          silent = true;
-          desc = "Switch buffer";
-        }
-        {
           key = "<leader>bd";
           mode = ["n"];
           action = "<cmd>lua MiniBufremove.delete()<CR>";
@@ -85,13 +78,6 @@
         }
 
         # ── Files (f) ──
-        {
-          key = "<leader>ff";
-          mode = ["n"];
-          action = "<cmd>Pick files<CR>";
-          silent = true;
-          desc = "Find file";
-        }
         {
           key = "<leader>fr";
           mode = ["n"];
@@ -142,13 +128,6 @@
           action = "<cmd>Git<CR>";
           silent = true;
           desc = "Fugitive status";
-        }
-        {
-          key = "<leader>gG";
-          mode = ["n"];
-          action = "<cmd>lua MiniGit.show_at_cursor()<CR>";
-          silent = true;
-          desc = "Show git info";
         }
         {
           key = "<leader>gl";
@@ -301,9 +280,9 @@
         {
           key = "<leader>hn";
           mode = ["n"];
-          action = "<cmd>lua MiniNotify.show_history()<CR>";
+          action = "<cmd>Noice history<CR>";
           silent = true;
-          desc = "Show notifications";
+          desc = "Notification history";
         }
 
         # ── LSP / Code (c) ──
@@ -392,14 +371,79 @@
           desc = "Next diagnostic";
         }
 
-        # ── Search (s) ──
+        # ── Debug (d) ──
         {
-          key = "<leader>ss";
+          key = "<leader>dc";
           mode = ["n"];
-          action = "<cmd>Pick grep_live<CR>";
+          action = "<cmd>lua require('dap').continue()<CR>";
           silent = true;
-          desc = "Live grep";
+          desc = "Continue";
         }
+        {
+          key = "<leader>ds";
+          mode = ["n"];
+          action = "<cmd>lua require('dap').step_over()<CR>";
+          silent = true;
+          desc = "Step over";
+        }
+        {
+          key = "<leader>di";
+          mode = ["n"];
+          action = "<cmd>lua require('dap').step_into()<CR>";
+          silent = true;
+          desc = "Step into";
+        }
+        {
+          key = "<leader>do";
+          mode = ["n"];
+          action = "<cmd>lua require('dap').step_out()<CR>";
+          silent = true;
+          desc = "Step out";
+        }
+        {
+          key = "<leader>db";
+          mode = ["n"];
+          action = "<cmd>lua require('dap').toggle_breakpoint()<CR>";
+          silent = true;
+          desc = "Toggle breakpoint";
+        }
+        {
+          key = "<leader>dB";
+          mode = ["n"];
+          action = "<cmd>lua require('dap').set_breakpoint(vim.fn.input('Condition: '))<CR>";
+          silent = true;
+          desc = "Conditional breakpoint";
+        }
+        {
+          key = "<leader>dr";
+          mode = ["n"];
+          action = "<cmd>lua require('dap').repl.open()<CR>";
+          silent = true;
+          desc = "Open REPL";
+        }
+        {
+          key = "<leader>dl";
+          mode = ["n"];
+          action = "<cmd>lua require('dap').run_last()<CR>";
+          silent = true;
+          desc = "Run last";
+        }
+        {
+          key = "<leader>du";
+          mode = ["n"];
+          action = "<cmd>lua require('dapui').toggle()<CR>";
+          silent = true;
+          desc = "Toggle DAP UI";
+        }
+        {
+          key = "<leader>de";
+          mode = ["n" "v"];
+          action = "<cmd>lua require('dapui').eval()<CR>";
+          silent = true;
+          desc = "Evaluate expression";
+        }
+
+        # ── Search (s) ──
         {
           key = "<leader>sw";
           mode = ["n"];
@@ -509,6 +553,13 @@
           silent = true;
           desc = "Toggle undo tree";
         }
+        {
+          key = "<leader>to";
+          mode = ["n"];
+          action = "<cmd>AerialToggle<CR>";
+          silent = true;
+          desc = "Toggle code outline";
+        }
 
         # ── Open (o) ──
         {
@@ -545,54 +596,6 @@
           desc = "Split vertical";
         }
         {
-          key = "<leader>wh";
-          mode = ["n"];
-          action = "<C-w>h";
-          desc = "Move left";
-        }
-        {
-          key = "<leader>wj";
-          mode = ["n"];
-          action = "<C-w>j";
-          desc = "Move down";
-        }
-        {
-          key = "<leader>wk";
-          mode = ["n"];
-          action = "<C-w>k";
-          desc = "Move up";
-        }
-        {
-          key = "<leader>wl";
-          mode = ["n"];
-          action = "<C-w>l";
-          desc = "Move right";
-        }
-        {
-          key = "<leader>wH";
-          mode = ["n"];
-          action = "<C-w>H";
-          desc = "Move window left";
-        }
-        {
-          key = "<leader>wJ";
-          mode = ["n"];
-          action = "<C-w>J";
-          desc = "Move window down";
-        }
-        {
-          key = "<leader>wK";
-          mode = ["n"];
-          action = "<C-w>K";
-          desc = "Move window up";
-        }
-        {
-          key = "<leader>wL";
-          mode = ["n"];
-          action = "<C-w>L";
-          desc = "Move window right";
-        }
-        {
           key = "<leader>w=";
           mode = ["n"];
           action = "<C-w>=";
@@ -625,7 +628,35 @@
           desc = "Yanky next";
         }
 
-        # ── Extras (x) ──
+        # ── Extras / Diagnostics (x) ──
+        {
+          key = "<leader>xx";
+          mode = ["n"];
+          action = "<cmd>Trouble diagnostics toggle<CR>";
+          silent = true;
+          desc = "All diagnostics";
+        }
+        {
+          key = "<leader>xX";
+          mode = ["n"];
+          action = "<cmd>Trouble diagnostics toggle filter.buf=0<CR>";
+          silent = true;
+          desc = "Buffer diagnostics";
+        }
+        {
+          key = "<leader>xl";
+          mode = ["n"];
+          action = "<cmd>Trouble loclist toggle<CR>";
+          silent = true;
+          desc = "Location list";
+        }
+        {
+          key = "<leader>xq";
+          mode = ["n"];
+          action = "<cmd>Trouble qflist toggle<CR>";
+          silent = true;
+          desc = "Quickfix list";
+        }
         {
           key = "<leader>xw";
           mode = ["n"];
