@@ -69,6 +69,22 @@
               mode = "x";
               keys = "z";
             }
+            {
+              mode = "n";
+              keys = "[";
+            }
+            {
+              mode = "n";
+              keys = "]";
+            }
+            {
+              mode = "x";
+              keys = "[";
+            }
+            {
+              mode = "x";
+              keys = "]";
+            }
           ];
           clues = [
             (mkLuaInline "require('mini.clue').gen_clues.builtin_completion()")
@@ -89,6 +105,11 @@
             }
             {
               mode = "n";
+              keys = "<Leader>d";
+              desc = "+debug";
+            }
+            {
+              mode = "n";
               keys = "<Leader>f";
               desc = "+file";
             }
@@ -99,13 +120,23 @@
             }
             {
               mode = "n";
+              keys = "<Leader>gx";
+              desc = "+conflict";
+            }
+            {
+              mode = "n";
               keys = "<Leader>h";
               desc = "+help";
             }
             {
               mode = "n";
-              keys = "<Leader>p";
-              desc = "+project";
+              keys = "<Leader>l";
+              desc = "+lsp";
+            }
+            {
+              mode = "n";
+              keys = "<Leader>o";
+              desc = "+open";
             }
             {
               mode = "n";
