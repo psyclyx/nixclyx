@@ -91,9 +91,9 @@
       },
       "branch": "main",
       "submodules": false,
-      "revision": "8d9477a64eec0c99f9c41c03342bb8b7f764412b",
-      "url": "https://github.com/numtide/llm-agents.nix/archive/8d9477a64eec0c99f9c41c03342bb8b7f764412b.tar.gz",
-      "hash": "sha256-jfOVTGxI5ZlrQfWL54Q3rNJay7o3ildR6V0xWbbdtCs="
+      "revision": "ab28ccc8ae39071ec4833def4ea90ad5aadb5644",
+      "url": "https://github.com/numtide/llm-agents.nix/archive/ab28ccc8ae39071ec4833def4ea90ad5aadb5644.tar.gz",
+      "hash": "sha256-ZYdadYL/s8dtY4KcvUMspwgKPpeR2QHYwt7sbSwn5Fw="
     },
     "nix-darwin": {
       "type": "Git",
@@ -155,7 +155,7 @@
         "repo": "robotnix"
       },
       "branch": "master",
-      "submodules": false,
+      "submodules": true,
       "revision": "08cb6f442d621cec0d9e7a608e6d11bfbd5e0e54",
       "url": "https://github.com/nix-community/robotnix/archive/08cb6f442d621cec0d9e7a608e6d11bfbd5e0e54.tar.gz",
       "hash": "sha256-UFhW4TNACzpCnkYu/xgDiTcIzV6mQqr1A2EG2HsoKV8="
@@ -169,9 +169,9 @@
       },
       "branch": "master",
       "submodules": false,
-      "revision": "17eea6f3816ba6568b8c81db8a4e6ca438b30b7c",
-      "url": "https://github.com/Mic92/sops-nix/archive/17eea6f3816ba6568b8c81db8a4e6ca438b30b7c.tar.gz",
-      "hash": "sha256-ktjWTq+D5MTXQcL9N6cDZXUf9kX8JBLLBLT0ZyOTSYY="
+      "revision": "d6e0e666048a5395d6ea4283143b7c9ac704720d",
+      "url": "https://github.com/Mic92/sops-nix/archive/d6e0e666048a5395d6ea4283143b7c9ac704720d.tar.gz",
+      "hash": "sha256-xbvX5Ik+0inJcLJtJ/AajAt7xCk6FOCrm5ogpwwvVDg="
     },
     "stylix": {
       "type": "Git",
