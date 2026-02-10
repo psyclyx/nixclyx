@@ -62,6 +62,16 @@
       # ── Git ───────────────────────────────────────────────────────
       git.vim-fugitive.enable = true;
       git.gitsigns.enable = true;
+      git.git-conflict = {
+        enable = true;
+        mappings = {
+          ours = "<leader>gxo";
+          theirs = "<leader>gxt";
+          both = "<leader>gxb";
+          none = "<leader>gx0";
+        };
+      };
+      git.gitlinker-nvim.enable = true;
 
       utility.direnv.enable = true;
       utility.sleuth.enable = true;

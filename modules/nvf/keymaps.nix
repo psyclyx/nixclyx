@@ -272,6 +272,15 @@
           desc = "Reset buffer";
         }
 
+        # ── Gitlinker ──
+        {
+          key = "<leader>gy";
+          mode = ["n" "v"];
+          action = "<cmd>GitLink<CR>";
+          silent = true;
+          desc = "Copy git permalink";
+        }
+
         # ── Diffview ──
         {
           key = "<leader>gv";
