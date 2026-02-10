@@ -77,6 +77,11 @@
       utility.sleuth.enable = true;
       utility.diffview-nvim.enable = true;
       utility.outline.aerial-nvim.enable = true;
+      utility.undotree.enable = true;
+      utility.yanky-nvim = {
+        enable = true;
+        setupOpts.ring.storage = "shada";
+      };
 
       terminal.toggleterm = {
         enable = true;

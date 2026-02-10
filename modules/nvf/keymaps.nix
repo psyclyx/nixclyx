@@ -560,6 +560,13 @@
           silent = true;
           desc = "Toggle line blame";
         }
+        {
+          key = "<leader>tu";
+          mode = ["n"];
+          action = "<cmd>UndotreeToggle<CR>";
+          silent = true;
+          desc = "Toggle undo tree";
+        }
 
         # ── Open (o) ──
         {
@@ -648,6 +655,32 @@
           mode = ["n"];
           action = "<C-w>=";
           desc = "Balance windows";
+        }
+
+        # ── Yanky ──
+        {
+          key = "p";
+          mode = ["n" "x"];
+          action = "<Plug>(YankyPutAfter)";
+          desc = "Put after (yanky)";
+        }
+        {
+          key = "P";
+          mode = ["n" "x"];
+          action = "<Plug>(YankyPutBefore)";
+          desc = "Put before (yanky)";
+        }
+        {
+          key = "<C-p>";
+          mode = ["n"];
+          action = "<Plug>(YankyPreviousEntry)";
+          desc = "Yanky previous";
+        }
+        {
+          key = "<C-n>";
+          mode = ["n"];
+          action = "<Plug>(YankyNextEntry)";
+          desc = "Yanky next";
         }
 
         # ── Extras (x) ──
