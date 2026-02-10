@@ -29,8 +29,19 @@
       };
     };
   in {
-    home.packages = [pkgs.claude-code];
-    home.file.".claude/settings.json".text = builtins.toJSON settings;
-    home.shellAliases.clauded = "claude --dangerously-skip-permissions";
+    home.activation.claude-code-settings = lib.hm.dag.entryAfter ["writeBoundary"] ''
+      $DRY_RUN_CMD install -Dm644 /dev/stdin "$HOME/.claude/settings.json" <<'EOF'
+      ${builtins.toJSON settings}
+      EOF
+    '';
+
+    home.packages = [pkgs.llm-agents.claude-code];
+
+    home.shellAliases = {
+      clauded = "claude --dangerously-skip-permissions";
+      pclaude = "claude --print";
+      pclauded = "claude --dangerously-skip-permissions --print";
+      clauder = "cat \${PROMPT_MD:-\${1:-prompt.md}} | pclauded";
+    };
   };
 }
