@@ -23,6 +23,7 @@ let
       common = {
         options = import ./modules/common/options {inherit nixclyx;};
       };
+      nvf = import ./modules/nvf {inherit nixclyx;};
     };
 
     evalConfig = import (sources.nixpkgs + "/nixos/lib/eval-config.nix");
@@ -71,6 +72,14 @@ let
       keys = import ./data/keys.nix;
       packageGroups = import ./data/packageGroups.nix;
       docs = import ./docs {inherit nixclyx;};
+      nvf = pkgs:
+        ((import sources.nvf).lib.neovimConfiguration {
+          inherit pkgs;
+          modules = [
+            modules.nvf
+            {psyclyx.nixos.programs.nvf.enable = true;}
+          ];
+        }).neovim;
       network = let
         config = builtins.fromJSON (builtins.readFile ./network.json);
         emptyState = { serial = 0; peers = {}; certs = {}; revoked_serials = []; };
