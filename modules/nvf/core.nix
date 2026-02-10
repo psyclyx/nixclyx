@@ -10,6 +10,8 @@
   };
   config = {cfg, lib, ...}: {
     vim = {
+      enableLuaLoader = true;
+
       globals = {
         mapleader = " ";
         maplocalleader = " m";
