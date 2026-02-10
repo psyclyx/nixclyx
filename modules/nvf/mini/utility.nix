@@ -5,7 +5,6 @@
     vim = {
       # ── Git ────────────────────────────────────────────────────────
       mini.git.enable = true;
-      mini.diff.enable = true;
 
       # ── Utility ───────────────────────────────────────────────────
       mini.bufremove.enable = true;
