@@ -1,7 +1,11 @@
 {
   path = ["psyclyx" "darwin" "config" "users" "psyc"];
   description = "psyc darwin user";
-  config = {lib, pkgs, ...}: {
+  config = {
+    lib,
+    pkgs,
+    ...
+  }: {
     users.users.psyc = {
       name = "psyc";
       home = "/Users/psyc";

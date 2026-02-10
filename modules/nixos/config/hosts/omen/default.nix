@@ -2,7 +2,12 @@
   path = ["psyclyx" "nixos" "config" "hosts" "omen"];
   variant = ["psyclyx" "nixos" "host"];
   imports = [./filesystems.nix];
-  config = {lib, pkgs, nixclyx, ...}: {
+  config = {
+    lib,
+    pkgs,
+    nixclyx,
+    ...
+  }: {
     networking.hostName = "omen";
 
     boot.kernelParams = ["snd-intel-dspcfg.dsp_driver=1"];

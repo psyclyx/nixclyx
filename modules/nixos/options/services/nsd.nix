@@ -27,7 +27,11 @@
     };
   };
 
-  config = {cfg, lib, ...}: {
+  config = {
+    cfg,
+    lib,
+    ...
+  }: {
     services.nsd = {
       enable = true;
       interfaces = cfg.interfaces;

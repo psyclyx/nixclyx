@@ -32,12 +32,12 @@ stdenv.mkDerivation {
 
     makeWrapper ${babashka}/bin/bb $out/bin/pki \
       --prefix PATH : ${lib.makeBinPath [
-        psyclyx.ensure-key
-        psyclyx.sign-key
-        openssh
-        git
-        wireguard-tools
-      ]} \
+      psyclyx.ensure-key
+      psyclyx.sign-key
+      openssh
+      git
+      wireguard-tools
+    ]} \
       --add-flags "-cp $out/share/pki/src" \
       --add-flags "-m pki.cli"
   '';

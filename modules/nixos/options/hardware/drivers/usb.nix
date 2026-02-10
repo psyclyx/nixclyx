@@ -28,7 +28,11 @@
         default = true;
       };
   };
-  config = {cfg, lib, ...}: {
+  config = {
+    cfg,
+    lib,
+    ...
+  }: {
     boot.initrd.availableKernelModules =
       (lib.optionals cfg.hid ["xhci_pci"])
       ++ (lib.optionals cfg.storage ["xhci_pci"])

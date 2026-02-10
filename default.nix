@@ -6,7 +6,7 @@ let
   overlay = import ./overlay.nix;
   packages = import ./packages;
 
-  mkNixclyx = { stateFile ? ./state.json }: let
+  mkNixclyx = {stateFile ? ./state.json}: let
     modules = {
       nixos = {
         options = import ./modules/nixos/options {inherit nixclyx;};
@@ -39,14 +39,16 @@ let
       };
 
     hostEntries = builtins.readDir ./modules/nixos/config/hosts;
-    hostNames = builtins.filter
+    hostNames =
+      builtins.filter
       (n: hostEntries.${n} == "directory")
       (builtins.attrNames hostEntries);
 
     configurations = builtins.listToAttrs (map (name: {
-      inherit name;
-      value = mkHost name;
-    }) hostNames);
+        inherit name;
+        value = mkHost name;
+      })
+      hostNames);
 
     darwinSystem = (loadFlake sources.nix-darwin).lib.darwinSystem;
 
@@ -82,24 +84,36 @@ let
         }).neovim;
       network = let
         config = builtins.fromJSON (builtins.readFile ./network.json);
-        emptyState = { serial = 0; peers = {}; certs = {}; revoked_serials = []; };
+        emptyState = {
+          serial = 0;
+          peers = {};
+          certs = {};
+          revoked_serials = [];
+        };
         state =
           if builtins.pathExists stateFile
           then builtins.fromJSON (builtins.readFile stateFile)
           else emptyState;
         # Merge credentials from state into peers
-        peers = builtins.mapAttrs (name: peer:
-          peer // (state.peers.${name} or {})
-        ) config.peers;
+        peers =
+          builtins.mapAttrs (
+            name: peer:
+              peer // (state.peers.${name} or {})
+          )
+          config.peers;
         allSubnets4 = builtins.map (s: s.subnet4) (builtins.attrValues config.sites);
         allSubnets6 = builtins.map (s: s.subnet6) (builtins.attrValues config.sites);
-      in config // { inherit peers state allSubnets4 allSubnets6; };
+      in
+        config // {inherit peers state allSubnets4 allSubnets6;};
     };
-  in nixclyx;
+  in
+    nixclyx;
 
   # Default instance with functor for customization
-  default = mkNixclyx {} // {
-    __functor = self: mkNixclyx;
-  };
+  default =
+    mkNixclyx {}
+    // {
+      __functor = self: mkNixclyx;
+    };
 in
   default

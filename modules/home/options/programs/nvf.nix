@@ -8,7 +8,11 @@
       description = "Path to file containing Anthropic API key (read at neovim startup)";
     };
   };
-  config = {cfg, nixclyx, ...}: {
+  config = {
+    cfg,
+    nixclyx,
+    ...
+  }: {
     programs.nvf = {
       enable = true;
       settings = {

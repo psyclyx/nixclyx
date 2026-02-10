@@ -19,17 +19,28 @@
       description = "Token groups mapping group names to lists of env/secret pairs";
       example = {
         ai = [
-          {env = "OPENROUTER_API_KEY"; secret = "/run/user/1000/secrets/openrouter";}
-          {env = "ANTHROPIC_API_KEY"; secret = "/run/user/1000/secrets/anthropic";}
+          {
+            env = "OPENROUTER_API_KEY";
+            secret = "/run/user/1000/secrets/openrouter";
+          }
+          {
+            env = "ANTHROPIC_API_KEY";
+            secret = "/run/user/1000/secrets/anthropic";
+          }
         ];
       };
     };
   };
-  config = {cfg, lib, ...}: let
+  config = {
+    cfg,
+    lib,
+    ...
+  }: let
     groupNames = lib.attrNames cfg.groups;
     mkGroupExports = name: let
       tokens = cfg.groups.${name};
-    in lib.concatMapStringsSep " "
+    in
+      lib.concatMapStringsSep " "
       (t: ''${t.env}="$(cat '${t.secret}')"'')
       tokens;
     mkCase = name: ''

@@ -2,7 +2,12 @@
   path = ["psyclyx" "nixos" "filesystems" "bcachefs"];
   description = "bcachefs";
   gate = false;
-  extraOptions = {config, lib, pkgs, ...}: let
+  extraOptions = {
+    config,
+    lib,
+    pkgs,
+    ...
+  }: let
     cfg = config.psyclyx.nixos.filesystems.bcachefs;
 
     getDeviceUnit = {bindsTo ? [], ...}:

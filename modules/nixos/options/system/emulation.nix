@@ -1,7 +1,11 @@
 {
   path = ["psyclyx" "nixos" "system" "emulation"];
   description = "Architecture emulation config";
-  options = {lib, pkgs, ...}: let
+  options = {
+    lib,
+    pkgs,
+    ...
+  }: let
     inherit (pkgs.stdenv.hostPlatform) system;
     defaultSystems =
       {

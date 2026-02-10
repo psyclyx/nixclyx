@@ -4,7 +4,12 @@
   options = {lib, ...}: {
     defaultTerminal = lib.mkEnableOption "setting as default terminal via TERMINAL environment variable";
   };
-  config = {cfg, config, lib, ...}: {
+  config = {
+    cfg,
+    config,
+    lib,
+    ...
+  }: {
     programs = {
       kitty = {
         enable = true;

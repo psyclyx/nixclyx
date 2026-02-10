@@ -4,7 +4,13 @@
   options = {lib, ...}: {
     nvidia = lib.mkEnableOption "nvidia-container-tools for gpu-accelerated container support";
   };
-  config = {cfg, config, lib, pkgs, ...}: {
+  config = {
+    cfg,
+    config,
+    lib,
+    pkgs,
+    ...
+  }: {
     environment.systemPackages = [pkgs.distrobox];
     hardware.nvidia-container-toolkit.enable = cfg.nvidia;
     psyclyx.nixos.system.containers.nvidia = lib.mkDefault config.hardware.nvidia.enabled;

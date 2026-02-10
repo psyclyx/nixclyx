@@ -1,7 +1,11 @@
 {
   path = ["psyclyx" "home" "config" "homes" "psyc" "workstation"];
   variant = ["psyclyx" "home" "variant"];
-  config = {lib, pkgs, ...}: {
+  config = {
+    lib,
+    pkgs,
+    ...
+  }: {
     home.packages = [
       pkgs.element-desktop
       pkgs.firefox-bin

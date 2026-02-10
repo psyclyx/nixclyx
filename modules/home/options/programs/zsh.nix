@@ -1,14 +1,24 @@
 {
   path = ["psyclyx" "home" "programs" "zsh"];
   description = "Zsh shell with prezto";
-  options = {lib, nixclyx, ...}: {
+  options = {
+    lib,
+    nixclyx,
+    ...
+  }: {
     pureSrc = lib.mkOption {
       type = lib.types.package;
       description = "Source package for the Pure zsh prompt theme";
       default = nixclyx.sources.zsh-pure;
     };
   };
-  config = {cfg, config, lib, pkgs, ...}: {
+  config = {
+    cfg,
+    config,
+    lib,
+    pkgs,
+    ...
+  }: {
     programs = {
       fzf.enable = true;
       zsh = {

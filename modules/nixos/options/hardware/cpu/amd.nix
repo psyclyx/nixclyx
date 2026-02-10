@@ -1,7 +1,11 @@
 {
   path = ["psyclyx" "nixos" "hardware" "cpu" "amd"];
   description = "AMD CPU config (currently only Ryzen 5950x)";
-  config = {config, pkgs, ...}: {
+  config = {
+    config,
+    pkgs,
+    ...
+  }: {
     nixpkgs.hostPlatform = "x86_64-linux";
 
     boot = {

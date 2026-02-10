@@ -12,7 +12,11 @@
       '';
     };
   };
-  config = {cfg, lib, ...}: {
+  config = {
+    cfg,
+    lib,
+    ...
+  }: {
     psyclyx.common.system.nix.enable = true;
     nix.settings.trusted-users = ["@wheel"];
 

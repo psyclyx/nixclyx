@@ -18,7 +18,11 @@
         default = true;
       };
   };
-  config = {cfg, lib, ...}: {
+  config = {
+    cfg,
+    lib,
+    ...
+  }: {
     boot.initrd.availableKernelModules =
       (lib.optionals cfg.cdRom ["sr_mod"])
       ++ (lib.optionals cfg.disk ["sd_mod"])

@@ -8,7 +8,11 @@
       };
   };
   gate = false;
-  config = {cfg, lib, ...}: {
+  config = {
+    cfg,
+    lib,
+    ...
+  }: {
     boot.kernelParams = lib.optional (!cfg.enableMitigations) "mitigations=off";
   };
 }

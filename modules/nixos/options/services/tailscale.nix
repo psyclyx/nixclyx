@@ -4,7 +4,12 @@
   options = {lib, ...}: {
     exitNode = lib.mkEnableOption "Configure tailscale client as an exit node";
   };
-  config = {cfg, config, pkgs, ...}: let
+  config = {
+    cfg,
+    config,
+    pkgs,
+    ...
+  }: let
     tsCfg = config.services.tailscale;
   in {
     environment.systemPackages = [pkgs.tailscale];

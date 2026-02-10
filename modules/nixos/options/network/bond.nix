@@ -40,30 +40,38 @@
       default = {};
       description = "Bond interface definitions.";
     };
-  config = {cfg, lib, ...}: {
-    systemd.network = lib.mkMerge (lib.mapAttrsToList (name: bondCfg: lib.mkMerge [
-      {
-        netdevs."10-${name}" = {
-          netdevConfig = {
-            Name = name;
-            Kind = "bond";
+  config = {
+    cfg,
+    lib,
+    ...
+  }: {
+    systemd.network = lib.mkMerge (lib.mapAttrsToList (name: bondCfg:
+      lib.mkMerge [
+        {
+          netdevs."10-${name}" = {
+            netdevConfig = {
+              Name = name;
+              Kind = "bond";
+            };
+            bondConfig = {
+              Mode = bondCfg.mode;
+              LACPTransmitRate = bondCfg.lacpRate;
+              TransmitHashPolicy = bondCfg.hashPolicy;
+              MIIMonitorSec = bondCfg.miiMonitorSec;
+            };
           };
-          bondConfig = {
-            Mode = bondCfg.mode;
-            LACPTransmitRate = bondCfg.lacpRate;
-            TransmitHashPolicy = bondCfg.hashPolicy;
-            MIIMonitorSec = bondCfg.miiMonitorSec;
+          networks."30-${name}-ports" = {
+            matchConfig.Name = builtins.concatStringsSep " " bondCfg.ports;
+            networkConfig.Bond = name;
           };
-        };
-        networks."30-${name}-ports" = {
-          matchConfig.Name = builtins.concatStringsSep " " bondCfg.ports;
-          networkConfig.Bond = name;
-        };
-        networks."40-${name}" = lib.recursiveUpdate {
-          matchConfig.Name = name;
-          linkConfig.RequiredForOnline = "routable";
-        } bondCfg.network;
-      }
-    ]) cfg);
+          networks."40-${name}" =
+            lib.recursiveUpdate {
+              matchConfig.Name = name;
+              linkConfig.RequiredForOnline = "routable";
+            }
+            bondCfg.network;
+        }
+      ])
+    cfg);
   };
 }

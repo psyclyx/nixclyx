@@ -61,9 +61,14 @@
       default = {};
     };
   };
-  config = {cfg, lib, ...}: lib.mkIf (cfg != {}) {
-    home-manager.sharedModules = [
-      {psyclyx.home.hardware.monitors = lib.mkDefault cfg;}
-    ];
-  };
+  config = {
+    cfg,
+    lib,
+    ...
+  }:
+    lib.mkIf (cfg != {}) {
+      home-manager.sharedModules = [
+        {psyclyx.home.hardware.monitors = lib.mkDefault cfg;}
+      ];
+    };
 }

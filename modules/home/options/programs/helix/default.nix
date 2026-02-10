@@ -1,7 +1,11 @@
 {
   path = ["psyclyx" "home" "programs" "helix"];
   description = "helix text editor";
-  config = {lib, pkgs, ...}: {
+  config = {
+    lib,
+    pkgs,
+    ...
+  }: {
     programs.helix = {
       enable = true;
       languages.language = [

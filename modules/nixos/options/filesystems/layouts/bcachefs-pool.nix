@@ -24,7 +24,11 @@
       };
     };
   };
-  config = {cfg, lib, ...}: {
+  config = {
+    cfg,
+    lib,
+    ...
+  }: {
     psyclyx.nixos.filesystems.bcachefs.enable = true;
 
     fileSystems = {

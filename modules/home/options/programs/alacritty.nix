@@ -4,7 +4,13 @@
   options = {lib, ...}: {
     defaultTerminal = lib.mkEnableOption "setting as default terminal via TERMINAL environment variable";
   };
-  config = {cfg, config, lib, pkgs, ...}: {
+  config = {
+    cfg,
+    config,
+    lib,
+    pkgs,
+    ...
+  }: {
     programs.alacritty = {
       enable = true;
       package = pkgs.alacritty-graphics;

@@ -77,7 +77,13 @@
     };
   };
 
-  config = {cfg, config, lib, nixclyx, ...}: let
+  config = {
+    cfg,
+    config,
+    lib,
+    nixclyx,
+    ...
+  }: let
     net = nixclyx.network;
     hub = net.peers.${net.rootHub};
     hasZones = cfg.authoritative.zones != {};
@@ -85,75 +91,89 @@
     # Resolve interface names to IPs
     resolveInterfaces = ifaces: let
       expandWg = iface:
-        if iface == "wg0" then [hub.ip4 hub.ip6]
+        if iface == "wg0"
+        then [hub.ip4 hub.ip6]
         else [iface];
-    in lib.flatten (map expandWg ifaces);
+    in
+      lib.flatten (map expandWg ifaces);
 
     # Generate zone data from config
     mkZoneData = name: zoneCfg: let
       ns1 = "ns1.${name}";
       ns2 = "ns2.${name}";
-      admin = if zoneCfg.admin != null then zoneCfg.admin else "admin.${name}";
+      admin =
+        if zoneCfg.admin != null
+        then zoneCfg.admin
+        else "admin.${name}";
 
       peerRecords = lib.optionalString zoneCfg.peerRecords (
         lib.concatStringsSep "\n" (lib.mapAttrsToList (peerName: peer: ''
-          ${peerName}    IN A     ${peer.ip4}
-          ${peerName}    IN AAAA  ${peer.ip6}
-        '') net.peers)
+            ${peerName}    IN A     ${peer.ip4}
+            ${peerName}    IN AAAA  ${peer.ip6}
+          '')
+          net.peers)
       );
 
-      baseData = if zoneCfg.data != null then zoneCfg.data else ''
-        $ORIGIN ${name}.
-        $TTL ${toString zoneCfg.ttl}
-        @    IN SOA  ${ns1}. ${admin}. (
-                     1 3600 900 604800 300 )
-        @    IN NS   ${ns1}.
-        @    IN NS   ${ns2}.
-        ns1  IN A    ${hub.endpoint}
-        ns2  IN A    ${hub.endpoint}
-        ${peerRecords}
-      '';
-    in baseData + zoneCfg.extraRecords;
+      baseData =
+        if zoneCfg.data != null
+        then zoneCfg.data
+        else ''
+          $ORIGIN ${name}.
+          $TTL ${toString zoneCfg.ttl}
+          @    IN SOA  ${ns1}. ${admin}. (
+                       1 3600 900 604800 300 )
+          @    IN NS   ${ns1}.
+          @    IN NS   ${ns2}.
+          ns1  IN A    ${hub.endpoint}
+          ns2  IN A    ${hub.endpoint}
+          ${peerRecords}
+        '';
+    in
+      baseData + zoneCfg.extraRecords;
 
     # Stub zone names for resolver
     stubZoneNames = (lib.attrNames cfg.authoritative.zones) ++ cfg.resolver.extraStubZones;
 
     # VPN subnet ACLs
     subnetAcl = map (s: "${s} allow") (net.allSubnets4 ++ net.allSubnets6);
+  in
+    lib.mkMerge [
+      # Client mode: avahi + resolved
+      (lib.mkIf cfg.client.enable {
+        psyclyx.nixos.services = {
+          avahi.enable = true;
+          resolved.enable = true;
+        };
+      })
 
-  in lib.mkMerge [
-    # Client mode: avahi + resolved
-    (lib.mkIf cfg.client.enable {
-      psyclyx.nixos.services = {
-        avahi.enable = true;
-        resolved.enable = true;
-      };
-    })
+      # Authoritative DNS via NSD (auto-enabled by gate when zones != {})
+      (lib.mkIf hasZones {
+        psyclyx.nixos.services.nsd = {
+          interfaces = cfg.authoritative.interfaces;
+          port = cfg.authoritative.port;
+          zones =
+            lib.mapAttrs (name: zoneCfg: {
+              data = mkZoneData name zoneCfg;
+            })
+            cfg.authoritative.zones;
+        };
+        # Disable avahi when NSD is using port 5353 (mDNS port conflict)
+        services.avahi.enable = lib.mkIf (cfg.authoritative.port == 5353) (lib.mkForce false);
+      })
 
-    # Authoritative DNS via NSD (auto-enabled by gate when zones != {})
-    (lib.mkIf hasZones {
-      psyclyx.nixos.services.nsd = {
-        interfaces = cfg.authoritative.interfaces;
-        port = cfg.authoritative.port;
-        zones = lib.mapAttrs (name: zoneCfg: {
-          data = mkZoneData name zoneCfg;
-        }) cfg.authoritative.zones;
-      };
-      # Disable avahi when NSD is using port 5353 (mDNS port conflict)
-      services.avahi.enable = lib.mkIf (cfg.authoritative.port == 5353) (lib.mkForce false);
-    })
-
-    # Resolver via Unbound
-    (lib.mkIf cfg.resolver.enable {
-      psyclyx.nixos.services.unbound = {
-        enable = true;
-        interfaces = resolveInterfaces cfg.resolver.interfaces;
-        accessControl = subnetAcl;
-        stubZones = map (name: {
-          inherit name;
-          stub-addr = "127.0.0.1@${toString cfg.authoritative.port}";
-        }) stubZoneNames;
-      };
-    })
-  ];
+      # Resolver via Unbound
+      (lib.mkIf cfg.resolver.enable {
+        psyclyx.nixos.services.unbound = {
+          enable = true;
+          interfaces = resolveInterfaces cfg.resolver.interfaces;
+          accessControl = subnetAcl;
+          stubZones =
+            map (name: {
+              inherit name;
+              stub-addr = "127.0.0.1@${toString cfg.authoritative.port}";
+            })
+            stubZoneNames;
+        };
+      })
+    ];
 }

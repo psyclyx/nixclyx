@@ -8,7 +8,12 @@
       description = "Users to put in the mlocate group";
     };
   };
-  config = {cfg, config, pkgs, ...}: {
+  config = {
+    cfg,
+    config,
+    pkgs,
+    ...
+  }: {
     services.locate = {
       enable = true;
       interval = "hourly";

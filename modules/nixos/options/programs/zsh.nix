@@ -4,7 +4,12 @@
   options = {lib, ...}: {
     defaultShell = lib.mkEnableOption "Zsh as the default shell";
   };
-  config = {cfg, lib, pkgs, ...}: {
+  config = {
+    cfg,
+    lib,
+    pkgs,
+    ...
+  }: {
     environment.pathsToLink = ["/share/zsh"];
     programs.zsh = {
       enable = true;

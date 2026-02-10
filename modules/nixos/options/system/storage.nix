@@ -22,7 +22,11 @@
       };
     };
   };
-  config = {cfg, lib, ...}:
+  config = {
+    cfg,
+    lib,
+    ...
+  }:
     lib.mkMerge [
       (lib.mkIf cfg.tune.hdd {
         services.udev.extraRules = ''

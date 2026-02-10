@@ -17,7 +17,11 @@
       description = "zswap (swap to zstd in-memory before disk)";
     };
   };
-  config = {cfg, lib, ...}: {
+  config = {
+    cfg,
+    lib,
+    ...
+  }: {
     boot = {
       kernel.sysctl."vm.swappiness" = cfg.swappiness;
       kernelParams = lib.mkIf cfg.zswap ["zswap.enabled=1"];
