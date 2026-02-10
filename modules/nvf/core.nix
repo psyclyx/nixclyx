@@ -1,7 +1,14 @@
 {
   path = ["psyclyx" "nixos" "programs" "nvf"];
   description = "nvf (neovim)";
-  config = {...}: {
+  options = {lib, ...}: {
+    anthropicKeyFile = lib.mkOption {
+      type = lib.types.nullOr lib.types.path;
+      default = null;
+      description = "Path to file containing Anthropic API key (read at neovim startup)";
+    };
+  };
+  config = {cfg, lib, ...}: {
     vim = {
       globals = {
         mapleader = " ";
@@ -45,6 +52,14 @@
       theme = {
         enable = true;
       };
+
+      luaConfigRC.anthropic-key = lib.mkIf (cfg.anthropicKeyFile != null) (lib.nvim.dag.entryAnywhere ''
+        local f = io.open("${cfg.anthropicKeyFile}", "r")
+        if f then
+          vim.env.ANTHROPIC_API_KEY = f:read("*a"):gsub("%s+$", "")
+          f:close()
+        end
+      '');
     };
   };
 }
