@@ -1,61 +1,86 @@
 # nixclyx
 
-NixOS configurations with SSH certificate PKI and WireGuard mesh networking.
+Public version of @psyclyx's homelab nix configuration.
 
-## PKI Quick Reference
+# Cheat sheets
+
+## ssh-keygen
+
+### Generate keys
+
+#### Host key
 
 ```bash
-# Show current state
-pki status
-
-# Provision a peer (generates keys, signs certs, deploys)
-pki provision <peer>
-
-# Provision all peers
-pki provision
-
-# Check keys without signing
-pki check <peer>
-
-# Add a new WireGuard-only peer
-pki add-peer <name>
-
-# Sign an arbitrary public key
-cat pubkey | pki sign host --principals "host1,host2" --identity "host1-host"
-cat pubkey | pki sign user --principals "username" --identity "user@host"
-
-# Enroll local workstation
-pki enroll                 # user key only
-pki enroll --host          # user + host keys
-
-# Revoke certificates
-pki revoke <serial> [serial...]
-pki generate-krl
+ssh-keygen -t ed25519 -N "" -C "" -f /etc/ssh/id_ed25519_host_key
+ssh-keygen -t ed25519 -N "" -C "" -f /etc/secrets/initrd/id_ed25519_host_key
 ```
 
-## Host Provisioning Workflow
+#### User key
 
-1. Add peer entry to `pki/state.json` with IP addresses and FQDN
-2. Boot the host with a temporary SSH key
-3. Run `pki provision <hostname>`
-4. Deploy NixOS configuration
-
-## Directory Structure
-
+```bash
+ssh-keygen -t ed25519 -N "" -C "user@host" -f ~/.ssh/id_ed25519
 ```
-pki/
-  config.json    # Static config (CA paths, wireguard settings, DNS)
-  state.json     # Dynamic state (peers, certs, serials)
-packages/
-  pki/           # Babashka PKI management tool
-    src/pki/
-      core.clj       # State management, serial tracking
-      shell.clj      # Shell command helpers
-      sign.clj       # Certificate signing
-      provision.clj  # Remote provisioning
-      cli.clj        # CLI entrypoint
-modules/
-  nixos/         # NixOS modules
-  darwin/        # macOS modules
-  home/          # home-manager modules
+
+### Extract public key from private key
+
+```bash
+ssh-keygen -y -f /etc/ssh/id_ed25519
+```
+
+### Sign keys (SSH CA)
+
+#### Create a CA
+
+```bash
+ssh-keygen -t ed25519 -N "" -C "my-ca" -f ca_key
+```
+
+#### Sign a host key
+
+```bash
+ssh-keygen -s ca_key -I "hostname" -h -n "hostname,hostname.example.com" host_key.pub
+# produces host_key-cert.pub
+```
+
+- `-h` marks it as a host certificate
+- `-n` sets valid principals (hostnames)
+- `-V +52w` to set validity (optional, default unlimited)
+
+#### Sign a user key
+
+```bash
+ssh-keygen -s ca_key -I "user@example.com" -n "root,deploy" user_key.pub
+# produces user_key-cert.pub
+```
+
+- `-n` sets valid principals (usernames the cert can log in as)
+- `-V +90d` to set validity
+
+### Inspect a certificate
+
+```bash
+ssh-keygen -L -f key-cert.pub
+```
+
+## Wireguard
+
+### Generate keys
+
+#### Private key
+
+```bash
+wg genkey > private.key
+chmod 600 private.key
+```
+
+#### Public key (from private)
+
+```bash
+wg pubkey < private.key > public.key
+```
+
+#### Preshared key (optional, per-peer)
+
+```bash
+wg genpsk > preshared.key
 ```
