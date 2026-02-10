@@ -22,7 +22,6 @@
           }
         ];
       };
-      mini.notify.enable = true;
       mini.indentscope.enable = true;
       mini.cursorword.enable = true;
       mini.animate.enable = true;
@@ -32,22 +31,6 @@
         enable = true;
         setupOpts = {
           highlighters = {
-            fixme = {
-              pattern = "%f[%w]()FIXME()%f[%W]";
-              group = "MiniHipatternsFixme";
-            };
-            hack = {
-              pattern = "%f[%w]()HACK()%f[%W]";
-              group = "MiniHipatternsHack";
-            };
-            todo = {
-              pattern = "%f[%w]()TODO()%f[%W]";
-              group = "MiniHipatternsTodo";
-            };
-            note = {
-              pattern = "%f[%w]()NOTE()%f[%W]";
-              group = "MiniHipatternsNote";
-            };
             hex_color = mkLuaInline "require('mini.hipatterns').gen_highlighter.hex_color()";
           };
         };
