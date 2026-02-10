@@ -47,7 +47,7 @@
 
       system = {
         emulation.enable = true;
-        swap.swappiness = 10;
+        swap.swappiness = 5;
       };
     };
 
