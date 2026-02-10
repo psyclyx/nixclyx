@@ -28,6 +28,10 @@
 
       ui.nvim-ufo.enable = true;
       ui.fastaction.enable = true;
+      ui.smartcolumn = {
+        enable = true;
+        setupOpts.colorcolumn = "80";
+      };
 
       notes.todo-comments.enable = true;
 

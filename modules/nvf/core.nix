@@ -29,7 +29,7 @@
         hidden = true;
         termguicolors = true;
         signcolumn = "yes";
-        colorcolumn = "80";
+        colorcolumn = "";
         showmode = false;
         splitbelow = true;
         splitright = true;
