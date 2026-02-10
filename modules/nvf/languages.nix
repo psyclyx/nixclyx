@@ -7,6 +7,7 @@
       treesitter = {
         enable = true;
         fold = true;
+        context.enable = true;
       };
 
       # ── LSP ───────────────────────────────────────────────────────
@@ -19,8 +20,13 @@
       };
 
       visuals.fidget-nvim.enable = true;
+      visuals.rainbow-delimiters.enable = true;
 
       diagnostics.enable = true;
+
+      ui.nvim-ufo.enable = true;
+
+      notes.todo-comments.enable = true;
 
       # ── Languages ─────────────────────────────────────────────────
       languages = {
@@ -52,6 +58,14 @@
 
       # ── Git ───────────────────────────────────────────────────────
       git.vim-fugitive.enable = true;
+      git.gitsigns.enable = true;
+
+      utility.diffview-nvim.enable = true;
+
+      terminal.toggleterm = {
+        enable = true;
+        setupOpts.direction = "horizontal";
+      };
 
       # ── AI assistant ──────────────────────────────────────────────
       assistant.avante-nvim = {
