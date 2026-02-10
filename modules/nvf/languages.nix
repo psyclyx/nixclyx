@@ -21,10 +21,12 @@
 
       visuals.fidget-nvim.enable = true;
       visuals.rainbow-delimiters.enable = true;
+      visuals.highlight-undo.enable = true;
 
       diagnostics.enable = true;
 
       ui.nvim-ufo.enable = true;
+      ui.fastaction.enable = true;
 
       notes.todo-comments.enable = true;
 
@@ -60,6 +62,8 @@
       git.vim-fugitive.enable = true;
       git.gitsigns.enable = true;
 
+      utility.direnv.enable = true;
+      utility.sleuth.enable = true;
       utility.diffview-nvim.enable = true;
 
       terminal.toggleterm = {
