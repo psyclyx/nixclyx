@@ -26,6 +26,11 @@
 
       diagnostics.enable = true;
 
+      debugger.nvim-dap = {
+        enable = true;
+        ui.enable = true;
+      };
+
       ui.nvim-ufo.enable = true;
       ui.fastaction.enable = true;
       ui.smartcolumn = {
