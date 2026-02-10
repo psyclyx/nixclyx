@@ -130,11 +130,6 @@
             }
             {
               mode = "n";
-              keys = "<Leader>l";
-              desc = "+lsp";
-            }
-            {
-              mode = "n";
               keys = "<Leader>o";
               desc = "+open";
             }
@@ -162,6 +157,17 @@
               mode = "n";
               keys = "<Leader>x";
               desc = "+extras";
+            }
+            # ── Visual mode groups ──
+            {
+              mode = "x";
+              keys = "<Leader>g";
+              desc = "+git";
+            }
+            {
+              mode = "x";
+              keys = "<Leader>d";
+              desc = "+debug";
             }
           ];
           window = {
