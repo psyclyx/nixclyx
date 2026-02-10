@@ -13,7 +13,12 @@
       lsp = {
         enable = true;
         formatOnSave = true;
+        lspSignature.enable = true;
+        lightbulb.enable = true;
+        inlayHints.enable = true;
       };
+
+      visuals.fidget-nvim.enable = true;
 
       diagnostics.enable = true;
 
