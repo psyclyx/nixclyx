@@ -3,6 +3,27 @@
   gate = {config, ...}: config.psyclyx.nixos.programs.nvf.enable;
   config = {...}: {
     vim = {
+      # ── Completion ─────────────────────────────────────────────────
+      autocomplete.blink-cmp = {
+        enable = true;
+        mappings = {
+          complete = "<C-Space>";
+          confirm = "<CR>";
+          next = "<Tab>";
+          previous = "<S-Tab>";
+          close = "<C-e>";
+          scrollDocsUp = "<C-u>";
+          scrollDocsDown = "<C-d>";
+        };
+        friendly-snippets.enable = true;
+        setupOpts = {
+          sources.default = ["lsp" "path" "snippets" "buffer"];
+          completion.documentation.auto_show = true;
+          completion.documentation.auto_show_delay_ms = 100;
+          fuzzy.implementation = "prefer_rust";
+        };
+      };
+
       # ── Treesitter ────────────────────────────────────────────────
       treesitter = {
         enable = true;
@@ -87,6 +108,7 @@
       };
       git.gitlinker-nvim.enable = true;
 
+      utility.smart-splits.enable = true;
       utility.mkdir.enable = true;
       utility.direnv.enable = true;
       utility.sleuth.enable = true;
@@ -96,6 +118,30 @@
       utility.yanky-nvim = {
         enable = true;
         setupOpts.ring.storage = "shada";
+      };
+
+      navigation.harpoon = {
+        enable = true;
+        mappings = {
+          markFile = "<leader>a";
+          listMarks = "<leader>e";
+          file1 = "<leader>1";
+          file2 = "<leader>2";
+          file3 = "<leader>3";
+          file4 = "<leader>4";
+        };
+      };
+
+      ui.noice = {
+        enable = true;
+        setupOpts = {
+          presets = {
+            bottom_search = true;
+            command_palette = true;
+            long_message_to_split = true;
+            lsp_doc_border = true;
+          };
+        };
       };
 
       terminal.toggleterm = {
