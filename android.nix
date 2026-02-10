@@ -1,27 +1,35 @@
 let
   sources = import ./npins;
+  robotnix = import sources.robotnix;
 
-  mkAndroid = {config}: {
-    build = import sources.robotnix config;
+  mkAndroid = config: {
+    #__functor = _: mkAndroid;
     inherit config;
-    __functor = _: args: mkAndroid {config = config // args.config or {};};
+    build = robotnix {configuration = config.configuration;};
   };
-  mkAndroids = {configs}: (builtins.mapAttrs (_: config: mkAndroid {inherit config;}) configs) // {__functor = _: args: mkAndroid {configs = configs // args.configs or {};};};
-in
-  mkAndroid
-  {
-    configs = {
-      pixel9pro = {
-        configuration = {
-          device = "caiman";
-          flavor = "grapheneos";
-          grapheneos.release = "2026020600";
 
-          microg.enable = true;
-          apps.fdroid.enable = true;
-          apps.seedvault.enable = true;
-          apps.updater.enable = true;
+  mkAndroids = configs:
+    {
+      #  __functor = _: mkAndroids;
+      inherit configs;
+    }
+    // (builtins.mapAttrs (_: mkAndroid) configs);
+in
+  mkAndroids
+  {
+    pixel9pro = {
+      configuration = {
+        device = "caiman";
+        flavor = "grapheneos";
+        grapheneos = {
+          # release = "2026020600";
+          channel = "stable";
         };
+
+        microg.enable = true;
+        apps.fdroid.enable = true;
+        apps.seedvault.enable = true;
+        # apps.updater.enable = true;
       };
     };
   }
