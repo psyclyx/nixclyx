@@ -16,11 +16,6 @@
       zones = lib.mkOption {
         type = lib.types.attrsOf (lib.types.submodule {
           options = {
-            peerRecords = lib.mkOption {
-              type = lib.types.bool;
-              default = false;
-              description = "Auto-generate A/AAAA records from network.json peers.";
-            };
             data = lib.mkOption {
               type = lib.types.nullOr lib.types.lines;
               default = null;
@@ -46,6 +41,11 @@
         default = {};
         description = "Authoritative zones to serve.";
       };
+      ns = lib.mkOption {
+        type = lib.types.nullOr lib.types.str;
+        default = null;
+        description = "IP address for auto-generated ns1/ns2 glue records. Required when zones use auto-generated SOA.";
+      };
       interfaces = lib.mkOption {
         type = lib.types.listOf lib.types.str;
         default = ["127.0.0.1" "::1"];
@@ -67,35 +67,45 @@
       interfaces = lib.mkOption {
         type = lib.types.listOf lib.types.str;
         default = [];
-        description = "Interfaces for resolver. Use interface names (wg0) or IPs.";
+        description = "Interfaces for resolver (IPs).";
       };
       extraStubZones = lib.mkOption {
         type = lib.types.listOf lib.types.str;
         default = [];
         description = "Additional zones to stub (beyond authoritative zones).";
       };
+      accessControl = lib.mkOption {
+        type = lib.types.listOf lib.types.str;
+        default = [];
+        description = "ACL entries for the resolver (e.g., '10.0.0.0/24 allow').";
+      };
+      localZones = lib.mkOption {
+        type = lib.types.attrsOf (lib.types.submodule {
+          options = {
+            type = lib.mkOption {
+              type = lib.types.enum ["static" "transparent" "typetransparent" "redirect"];
+              default = "static";
+              description = "Unbound local-zone type. 'static' serves only local-data (NXDOMAIN otherwise). 'transparent' falls through to normal resolution on miss.";
+            };
+            records = lib.mkOption {
+              type = lib.types.listOf lib.types.str;
+              default = [];
+              description = "DNS records (e.g., 'host.example.com. IN A 10.0.0.1').";
+            };
+          };
+        });
+        default = {};
+        description = "Zones served locally by the resolver via unbound local-data.";
+      };
     };
   };
 
   config = {
     cfg,
-    config,
     lib,
-    nixclyx,
     ...
   }: let
-    net = nixclyx.network;
-    hub = net.peers.${net.rootHub};
     hasZones = cfg.authoritative.zones != {};
-
-    # Resolve interface names to IPs
-    resolveInterfaces = ifaces: let
-      expandWg = iface:
-        if iface == "wg0"
-        then [hub.ip4 hub.ip6]
-        else [iface];
-    in
-      lib.flatten (map expandWg ifaces);
 
     # Generate zone data from config
     mkZoneData = name: zoneCfg: let
@@ -106,13 +116,10 @@
         then zoneCfg.admin
         else "admin.${name}";
 
-      peerRecords = lib.optionalString zoneCfg.peerRecords (
-        lib.concatStringsSep "\n" (lib.mapAttrsToList (peerName: peer: ''
-            ${peerName}    IN A     ${peer.ip4}
-            ${peerName}    IN AAAA  ${peer.ip6}
-          '')
-          net.peers)
-      );
+      nsGlue = lib.optionalString (cfg.authoritative.ns != null) ''
+        ns1  IN A    ${cfg.authoritative.ns}
+        ns2  IN A    ${cfg.authoritative.ns}
+      '';
 
       baseData =
         if zoneCfg.data != null
@@ -124,18 +131,13 @@
                        1 3600 900 604800 300 )
           @    IN NS   ${ns1}.
           @    IN NS   ${ns2}.
-          ns1  IN A    ${hub.endpoint}
-          ns2  IN A    ${hub.endpoint}
-          ${peerRecords}
+          ${nsGlue}
         '';
     in
       baseData + zoneCfg.extraRecords;
 
     # Stub zone names for resolver
     stubZoneNames = (lib.attrNames cfg.authoritative.zones) ++ cfg.resolver.extraStubZones;
-
-    # VPN subnet ACLs
-    subnetAcl = map (s: "${s} allow") (net.allSubnets4 ++ net.allSubnets6);
   in
     lib.mkMerge [
       # Client mode: avahi + resolved
@@ -149,7 +151,10 @@
       # Authoritative DNS via NSD (auto-enabled by gate when zones != {})
       (lib.mkIf hasZones {
         psyclyx.nixos.services.nsd = {
-          interfaces = cfg.authoritative.interfaces;
+          # Auto-add localhost when resolver needs to stub to NSD
+          interfaces =
+            cfg.authoritative.interfaces
+            ++ lib.optionals cfg.resolver.enable ["127.0.0.1" "::1"];
           port = cfg.authoritative.port;
           zones =
             lib.mapAttrs (name: zoneCfg: {
@@ -162,18 +167,24 @@
       })
 
       # Resolver via Unbound
-      (lib.mkIf cfg.resolver.enable {
+      (lib.mkIf cfg.resolver.enable (let
+        localZoneCfg = cfg.resolver.localZones;
+      in {
         psyclyx.nixos.services.unbound = {
           enable = true;
-          interfaces = resolveInterfaces cfg.resolver.interfaces;
-          accessControl = subnetAcl;
+          interfaces = cfg.resolver.interfaces;
+          accessControl = cfg.resolver.accessControl;
           stubZones =
             map (name: {
               inherit name;
               stub-addr = "127.0.0.1@${toString cfg.authoritative.port}";
             })
             stubZoneNames;
+          localZones =
+            lib.mapAttrs (_: z: z.type) localZoneCfg;
+          localData =
+            lib.concatLists (lib.mapAttrsToList (_: z: z.records) localZoneCfg);
         };
-      })
+      }))
     ];
 }

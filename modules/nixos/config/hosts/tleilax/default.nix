@@ -1,15 +1,11 @@
 {
   path = ["psyclyx" "nixos" "config" "hosts" "tleilax"];
   variant = ["psyclyx" "nixos" "host"];
-  imports = [./network.nix];
+  imports = [./network.nix ./wireguard.nix];
   config = {
-    lib,
     nixclyx,
     ...
-  }: let
-    net = nixclyx.network;
-    hub = net.peers.${net.rootHub};
-  in {
+  }: {
     networking.hostName = "tleilax";
 
     fileSystems = {
@@ -32,21 +28,37 @@
 
         dns = {
           authoritative = {
-            interfaces = ["199.255.18.171" "2606:7940:32:26::10"]; # Public IPs only
+            ns = "199.255.18.171";
+            interfaces = ["199.255.18.171" "2606:7940:32:26::10"];
             port = 53;
             zones = {
-              "psyclyx.net" = {peerRecords = true;};
               "psyclyx.xyz" = {
                 ttl = 3600;
                 extraRecords = ''
-                  vpn    IN A     ${hub.endpoint}
+                  vpn    IN A     199.255.18.171
                 '';
               };
             };
           };
           resolver = {
             enable = true;
-            interfaces = ["wg0"];
+            interfaces = ["10.157.0.1"];
+            accessControl = ["10.157.0.0/24 allow"];
+            localZones = {
+              "psyclyx.net" = {
+                type = "static";
+                records = [
+                  "tleilax.psyclyx.net. IN A 10.157.0.1"
+                  "sigil.psyclyx.net. IN A 10.157.0.3"
+                  "iyr.psyclyx.net. IN A 10.157.0.2"
+                ];
+              };
+              "psyclyx.xyz" = {
+                type = "transparent";
+                # Split horizon: internal overrides go here
+                # Queries without local-data fall through to NSD (public answers)
+              };
+            };
           };
         };
       };

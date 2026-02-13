@@ -1,6 +1,7 @@
 {
   path = ["psyclyx" "nixos" "config" "hosts" "iyr"];
   variant = ["psyclyx" "nixos" "host"];
+  imports = [./network.nix ./wireguard.nix];
   config = {lib, ...}: {
     networking.hostName = "iyr";
 
@@ -20,6 +21,8 @@
       hardware = {
         cpu.intel.enable = true;
       };
+
+      network.dns.client.enable = true;
 
       role = "server";
     };

@@ -1,7 +1,7 @@
 {
   path = ["psyclyx" "nixos" "config" "hosts" "sigil"];
   variant = ["psyclyx" "nixos" "host"];
-  imports = [./hardware.nix ./network.nix];
+  imports = [./hardware.nix ./network.nix ./wireguard.nix];
   config = {
     lib,
     pkgs,
@@ -37,6 +37,8 @@
         glasgow.enable = true;
         steam.enable = true;
       };
+
+      network.dns.client.enable = true;
 
       role = "workstation";
 

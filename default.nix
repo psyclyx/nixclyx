@@ -6,7 +6,7 @@ let
   overlay = import ./overlay.nix;
   packages = import ./packages;
 
-  mkNixclyx = {pkiStateFile ? ./pki-state.json}: let
+  mkNixclyx = {...}: let
     modules = {
       nixos = {
         options = import ./modules/nixos/options {inherit nixclyx;};
@@ -82,33 +82,6 @@ let
             {psyclyx.nixos.programs.nvf.enable = true;}
           ];
         }).neovim;
-      network = let
-        config = builtins.fromJSON (builtins.readFile ./network.json);
-        emptyState = {
-          serial = 0;
-          identities = {};
-          certs = {};
-          revokedSerials = [];
-        };
-        pkiState =
-          if builtins.pathExists pkiStateFile
-          then builtins.fromJSON (builtins.readFile pkiStateFile)
-          else emptyState;
-        # Merge wireguard public keys from pki-state identities into peers
-        peers =
-          builtins.mapAttrs (
-            name: peer:
-              peer // (
-                if pkiState.identities ? ${name}
-                then { publicKey = pkiState.identities.${name}.wireguard.publicKey or null; }
-                else {}
-              )
-          )
-          config.peers;
-        allSubnets4 = builtins.map (s: s.subnet4) (builtins.attrValues config.sites);
-        allSubnets6 = builtins.map (s: s.subnet6) (builtins.attrValues config.sites);
-      in
-        config // {inherit peers allSubnets4 allSubnets6; state = pkiState;};
     };
   in
     nixclyx;
