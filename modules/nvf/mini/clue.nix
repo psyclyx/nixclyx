@@ -85,6 +85,10 @@
               mode = "x";
               keys = "]";
             }
+            {
+              mode = "n";
+              keys = "<Leader>m";
+            }
           ];
           clues = [
             (mkLuaInline "require('mini.clue').gen_clues.builtin_completion()")
@@ -173,6 +177,16 @@
               mode = "x";
               keys = "<Leader>d";
               desc = "+debug";
+            }
+            {
+              mode = "x";
+              keys = "<Leader>s";
+              desc = "+search";
+            }
+            {
+              mode = "n";
+              keys = "<Leader>m";
+              desc = "+local/repl";
             }
           ];
           window = {

@@ -474,7 +474,7 @@
         }
         {
           key = "<leader>sw";
-          mode = ["n"];
+          mode = ["n" "v"];
           action = "<cmd>lua Snacks.picker.grep_word()<CR>";
           silent = true;
           desc = "Search word under cursor";
@@ -499,13 +499,6 @@
           action = "<cmd>lua Snacks.picker.diagnostics()<CR>";
           silent = true;
           desc = "Search diagnostics";
-        }
-        {
-          key = "<leader>ss";
-          mode = ["n"];
-          action = "<cmd>lua Snacks.picker.lsp_symbols()<CR>";
-          silent = true;
-          desc = "Search symbols";
         }
         {
           key = "<leader>st";
