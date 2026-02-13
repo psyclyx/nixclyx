@@ -28,6 +28,16 @@
       default = [];
       description = "Zones to stub to a local authoritative server.";
     };
+    localZones = lib.mkOption {
+      type = lib.types.attrsOf lib.types.str;
+      default = {};
+      description = "Local zone declarations mapping zone name to type (e.g., { \"example.com\" = \"static\"; }).";
+    };
+    localData = lib.mkOption {
+      type = lib.types.listOf lib.types.str;
+      default = [];
+      description = "Local data entries without quoting (e.g., 'host.example.com. IN A 10.0.0.1').";
+    };
     forward = {
       upstream = lib.mkOption {
         type = lib.types.listOf lib.types.str;
@@ -50,16 +60,23 @@
     services.unbound = {
       enable = true;
       settings = {
-        server = {
-          interface = ["127.0.0.1" "::1"] ++ cfg.interfaces;
-          access-control =
-            [
-              "127.0.0.0/8 allow"
-              "::1/128 allow"
-            ]
-            ++ cfg.accessControl;
-          do-not-query-localhost = false;
-        };
+        server =
+          {
+            interface = ["127.0.0.1" "::1"] ++ cfg.interfaces;
+            access-control =
+              [
+                "127.0.0.0/8 allow"
+                "::1/128 allow"
+              ]
+              ++ cfg.accessControl;
+            do-not-query-localhost = false;
+          }
+          // lib.optionalAttrs (cfg.localZones != {}) {
+            local-zone = lib.mapAttrsToList (name: type: ''"${name}." ${type}'') cfg.localZones;
+          }
+          // lib.optionalAttrs (cfg.localData != []) {
+            local-data = map (d: ''"${d}"'') cfg.localData;
+          };
         stub-zone = cfg.stubZones;
         forward-zone = [
           {
