@@ -1,0 +1,51 @@
+{
+  "cas": {
+    "host":   { "env": "PKI_HOST_CA",   "default": "~/.ssh/ca/host_ca" },
+    "initrd": { "env": "PKI_INITRD_CA", "default": "~/.ssh/ca/initrd_ca" },
+    "user":   { "env": "PKI_USER_CA",   "default": "~/.ssh/ca/user_ca" }
+  },
+  "keyTypes": {
+    "sshHost": {
+      "method": "host",
+      "path": "/etc/ssh/ssh_host_ed25519_key",
+      "sign": {
+        "certType": "host",
+        "ca": "host",
+        "certPath": "/etc/ssh/ssh_host_ed25519_key-cert.pub",
+        "principals": "{id},{fqdn}",
+        "identity": "{fqdn}-host"
+      }
+    },
+    "sshInitrd": {
+      "method": "host",
+      "path": "/etc/secrets/initrd/ssh_host_ed25519_key",
+      "sign": {
+        "certType": "host",
+        "ca": "initrd",
+        "certPath": "/etc/secrets/initrd/ssh_host_ed25519_key-cert.pub",
+        "principals": "{id},{fqdn}",
+        "identity": "{fqdn}-initrd"
+      }
+    },
+    "sshUserRoot": {
+      "method": "user",
+      "path": "/root/.ssh/id_ed25519",
+      "comment": "root@{id}",
+      "sign": {
+        "certType": "user",
+        "ca": "user",
+        "certPath": "/root/.ssh/id_ed25519-cert.pub",
+        "principals": "root",
+        "identity": "root@{fqdn}"
+      }
+    },
+    "wireguard": {
+      "method": "wg",
+      "path": "/etc/secrets/wireguard/private.key"
+    },
+    "wireguardPsk": {
+      "method": "wg-psk",
+      "path": "/etc/secrets/wireguard/psk/{peerId}.key"
+    }
+  }
+}

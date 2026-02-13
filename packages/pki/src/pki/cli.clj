@@ -1,9 +1,13 @@
 (ns pki.cli
   "CLI entrypoint for PKI management."
   (:require [babashka.cli :as cli]
-            [pki.core :as core]
+            [pki.config :as config]
+            [pki.state :as state]
             [pki.sign :as sign]
-            [pki.provision :as provision]
+            [pki.ensure :as ensure]
+            [pki.target :as target]
+            [pki.migrate :as migrate]
+            [pki.shell :as sh]
             [clojure.string :as str]))
 
 (defn- die! [msg]
@@ -15,131 +19,119 @@
   (println "Usage: pki <command> [options]
 
 Commands:
-  provision [peer...]   Provision peers (all if none specified)
-  check [peer...]       Check mode (no signing)
-  add-peer <name>       Add a new peer interactively
-  wg-quick <peer>       Generate wg-quick config for a peer
-  sign <type>           Sign pubkey from stdin (type: host|user|initrd)
-  enroll [options]      Enroll local workstation
-  revoke <serial...>    Add serials to revocation list
-  generate-krl          Generate KRL files from revoked serials
-  status                Show current state summary
+  ensure <keyTypes> <id> [options]   Generate, sign, deploy, record
+  check  <keyTypes> <id> [options]   Check key existence on target
+  sign   <type> [options]            Sign pubkey from stdin (raw)
+  revoke <serial...>                 Add serials to revocation list
+  krl                                Generate KRL files
+  status                             Show state summary
+  migrate                            Migrate old state.json
 
-Files:
-  network.json   Network topology config (peers, sites, port)
-  state.json     Operational state (credentials, serials, certs)
+Target options (ensure/check):
+  --ssh USER@HOST    SSH target
+  -J, --jump HOST    SSH jump host
+  -p, --port PORT    SSH port
+  --local            Local target (default when no --ssh)
+  --root PATH        Filesystem root prefix
+
+Ensure options:
+  --rotate           Delete and regenerate keys
+  --force            Don't prompt before overwriting files
+  --var KEY=VAL      Template variable (repeatable)
+
+Sign options:
+  --principals LIST  Comma-separated principals (required)
+  --identity STR     Certificate identity (required)
+  --ca PATH          CA key path
+  --ca-type TYPE     host or user (default: host)
 
 CA keys (override with env vars):
   ~/.ssh/ca/host_ca      (or PKI_HOST_CA)
   ~/.ssh/ca/user_ca      (or PKI_USER_CA)
-  ~/.ssh/ca/initrd_ca    (or PKI_INITRD_CA)
+  ~/.ssh/ca/initrd_ca    (or PKI_INITRD_CA)"))
 
-Provision options:
-  -J, --jump HOST   SSH jump host (e.g. 'user@jumphost')
-  -p, --port PORT   SSH port (default: 22)
-  -r, --rotate      Rotate keys before provisioning
+;; --- Helper: parse --var KEY=VAL into a map ---
 
-wg-quick options:
-  --gen-key         Generate new keypair (updates state.json with pubkey)
-  --private-key K   Use existing private key
-  (no key option)   Output with __PRIVATE_KEY__ placeholder for updates
-
-Sign options:
-  --principals LIST   Comma-separated principals (required)
-  --identity STR      Certificate identity (required)
-  --ca PATH           CA key path (overrides default)
-
-Enroll options:
-  --principal NAME    User certificate principal (default: current user)
-  --identity STR      Certificate identity (default: user@hostname)
-  --host              Also enroll local host key"))
+(defn- parse-vars
+  "Parse --var options into a map. Accepts a single string or vector of strings."
+  [var-opt]
+  (let [vars (cond
+               (nil? var-opt) []
+               (string? var-opt) [var-opt]
+               (sequential? var-opt) var-opt
+               :else [var-opt])]
+    (reduce (fn [m v]
+              (let [[k val] (str/split (str v) #"=" 2)]
+                (when-not val
+                  (throw (ex-info (str "Invalid --var format (expected KEY=VAL): " v)
+                                  {:var v})))
+                (assoc m (keyword k) val)))
+            {}
+            vars)))
 
 ;; --- Commands ---
 
 (defn cmd-status [_opts _args]
-  (let [network (core/read-network)
-        state (core/read-state)
-        merged (core/read-merged)
-        peer-count (count (:peers network))
-        provisioned-count (count (filter #(:publicKey (val %)) (:peers merged)))
-        cert-count (count (:certs state))
-        revoked-count (count (:revoked_serials state))]
-    (println "serial:     " (:serial state 0))
-    (println "peers:      " peer-count (str "(" provisioned-count " provisioned)"))
+  (let [st (state/read-state)
+        id-count (count (:identities st))
+        cert-count (count (:certs st))
+        revoked-count (count (state/revoked-serials st))]
+    (println "serial:     " (:serial st 0))
+    (println "identities: " id-count)
     (println "certs:      " cert-count)
     (println "revoked:    " revoked-count)
 
-    (when (pos? peer-count)
+    (when (pos? id-count)
       (println)
-      (println "peers:")
-      (doseq [[name peer] (:peers merged)]
-        (let [status (if (:publicKey peer) "✓" "○")]
-          (println (str "  " status " " (clojure.core/name name) ": "
-                        (:ip4 peer) " (" (:site peer) ")")))))
+      (println "identities:")
+      (doseq [[id-name id-data] (:identities st)]
+        (let [key-types (keys id-data)
+              summary (str/join ", " (map name key-types))]
+          (println (str "  " (name id-name) ": " summary)))))
 
     (when (pos? revoked-count)
       (println)
       (println "revoked serials:")
-      (doseq [s (:revoked_serials state)]
+      (doseq [s (state/revoked-serials st)]
         (println (str "  " s))))))
 
-(defn cmd-provision [opts args]
-  (provision/provision-peers!
-   {:peer-names args
-    :check false
-    :rotate (:rotate opts)
-    :jump (:jump opts)
-    :port (:port opts)}))
+(defn cmd-ensure [opts args]
+  (when (< (count args) 2)
+    (die! "ensure requires <keyTypes> and <id>"))
+
+  (let [key-types (first args)
+        id (second args)
+        vars (parse-vars (:var opts))
+        tgt (target/make-target opts)]
+    (ensure/ensure! {:key-types key-types
+                     :id id
+                     :vars vars
+                     :target tgt
+                     :rotate (:rotate opts)
+                     :force (:force opts)
+                     :root (:root opts)})))
 
 (defn cmd-check [opts args]
-  (provision/provision-peers!
-   {:peer-names args
-    :check true
-    :jump (:jump opts)
-    :port (:port opts)}))
+  (when (< (count args) 2)
+    (die! "check requires <keyTypes> and <id>"))
 
-(defn cmd-add-peer [_opts args]
-  (when (empty? args)
-    (die! "add-peer requires a peer name"))
-
-  (let [peer-name (first args)
-        network (core/read-network)
-        sites (keys (:sites network))]
-
-    (println "Available sites:" (str/join ", " (map name sites)))
-    (print "Site: ")
-    (flush)
-    (let [site (str/trim (read-line))]
-      (when (str/blank? site)
-        (die! "Site required"))
-      (when-not ((set (map name sites)) site)
-        (die! (str "Unknown site: " site)))
-
-      (let [suffix (core/next-available-ip site)
-            ips (core/make-peer-ips site suffix)]
-
-        (print (str "FQDN for " peer-name " (e.g., device.roam.psyclyx.net): "))
-        (flush)
-        (let [fqdn (str/trim (read-line))]
-          (when (str/blank? fqdn)
-            (die! "FQDN required"))
-
-          ;; Config only - no credentials (those go in state.json via provision)
-          (let [peer-data (merge ips {:site site :fqdn fqdn})]
-            (core/add-peer! peer-name peer-data)
-            (println (str "Added peer " peer-name " to network.json"))
-            (println (str "  Site: " site))
-            (println (str "  IPs:  " (:ip4 ips) " / " (:ip6 ips)))
-            (println)
-            (println "Run 'pki provision" peer-name "' to generate keys and credentials")))))))
+  (let [key-types (first args)
+        id (second args)
+        vars (parse-vars (:var opts))
+        tgt (target/make-target opts)]
+    (ensure/check! {:key-types key-types
+                    :id id
+                    :vars vars
+                    :target tgt
+                    :root (:root opts)})))
 
 (defn cmd-sign [opts args]
   (when (empty? args)
-    (die! "sign requires a type (host|user|initrd)"))
+    (die! "sign requires a type (host|user)"))
 
   (let [sign-type (keyword (first args))
-        _ (when-not (#{:host :user :initrd} sign-type)
-            (die! (str "Unknown sign type: " (first args) " (use host|user|initrd)")))
+        _ (when-not (#{:host :user} sign-type)
+            (die! (str "Unknown sign type: " (first args) " (use host|user)")))
         principals (:principals opts)
         identity (:identity opts)
         _ (when-not principals (die! "--principals required"))
@@ -149,150 +141,65 @@ Enroll options:
     (when (str/blank? pubkey)
       (die! "No public key provided on stdin"))
 
-    (let [result (sign/sign-key!
-                  {:ca-type sign-type
-                   :ca-path (:ca opts)
-                   :principals principals
-                   :identity identity
-                   :pubkey pubkey})]
+    (let [ca-path (or (:ca opts)
+                      (config/resolve-ca-path (config/read-config)
+                                              (name (or (:ca-type opts) sign-type))))
+          serial (state/allocate-serial!)
+          result (sign/sign-key!
+                   {:ca-type sign-type
+                    :ca-path ca-path
+                    :principals principals
+                    :identity identity
+                    :serial serial
+                    :pubkey pubkey})]
+
+      ;; Record cert in state
+      (state/record-cert! serial
+                          {:id "manual"
+                           :keyType (name sign-type)
+                           :ca (name sign-type)
+                           :identity identity
+                           :principals principals
+                           :issuedAt (.toString (java.time.Instant/now))})
+
       (println (:cert result))
       (binding [*out* *err*]
-        (println (str "Signed with serial " (:serial result)))))))
+        (println (str "Signed with serial " serial))))))
 
 (defn cmd-revoke [_opts args]
   (when (empty? args)
     (die! "revoke requires at least one serial number"))
 
   (let [serials (map parse-long args)]
-    (core/revoke-serials! serials)
+    (state/revoke-serials! serials)
     (println (str "Revoked serials: " (str/join ", " serials)))))
 
-(defn cmd-generate-krl [_opts _args]
-  (let [state (core/read-state)
-        revoked (core/revoked-serials state)]
+(defn cmd-krl [_opts _args]
+  (let [st (state/read-state)
+        revoked (state/revoked-serials st)]
     (if (empty? revoked)
       (println "No revoked serials, nothing to do")
-      (let [version (:serial state)
-            pki-dir core/*repo-root*]
-        (doseq [ca-type [:host :initrd :user]]
-          (let [ca-serials (->> (:certs state)
-                                (filter (fn [[_ cert]] (= (name ca-type) (:ca cert))))
+      (let [version (:serial st)
+            pki-config (config/read-config)
+            pki-dir config/*repo-root*]
+        (doseq [ca-name (keys (:cas pki-config))]
+          (let [ca-serials (->> (:certs st)
+                                (filter (fn [[_ cert]] (= (name ca-name) (:ca cert))))
                                 (map (fn [[s _]] (parse-long s)))
                                 (filter (set revoked)))]
             (if (empty? ca-serials)
-              (println (str "No revoked serials for " (name ca-type) " CA, skipping"))
-              (let [ca-key (core/ca-path ca-type)
-                    krl-path (str pki-dir "/krl-" (name ca-type) ".krl")
+              (println (str "No revoked serials for " (name ca-name) " CA, skipping"))
+              (let [ca-key (config/resolve-ca-path pki-config (name ca-name))
+                    krl-path (str pki-dir "/krl-" (name ca-name) ".krl")
                     spec-content (str/join "\n" (map #(str "serial: " %) ca-serials))
                     spec-file (str (babashka.fs/create-temp-file) ".spec")]
                 (spit spec-file spec-content)
-                (pki.shell/run! "ssh-keygen" "-k" "-f" krl-path "-s" ca-key "-z" (str version) spec-file)
+                (sh/run! "ssh-keygen" "-k" "-f" krl-path "-s" ca-key "-z" (str version) spec-file)
                 (babashka.fs/delete spec-file)
                 (println (str "Wrote " krl-path " (version " version ")"))))))))))
 
-(defn cmd-enroll [opts _args]
-  (let [current-user (System/getenv "USER")
-        current-hostname (str/trim (pki.shell/run-out! "hostname" "-s"))
-        current-fqdn (str/trim (pki.shell/run-out! "hostname" "-f"))
-        principal (or (:principal opts) current-user)
-        identity (or (:identity opts) (str current-user "@" current-fqdn))]
-
-    ;; Enroll user key
-    (println "==> Ensuring user key")
-    (let [user-pub (pki.shell/run-out! "ensure-key" "user" "--std" "self"
-                                       "--comment" (str current-user "@" current-hostname))
-          serial (core/allocate-serial!)]
-      (println (str "==> Signing user key (serial " serial ")"))
-      (let [result (sign/sign-key! {:ca-type :user
-                                    :principals principal
-                                    :identity identity
-                                    :serial serial
-                                    :pubkey user-pub})
-            cert-path (str (System/getenv "HOME") "/.ssh/id_ed25519-cert.pub")]
-        (spit cert-path (:cert result))
-        (println (str "==> Wrote " cert-path))))
-
-    ;; Optionally enroll host key
-    (when (:host opts)
-      (println "==> Ensuring host key")
-      (let [host-pub (pki.shell/run-out! "ensure-key" "host" "--std" "sshd")
-            serial (core/allocate-serial!)]
-        (println (str "==> Signing host key (serial " serial ")"))
-        (let [result (sign/sign-key! {:ca-type :host
-                                      :principals (str current-hostname "," current-fqdn)
-                                      :identity (str current-fqdn "-host")
-                                      :serial serial
-                                      :pubkey host-pub})
-              cert-path "/etc/ssh/ssh_host_ed25519_key-cert.pub"]
-          (spit cert-path (:cert result))
-          (println (str "==> Wrote " cert-path)))))
-
-    (println (str "==> Enroll complete (next serial: " (:serial (core/read-state)) ")"))))
-
-(defn cmd-wg-quick [opts args]
-  (when (empty? args)
-    (die! "wg-quick requires a peer name"))
-
-  (let [peer-name (first args)
-        network (core/read-network)
-        peer (core/get-peer-with-state peer-name)
-        _ (when-not peer (die! (str "Peer not found: " peer-name)))
-
-        root-hub-name (:rootHub network)
-        root-hub (core/get-peer-with-state root-hub-name)
-
-        ;; Determine which hub this peer connects to
-        peer-site (get-in network [:sites (keyword (:site peer))])
-        site-hub (:hub peer-site)
-        hub-name (or site-hub root-hub-name)
-        hub (core/get-peer-with-state hub-name)
-
-        ;; Get or generate private key, or use placeholder
-        private-key (cond
-                      (:private-key opts) (:private-key opts)
-                      (:gen-key opts) (str/trim (pki.shell/run-out! "wg" "genkey"))
-                      :else "__PRIVATE_KEY__")
-
-        ;; Calculate public key and update state if generating
-        _ (when (:gen-key opts)
-            (let [public-key (str/trim (:out (pki.shell/run!
-                                               {:in private-key}
-                                               "wg" "pubkey")))]
-              (core/update-peer-state! peer-name {:publicKey public-key})
-              (binding [*out* *err*]
-                (println "Updated" peer-name "publicKey in state.json"))))
-
-        ;; Build AllowedIPs - all subnets
-        all-subnets (->> (:sites network)
-                         vals
-                         (mapcat (fn [s] [(:subnet4 s) (:subnet6 s)])))
-
-        ;; Hub endpoint
-        hub-endpoint (or (:endpoint hub)
-                         (die! (str "Hub " hub-name " has no endpoint")))
-
-        ;; Generate config
-        wg-quick-conf (str "[Interface]\n"
-                          "PrivateKey = " private-key "\n"
-                          "Address = " (:ip4 peer) "/24, " (:ip6 peer) "/64\n"
-                          "DNS = " (:ip4 root-hub) "\n"
-                          "\n"
-                          "[Peer]\n"
-                          "PublicKey = " (or (:publicKey hub) "<HUB_PUBLIC_KEY>") "\n"
-                          "AllowedIPs = " (str/join ", " all-subnets) "\n"
-                          "Endpoint = " hub-endpoint ":" (:port network) "\n"
-                          "PersistentKeepalive = 25\n")]
-
-    (println wg-quick-conf)
-
-    ;; If using placeholder, print update instructions to stderr
-    (when (= private-key "__PRIVATE_KEY__")
-      (binding [*out* *err*]
-        (println)
-        (println "# Update existing config (preserves private key):")
-        (println "# KEY=$(grep PrivateKey /etc/wireguard/wg0.conf | awk '{print $3}')")
-        (println "# <above output> | sed \"s/__PRIVATE_KEY__/$KEY/\" > /etc/wireguard/wg0.conf")
-        (println "# wg syncconf wg0 <(wg-quick strip /etc/wireguard/wg0.conf)")))))
+(defn cmd-migrate [_opts _args]
+  (migrate/migrate!))
 
 ;; --- Main ---
 
@@ -300,13 +207,15 @@ Enroll options:
   {:principals {:alias :n :desc "Comma-separated principals"}
    :identity {:alias :i :desc "Certificate identity"}
    :ca {:desc "CA key path (overrides env var)"}
-   :principal {:desc "User principal for enroll"}
-   :host {:alias :h :coerce :boolean :desc "Also enroll host key"}
-   :rotate {:alias :r :coerce :boolean :desc "Rotate keys before provisioning"}
-   :jump {:alias :J :desc "SSH jump host (passed to -J)"}
-   :port {:alias :p :coerce :int :desc "SSH port (passed to -p)"}
-   :gen-key {:coerce :boolean :desc "Generate new WireGuard keypair"}
-   :private-key {:desc "Existing WireGuard private key"}
+   :ca-type {:desc "Certificate type for sign (host or user)"}
+   :rotate {:alias :r :coerce :boolean :desc "Rotate keys"}
+   :force {:alias :f :coerce :boolean :desc "Don't prompt before overwriting"}
+   :ssh {:desc "SSH target (USER@HOST)"}
+   :jump {:alias :J :desc "SSH jump host"}
+   :port {:alias :p :coerce :int :desc "SSH port"}
+   :local {:coerce :boolean :desc "Local target (default)"}
+   :root {:desc "Filesystem root prefix"}
+   :var {:coerce [] :desc "Template variable (KEY=VAL, repeatable)"}
    :help {:coerce :boolean :desc "Show help"}})
 
 (defn -main [& args]
@@ -314,7 +223,8 @@ Enroll options:
         [cmd & cmd-args] args]
 
     ;; Initialize paths (finds repo root automatically)
-    (core/init-paths!)
+    (config/init-paths!)
+    (state/init-paths!)
 
     (when (or (:help opts) (nil? cmd))
       (print-usage!)
@@ -322,14 +232,12 @@ Enroll options:
 
     (case cmd
       "status" (cmd-status opts cmd-args)
-      "provision" (cmd-provision opts cmd-args)
+      "ensure" (cmd-ensure opts cmd-args)
       "check" (cmd-check opts cmd-args)
-      "add-peer" (cmd-add-peer opts cmd-args)
       "sign" (cmd-sign opts cmd-args)
       "revoke" (cmd-revoke opts cmd-args)
-      "generate-krl" (cmd-generate-krl opts cmd-args)
-      "enroll" (cmd-enroll opts cmd-args)
-      "wg-quick" (cmd-wg-quick opts cmd-args)
+      "krl" (cmd-krl opts cmd-args)
+      "migrate" (cmd-migrate opts cmd-args)
       (die! (str "Unknown command: " cmd)))))
 
 ;; Entry point when run directly
