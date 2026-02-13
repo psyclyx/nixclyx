@@ -86,6 +86,7 @@
              :method (:method kt)
              :path (resolve (:path kt))}
       (:comment kt) (assoc :comment (resolve (:comment kt)))
+      (:owner kt)   (assoc :owner (resolve (:owner kt)))
       (:sign kt)    (assoc :sign
                            (let [sign (:sign kt)]
                              {:certType (:certType sign)

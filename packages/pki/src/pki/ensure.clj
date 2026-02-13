@@ -55,6 +55,25 @@
                        :issuedAt (.toString (java.time.Instant/now))})
   (println (str "==> " kt-name ": recorded in pki-state.json")))
 
+(defn- chown-key-files!
+  "Chown key files and parent directory to the specified owner on target."
+  [target resolved-kt root]
+  (when-let [owner (:owner resolved-kt)]
+    (let [prefix (or root "")
+          key-path (str prefix (:path resolved-kt))
+          dir (str key-path "/..")]
+      (print-step (:label target) (:name resolved-kt)
+                  (str "chown " owner " " key-path " (and related files)"))
+      (target/run-cmd! target {:continue true}
+                        "sh" "-c"
+                        (str "chown " owner " "
+                             "'" key-path "' "
+                             "'" key-path ".pub' "
+                             "'" key-path "-cert.pub' "
+                             "2>/dev/null; "
+                             "chown " owner " "
+                             "\"$(dirname '" key-path "')\"")))))
+
 (defn ensure-key-type!
   "Ensure a single key type for an identity on a target.
    Options:
@@ -90,45 +109,51 @@
             (state/record-key! id kt-name pubkey))
 
           ;; Sign if sign config is present
-          (if-let [sign-cfg (:sign resolved-kt)]
-            (let [serial (state/allocate-serial!)
-                  ca-path (config/resolve-ca-path pki-config (:ca sign-cfg))
+          (let [final-result
+                (if-let [sign-cfg (:sign resolved-kt)]
+                  (let [serial (state/allocate-serial!)
+                        ca-path (config/resolve-ca-path pki-config (:ca sign-cfg))
 
-                  _ (print-step kt-name
-                                (str "signing certificate (serial " serial ", ca: " (:ca sign-cfg) ")"))
-                  _ (println (str "    principals: " (:principals sign-cfg)))
-                  _ (println (str "    identity: " (:identity sign-cfg)))
+                        _ (print-step kt-name
+                                      (str "signing certificate (serial " serial ", ca: " (:ca sign-cfg) ")"))
+                        _ (println (str "    principals: " (:principals sign-cfg)))
+                        _ (println (str "    identity: " (:identity sign-cfg)))
 
-                  cert-result (sign/sign-key!
-                               {:ca-type (keyword (:certType sign-cfg))
-                                :ca-path ca-path
-                                :principals (:principals sign-cfg)
-                                :identity (:identity sign-cfg)
-                                :serial serial
-                                :pubkey pubkey})
-                  cert (:cert cert-result)
-                  cert-path (:certPath sign-cfg)]
+                        cert-result (sign/sign-key!
+                                     {:ca-type (keyword (:certType sign-cfg))
+                                      :ca-path ca-path
+                                      :principals (:principals sign-cfg)
+                                      :identity (:identity sign-cfg)
+                                      :serial serial
+                                      :pubkey pubkey})
+                        cert (:cert cert-result)
+                        cert-path (:certPath sign-cfg)]
 
-              ;; Check if cert exists on target and prompt
-              (print-step target-label kt-name
-                          (str "deploying cert to " cert-path))
-              (let [exists (target/file-exists? target cert-path)
-                    should-deploy (or (not exists) (prompt-overwrite cert-path force))]
+                    ;; Check if cert exists on target and prompt
+                    (print-step target-label kt-name
+                                (str "deploying cert to " cert-path))
+                    (let [exists (target/file-exists? target cert-path)
+                          should-deploy (or (not exists) (prompt-overwrite cert-path force))]
 
-                (if should-deploy
-                  ;; Deploy cert
-                  (target/write-file! target cert-path cert)
-                  ;; Skipped
-                  (println "    skipped."))
+                      (if should-deploy
+                        ;; Deploy cert
+                        (target/write-file! target cert-path cert)
+                        ;; Skipped
+                        (println "    skipped."))
 
-                ;; Record cert regardless of whether we deployed
-                (record-and-print! id kt-name serial sign-cfg)
-                (assoc result :certSerial serial)))
+                      ;; Record cert regardless of whether we deployed
+                      (record-and-print! id kt-name serial sign-cfg)
+                      (assoc result :certSerial serial)))
 
-            ;; No sign config, just record key
-            (do
-              (println (str "==> " kt-name ": recorded in pki-state.json"))
-              result)))))))
+                  ;; No sign config, just record key
+                  (do
+                    (println (str "==> " kt-name ": recorded in pki-state.json"))
+                    result))]
+
+            ;; Fix ownership if owner is specified
+            (chown-key-files! target resolved-kt root)
+
+            final-result))))))
 
 (defn ensure!
   "Ensure multiple key types for an identity.
