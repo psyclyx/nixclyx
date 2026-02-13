@@ -17,6 +17,7 @@
       enable = true;
       settings = {
         imports = [nixclyx.modules.nvf];
+        psyclyx.nixos.programs.nvf.enable = true;
         psyclyx.nixos.programs.nvf.anthropicKeyFile = cfg.anthropicKeyFile;
       };
     };
