@@ -127,6 +127,7 @@
                                        :sshUser {:method "user"
                                                   :path "{home}/.ssh/id_ed25519"
                                                   :comment "{user}@{id}"
+                                                  :owner "{user}"
                                                   :sign {:certType "user"
                                                          :ca "user"
                                                          :certPath "{home}/.ssh/id_ed25519-cert.pub"
