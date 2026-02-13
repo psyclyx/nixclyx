@@ -11,10 +11,10 @@ in {
       default = "192.0.2.1"; # TEST-NET-1 placeholder
       description = "Public IPv4 address.";
     };
-    ipv6Prefix = lib.mkOption {
+    ipv6 = lib.mkOption {
       type = lib.types.str;
       default = "2001:db8::"; # Documentation prefix placeholder
-      description = "IPv6 prefix (e.g., '2001:db8::').";
+      description = "IPv6 prefix (e.g., '2606:7940:32:26::').";
     };
   };
 
@@ -22,7 +22,7 @@ in {
     systemd.network = {
       wait-online.enable = true;
       netdevs = {
-        "30-bond0" = {
+        "20-bond0" = {
           netdevConfig = {
             Name = "bond0";
             Kind = "bond";
@@ -35,22 +35,24 @@ in {
           };
         };
       };
+
       networks = {
         "10-eno-disable" = {
           matchConfig.Name = "eno0 eno1";
           linkConfig.ActivationPolicy = "down";
         };
-        "30-bond0-ports" = {
+        "20-bond0-ports" = {
           matchConfig.Name = "ens1f0np0 ens1f1np1";
           networkConfig.Bond = "bond0";
         };
-        "30-bond0" = {
+
+        "20-bond0" = {
           matchConfig.Name = "bond0";
           linkConfig.RequiredForOnline = "routable";
 
           address = [
             "${cfg.ipv4}/32"
-            "${cfg.ipv6Prefix}10/120"
+            "${cfg.ipv6}10/120"
           ];
 
           networkConfig = {
@@ -61,11 +63,11 @@ in {
           routes = [
             {
               Destination = "::/0";
-              Gateway = "${cfg.ipv6Prefix}1";
+              Gateway = "${cfg.ipv6}1";
             }
             {
               Destination = "0.0.0.0/0";
-              Gateway = "${cfg.ipv6Prefix}1";
+              Gateway = "${cfg.ipv6}1";
             }
           ];
 
