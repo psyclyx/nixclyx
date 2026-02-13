@@ -166,6 +166,11 @@
             }
             {
               mode = "x";
+              keys = "<Leader>c";
+              desc = "+code";
+            }
+            {
+              mode = "x";
               keys = "<Leader>d";
               desc = "+debug";
             }

@@ -4,7 +4,6 @@
   config = {...}: {
     vim = {
       # ── Utility ───────────────────────────────────────────────────
-      mini.bufremove.enable = true;
       mini.trailspace.enable = true;
       mini.sessions.enable = true;
     };

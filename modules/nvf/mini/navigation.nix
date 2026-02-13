@@ -10,9 +10,6 @@
         enable = true;
         setupOpts.options.use_as_default_explorer = true;
       };
-      mini.pick.enable = true;
-      mini.extra.enable = true;
-      mini.fuzzy.enable = true;
       mini.visits.enable = true;
       mini.jump.enable = true;
       mini.jump2d.enable = true;
