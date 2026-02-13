@@ -70,11 +70,12 @@
         dest-str (str user "@" host)]
     {:label (str "ssh:" dest-str)
      :run-cmd! (fn [opts & args]
-                 ;; If the command is ensure-key, make sure it's been pushed
-                 (let [cmd-name (first args)]
-                   (when (= cmd-name "ensure-key")
-                     (ensure-key-pushed! host conn-opts pushed-atom)))
-                 (let [ssh-args (concat ["ssh"] (ssh-opts conn-opts) [dest-str]
+                 ;; If the command is ensure-key, push it and rewrite to full path
+                 (let [args (if (= (first args) "ensure-key")
+                              (let [bin-path (ensure-key-pushed! host conn-opts pushed-atom)]
+                                (cons bin-path (rest args)))
+                              args)
+                       ssh-args (concat ["ssh"] (ssh-opts conn-opts) [dest-str]
                                         (map str args))]
                    (apply sh/run! opts ssh-args)))
      :write! (fn [path content]
