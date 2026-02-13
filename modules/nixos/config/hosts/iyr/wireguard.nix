@@ -1,6 +1,7 @@
 {
   config,
   lib,
+  ...
 }:
 lib.mkIf (config.psyclyx.host == "iyr")
 {
