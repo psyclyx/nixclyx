@@ -8,9 +8,9 @@
         {
           key = "<leader><leader>";
           mode = ["n"];
-          action = "<cmd>Pick files<CR>";
+          action = "<cmd>lua Snacks.picker.smart()<CR>";
           silent = true;
-          desc = "Find files";
+          desc = "Find files (smart)";
         }
         {
           key = "<leader>.";
@@ -22,14 +22,14 @@
         {
           key = "<leader>,";
           mode = ["n"];
-          action = "<cmd>Pick buffers<CR>";
+          action = "<cmd>lua Snacks.picker.buffers()<CR>";
           silent = true;
           desc = "Switch buffer";
         }
         {
           key = "<leader>/";
           mode = ["n"];
-          action = "<cmd>Pick grep_live<CR>";
+          action = "<cmd>lua Snacks.picker.grep()<CR>";
           silent = true;
           desc = "Search project";
         }
@@ -44,14 +44,14 @@
         {
           key = "<leader>bd";
           mode = ["n"];
-          action = "<cmd>lua MiniBufremove.delete()<CR>";
+          action = "<cmd>lua Snacks.bufdelete()<CR>";
           silent = true;
           desc = "Delete buffer";
         }
         {
           key = "<leader>bD";
           mode = ["n"];
-          action = "<cmd>lua MiniBufremove.delete(0, true)<CR>";
+          action = "<cmd>lua Snacks.bufdelete({force=true})<CR>";
           silent = true;
           desc = "Force delete buffer";
         }
@@ -79,18 +79,25 @@
 
         # ── Files (f) ──
         {
+          key = "<leader>ff";
+          mode = ["n"];
+          action = "<cmd>lua Snacks.picker.files()<CR>";
+          silent = true;
+          desc = "Find files";
+        }
+        {
           key = "<leader>fr";
           mode = ["n"];
-          action = "<cmd>Pick oldfiles<CR>";
+          action = "<cmd>lua Snacks.picker.recent()<CR>";
           silent = true;
           desc = "Recent files";
         }
         {
           key = "<leader>fR";
           mode = ["n"];
-          action = "<cmd>Pick visit_paths<CR>";
+          action = "<cmd>lua Snacks.picker.recent({filter={cwd=true}})<CR>";
           silent = true;
-          desc = "Recent paths (visits)";
+          desc = "Recent files (cwd)";
         }
         {
           key = "<leader>fs";
@@ -160,28 +167,28 @@
         {
           key = "<leader>gs";
           mode = ["n"];
-          action = "<cmd>Pick git_files<CR>";
+          action = "<cmd>lua Snacks.picker.git_status()<CR>";
           silent = true;
-          desc = "Git status (picker)";
+          desc = "Git status";
         }
         {
           key = "<leader>gc";
           mode = ["n"];
-          action = "<cmd>Pick git_commits<CR>";
+          action = "<cmd>lua Snacks.picker.git_log()<CR>";
           silent = true;
           desc = "Git commits";
         }
         {
           key = "<leader>gb";
           mode = ["n"];
-          action = "<cmd>Pick git_branches<CR>";
+          action = "<cmd>lua Snacks.picker.git_branches()<CR>";
           silent = true;
           desc = "Git branches";
         }
         {
           key = "<leader>gh";
           mode = ["n"];
-          action = "<cmd>Pick git_hunks<CR>";
+          action = "<cmd>lua Snacks.picker.git_diff()<CR>";
           silent = true;
           desc = "Git hunks";
         }
@@ -259,28 +266,28 @@
         {
           key = "<leader>hh";
           mode = ["n"];
-          action = "<cmd>Pick help<CR>";
+          action = "<cmd>lua Snacks.picker.help()<CR>";
           silent = true;
           desc = "Help tags";
         }
         {
           key = "<leader>hk";
           mode = ["n"];
-          action = "<cmd>Pick keymaps<CR>";
+          action = "<cmd>lua Snacks.picker.keymaps()<CR>";
           silent = true;
           desc = "Search keymaps";
         }
         {
           key = "<leader>hm";
           mode = ["n"];
-          action = "<cmd>Pick commands<CR>";
+          action = "<cmd>lua Snacks.picker.commands()<CR>";
           silent = true;
           desc = "Search commands";
         }
         {
           key = "<leader>hn";
           mode = ["n"];
-          action = "<cmd>Noice history<CR>";
+          action = "<cmd>lua Snacks.picker.notifications()<CR>";
           silent = true;
           desc = "Notification history";
         }
@@ -303,7 +310,7 @@
         {
           key = "<leader>cr";
           mode = ["n"];
-          action = "<cmd>lua vim.lsp.buf.references()<CR>";
+          action = "<cmd>lua Snacks.picker.lsp_references()<CR>";
           silent = true;
           desc = "Find references";
         }
@@ -323,14 +330,14 @@
         }
         {
           key = "<leader>ca";
-          mode = ["n"];
+          mode = ["n" "v"];
           action = "<cmd>lua vim.lsp.buf.code_action()<CR>";
           silent = true;
           desc = "Code action";
         }
         {
           key = "<leader>cf";
-          mode = ["n"];
+          mode = ["n" "v"];
           action = "<cmd>lua vim.lsp.buf.format()<CR>";
           silent = true;
           desc = "Format";
@@ -348,6 +355,20 @@
           action = "<cmd>lua vim.lsp.buf.signature_help()<CR>";
           silent = true;
           desc = "Signature help";
+        }
+        {
+          key = "<leader>cs";
+          mode = ["n"];
+          action = "<cmd>lua Snacks.picker.lsp_symbols()<CR>";
+          silent = true;
+          desc = "Document symbols";
+        }
+        {
+          key = "<leader>cS";
+          mode = ["n"];
+          action = "<cmd>lua Snacks.picker.lsp_workspace_symbols()<CR>";
+          silent = true;
+          desc = "Workspace symbols";
         }
         {
           key = "<leader>ce";
@@ -445,25 +466,46 @@
 
         # ── Search (s) ──
         {
+          key = "<leader>sg";
+          mode = ["n"];
+          action = "<cmd>lua Snacks.picker.grep()<CR>";
+          silent = true;
+          desc = "Grep";
+        }
+        {
           key = "<leader>sw";
           mode = ["n"];
-          action = "<cmd>Pick grep pattern=\"<cword>\"<CR>";
+          action = "<cmd>lua Snacks.picker.grep_word()<CR>";
           silent = true;
           desc = "Search word under cursor";
         }
         {
           key = "<leader>sb";
           mode = ["n"];
-          action = "<cmd>Pick buf_lines<CR>";
+          action = "<cmd>lua Snacks.picker.lines()<CR>";
           silent = true;
           desc = "Search in buffer";
         }
         {
           key = "<leader>sr";
           mode = ["n"];
-          action = "<cmd>Pick resume<CR>";
+          action = "<cmd>lua Snacks.picker.resume()<CR>";
           silent = true;
           desc = "Resume last search";
+        }
+        {
+          key = "<leader>sd";
+          mode = ["n"];
+          action = "<cmd>lua Snacks.picker.diagnostics()<CR>";
+          silent = true;
+          desc = "Search diagnostics";
+        }
+        {
+          key = "<leader>ss";
+          mode = ["n"];
+          action = "<cmd>lua Snacks.picker.lsp_symbols()<CR>";
+          silent = true;
+          desc = "Search symbols";
         }
         {
           key = "<leader>st";
@@ -471,6 +513,13 @@
           action = "<cmd>TodoQuickFix<CR>";
           silent = true;
           desc = "Search TODOs";
+        }
+        {
+          key = "<leader>sm";
+          mode = ["n"];
+          action = "<cmd>lua Snacks.picker.marks()<CR>";
+          silent = true;
+          desc = "Search marks";
         }
 
         # ── Quit (q) ──
