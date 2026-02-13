@@ -1,8 +1,8 @@
 {
-  path = ["psyclyx" "nixos" "config" "hosts" "vigil"];
+  path = ["psyclyx" "nixos" "config" "hosts" "iyr"];
   variant = ["psyclyx" "nixos" "host"];
   config = {lib, ...}: {
-    networking.hostName = "vigil";
+    networking.hostName = "iyr";
 
     psyclyx.nixos = {
       boot = {

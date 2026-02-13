@@ -40,18 +40,18 @@
     };
   };
 
-  vigil = {...}: {
+  iyr = {...}: {
     imports = [
       nixclyx.modules.nixos.options
       nixclyx.modules.nixos.config
     ];
     config = {
-      psyclyx.nixos.host = "vigil";
+      psyclyx.nixos.host = "iyr";
       deployment = {
         tags = [
           "minipc"
         ];
-        targetHost = "vigil.lan";
+        targetHost = "iyr.lan";
         targetPort = 22;
         targetUser = "root";
       };
