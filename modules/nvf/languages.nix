@@ -1,7 +1,7 @@
 {
   path = ["psyclyx" "nixos" "programs" "nvf" "languages"];
   gate = {config, ...}: config.psyclyx.nixos.programs.nvf.enable;
-  config = {...}: {
+  config = {lib, ...}: {
     vim = {
       # ── Completion ─────────────────────────────────────────────────
       autocomplete.blink-cmp = {
@@ -21,6 +21,7 @@
           completion.documentation.auto_show = true;
           completion.documentation.auto_show_delay_ms = 100;
           fuzzy.implementation = "prefer_rust";
+          signature.enabled = true;
         };
       };
 
@@ -35,7 +36,6 @@
       lsp = {
         enable = true;
         formatOnSave = true;
-        lspSignature.enable = true;
         lightbulb.enable = true;
         inlayHints.enable = true;
         trouble.enable = true;
@@ -43,7 +43,27 @@
 
       visuals.fidget-nvim.enable = true;
       visuals.rainbow-delimiters.enable = true;
-      visuals.highlight-undo.enable = true;
+      visuals.highlight-undo = {
+        enable = true;
+        setupOpts = {
+          ignored_filetypes = [
+            # defaults
+            "neo-tree" "fugitive" "TelescopePrompt" "mason" "lazy"
+            # ui buffers that flash on render
+            "ministarter"
+          ];
+          ignore_cb = lib.generators.mkLuaInline ''
+            function(buf)
+              local bo = vim.bo[buf]
+              if bo.buftype ~= "" then return true end
+              if not bo.modifiable then return true end
+              local name = vim.api.nvim_buf_get_name(buf)
+              if name:match("conjure%-log%-") then return true end
+              return false
+            end
+          '';
+        };
+      };
       visuals.hlargs-nvim.enable = true;
 
       diagnostics.enable = true;
@@ -93,6 +113,12 @@
 
       # ── REPL ──────────────────────────────────────────────────────
       repl.conjure.enable = true;
+      globals.conjure = {
+        filetype.clojure = "conjure.client.clojure.nrepl";
+        client.clojure.nrepl.connection.auto_repl = {
+          cmd = "clj -Sdeps '{:deps {nrepl/nrepl {:mvn/version \"1.3.0\"} cider/cider-nrepl {:mvn/version \"0.50.2\"}}}' -M -m nrepl.cmdline --port $port --middleware '[cider.nrepl/cider-middleware]'";
+        };
+      };
 
       # ── Git ───────────────────────────────────────────────────────
       git.vim-fugitive.enable = true;
@@ -117,7 +143,7 @@
       utility.undotree.enable = true;
       utility.yanky-nvim = {
         enable = true;
-        setupOpts.ring.storage = "shada";
+        setupOpts.ring.storage = "sqlite";
       };
 
       navigation.harpoon = {
