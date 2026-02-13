@@ -21,7 +21,7 @@
     (cond
       (str/ends-with? identity "-host")   "sshHost"
       (str/ends-with? identity "-initrd") "sshInitrd"
-      (str/starts-with? identity "root@") "sshUserRoot"
+      (str/includes? identity "@") "sshUser"
       :else nil)))
 
 (defn- infer-cert-id
@@ -39,9 +39,9 @@
       (let [fqdn (subs identity 0 (- (count identity) 7))]
         (first (str/split fqdn #"\.")))
 
-      ;; "root@fqdn" -> extract hostname
-      (str/starts-with? identity "root@")
-      (let [fqdn (subs identity 5)]
+      ;; "user@fqdn" -> extract hostname
+      (str/includes? identity "@")
+      (let [fqdn (second (str/split identity #"@" 2))]
         (first (str/split fqdn #"\.")))
 
       :else nil)))
@@ -63,7 +63,7 @@
              (assoc :sshInitrd {:publicKey (:ssh_host_initrd peer-data)})
 
              (:ssh_user_root peer-data)
-             (assoc :sshUserRoot {:publicKey (:ssh_user_root peer-data)}))]
+             (assoc :sshUser {:publicKey (:ssh_user_root peer-data)}))]
        (if (seq identity-data)
          (assoc acc peer-name identity-data)
          acc)))
@@ -124,14 +124,14 @@
                                                           :certPath "/etc/secrets/initrd/ssh_host_ed25519_key-cert.pub"
                                                           :principals "{id},{fqdn}"
                                                           :identity "{fqdn}-initrd"}}
-                                       :sshUserRoot {:method "user"
-                                                     :path "/root/.ssh/id_ed25519"
-                                                     :comment "root@{id}"
-                                                     :sign {:certType "user"
-                                                            :ca "user"
-                                                            :certPath "/root/.ssh/id_ed25519-cert.pub"
-                                                            :principals "root"
-                                                            :identity "root@{fqdn}"}}
+                                       :sshUser {:method "user"
+                                                  :path "{home}/.ssh/id_ed25519"
+                                                  :comment "{user}@{id}"
+                                                  :sign {:certType "user"
+                                                         :ca "user"
+                                                         :certPath "{home}/.ssh/id_ed25519-cert.pub"
+                                                         :principals "{user}"
+                                                         :identity "{user}@{fqdn}"}}
                                        :wireguard {:method "wg"
                                                    :path "/etc/secrets/wireguard/private.key"}
                                        :wireguardPsk {:method "wg-psk"
