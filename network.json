@@ -38,11 +38,11 @@
       "ip6": "fd10:100:10::1",
       "fqdn": "sigil.home.psyclyx.net"
     },
-    "vigil": {
+    "iyr": {
       "site": "apartment",
       "ip4": "10.100.10.2",
       "ip6": "fd10:100:10::2",
-      "fqdn": "vigil.home.psyclyx.net"
+      "fqdn": "iyr.home.psyclyx.net"
     },
     "lab-1": {
       "site": "apartment",
