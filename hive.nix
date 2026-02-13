@@ -16,7 +16,7 @@
           "desktop"
         ];
         allowLocalDeployment = true;
-        targetHost = "sigil.home.psyclyx.net";
+        targetHost = "sigil.lan";
         targetPort = 22;
         targetUser = "root";
       };
@@ -49,10 +49,9 @@
       psyclyx.nixos.host = "vigil";
       deployment = {
         tags = [
-          "server"
-          "lab"
+          "minipc"
         ];
-        targetHost = "vigil.home.psyclyx.net";
+        targetHost = "vigil.lan";
         targetPort = 22;
         targetUser = "root";
       };
@@ -87,7 +86,7 @@
           "server"
           "lab"
         ];
-        targetHost = "lab-1.home.psyclyx.net";
+        targetHost = "lab-1.lan";
         targetPort = 22;
         targetUser = "root";
       };
@@ -106,7 +105,7 @@
           "server"
           "lab"
         ];
-        targetHost = "lab-2.home.psyclyx.net";
+        targetHost = "lab-2.lan";
         targetPort = 22;
         targetUser = "root";
       };
@@ -125,7 +124,7 @@
           "server"
           "lab"
         ];
-        targetHost = "lab-3.home.psyclyx.net";
+        targetHost = "lab-3.lan";
         targetPort = 22;
         targetUser = "root";
       };
@@ -144,7 +143,7 @@
           "server"
           "lab"
         ];
-        targetHost = "lab-4.home.psyclyx.net";
+        targetHost = "lab-4.lan";
         targetPort = 22;
         targetUser = "root";
       };
