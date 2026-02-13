@@ -19,22 +19,45 @@ in {
   };
 
   config = lib.mkIf (config.psyclyx.nixos.host == "tleilax") {
-    systemd.network.wait-online.enable = true;
+    systemd.network = {
+      wait-online.enable = true;
+      netdevs = {
+        "30-bond0" = {
+          netdevConfig = {
+            Name = "bond0";
+            Kind = "bond";
+          };
+          bondConfig = {
+            Mode = "802.3ad";
+            LACPTransmitRate = "fast";
+            TransmitHashPolicy = "layer3+4";
+            MIIMonitorSec = "1s";
+          };
+        };
+      };
+      networks = {
+        "10-eno-disable" = {
+          matchConfig.Name = "eno0 eno1";
+          linkConfig.ActivationPolicy = "down";
+        };
+        "30-bond0-ports" = {
+          matchConfig.Name = "ens1f0np0 ens1f1np1";
+          networkConfig.Bond = "bond0";
+        };
+        "30-bond0" = {
+          matchConfig.Name = "bond0";
+          linkConfig.RequiredForOnline = "routable";
 
-    psyclyx.nixos.network = {
-      networkd.disableInterfaces = ["eno0" "eno1"];
-
-      bonds.bond0 = {
-        ports = ["ens1f0np0" "ens1f1np1"];
-        network = {
           address = [
             "${cfg.ipv4}/32"
             "${cfg.ipv6Prefix}10/120"
           ];
+
           networkConfig = {
             DHCP = false;
             IPv6AcceptRA = false;
           };
+
           routes = [
             {
               Destination = "::/0";
@@ -45,6 +68,7 @@ in {
               Gateway = "${cfg.ipv6Prefix}1";
             }
           ];
+
           dns = [
             "1.1.1.1"
             "1.0.0.1"
