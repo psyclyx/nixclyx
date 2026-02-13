@@ -19,36 +19,92 @@
   (println "Usage: pki <command> [options]
 
 Commands:
-  ensure <keyTypes> <id> [options]   Generate, sign, deploy, record
-  check  <keyTypes> <id> [options]   Check key existence on target
-  sign   <type> [options]            Sign pubkey from stdin (raw)
-  revoke <serial...>                 Add serials to revocation list
-  krl                                Generate KRL files
-  status                             Show state summary
-  migrate                            Migrate old state.json
+  ensure <keyTypes> <id>   Generate keys, sign certs, deploy, record state
+  check  <keyTypes> <id>   Check key existence on target (no changes)
+  sign   <type>            Sign a pubkey from stdin (ad-hoc, no key type config)
+  revoke <serial...>       Add serial numbers to revocation list
+  krl                      Generate KRL files from revoked serials
+  status                   Show state summary (identities, certs, serials)
+  migrate                  Migrate state.json to pki-state.json format
+
+Arguments (ensure/check):
+  <keyTypes>   Comma-separated key type IDs defined in pki-config.json
+  <id>         Arbitrary identity name for state tracking
 
 Target options (ensure/check):
-  --ssh USER@HOST    SSH target
-  -J, --jump HOST    SSH jump host
-  -p, --port PORT    SSH port
-  --local            Local target (default when no --ssh)
-  --root PATH        Filesystem root prefix
+  --ssh USER@HOST    Run on remote host via SSH
+  -J, --jump HOST    SSH jump host (passed to -J)
+  -p, --port PORT    SSH port (passed to -p)
+  --local            Run locally (default when --ssh is not set)
+  --root PATH        Prefix all key/cert paths (works with both targets)
 
 Ensure options:
-  --rotate           Delete and regenerate keys
-  --force            Don't prompt before overwriting files
-  --var KEY=VAL      Template variable (repeatable)
+  -r, --rotate       Delete existing keys and regenerate
+  -f, --force        Overwrite cert files without prompting
+  --var KEY=VAL      Set a template variable (repeatable)
 
 Sign options:
-  --principals LIST  Comma-separated principals (required)
-  --identity STR     Certificate identity (required)
-  --ca PATH          CA key path
-  --ca-type TYPE     host or user (default: host)
+  -n, --principals LIST   Comma-separated principals (required)
+  -i, --identity STR      Certificate identity string (required)
+  --ca PATH               CA key path (overrides pki-config.json)
+  --ca-type TYPE           host or user (default: host)
 
-CA keys (override with env vars):
-  ~/.ssh/ca/host_ca      (or PKI_HOST_CA)
-  ~/.ssh/ca/user_ca      (or PKI_USER_CA)
-  ~/.ssh/ca/initrd_ca    (or PKI_INITRD_CA)"))
+Template variables:
+  Key type definitions in pki-config.json use {name} placeholders.
+  These are resolved from --var flags at runtime. The <id> positional
+  is always available as {id}. Unresolved variables cause an error.
+
+File ownership:
+  Key types may specify an \"owner\" field (also a template). When set,
+  all generated files (key, pubkey, cert, parent dir) are chowned to
+  that user after creation. Useful when deploying as root via --ssh
+  for a non-root user's keys.
+
+Config files (in repo root):
+  pki-config.json   Key type and CA definitions (see below)
+  pki-state.json    Operational state (serials, identities, certs)
+
+CA keys (configurable in pki-config.json, override with env vars):
+  PKI_HOST_CA      default: ~/.ssh/ca/host_ca
+  PKI_INITRD_CA    default: ~/.ssh/ca/initrd_ca
+  PKI_USER_CA      default: ~/.ssh/ca/user_ca
+
+pki-config.json format:
+  { \"cas\":      { \"<name>\": { \"env\": \"ENV_VAR\", \"default\": \"path\" } },
+    \"keyTypes\": { \"<name>\": {
+      \"method\":  \"host|user|wg|wg-psk\",
+      \"path\":    \"/path/to/private/key (templates ok)\",
+      \"comment\": \"optional key comment (templates ok)\",
+      \"owner\":   \"optional file owner (templates ok)\",
+      \"sign\":    {                      (omit if no cert needed)
+        \"certType\":   \"host|user\",
+        \"ca\":         \"<ca name>\",
+        \"certPath\":   \"/path/to/cert (templates ok)\",
+        \"principals\": \"comma,separated (templates ok)\",
+        \"identity\":   \"cert identity (templates ok)\" }}}}
+
+Examples:
+  pki ensure sshHost,wireguard myhost \\
+    --var fqdn=myhost.example.com --ssh root@myhost.example.com
+
+  pki ensure sshUser myhost \\
+    --var fqdn=myhost.example.com --var user=deploy --var home=/home/deploy \\
+    --ssh root@myhost.example.com
+
+  pki ensure sshHost,sshInitrd myhost \\
+    --var fqdn=myhost.example.com --root /mnt
+
+  pki ensure sshHost myhost --rotate --force \\
+    --var fqdn=myhost.example.com --ssh root@myhost -J jumphost
+
+  pki check sshHost,wireguard myhost --ssh root@myhost.example.com
+
+  cat key.pub | pki sign host -n myhost,myhost.example.com -i myhost-host
+
+  pki revoke 3 4 5
+  pki krl
+  pki status
+  pki migrate"))
 
 ;; --- Helper: parse --var KEY=VAL into a map ---
 
