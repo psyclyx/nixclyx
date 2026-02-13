@@ -27,16 +27,16 @@
         "identity": "{fqdn}-initrd"
       }
     },
-    "sshUserRoot": {
+    "sshUser": {
       "method": "user",
-      "path": "/root/.ssh/id_ed25519",
-      "comment": "root@{id}",
+      "path": "{home}/.ssh/id_ed25519",
+      "comment": "{user}@{id}",
       "sign": {
         "certType": "user",
         "ca": "user",
-        "certPath": "/root/.ssh/id_ed25519-cert.pub",
-        "principals": "root",
-        "identity": "root@{fqdn}"
+        "certPath": "{home}/.ssh/id_ed25519-cert.pub",
+        "principals": "{user}",
+        "identity": "{user}@{fqdn}"
       }
     },
     "wireguard": {
