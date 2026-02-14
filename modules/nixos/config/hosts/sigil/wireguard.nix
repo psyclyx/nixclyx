@@ -2,10 +2,8 @@
   config,
   lib,
   ...
-}:
-lib.mkIf (config.psyclyx.host == "sigil")
-{
-  config = {
+}: {
+  config = lib.mkIf (config.psyclyx.nixos.host == "sigil") {
     networking.firewall.allowedUDPPorts = [51820];
     systemd.network = {
       netdevs = {
