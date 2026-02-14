@@ -138,6 +138,14 @@
 
     # Stub zone names for resolver
     stubZoneNames = (lib.attrNames cfg.authoritative.zones) ++ cfg.resolver.extraStubZones;
+
+    # When NSD uses port 53, it can't also bind localhost (unbound needs that).
+    # In that case, stub via NSD's first public interface instead.
+    nsdConflictsWithResolver = cfg.resolver.enable && cfg.authoritative.port == 53;
+    stubAddr =
+      if nsdConflictsWithResolver
+      then "${builtins.head cfg.authoritative.interfaces}@${toString cfg.authoritative.port}"
+      else "127.0.0.1@${toString cfg.authoritative.port}";
   in
     lib.mkMerge [
       # Client mode: avahi + resolved
@@ -151,10 +159,10 @@
       # Authoritative DNS via NSD (auto-enabled by gate when zones != {})
       (lib.mkIf hasZones {
         psyclyx.nixos.services.nsd = {
-          # Auto-add localhost when resolver needs to stub to NSD
+          # Add localhost for stub resolution, unless NSD is on port 53 (conflicts with unbound)
           interfaces =
             cfg.authoritative.interfaces
-            ++ lib.optionals cfg.resolver.enable ["127.0.0.1" "::1"];
+            ++ lib.optionals (cfg.resolver.enable && !nsdConflictsWithResolver) ["127.0.0.1" "::1"];
           port = cfg.authoritative.port;
           zones =
             lib.mapAttrs (name: zoneCfg: {
@@ -177,7 +185,7 @@
           stubZones =
             map (name: {
               inherit name;
-              stub-addr = "127.0.0.1@${toString cfg.authoritative.port}";
+              stub-addr = stubAddr;
             })
             stubZoneNames;
           localZones =
