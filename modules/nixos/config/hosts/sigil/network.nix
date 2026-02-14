@@ -7,7 +7,7 @@
     systemd.network.networks."20-sfp" = {
       matchConfig.Name = "enp5s0f?";
       networkConfig = {
-        Domains = ["~."];
+        Domains = ["~." "~psyclyx.xyz"];
         DHCP = "yes";
       };
       dhcpV4Config = {

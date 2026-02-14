@@ -4,7 +4,7 @@
   ...
 }: let
   vlanIds = [
-    10
+    10 # vpn
     11
     12
     13
@@ -26,6 +26,7 @@
 in {
   config = lib.mkIf (config.psyclyx.nixos.host == "iyr") {
     networking.firewall.allowedUDPPorts = [67];
+    boot.kernel.sysctl."net.ipv4.ip_forward" = 1;
 
     systemd.network = {
       netdevs =
@@ -73,7 +74,7 @@ in {
           linkConfig.RequiredForOnline = "carrier";
 
           networkConfig = {
-            Domains = ["~."];
+            Domains = ["~." "~psyclyx.xyz"];
             DHCP = "no";
           };
 

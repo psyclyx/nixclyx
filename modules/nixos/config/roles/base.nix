@@ -30,7 +30,6 @@
 
         network = {
           networkd.enable = true;
-          wireguard.enable = lib.mkDefault true;
         };
 
         programs = {
