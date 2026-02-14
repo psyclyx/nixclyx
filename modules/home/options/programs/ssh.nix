@@ -42,11 +42,6 @@
             user = "root";
           };
 
-          "tleilax" = {
-            # hostname = "tleilax.psyclyx.xyz";
-            port = 17891;
-            forwardAgent = true;
-          };
         };
       };
     };
