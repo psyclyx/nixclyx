@@ -3,6 +3,7 @@
   variant = ["psyclyx" "nixos" "host"];
   imports = [./network.nix ./wireguard.nix];
   config = {
+    config,
     nixclyx,
     ...
   }: {
@@ -55,6 +56,9 @@
               };
               "psyclyx.xyz" = {
                 type = "transparent";
+                records = [
+                  "metrics.psyclyx.xyz. IN A 10.157.0.1"
+                ];
                 # Split horizon: internal overrides go here
                 # Queries without local-data fall through to NSD (public answers)
               };
@@ -68,11 +72,23 @@
       services = {
         tailscale.exitNode = true;
 
+        grafana = {
+          enable = true;
+          domain = "metrics.psyclyx.xyz";
+        };
+
         nginx = {
           enable = true;
           acme.email = "me@psyclyx.xyz";
-          virtualHosts."docs.psyclyx.xyz" = {
-            root = nixclyx.docs;
+          virtualHosts = {
+            "docs.psyclyx.xyz" = {
+              root = nixclyx.docs;
+            };
+            "metrics.psyclyx.xyz" = let
+              inherit (config.psyclyx.nixos.services.grafana.listen) address port;
+            in {
+              locations."/".proxyPass = "http://${address}:${builtins.toString port}";
+            };
           };
         };
       };
