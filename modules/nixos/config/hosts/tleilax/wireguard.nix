@@ -23,7 +23,7 @@
             };
             wireguardConfig = {
               ListenPort = 51820;
-              PrivateKeyFile = "/etc/wireguard/private.key";
+              PrivateKeyFile = "/etc/secrets/wireguard/private.key";
             };
             wireguardPeers = [
               {
@@ -46,7 +46,10 @@
         networks = {
           "30-wg0" = {
             matchConfig.Name = "wg0";
-            address = ["10.157.0.1/24"];
+            address = [
+              "10.157.0.1/24"
+              "10.0.10.2/24"
+            ];
           };
         };
       };

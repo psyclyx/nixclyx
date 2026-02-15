@@ -20,15 +20,15 @@
             };
 
             wireguardConfig = {
-              PrivateKeyFile = "/etc/wireguard/private.key";
+              PrivateKeyFile = "/etc/secrets/wireguard/private.key";
             };
 
             wireguardPeers = [
               {
                 # tleilax
                 PublicKey = "Hsytr+mjAfsBPoC99XHKLh9+jEbyz1REF0okmlviUVc=";
-                Endpoint = "vpn.psyclyx.xyz:51280";
-                AllowedIPs = ["10.0.10.0/24"];
+                Endpoint = "vpn.psyclyx.xyz:51820";
+                AllowedIPs = ["10.157.0.0/24"];
                 PersistentKeepalive = 25;
               }
             ];
