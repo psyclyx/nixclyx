@@ -44,7 +44,7 @@
           resolver = {
             enable = true;
             interfaces = ["10.157.0.1"];
-            accessControl = ["10.157.0.0/24 allow"];
+            accessControl = ["10.157.0.0/24 allow" "10.0.0.0/24 allow"];
             localZones = {
               "psyclyx.net" = {
                 type = "static";

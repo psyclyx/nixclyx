@@ -31,6 +31,7 @@
                 PublicKey = "9wnevbvkDGcyNnMECEzgfaghqi4tEw4GsgC/TUcSTS4=";
                 AllowedIPs = [
                   "10.0.10.0/24"
+                  "10.0.0.0/24"
                   "10.157.0.2/32"
                 ];
               }
@@ -49,6 +50,9 @@
             address = [
               "10.157.0.1/24"
               "10.0.10.2/24"
+            ];
+            routes = [
+              {Destination = "10.0.0.0/24";}
             ];
           };
         };

@@ -24,7 +24,6 @@
               Endpoint = "vpn.psyclyx.xyz:51820";
               AllowedIPs = [
                 "10.157.0.0/24"
-                "10.0.10.0/24"
               ];
               PersistentKeepalive = 25;
             }
