@@ -1,9 +1,8 @@
 {
   path = ["psyclyx" "nixos" "hardware" "gpu" "intel"];
-  description = "Intel graphics (i915 driver, kaby lake)";
+  description = "Intel integrated graphics (i915)";
   config = _: {
     boot = {
-      kernelModules = ["kvm-intel"];
       kernelParams = [
         "i915.enable_guc=2"
         "i915.enable_fbc=1"
