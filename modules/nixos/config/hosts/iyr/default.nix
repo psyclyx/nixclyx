@@ -4,6 +4,7 @@
   imports = [./network.nix ./wireguard.nix];
   config = {lib, ...}: {
     networking.hostName = "iyr";
+    networking.extraHosts = "199.255.18.171 vpn.psyclyx.xyz";
 
     psyclyx.nixos = {
       boot = {
@@ -20,11 +21,17 @@
 
       hardware = {
         cpu.intel.enable = true;
+        gpu.intel.enable = true;
       };
 
       network.dns.client.enable = true;
 
       role = "server";
+
+      services.kiosk = {
+        enable = true;
+        url = "https://metrics.psyclyx.xyz";
+      };
     };
   };
 }
