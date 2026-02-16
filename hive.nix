@@ -12,6 +12,7 @@
       psyclyx.nixos.host = "sigil";
       deployment = {
         tags = [
+          "apartment"
           "workstation"
           "desktop"
         ];
@@ -49,6 +50,8 @@
       psyclyx.nixos.host = "iyr";
       deployment = {
         tags = [
+          "apartment"
+          "router"
           "minipc"
         ];
         targetHost = "iyr.lan";
@@ -66,7 +69,10 @@
     config = {
       psyclyx.nixos.host = "tleilax";
       deployment = {
-        tags = ["server"];
+        tags = [
+          "server"
+          "colo"
+        ];
         targetHost = "tleilax.psyclyx.xyz";
         targetPort = 17891;
         targetUser = "root";
@@ -84,6 +90,7 @@
       deployment = {
         tags = [
           "server"
+          "apartment"
           "lab"
         ];
         targetHost = "lab-1.lan";
@@ -103,6 +110,7 @@
       deployment = {
         tags = [
           "server"
+          "apartment"
           "lab"
         ];
         targetHost = "lab-2.lan";
@@ -122,6 +130,7 @@
       deployment = {
         tags = [
           "server"
+          "apartment"
           "lab"
         ];
         targetHost = "lab-3.lan";
@@ -141,6 +150,7 @@
       deployment = {
         tags = [
           "server"
+          "apartment"
           "lab"
         ];
         targetHost = "lab-4.lan";
