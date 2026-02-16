@@ -4,9 +4,26 @@
   imports = [./network.nix ./wireguard.nix];
   config = {
     config,
+    pkgs,
     nixclyx,
     ...
-  }: {
+  }: let
+    acmeHook = pkgs.writeShellScript "acme-dns-hook" ''
+      action="$1"
+      value="$3"
+      ACME_FILE="/var/lib/nsd/dynamic/psyclyx.net.acme"
+      case "$action" in
+        present)
+          echo "_acme-challenge IN TXT \"$value\"" >> "$ACME_FILE"
+          ${pkgs.nsd}/bin/nsd-control reload psyclyx.net
+          ;;
+        cleanup)
+          : > "$ACME_FILE"
+          ${pkgs.nsd}/bin/nsd-control reload psyclyx.net
+          ;;
+      esac
+    '';
+  in {
     networking.hostName = "tleilax";
 
     fileSystems = {
@@ -37,6 +54,12 @@
                 ttl = 3600;
                 extraRecords = ''
                   vpn    IN A     199.255.18.171
+                '';
+              };
+              "psyclyx.net" = {
+                ttl = 3600;
+                extraRecords = ''
+                  $INCLUDE /var/lib/nsd/dynamic/psyclyx.net.acme
                 '';
               };
             };
@@ -70,7 +93,7 @@
 
         grafana = {
           enable = true;
-          domain = "metrics.psyclyx.xyz";
+          domain = "metrics.psyclyx.net";
         };
 
         nginx = {
@@ -80,14 +103,46 @@
             "docs.psyclyx.xyz" = {
               root = nixclyx.docs;
             };
-            "metrics.psyclyx.xyz" = let
-              inherit (config.psyclyx.nixos.services.grafana.listen) address port;
-            in {
-              locations."/".proxyPass = "http://${address}:${builtins.toString port}";
-            };
           };
         };
       };
     };
+
+    # NSD remote control for ACME DNS hook
+    services.nsd.remoteControl.enable = true;
+
+    # Grant acme user access to NSD control keys
+    systemd.services.nsd.serviceConfig.ExecStartPost = let
+      script = pkgs.writeShellScript "nsd-control-acme-perms" ''
+        chgrp acme /etc/nsd/nsd_control.key /etc/nsd/nsd_control.pem
+        chmod g+r /etc/nsd/nsd_control.key /etc/nsd/nsd_control.pem
+      '';
+    in ["+${script}"];
+
+    # Internal metrics vhost (bypasses psyclyx nginx module — needs DNS-01 cert)
+    services.nginx.virtualHosts."metrics.psyclyx.net" = {
+      useACMEHost = "psyclyx.net";
+      forceSSL = true;
+      listen = [
+        { addr = "10.157.0.1"; port = 443; ssl = true; }
+        { addr = "10.157.0.1"; port = 80; }
+      ];
+      locations."/".proxyPass = "http://127.0.0.1:2134";
+    };
+
+    # ACME wildcard cert for *.psyclyx.net via DNS-01
+    security.acme.certs."psyclyx.net" = {
+      domain = "psyclyx.net";
+      extraDomainNames = ["*.psyclyx.net"];
+      dnsProvider = "exec";
+      credentialFiles."EXEC_PATH" = pkgs.writeText "acme-exec-path" "${acmeHook}";
+      group = "nginx";
+    };
+
+    # Ensure ACME challenge file exists for NSD $INCLUDE
+    systemd.tmpfiles.rules = [
+      "d /var/lib/nsd/dynamic 0755 acme acme -"
+      "f /var/lib/nsd/dynamic/psyclyx.net.acme 0644 acme acme -"
+    ];
   };
 }
