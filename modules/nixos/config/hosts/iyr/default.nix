@@ -44,7 +44,7 @@
 
       services.kiosk = {
         enable = true;
-        url = "https://metrics.psyclyx.xyz";
+        url = "https://metrics.psyclyx.net";
       };
     };
   };
