@@ -24,7 +24,22 @@
         gpu.intel.enable = true;
       };
 
-      network.dns.client.enable = true;
+      network.dns = {
+        client.enable = true;
+        resolver = {
+          enable = true;
+          interfaces = [
+            "10.0.0.11"
+            "10.0.10.1"
+            "10.0.20.1"
+            "10.0.21.1"
+            "10.0.22.1"
+            "10.0.23.1"
+            "10.0.240.1"
+          ];
+          accessControl = ["10.0.0.0/8 allow"];
+        };
+      };
 
       role = "server";
 

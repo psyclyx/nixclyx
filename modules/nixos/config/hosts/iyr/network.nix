@@ -4,10 +4,13 @@
   ...
 }: let
   vlanIds = [
-    10 # vpn
-    11
-    12
-    13
+    10 # main network
+
+    20 # lab
+    21
+    22
+    23
+
     240 # mgmt
     250 # transit
   ];
@@ -24,54 +27,67 @@
     "31-${vlanIface iface id}"
     (vlanNetdev iface id);
 
-  dhcpVlans = [10 11 12 13];
+  dhcpVlans = [10 20 21 22 23 240];
 
   labServers = [
     {
       name = "lab-1";
       n = 1;
-      macs = [
-        "94:18:82:79:b9:f0" # eno1 → vlan 10
-        "94:18:82:79:b9:f1" # eno2 → vlan 11
-        "94:18:82:79:b9:f2" # eno3 → vlan 12
-        "94:18:82:79:b9:f3" # eno4 → vlan 13
-      ];
+      interfaces = {
+        mgmt = "94:18:82:74:f4:e0";
+        eno1 = "94:18:82:79:b9:f0";
+        eno2 = "94:18:82:79:b9:f1";
+        eno3 = "94:18:82:79:b9:f2";
+        eno4 = "94:18:82:79:b9:f3";
+      };
     }
     {
       name = "lab-2";
       n = 2;
-      macs = [
-        "94:18:82:89:83:70"
-        "94:18:82:89:83:71"
-        "94:18:82:89:83:72"
-        "94:18:82:89:83:73"
-      ];
+      interfaces = {
+        mgmt = "94:18:82:85:00:82";
+        eno1 = "94:18:82:89:83:70";
+        eno2 = "94:18:82:89:83:71";
+        eno3 = "94:18:82:89:83:72";
+        eno4 = "94:18:82:89:83:73";
+      };
     }
     {
       name = "lab-3";
       n = 3;
-      macs = [
-        "14:02:ec:35:02:a4"
-        "14:02:ec:35:02:a5"
-        "14:02:ec:35:02:a6"
-        "14:02:ec:35:02:a7"
-      ];
+      interfaces = {
+        mgmt = "14:02:EC:37:A1:48";
+        eno1 = "14:02:ec:35:02:a4";
+        eno2 = "14:02:ec:35:02:a5";
+        eno3 = "14:02:ec:35:02:a6";
+        eno4 = "14:02:ec:35:02:a7";
+      };
     }
     {
       name = "lab-4";
       n = 4;
-      macs = [
-        "14:02:ec:33:97:a0"
-        "14:02:ec:33:97:a1"
-        "14:02:ec:33:97:a2"
-        "14:02:ec:33:97:a3"
-      ];
+      interfaces = {
+        mgmt = "94:57:a5:51:20:62";
+        eno1 = "14:02:ec:33:97:a0";
+        eno2 = "14:02:ec:33:97:a1";
+        eno3 = "14:02:ec:33:97:a2";
+        eno4 = "14:02:ec:33:97:a3";
+      };
     }
   ];
 
+  vlanIfaceMap = {
+    "10" = null;
+    "20" = "eno1";
+    "21" = "eno2";
+    "22" = "eno3";
+    "23" = "eno4";
+    "240" = "mgmt";
+  };
+
   mkSubnet = vlanId: let
-    macIndex = vlanId - 10;
     prefix = "10.0.${toString vlanId}";
+    ifaceName = vlanIfaceMap.${toString vlanId} or null;
   in {
     id = vlanId;
     subnet = "${prefix}.0/24";
@@ -83,20 +99,34 @@
       }
       {
         name = "domain-name-servers";
-        data = "10.0.0.10";
+        data = "${prefix}.1";
       }
     ];
     reservations =
-      map (s: {
-        "hw-address" = builtins.elemAt s.macs macIndex;
-        "ip-address" = "${prefix}.${toString (10 + s.n)}";
-        hostname = s.name;
-      })
-      labServers;
+      if ifaceName == null
+      then []
+      else
+        map (s: {
+          "hw-address" = s.interfaces.${ifaceName};
+          "ip-address" = "${prefix}.${toString (10 + s.n)}";
+          hostname = s.name;
+        })
+        labServers;
   };
 in {
   config = lib.mkIf (config.psyclyx.nixos.host == "iyr") {
-    networking.firewall.allowedUDPPorts = [67];
+    networking.firewall = {
+      enable = false;
+      allowedUDPPorts = [67 53];
+      allowedTCPPorts = [53];
+    };
+
+    networking.nat = {
+      enable = true;
+      externalInterface = "bond0.250";
+      internalInterfaces = map (id: "bond0.${toString id}") [10 20 21 22 23 240];
+    };
+
     boot.kernel.sysctl."net.ipv4.ip_forward" = 1;
 
     psyclyx.nixos.services.kea = {
@@ -146,18 +176,23 @@ in {
           };
 
           address = ["10.0.0.11/24"];
-          gateway = ["10.0.0.10"];
-          dns = ["10.0.0.10"];
+          dns = ["127.0.0.1"];
 
           vlan = map (vlanIface "bond0") vlanIds;
         };
 
         "${vlanUnit 10}" = vlan 10;
-        "${vlanUnit 11}" = vlan 11;
-        "${vlanUnit 12}" = vlan 12;
-        "${vlanUnit 13}" = vlan 13;
+        "${vlanUnit 20}" = vlan 20;
+        "${vlanUnit 21}" = vlan 21;
+        "${vlanUnit 22}" = vlan 22;
+        "${vlanUnit 23}" = vlan 23;
         "${vlanUnit 240}" = vlan 240;
-        "${vlanUnit 250}" = vlan 250;
+        "${vlanUnit 250}" = {
+          matchConfig.Name = vlanIface "bond0" 250;
+          networkConfig.DHCP = "ipv4";
+          dhcpV4Config.UseRoutes = true;
+          linkConfig.RequiredForOnline = "no";
+        };
       };
     };
   };
