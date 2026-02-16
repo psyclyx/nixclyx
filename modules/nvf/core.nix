@@ -41,6 +41,7 @@
         splitbelow = true;
         splitright = true;
         updatetime = 250;
+        timeoutlen = 300;
       };
 
       clipboard = {
@@ -62,20 +63,75 @@
         transparent = true;
       };
 
+      lsp = {
+        formatOnSave = true;
+        inlayHints.enable = true;
+        trouble.enable = true;
+        lightbulb.enable = true;
+        lspkind.enable = true;
+      };
       diagnostics = {
         enable = true;
       };
       filetree.neo-tree.enable = true;
       binds = {
-        whichKey.enable = true;
+        whichKey = {
+          enable = true;
+          register = {
+            "<leader>w" = "Windows";
+            "<leader>b" = "Buffers";
+            "<leader>f" = "Find";
+            "<leader>s" = "Search";
+            "<leader>q" = "Quit";
+            "<leader>e" = "Explorer";
+            "<leader>g" = "Git";
+            "<leader>l" = "LSP";
+            "<leader>u" = "Toggle";
+            "<leader>a" = "AI (Avante)";
+          };
+        };
       };
 
       dashboard.alpha.enable = true;
 
       formatter.conform-nvim.enable = true;
       git.enable = true;
-      telescope.enable = true;
-      autocomplete.blink-cmp.enable = true;
+      telescope = {
+        enable = true;
+        setupOpts.defaults.vimgrep_arguments = [
+          "${pkgs.ripgrep}/bin/rg"
+          "--color=never"
+          "--no-heading"
+          "--with-filename"
+          "--line-number"
+          "--column"
+          "--smart-case"
+        ];
+        extensions = [
+          {
+            name = "fzf";
+            packages = [pkgs.vimPlugins.telescope-fzf-native-nvim];
+            setup = {
+              fzf = {
+                fuzzy = true;
+                override_generic_sorter = true;
+                override_file_sorter = true;
+                case_mode = "smart_case";
+              };
+            };
+          }
+        ];
+      };
+      autocomplete.blink-cmp = {
+        enable = true;
+        setupOpts = {
+          signature.enabled = true;
+          completion.documentation = {
+            auto_show = true;
+            auto_show_delay_ms = 100;
+          };
+        };
+      };
       statusline.lualine.enable = true;
 
       languages = {
@@ -147,7 +203,14 @@
       visuals = {
         rainbow-delimiters.enable = true;
       };
-      assistant.avante-nvim.enable = true;
+      assistant.avante-nvim = {
+        enable = true;
+        setupOpts = {
+          provider = "claude";
+          behaviour.auto_set_keymaps = true;
+          hints.enabled = true;
+        };
+      };
 
       extraPlugins = {
         nvim-paredit = {
@@ -157,6 +220,44 @@
       };
 
       keymaps = [
+        # neo-tree
+        {
+          mode = "n";
+          key = "<leader>ee";
+          action = "<cmd>Neotree toggle<cr>";
+          desc = "Toggle file tree";
+        }
+        {
+          mode = "n";
+          key = "<leader>ef";
+          action = "<cmd>Neotree reveal<cr>";
+          desc = "Reveal current file";
+        }
+        {
+          mode = "n";
+          key = "<leader>fe";
+          action = "<cmd>lua require('neo-tree.command').execute({ dir = vim.fn.expand('%:p:h'), reveal = true })<cr>";
+          desc = "Browse current directory";
+        }
+        {
+          mode = "n";
+          key = "<leader>es";
+          action = "<cmd>Neotree document_symbols<cr>";
+          desc = "Document symbols";
+        }
+        {
+          mode = "n";
+          key = "<leader>eg";
+          action = "<cmd>Neotree git_status<cr>";
+          desc = "Git status tree";
+        }
+        {
+          mode = "n";
+          key = "<leader>eb";
+          action = "<cmd>Neotree buffers<cr>";
+          desc = "Buffer tree";
+        }
+
         # window management
         {
           mode = "n";
@@ -247,6 +348,32 @@
           key = "<leader>sc";
           action = "<cmd>nohlsearch<cr>";
           desc = "Clear highlights";
+        }
+        {
+          mode = "n";
+          key = "<leader>fo";
+          action = "<cmd>Telescope oldfiles<cr>";
+          desc = "Recent files";
+        }
+        {
+          mode = "n";
+          key = "<leader>fk";
+          action = "<cmd>Telescope keymaps<cr>";
+          desc = "Keybindings";
+        }
+
+        # toggles
+        {
+          mode = "n";
+          key = "<leader>ui";
+          action = "<cmd>lua vim.lsp.inlay_hint.enable(not vim.lsp.inlay_hint.is_enabled())<cr>";
+          desc = "Toggle inlay hints";
+        }
+        {
+          mode = "n";
+          key = "<leader>up";
+          action = "<cmd>lua require('precognition').toggle()<cr>";
+          desc = "Toggle precognition";
         }
       ];
 
