@@ -4,7 +4,6 @@
   imports = [./network.nix ./wireguard.nix];
   config = {lib, ...}: {
     networking.hostName = "iyr";
-    networking.extraHosts = "199.255.18.171 vpn.psyclyx.xyz";
 
     psyclyx.nixos = {
       boot = {

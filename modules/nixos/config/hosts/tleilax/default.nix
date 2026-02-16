@@ -52,15 +52,8 @@
                   "tleilax.psyclyx.net. IN A 10.157.0.1"
                   "sigil.psyclyx.net. IN A 10.157.0.3"
                   "iyr.psyclyx.net. IN A 10.157.0.2"
+                  "metrics.psyclyx.net. IN A 10.157.0.1"
                 ];
-              };
-              "psyclyx.xyz" = {
-                type = "transparent";
-                records = [
-                  "metrics.psyclyx.xyz. IN A 10.157.0.1"
-                ];
-                # Split horizon: internal overrides go here
-                # Queries without local-data fall through to NSD (public answers)
               };
             };
           };

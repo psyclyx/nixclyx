@@ -40,7 +40,7 @@
             matchConfig.Name = "wg0";
             address = ["10.157.0.2/24"];
             dns = ["10.157.0.1"];
-            domains = ["~psyclyx.net" "~psyclyx.xyz"];
+            domains = ["~psyclyx.net"];
           };
         };
       };
