@@ -40,6 +40,7 @@
           fwupd.enable = lib.mkDefault true;
           locate.enable = lib.mkDefault true;
           openssh.enable = lib.mkDefault true;
+          prometheus.enable = lib.mkDefault true;
           tailscale.enable = lib.mkDefault true;
         };
 

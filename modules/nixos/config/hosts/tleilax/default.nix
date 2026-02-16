@@ -72,6 +72,9 @@
       services = {
         tailscale.exitNode = true;
 
+        loki.enable = true;
+        prometheus.server.enable = true;
+
         grafana = {
           enable = true;
           domain = "metrics.psyclyx.xyz";
