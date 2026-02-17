@@ -47,6 +47,11 @@
           default = null;
           description = "Primary network segment name (for lab hosts)";
         };
+        labIndex = lib.mkOption {
+          type = lib.types.nullOr lib.types.int;
+          default = null;
+          description = "Numeric lab server index (used to derive IP addresses as base + labIndex)";
+        };
         mac = lib.mkOption {
           type = lib.types.attrsOf lib.types.str;
           default = {};
@@ -68,6 +73,16 @@
         ipv6Suffix = lib.mkOption {
           type = lib.types.str;
           description = "IPv6 subnet ID suffix (hex, appended to ULA prefix)";
+        };
+        labIface = lib.mkOption {
+          type = lib.types.nullOr lib.types.str;
+          default = null;
+          description = "Lab server interface connected to this network (null if no lab hosts on this network)";
+        };
+        ipv6PdSubnetId = lib.mkOption {
+          type = lib.types.nullOr lib.types.int;
+          default = null;
+          description = "DHCPv6 prefix delegation subnet ID";
         };
       };
     };

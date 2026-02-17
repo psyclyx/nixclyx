@@ -4,17 +4,13 @@
   pkgs,
   ...
 }: let
-  vlanIds = [
-    10 # main network
+  topo = config.psyclyx.topology;
 
-    20 # lab
-    21
-    22
-    23
+  # Derive VLAN lists from topology
+  dhcpVlans = lib.sort builtins.lessThan (lib.mapAttrsToList (_: net: net.vlan) topo.networks);
+  transitVlan = 250;
+  vlanIds = dhcpVlans ++ [transitVlan];
 
-    240 # mgmt
-    250 # transit
-  ];
   vlanIface = iface: id: "${iface}.${builtins.toString id}";
   vlanNetdev = iface: id: {
     netdevConfig = {
@@ -28,86 +24,33 @@
     "31-${vlanIface iface id}"
     (vlanNetdev iface id);
 
-  dhcpVlans = [10 20 21 22 23 240];
+  # Derive lab server list from topology (sorted by index for stable ordering)
+  labServers = lib.sort (a: b: a.n < b.n) (lib.mapAttrsToList (name: host: {
+    inherit name;
+    n = host.labIndex;
+    interfaces = host.mac;
+  }) (lib.filterAttrs (_: host: host.labIndex != null) topo.hosts));
 
-  labServers = [
-    {
-      name = "lab-1";
-      n = 1;
-      interfaces = {
-        mgmt = "94:18:82:74:f4:e0";
-        eno1 = "94:18:82:79:b9:f0";
-        eno2 = "94:18:82:79:b9:f1";
-        eno3 = "94:18:82:79:b9:f2";
-        eno4 = "94:18:82:79:b9:f3";
-      };
-    }
-    {
-      name = "lab-2";
-      n = 2;
-      interfaces = {
-        mgmt = "94:18:82:85:00:82";
-        eno1 = "94:18:82:89:83:70";
-        eno2 = "94:18:82:89:83:71";
-        eno3 = "94:18:82:89:83:72";
-        eno4 = "94:18:82:89:83:73";
-      };
-    }
-    {
-      name = "lab-3";
-      n = 3;
-      interfaces = {
-        mgmt = "14:02:EC:37:A1:48";
-        eno1 = "14:02:ec:35:02:a4";
-        eno2 = "14:02:ec:35:02:a5";
-        eno3 = "14:02:ec:35:02:a6";
-        eno4 = "14:02:ec:35:02:a7";
-      };
-    }
-    {
-      name = "lab-4";
-      n = 4;
-      interfaces = {
-        mgmt = "94:57:a5:51:20:62";
-        eno1 = "14:02:ec:33:97:a0";
-        eno2 = "14:02:ec:33:97:a1";
-        eno3 = "14:02:ec:33:97:a2";
-        eno4 = "14:02:ec:33:97:a3";
-      };
-    }
-  ];
+  # Derive VLAN → name/interface/subnet-id maps from topology
+  vlanZoneMap = builtins.listToAttrs (lib.mapAttrsToList (name: net:
+    lib.nameValuePair (toString net.vlan) name
+  ) topo.networks);
 
-  vlanIfaceMap = {
-    "10" = null;
-    "20" = "eno1";
-    "21" = "eno2";
-    "22" = "eno3";
-    "23" = "eno4";
-    "240" = "mgmt";
-  };
+  vlanIfaceMap = builtins.listToAttrs (lib.mapAttrsToList (_: net:
+    lib.nameValuePair (toString net.vlan) net.labIface
+  ) topo.networks);
 
-  vlanZoneMap = {
-    "10" = "main";
-    "20" = "rack-a";
-    "21" = "rack-b";
-    "22" = "rack-c";
-    "23" = "rack-vpn";
-    "240" = "mgmt";
-  };
+  ipv6SubnetMap = builtins.listToAttrs (lib.mapAttrsToList (_: net:
+    lib.nameValuePair (toString net.vlan) net.ipv6PdSubnetId
+  ) topo.networks);
 
-  # subnet IDs within the delegated /60 prefix
-  ipv6SubnetMap = {
-    "10" = 0;
-    "20" = 1;
-    "21" = 2;
-    "22" = 3;
-    "23" = 4;
-    "240" = 5;
-  };
-
-  # IPv6 ULA addressing
-  ulaPrefix = "fd9a:e830:4b1e";
-  ulaReverseBase = "e.1.b.4.0.3.8.e.a.9.d.f";
+  # IPv6 ULA addressing (derived from topology)
+  ulaPrefix = topo.ipv6UlaPrefix;
+  ulaReverseBase = let
+    stripped = lib.replaceStrings [":"] [""] ulaPrefix;
+    chars = lib.stringToCharacters stripped;
+    reversed = lib.reverseList chars;
+  in lib.concatStringsSep "." reversed;
 
   intToHex = n: let
     hexDigits = ["0" "1" "2" "3" "4" "5" "6" "7" "8" "9" "a" "b" "c" "d" "e" "f"];
@@ -442,13 +385,13 @@ in {
       enable = true;
       trustedInterfaces =
         ["bond0"]
-        ++ map (id: "bond0.${toString id}") [10 20 21 22 23 240];
+        ++ map (id: "bond0.${toString id}") dhcpVlans;
     };
 
     networking.nat = {
       enable = true;
-      externalInterface = "bond0.250";
-      internalInterfaces = map (id: "bond0.${toString id}") [10 20 21 22 23 240];
+      externalInterface = "bond0.${toString transitVlan}";
+      internalInterfaces = map (id: "bond0.${toString id}") dhcpVlans;
     };
 
     boot.kernel.sysctl."net.ipv4.ip_forward" = 1;
@@ -578,14 +521,11 @@ in {
           vlan = map (vlanIface "bond0") vlanIds;
         };
 
-        "${vlanUnit 10}" = vlan 10;
-        "${vlanUnit 20}" = vlan 20;
-        "${vlanUnit 21}" = vlan 21;
-        "${vlanUnit 22}" = vlan 22;
-        "${vlanUnit 23}" = vlan 23;
-        "${vlanUnit 240}" = vlan 240;
-        "${vlanUnit 250}" = {
-          matchConfig.Name = vlanIface "bond0" 250;
+      }
+      // builtins.listToAttrs (map (id: lib.nameValuePair (vlanUnit id) (vlan id)) dhcpVlans)
+      // {
+        "${vlanUnit transitVlan}" = {
+          matchConfig.Name = vlanIface "bond0" transitVlan;
           networkConfig = {
             DHCP = "yes";
             IPv6AcceptRA = true;

@@ -1,5 +1,5 @@
 {
   path = ["psyclyx" "topology"];
   gate = false;
-  imports = [./wireguard.nix ./dns.nix ./monitoring.nix];
+  imports = [./wireguard.nix ./dns.nix ./monitoring.nix ./deployment.nix];
 }

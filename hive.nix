@@ -18,7 +18,6 @@
         ];
         allowLocalDeployment = true;
         targetHost = "sigil.lan";
-        targetPort = 22;
         targetUser = "root";
       };
     };
@@ -55,7 +54,6 @@
           "minipc"
         ];
         targetHost = "iyr.main.home.psyclyx.net";
-        targetPort = 22;
         targetUser = "root";
       };
     };
@@ -74,7 +72,6 @@
           "colo"
         ];
         targetHost = "tleilax.psyclyx.xyz";
-        targetPort = 17891;
         targetUser = "root";
       };
     };
@@ -94,7 +91,6 @@
           "lab"
         ];
         targetHost = "lab-1.lan";
-        targetPort = 22;
         targetUser = "root";
       };
     };
@@ -114,7 +110,6 @@
           "lab"
         ];
         targetHost = "lab-2.lan";
-        targetPort = 22;
         targetUser = "root";
       };
     };
@@ -134,7 +129,6 @@
           "lab"
         ];
         targetHost = "lab-3.lan";
-        targetPort = 22;
         targetUser = "root";
       };
     };
@@ -154,7 +148,6 @@
           "lab"
         ];
         targetHost = "lab-4.lan";
-        targetPort = 22;
         targetUser = "root";
       };
     };
