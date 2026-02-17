@@ -35,8 +35,6 @@
         "30-wg0" = {
           matchConfig.Name = "wg0";
           address = ["10.157.0.3/24"];
-          dns = ["10.157.0.1"];
-          domains = ["~psyclyx.net"];
         };
       };
     };
