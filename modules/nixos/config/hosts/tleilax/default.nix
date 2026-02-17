@@ -1,7 +1,7 @@
 {
   path = ["psyclyx" "nixos" "config" "hosts" "tleilax"];
   variant = ["psyclyx" "nixos" "host"];
-  imports = [./network.nix ./wireguard.nix];
+  imports = [./network.nix];
   config = {
     config,
     lib,
@@ -26,6 +26,14 @@
     '';
   in {
     networking.hostName = "tleilax";
+
+    # WireGuard extras (topology module handles base wg0 config)
+    boot.kernel.sysctl."net.ipv4.ip_forward" = 1;
+    networking.firewall.trustedInterfaces = ["wg0"];
+    systemd.network.networks."30-wg0" = {
+      address = ["10.0.10.2/24"];
+      routes = [{Destination = "10.0.0.0/24";}];
+    };
 
     fileSystems = {
       "/" = {
@@ -70,9 +78,6 @@
               "psyclyx.net" = {
                 type = "transparent";
                 records = [
-                  "tleilax.psyclyx.net. IN A 10.157.0.1"
-                  "sigil.psyclyx.net. IN A 10.157.0.3"
-                  "iyr.psyclyx.net. IN A 10.157.0.2"
                   "metrics.psyclyx.net. IN A 10.157.0.1"
                 ];
               };

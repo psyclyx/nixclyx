@@ -1,9 +1,12 @@
 {
   path = ["psyclyx" "nixos" "config" "hosts" "iyr"];
   variant = ["psyclyx" "nixos" "host"];
-  imports = [./network.nix ./wireguard.nix];
+  imports = [./network.nix];
   config = {lib, ...}: {
     networking.hostName = "iyr";
+
+    # WireGuard extras (topology module handles base wg0 config)
+    networking.firewall.trustedInterfaces = ["wg0"];
 
     psyclyx.nixos = {
       boot = {

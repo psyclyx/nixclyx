@@ -1,7 +1,7 @@
 {
   path = ["psyclyx" "nixos" "config" "hosts" "sigil"];
   variant = ["psyclyx" "nixos" "host"];
-  imports = [./hardware.nix ./network.nix ./wireguard.nix];
+  imports = [./hardware.nix ./network.nix];
   config = {
     lib,
     pkgs,
