@@ -91,7 +91,7 @@
     "20" = "rack-a";
     "21" = "rack-b";
     "22" = "rack-c";
-    "23" = "rack-d";
+    "23" = "rack-vpn";
     "240" = "mgmt";
   };
 
@@ -243,12 +243,7 @@
 
     get_zone() {
       case "$1" in
-        10) echo "main" ;;
-        20) echo "lab-1" ;;
-        21) echo "lab-2" ;;
-        22) echo "lab-3" ;;
-        23) echo "lab-4" ;;
-        240) echo "mgmt" ;;
+        ${lib.concatStringsSep "\n        " (lib.mapAttrsToList (id: zone: "${id}) echo \"${zone}\" ;;") vlanZoneMap)}
         *) echo "" ;;
       esac
     }
