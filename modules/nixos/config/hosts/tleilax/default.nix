@@ -4,6 +4,7 @@
   imports = [./network.nix ./wireguard.nix];
   config = {
     config,
+    lib,
     pkgs,
     nixclyx,
     ...
@@ -58,9 +59,6 @@
               };
               "psyclyx.net" = {
                 ttl = 3600;
-                extraRecords = ''
-                  $INCLUDE /var/lib/nsd/dynamic/psyclyx.net.acme
-                '';
               };
             };
           };
@@ -70,13 +68,21 @@
             accessControl = ["10.157.0.0/24 allow" "10.0.0.0/24 allow"];
             localZones = {
               "psyclyx.net" = {
-                type = "static";
+                type = "transparent";
                 records = [
                   "tleilax.psyclyx.net. IN A 10.157.0.1"
                   "sigil.psyclyx.net. IN A 10.157.0.3"
                   "iyr.psyclyx.net. IN A 10.157.0.2"
                   "metrics.psyclyx.net. IN A 10.157.0.1"
                 ];
+              };
+            };
+            forwardZones = {
+              "home.psyclyx.net" = {
+                forward-addr = ["10.157.0.2"];
+              };
+              "0.10.in-addr.arpa" = {
+                forward-addr = ["10.157.0.2"];
               };
             };
           };
@@ -111,6 +117,20 @@
     # NSD remote control for ACME DNS hook
     services.nsd.remoteControl.enable = true;
 
+    # Generate remote control TLS certs if missing (NSD module doesn't auto-generate),
+    # then inject ACME $INCLUDE after upstream preStart copies zone files from the store
+    # (can't be in zone data directly — nsd-checkzone runs at build time in the sandbox)
+    systemd.services.nsd.preStart = lib.mkMerge [
+      (lib.mkBefore ''
+        if [ ! -f /etc/nsd/nsd_server.pem ]; then
+          ${pkgs.nsd}/bin/nsd-control-setup
+        fi
+      '')
+      (lib.mkAfter ''
+        echo '$INCLUDE /var/lib/nsd/dynamic/psyclyx.net.acme' >> /var/lib/nsd/zones/psyclyx.net
+      '')
+    ];
+
     # Grant acme user access to NSD control keys
     systemd.services.nsd.serviceConfig.ExecStartPost = let
       script = pkgs.writeShellScript "nsd-control-acme-perms" ''
@@ -124,8 +144,15 @@
       useACMEHost = "psyclyx.net";
       forceSSL = true;
       listen = [
-        { addr = "10.157.0.1"; port = 443; ssl = true; }
-        { addr = "10.157.0.1"; port = 80; }
+        {
+          addr = "10.157.0.1";
+          port = 443;
+          ssl = true;
+        }
+        {
+          addr = "10.157.0.1";
+          port = 80;
+        }
       ];
       locations."/".proxyPass = "http://127.0.0.1:2134";
     };
@@ -135,7 +162,7 @@
       domain = "psyclyx.net";
       extraDomainNames = ["*.psyclyx.net"];
       dnsProvider = "exec";
-      credentialFiles."EXEC_PATH" = pkgs.writeText "acme-exec-path" "${acmeHook}";
+      credentialFiles."EXEC_PATH_FILE" = pkgs.writeText "acme-exec-path" "${acmeHook}";
       group = "nginx";
     };
 
