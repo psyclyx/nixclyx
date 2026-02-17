@@ -54,7 +54,7 @@
           "router"
           "minipc"
         ];
-        targetHost = "iyr.lan";
+        targetHost = "iyr.main.home.psyclyx.net";
         targetPort = 22;
         targetUser = "root";
       };
