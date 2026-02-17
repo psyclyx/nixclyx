@@ -38,6 +38,22 @@
       default = [];
       description = "Local data entries without quoting (e.g., 'host.example.com. IN A 10.0.0.1').";
     };
+    forwardZones = lib.mkOption {
+      type = lib.types.listOf (lib.types.submodule {
+        options = {
+          name = lib.mkOption {
+            type = lib.types.str;
+            description = "Zone name.";
+          };
+          forward-addr = lib.mkOption {
+            type = lib.types.listOf lib.types.str;
+            description = "Forward addresses for this zone.";
+          };
+        };
+      });
+      default = [];
+      description = "Additional forward zones (beyond the default catch-all).";
+    };
     forward = {
       upstream = lib.mkOption {
         type = lib.types.listOf lib.types.str;
@@ -78,7 +94,7 @@
             local-data = map (d: ''"${d}"'') cfg.localData;
           };
         stub-zone = cfg.stubZones;
-        forward-zone = [
+        forward-zone = cfg.forwardZones ++ [
           {
             name = ".";
             forward-tls-upstream = cfg.forward.tls;

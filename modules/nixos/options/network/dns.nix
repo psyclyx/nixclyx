@@ -97,6 +97,18 @@
         default = {};
         description = "Zones served locally by the resolver via unbound local-data.";
       };
+      forwardZones = lib.mkOption {
+        type = lib.types.attrsOf (lib.types.submodule {
+          options = {
+            forward-addr = lib.mkOption {
+              type = lib.types.listOf lib.types.str;
+              description = "Forward addresses for this zone.";
+            };
+          };
+        });
+        default = {};
+        description = "Additional forward zones for the resolver.";
+      };
     };
   };
 
@@ -192,6 +204,12 @@
             lib.mapAttrs (_: z: z.type) localZoneCfg;
           localData =
             lib.concatLists (lib.mapAttrsToList (_: z: z.records) localZoneCfg);
+          forwardZones =
+            lib.mapAttrsToList (name: z: {
+              inherit name;
+              inherit (z) forward-addr;
+            })
+            cfg.resolver.forwardZones;
         };
       }))
     ];
