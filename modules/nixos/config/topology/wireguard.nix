@@ -14,6 +14,10 @@
   vpnPeers = lib.filterAttrs (name: host:
     name != hostName && host.vpn != null
   ) topo.hosts;
+
+  allPeerExportedRoutes = lib.concatMap
+    (host: host.vpn.exportedRoutes or [])
+    (lib.attrValues vpnPeers);
 in {
   config = lib.mkIf hasVpn {
     networking.firewall.allowedUDPPorts = [topo.vpn.port];
@@ -45,7 +49,7 @@ in {
               {
                 PublicKey = hubHost.vpn.publicKey;
                 Endpoint = "vpn.${topo.domain.public}:${toString topo.vpn.port}";
-                AllowedIPs = [topo.vpn.subnet];
+                AllowedIPs = [topo.vpn.subnet] ++ allPeerExportedRoutes;
                 PersistentKeepalive = 25;
               }
             ];
