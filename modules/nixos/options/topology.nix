@@ -42,10 +42,10 @@
           default = 22;
           description = "SSH listen port";
         };
-        network = lib.mkOption {
-          type = lib.types.nullOr lib.types.str;
-          default = null;
-          description = "Primary network segment name (for lab hosts)";
+        nat = lib.mkOption {
+          type = lib.types.attrsOf lib.types.str;
+          default = {};
+          description = "1:1 NAT mappings: network name → NAT prefix (e.g. rack-vpn → 10.157.10.0/24)";
         };
         labIndex = lib.mkOption {
           type = lib.types.nullOr lib.types.int;
@@ -86,7 +86,72 @@
         };
       };
     };
+
+    linkModule = {
+      options = {
+        from = lib.mkOption {
+          type = lib.types.str;
+          description = "Source device";
+        };
+        to = lib.mkOption {
+          type = lib.types.str;
+          description = "Destination device";
+        };
+        port = lib.mkOption {
+          type = lib.types.str;
+          description = "Port on destination device";
+        };
+        networks = lib.mkOption {
+          type = lib.types.listOf lib.types.str;
+          description = "Tagged networks on this link";
+        };
+        untagged = lib.mkOption {
+          type = lib.types.nullOr lib.types.str;
+          default = null;
+          description = "Untagged network on this link";
+        };
+      };
+    };
   in {
+    conventions = lib.mkOption {
+      type = lib.types.submodule {
+        options = {
+          gatewayOffset = lib.mkOption {
+            type = lib.types.int;
+            description = "Host offset for gateway addresses within a subnet";
+          };
+          hostBaseOffset = lib.mkOption {
+            type = lib.types.int;
+            description = "Base offset for host addresses (lab servers get base + index)";
+          };
+          dhcpPool = lib.mkOption {
+            type = lib.types.submodule {
+              options = {
+                start = lib.mkOption {
+                  type = lib.types.int;
+                  description = "First address in DHCP pool (last octet)";
+                };
+                end = lib.mkOption {
+                  type = lib.types.int;
+                  description = "Last address in DHCP pool (last octet)";
+                };
+              };
+            };
+            description = "DHCP pool address range";
+          };
+          transitVlan = lib.mkOption {
+            type = lib.types.int;
+            description = "VLAN ID for the transit (upstream) network";
+          };
+          homeDomain = lib.mkOption {
+            type = lib.types.str;
+            description = "Home domain suffix for zone names";
+          };
+        };
+      };
+      description = "Network naming and numbering conventions";
+    };
+
     domain = lib.mkOption {
       type = lib.types.submodule {
         options = {
@@ -134,10 +199,38 @@
       description = "IPv6 ULA prefix for home network";
     };
 
+    switches = lib.mkOption {
+      type = lib.types.attrsOf (lib.types.submodule {
+        freeformType = lib.types.attrsOf lib.types.anything;
+        options = {
+          model = lib.mkOption {
+            type = lib.types.str;
+            description = "Switch model identifier";
+          };
+          mac = lib.mkOption {
+            type = lib.types.str;
+            description = "Switch base MAC address";
+          };
+          identity = lib.mkOption {
+            type = lib.types.str;
+            description = "Switch system identity / hostname";
+          };
+        };
+      });
+      default = {};
+      description = "Physical switch definitions";
+    };
+
+    links = lib.mkOption {
+      type = lib.types.listOf (lib.types.submodule linkModule);
+      default = [];
+      description = "Physical link definitions between devices";
+    };
+
     networks = lib.mkOption {
       type = lib.types.attrsOf (lib.types.submodule networkModule);
       default = {};
       description = "Network segment definitions (VLANs)";
     };
-  };
+};
 }
