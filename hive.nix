@@ -17,7 +17,7 @@
           "desktop"
         ];
         allowLocalDeployment = true;
-        targetHost = "sigil.lan";
+        targetHost = "10.157.0.3";
         targetUser = "root";
       };
     };
@@ -53,7 +53,7 @@
           "router"
           "minipc"
         ];
-        targetHost = "iyr.main.home.psyclyx.net";
+        targetHost = "10.157.0.2";
         targetUser = "root";
       };
     };
@@ -71,7 +71,7 @@
           "server"
           "colo"
         ];
-        targetHost = "tleilax.psyclyx.xyz";
+        targetHost = "10.157.0.1";
         targetUser = "root";
       };
     };
@@ -90,7 +90,7 @@
           "apartment"
           "lab"
         ];
-        targetHost = "lab-1.lan";
+        targetHost = "10.157.10.11";
         targetUser = "root";
       };
     };
@@ -109,7 +109,7 @@
           "apartment"
           "lab"
         ];
-        targetHost = "lab-2.lan";
+        targetHost = "10.157.10.12";
         targetUser = "root";
       };
     };
@@ -128,7 +128,7 @@
           "apartment"
           "lab"
         ];
-        targetHost = "lab-3.lan";
+        targetHost = "10.157.10.13";
         targetUser = "root";
       };
     };
@@ -147,7 +147,7 @@
           "apartment"
           "lab"
         ];
-        targetHost = "lab-4.lan";
+        targetHost = "10.157.10.14";
         targetUser = "root";
       };
     };
