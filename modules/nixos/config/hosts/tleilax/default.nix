@@ -125,22 +125,24 @@
     # Generate remote control TLS certs if missing (NSD module doesn't auto-generate),
     # then inject ACME $INCLUDE after upstream preStart copies zone files from the store
     # (can't be in zone data directly — nsd-checkzone runs at build time in the sandbox)
+    systemd.services.nsd.serviceConfig.WorkingDirectory = "/";
+    systemd.services.nsd.serviceConfig.StateDirectoryMode = "0751";
     systemd.services.nsd.preStart = lib.mkMerge [
       (lib.mkBefore ''
         if [ ! -f /etc/nsd/nsd_server.pem ]; then
-          ${pkgs.nsd}/bin/nsd-control-setup
+          PATH="${pkgs.openssl}/bin:$PATH" ${pkgs.nsd}/bin/nsd-control-setup
         fi
       '')
       (lib.mkAfter ''
-        echo '$INCLUDE /var/lib/nsd/dynamic/psyclyx.net.acme' >> /var/lib/nsd/zones/psyclyx.net
+        echo '$INCLUDE /dynamic/psyclyx.net.acme' >> /var/lib/nsd/zones/psyclyx.net
       '')
     ];
 
-    # Grant acme user access to NSD control keys
+    # Grant acme user access to NSD control + server certs
     systemd.services.nsd.serviceConfig.ExecStartPost = let
       script = pkgs.writeShellScript "nsd-control-acme-perms" ''
-        chgrp acme /etc/nsd/nsd_control.key /etc/nsd/nsd_control.pem
-        chmod g+r /etc/nsd/nsd_control.key /etc/nsd/nsd_control.pem
+        chgrp acme /etc/nsd/nsd_control.key /etc/nsd/nsd_control.pem /etc/nsd/nsd_server.pem
+        chmod g+r /etc/nsd/nsd_control.key /etc/nsd/nsd_control.pem /etc/nsd/nsd_server.pem
       '';
     in ["+${script}"];
 
@@ -171,10 +173,15 @@
       group = "nginx";
     };
 
+    # Allow ACME renewal service to write challenge records into NSD zone
+    systemd.services."acme-order-renew-psyclyx.net".serviceConfig.ReadWritePaths = ["/var/lib/nsd/dynamic"];
+
     # Ensure ACME challenge file exists for NSD $INCLUDE
+    # /var/lib/nsd needs o+x so the acme user can traverse to /dynamic/
     systemd.tmpfiles.rules = [
-      "d /var/lib/nsd/dynamic 0755 acme acme -"
-      "f /var/lib/nsd/dynamic/psyclyx.net.acme 0644 acme acme -"
+      "d /var/lib/nsd 0751 nsd nsd -"
+      "d /var/lib/nsd/dynamic 0775 nsd acme -"
+      "f /var/lib/nsd/dynamic/psyclyx.net.acme 0664 acme nsd -"
     ];
   };
 }
