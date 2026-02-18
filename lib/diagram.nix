@@ -1,128 +1,112 @@
-# diagram.nix — Generate a Mermaid network diagram from topology data.
+# diagram.nix — Generic Mermaid graph renderer.
 #
-# mkMermaid :: lib -> topology -> string
+# mkMermaid :: lib -> graph -> string
 #
-# Pure function: no nixpkgs dependency beyond lib string helpers.
-lib: topology: let
-  inherit (builtins) attrNames filter hasAttr concatStringsSep length;
-  inherit (lib) replaceStrings;
+# Renders an abstract graph model to Mermaid markup.  Contains no domain
+# knowledge — all topology interpretation belongs in the caller.
+#
+# Graph model:
+#   { direction, nodes, edges, subgraphs, subgraphOrder, classes }
+lib: graph: let
+  inherit (builtins) attrNames filter hasAttr concatStringsSep;
+  inherit (lib) replaceStrings mapAttrsToList;
 
-  # Sanitize node IDs: replace `-` with `_` for Mermaid compatibility.
   san = replaceStrings ["-"] ["_"];
-
-  hosts = topology.hosts;
-  hostNames = attrNames hosts;
-  networks = topology.networks;
-  networkNames = attrNames networks;
-
-  hub = topology.vpn.hub;
-
-  vpnHosts = filter (h: hasAttr "vpn" hosts.${h}) hostNames;
-  spokes = filter (h: h != hub) vpnHosts;
-
-  # Lab hosts have a labIndex and mac set.
-  labHosts = filter (h: hasAttr "labIndex" hosts.${h}) hostNames;
-
-  # Networks with a labIface — every lab host is in each of these.
-  labNetworks = filter (n: hasAttr "labIface" networks.${n}) networkNames;
-
-  standalone = filter (h:
-    !(hasAttr "vpn" hosts.${h}) && !(hasAttr "labIndex" hosts.${h})
-  ) hostNames;
-
-  # The router is iyr — it has VPN with exportedRoutes into lab networks.
-  router = "iyr";
 
   indent = n: concatStringsSep "" (builtins.genList (_: "  ") n);
 
   lines = ls: concatStringsSep "\n" (filter (l: l != "") ls);
 
-  # --- Internet & hub ---
-  internetSection = lines [
-    "${indent 1}internet((Internet))"
-    "${indent 1}internet --- |${hosts.${hub}.publicIPv4}| ${san hub}"
-    "${indent 1}internet --- |${hosts.${hub}.publicIPv6}| ${san hub}"
-  ];
+  lbl = text: "|\"${text}\"|";
 
-  # --- VPN subgraph ---
-  vpnNodes = concatStringsSep "\n" (map (h:
-    "${indent 2}${san h}[${h}<br/>${hosts.${h}.vpn.address}]"
-  ) vpnHosts);
+  shapeOpen = shape:
+    if shape == "circle" then "((\""
+    else if shape == "hexagon" then "{{\""
+    else "[\"";
+  shapeClose = shape:
+    if shape == "circle" then "\"))"
+    else if shape == "hexagon" then "\"}}"
+    else "\"]";
 
-  vpnLinks = concatStringsSep "\n" (map (s:
-    "${indent 1}${san hub} -.-|WireGuard| ${san s}"
-  ) spokes);
+  connector = style:
+    if style == "dashed" then "-.-"
+    else if style == "invisible" then "~~~"
+    else "---";
 
-  vpnSubgraph = lines [
-    "${indent 1}subgraph vpn[VPN Overlay — ${topology.vpn.subnet}]"
-    vpnNodes
-    "${indent 1}end"
-    vpnLinks
-  ];
+  # Format a node reference in an edge — inline nodes include their declaration.
+  nodeRef = id: let
+    nodes = graph.nodes or {};
+  in if hasAttr id nodes && (nodes.${id}.inline or false) then let
+    n = nodes.${id};
+    shape = n.shape or "rect";
+  in "${san id}${shapeOpen shape}${n.label}${shapeClose shape}"
+  else san id;
 
-  # --- Lab network subgraphs ---
-  # Every lab host appears in every labIface-bearing network.
-  # Node IDs are scoped per-network to allow the same host in multiple subgraphs.
-  networkSubgraph = net: let
-    info = networks.${net};
-    iface = info.labIface;
-    label =
-      if hasAttr "vpnNat" info
-      then "${net} — ${info.ipv4}<br/>1:1 NAT ${info.vpnNat}"
-      else "${net} — ${info.ipv4}";
-    memberNodes = concatStringsSep "\n" (map (h:
-      "${indent 3}${san h}_${san net}[${h} / ${iface}]"
-    ) labHosts);
-  in lines [
-    "${indent 2}subgraph ${san net}[${label}]"
-    memberNodes
-    "${indent 2}end"
-  ];
+  renderEdge = depth: e: let
+    conn = connector (e.style or "solid");
+    fromRef = nodeRef e.from;
+    toRef = nodeRef e.to;
+    labelPart = if hasAttr "label" e && e.label != ""
+      then " ${lbl e.label} "
+      else " ";
+  in "${indent depth}${fromRef} ${conn}${labelPart}${toRef}";
 
-  # main has no labIface — include it as an empty segment iyr routes to.
-  mainSubgraph = lines [
-    "${indent 2}subgraph main[main — ${networks.main.ipv4}]"
-    "${indent 2}end"
-  ];
+  renderNode = depth: id: n: let
+    shape = n.shape or "rect";
+  in "${indent depth}${san id}${shapeOpen shape}${n.label}${shapeClose shape}";
 
-  networkSubgraphs = concatStringsSep "\n"
-    ([mainSubgraph] ++ map networkSubgraph labNetworks);
+  collectMembers = sgs: builtins.concatLists (mapAttrsToList (_: sg:
+    (sg.members or []) ++ collectMembers (sg.subgraphs or {})
+  ) sgs);
 
-  routerLinks = concatStringsSep "\n"
-    (["${indent 2}${san router} --- main"]
-     ++ map (net: "${indent 2}${san router} --- ${san net}") labNetworks);
+  renderSubgraph = depth: id: sg: let
+    nestedOrder = attrNames (sg.subgraphs or {});
+    nestedSgs = map (nid:
+      renderSubgraph (depth + 1) nid (sg.subgraphs or {}).${nid}
+    ) nestedOrder;
+    memberNodes = map (m:
+      if hasAttr m (graph.nodes or {})
+      then renderNode (depth + 1) m graph.nodes.${m}
+      else "${indent (depth + 1)}${san m}"
+    ) (sg.members or []);
+    sgEdges = map (renderEdge (depth + 1)) (sg.edges or []);
+    outerEdges = map (renderEdge depth) (sg.outerEdges or []);
+  in lines ([
+    "${indent depth}subgraph ${san id}[\"${sg.label}\"]"
+  ] ++ nestedSgs ++ memberNodes ++ sgEdges ++ [
+    "${indent depth}end"
+  ] ++ outerEdges);
 
-  # Show the 1:1 NAT link from VPN into rack-vpn.
-  natLinks = concatStringsSep "\n" (filter (l: l != "") (map (net: let
-    info = networks.${net};
-  in
-    if hasAttr "vpnNat" info
-    then "${indent 1}${san router} -.-|1:1 NAT<br/>${info.vpnNat}| ${san net}"
-    else ""
-  ) labNetworks));
+  subgraphs = graph.subgraphs or {};
+  allSubgraphed = collectMembers subgraphs;
 
-  labSubgraph = lines [
-    "${indent 1}subgraph lab[Home Lab]"
-    networkSubgraphs
-    routerLinks
-    "${indent 1}end"
-    natLinks
-  ];
+  sgOrder = graph.subgraphOrder or (attrNames subgraphs);
+  renderedSubgraphs = map (id:
+    renderSubgraph 1 id subgraphs.${id}
+  ) sgOrder;
 
-  # --- Standalone hosts ---
-  standaloneSection =
-    if length standalone == 0 then ""
-    else lines (map (h:
-      "${indent 1}${san h}[${h}]"
-    ) standalone);
+  topNodes = filter (id:
+    !builtins.elem id allSubgraphed
+    && !((graph.nodes or {}).${id}.inline or false)
+  ) (attrNames (graph.nodes or {}));
+  renderedTopNodes = map (id: renderNode 1 id graph.nodes.${id}) topNodes;
 
-in lines [
-  "graph TD"
-  internetSection
-  ""
-  vpnSubgraph
-  ""
-  labSubgraph
-  ""
-  standaloneSection
-]
+  renderedEdges = map (renderEdge 1) (graph.edges or []);
+
+  classes = graph.classes or {};
+  classDefs = mapAttrsToList (name: c:
+    "classDef ${name} fill:${c.fill},stroke:${c.stroke},color:${c.color}"
+  ) classes;
+
+  classAssignments = builtins.concatLists (mapAttrsToList (name: _: let
+    members = filter (id:
+      hasAttr id (graph.nodes or {}) && (graph.nodes.${id}.class or null) == name
+    ) (attrNames (graph.nodes or {}));
+  in if members == [] then []
+    else ["class ${concatStringsSep "," (map san members)} ${name}"]
+  ) classes);
+
+in lines ([
+  "graph ${graph.direction or "TD"}"
+] ++ renderedTopNodes ++ renderedEdges ++ renderedSubgraphs
+  ++ classDefs ++ classAssignments)
