@@ -1,8 +1,13 @@
 {
   path = ["psyclyx" "nixos" "config" "hosts" "iyr"];
   variant = ["psyclyx" "nixos" "host"];
-  imports = [./network.nix];
-  config = {lib, ...}: {
+  imports = [./networkd.nix ./dhcp.nix ./dns.nix];
+  config = {lib, config, nixclyx, ...}: let
+    topo = config.psyclyx.topology;
+    dt = nixclyx.lib.topology lib topo;
+    sortedNets = map (vlan:
+      dt.networks.${dt.vlanNameMap.${toString vlan}}) dt.dhcpVlans;
+  in {
     networking.hostName = "iyr";
 
     # WireGuard extras (topology module handles base wg0 config)
@@ -30,29 +35,23 @@
         client.enable = true;
         resolver = {
           enable = true;
-          interfaces = [
-            "10.0.0.11"
-            "10.0.10.1"
-            "10.0.20.1"
-            "10.0.21.1"
-            "10.0.22.1"
-            "10.0.23.1"
-            "10.0.240.1"
-            "10.157.0.2"
-            "fd9a:e830:4b1e:a::1"
-            "fd9a:e830:4b1e:14::1"
-            "fd9a:e830:4b1e:15::1"
-            "fd9a:e830:4b1e:16::1"
-            "fd9a:e830:4b1e:17::1"
-            "fd9a:e830:4b1e:f0::1"
-            "::"
-          ];
+          interfaces =
+            ["10.0.0.11"]
+            ++ map (net: net.gateway4) sortedNets
+            ++ ["10.157.0.2"]
+            ++ map (net: net.gateway6) sortedNets
+            ++ ["::"];
           accessControl = [
             "10.0.0.0/8 allow"
-            "fd9a:e830:4b1e::/48 allow"
+            "${topo.ipv6UlaPrefix}::/48 allow"
             "fe80::/10 allow"
             "::1/128 allow"
           ];
+          forwardZones = {
+            "psyclyx.net" = {
+              forward-addr = ["10.157.0.1"];
+            };
+          };
         };
       };
 
