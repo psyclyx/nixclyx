@@ -188,6 +188,26 @@
       description = "VPN overlay configuration";
     };
 
+    uplink = lib.mkOption {
+      type = lib.types.submodule {
+        options = {
+          switch = lib.mkOption {
+            type = lib.types.str;
+            description = "Switch carrying the upstream link";
+          };
+          port = lib.mkOption {
+            type = lib.types.str;
+            description = "Port on the switch connected to upstream";
+          };
+          vlan = lib.mkOption {
+            type = lib.types.int;
+            description = "VLAN ID for the upstream transit link";
+          };
+        };
+      };
+      description = "Upstream / transit link definition";
+    };
+
     hosts = lib.mkOption {
       type = lib.types.attrsOf (lib.types.submodule hostModule);
       default = {};
