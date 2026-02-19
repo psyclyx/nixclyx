@@ -73,7 +73,7 @@
       diagnostics = {
         enable = true;
       };
-      filetree.neo-tree.enable = true;
+      filetree.neo-tree.enable = false;
       binds = {
         whichKey = {
           enable = true;
@@ -195,7 +195,10 @@
         ccc.enable = true;
         direnv.enable = true;
         mkdir.enable = true;
-        motion.precognition.enable = true;
+        motion.precognition = {
+          enable = true;
+          setupOpts.startVisible = false;
+        };
         multicursors.enable = true;
         surround.enable = true;
       };
@@ -217,45 +220,25 @@
           package = pkgs.vimPlugins.nvim-paredit;
           setup = ''require("nvim-paredit").setup({})'';
         };
+        mini-files = {
+          package = pkgs.vimPlugins.mini-nvim;
+          setup = ''require("mini.files").setup({})'';
+        };
       };
 
       keymaps = [
-        # neo-tree
-        {
-          mode = "n";
-          key = "<leader>ee";
-          action = "<cmd>Neotree toggle<cr>";
-          desc = "Toggle file tree";
-        }
-        {
-          mode = "n";
-          key = "<leader>ef";
-          action = "<cmd>Neotree reveal<cr>";
-          desc = "Reveal current file";
-        }
+        # mini.files
         {
           mode = "n";
           key = "<leader>fe";
-          action = "<cmd>lua require('neo-tree.command').execute({ dir = vim.fn.expand('%:p:h'), reveal = true })<cr>";
-          desc = "Browse current directory";
+          action = "<cmd>lua MiniFiles.open(vim.api.nvim_buf_get_name(0))<cr>";
+          desc = "File explorer (current file)";
         }
         {
           mode = "n";
-          key = "<leader>es";
-          action = "<cmd>Neotree document_symbols<cr>";
-          desc = "Document symbols";
-        }
-        {
-          mode = "n";
-          key = "<leader>eg";
-          action = "<cmd>Neotree git_status<cr>";
-          desc = "Git status tree";
-        }
-        {
-          mode = "n";
-          key = "<leader>eb";
-          action = "<cmd>Neotree buffers<cr>";
-          desc = "Buffer tree";
+          key = "<leader>ee";
+          action = "<cmd>lua MiniFiles.open()<cr>";
+          desc = "File explorer (cwd)";
         }
 
         # window management
