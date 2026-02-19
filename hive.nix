@@ -15,9 +15,10 @@
           "apartment"
           "workstation"
           "desktop"
+          "fixed"
         ];
         allowLocalDeployment = true;
-        targetHost = "10.157.0.3";
+        targetHost = "sigil.psyclyx.net";
         targetUser = "root";
       };
     };
@@ -52,8 +53,9 @@
           "apartment"
           "router"
           "minipc"
+          "fixed"
         ];
-        targetHost = "10.157.0.2";
+        targetHost = "iyr.psyclyx.net";
         targetUser = "root";
       };
     };
@@ -71,7 +73,7 @@
           "server"
           "colo"
         ];
-        targetHost = "10.157.0.1";
+        targetHost = "tleilax.psyclyx.net";
         targetUser = "root";
       };
     };
@@ -89,8 +91,9 @@
           "server"
           "apartment"
           "lab"
+          "fixed"
         ];
-        targetHost = "10.157.10.11";
+        targetHost = "lab-1.rack-vpn.home.psyclyx.net";
         targetUser = "root";
       };
     };
@@ -108,8 +111,9 @@
           "server"
           "apartment"
           "lab"
+          "fixed"
         ];
-        targetHost = "10.157.10.12";
+        targetHost = "lab-2.rack-vpn.home.psyclyx.net";
         targetUser = "root";
       };
     };
@@ -127,8 +131,9 @@
           "server"
           "apartment"
           "lab"
+          "fixed"
         ];
-        targetHost = "10.157.10.13";
+        targetHost = "lab-3.rack-vpn.home.psyclyx.net";
         targetUser = "root";
       };
     };
@@ -146,8 +151,9 @@
           "server"
           "apartment"
           "lab"
+          "fixed"
         ];
-        targetHost = "10.157.10.14";
+        targetHost = "lab-4.rack-vpn.home.psyclyx.net";
         targetUser = "root";
       };
     };
