@@ -54,7 +54,7 @@
       OtherInformation = true;
       DNS = "_link_local";
     };
-    linkConfig.RequiredForOnline = "no";
+    linkConfig.RequiredForOnline = "routable";
   };
 in {
   config = lib.mkIf (config.psyclyx.nixos.host == "iyr") {
@@ -140,7 +140,7 @@ in {
               PrefixDelegationHint = "::/60";
               WithoutRA = "solicit";
             };
-            linkConfig.RequiredForOnline = "no";
+            linkConfig.RequiredForOnline = "carrier";
           };
         };
     };
