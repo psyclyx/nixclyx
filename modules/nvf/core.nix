@@ -325,6 +325,20 @@
           desc = "Quit all";
         }
 
+        # buffers / grep
+        {
+          mode = "n";
+          key = "<leader>,";
+          action = "<cmd>Telescope buffers<cr>";
+          desc = "Open buffers";
+        }
+        {
+          mode = "n";
+          key = "<leader>/";
+          action = "<cmd>Telescope live_grep<cr>";
+          desc = "Grep in project";
+        }
+
         # search
         {
           mode = "n";
