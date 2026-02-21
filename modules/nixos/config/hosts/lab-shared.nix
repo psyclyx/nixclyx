@@ -6,7 +6,7 @@
     ...
   }:
     lib.hasPrefix "lab-" config.psyclyx.nixos.host;
-  config = {lib, ...}: {
+  config = {config, lib, ...}: {
     boot = {
       initrd = {
         systemd = {
@@ -21,6 +21,8 @@
       };
     };
 
+    networking.firewall.trustedInterfaces = ["eno4"];
+
     psyclyx.nixos = {
       boot = {
         initrd-ssh.enable = true;
@@ -31,6 +33,14 @@
       hardware.presets.hpe.dl360-gen9.enable = true;
 
       role = "server";
+
+      services.rustfs = {
+        enable = true;
+        clusterNodes = let
+          labHosts = lib.filterAttrs (_: h: h.labIndex != null) config.psyclyx.topology.hosts;
+        in
+          lib.mapAttrsToList (name: _: name) labHosts;
+      };
     };
   };
 }

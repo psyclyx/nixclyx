@@ -5,6 +5,7 @@ in {
     [
       "${sources.home-manager}/nixos"
       (loadFlake sources.stylix).nixosModules.stylix
+      (loadFlake sources.rustfs-flake).nixosModules.default
       modules.common.options
     ]
     ++ nixclyx.lib.fs.collectSpecs nixclyx.lib.modules.mkModule ./.;

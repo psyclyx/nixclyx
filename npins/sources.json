@@ -160,6 +160,19 @@
       "url": null,
       "hash": "sha256-L2j0FdS+Ozf3pqhARyHwcmIRyIHv3Oik2GIVbCUW0IU="
     },
+    "rustfs-flake": {
+      "type": "Git",
+      "repository": {
+        "type": "GitHub",
+        "owner": "rustfs",
+        "repo": "rustfs-flake"
+      },
+      "branch": "main",
+      "submodules": false,
+      "revision": "74dcf53ca87d741034be3588fea36b84a3cfef7e",
+      "url": "https://github.com/rustfs/rustfs-flake/archive/74dcf53ca87d741034be3588fea36b84a3cfef7e.tar.gz",
+      "hash": "sha256-CTxdmLgRhUC9fWdiJz+C/6PAExBn0IvnO90x7IqNS2U="
+    },
     "sops-nix": {
       "type": "Git",
       "repository": {
