@@ -106,8 +106,13 @@
             [
               {
                 job_name = "node";
+                # Don't add localhost:9100 here — the collector is already in its
+                # own scrapeTargets via FQDN (from spokeVpnTargets).  Adding
+                # localhost:9100 would double-scrape the local node_exporter and,
+                # worse, the "localhost:9100" instance label collides with the
+                # server's own localhost:9100 when remote-written.
                 static_configs = [
-                  {targets = cfg.collector.scrapeTargets ++ ["localhost:9100"];}
+                  {targets = cfg.collector.scrapeTargets;}
                 ];
               }
             ]
