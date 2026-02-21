@@ -72,6 +72,7 @@
         tags = [
           "server"
           "colo"
+          "fixed"
         ];
         targetHost = "tleilax.psyclyx.net";
         targetUser = "root";
