@@ -2,11 +2,17 @@
   path = ["psyclyx" "nixos" "config" "hosts" "iyr"];
   variant = ["psyclyx" "nixos" "host"];
   imports = [./networkd.nix ./dhcp.nix ./dns.nix];
-  config = {lib, config, nixclyx, ...}: let
+  config = {
+    lib,
+    config,
+    nixclyx,
+    ...
+  }: let
     topo = config.psyclyx.topology;
     dt = nixclyx.lib.topology lib topo;
     sortedNets = map (vlan:
-      dt.networks.${dt.vlanNameMap.${toString vlan}}) dt.dhcpVlans;
+      dt.networks.${dt.vlanNameMap.${toString vlan}})
+    dt.dhcpVlans;
   in {
     networking.hostName = "iyr";
 
@@ -57,9 +63,12 @@
 
       role = "server";
 
-      services.kiosk = {
-        enable = true;
-        url = "https://metrics.psyclyx.net";
+      services = {
+        prometheus.collector.enable = true;
+        kiosk = {
+          enable = true;
+          url = "https://metrics.psyclyx.net";
+        };
       };
     };
   };

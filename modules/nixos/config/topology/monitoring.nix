@@ -8,25 +8,36 @@
   vpnHosts = lib.filterAttrs (_: host: host.vpn != null) topo.hosts;
   labHosts = lib.filterAttrs (_: host: host ? labIndex) topo.hosts;
 
-  vpnTargets = lib.mapAttrsToList
+  # VPN hosts excluding the hub (scraped by collector, not server).
+  spokeVpnHosts = lib.filterAttrs (name: _: name != topo.vpn.hub) vpnHosts;
+
+  spokeVpnTargets = lib.mapAttrsToList
     (name: _: "${name}.${topo.domain.internal}:9100")
-    vpnHosts;
+    spokeVpnHosts;
 
   labTargets = lib.mapAttrsToList
     (name: _: "${name}.rack-vpn.${topo.conventions.homeDomain}:9100")
     labHosts;
 
-  scrapeTargets = vpnTargets ++ labTargets;
-
-  # SNMP targets: switches with a br0 address reachable over VPN.
+  # SNMP targets: switches with a br0 address.
   snmpTargets = lib.concatLists (lib.mapAttrsToList (_: sw:
     lib.optional (sw ? addresses && sw.addresses ? br0)
       (builtins.head (lib.splitString "/" sw.addresses.br0.address))
   ) topo.switches);
+
+  hubVpnAddress = vpnHosts.${topo.vpn.hub}.vpn.address;
 in {
-  config = lib.mkIf config.psyclyx.nixos.services.prometheus.server.enable {
-    psyclyx.nixos.services.prometheus.server = {
-      inherit scrapeTargets snmpTargets;
-    };
-  };
+  config = lib.mkMerge [
+    (lib.mkIf config.psyclyx.nixos.services.prometheus.collector.enable {
+      psyclyx.nixos.services.prometheus.collector = {
+        scrapeTargets = spokeVpnTargets ++ labTargets;
+        inherit snmpTargets;
+        remoteWriteUrl = lib.mkDefault "http://${hubVpnAddress}:9090/api/v1/write";
+      };
+    })
+    (lib.mkIf config.psyclyx.nixos.services.prometheus.server.enable {
+      # Server only scrapes itself (localhost:9100 is added automatically).
+      # All other targets are scraped by the collector and remote-written.
+    })
+  ];
 }
