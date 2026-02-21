@@ -105,6 +105,7 @@
         grafana = {
           enable = true;
           domain = "metrics.psyclyx.net";
+          dashboards.enable = true;
         };
 
         nginx = {

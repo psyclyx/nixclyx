@@ -1,0 +1,198 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": { "type": "grafana", "uid": "-- Grafana --" },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": false,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "links": [],
+  "panels": [
+    {
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": { "axisBorderShow": false, "axisCenteredZero": false, "axisLabel": "", "fillOpacity": 20, "lineWidth": 1, "scaleDistribution": { "type": "linear" }, "showPoints": "never" },
+          "unit": "celsius",
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "yellow", "value": 70 }, { "color": "red", "value": 85 }] }
+        }
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "id": 1,
+      "options": { "legend": { "calcs": ["mean", "lastNotNull"], "displayMode": "table", "placement": "bottom" }, "tooltip": { "mode": "multi", "sort": "desc" } },
+      "title": "CPU Temperatures",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "node_hwmon_temp_celsius{instance=~\"$instance\",chip=~\".*coretemp.*|.*k10temp.*\"}",
+          "legendFormat": "{{instance}} {{chip}} {{sensor}}",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": { "axisBorderShow": false, "axisCenteredZero": false, "axisLabel": "", "fillOpacity": 20, "lineWidth": 1, "scaleDistribution": { "type": "linear" }, "showPoints": "never" },
+          "unit": "rpm"
+        }
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "id": 2,
+      "options": { "legend": { "calcs": ["mean", "lastNotNull"], "displayMode": "table", "placement": "bottom" }, "tooltip": { "mode": "multi", "sort": "desc" } },
+      "title": "Fan Speeds",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "node_hwmon_fan_rpm{instance=~\"$instance\"}",
+          "legendFormat": "{{instance}} {{chip}} {{sensor}}",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": { "axisBorderShow": false, "axisCenteredZero": false, "axisLabel": "", "fillOpacity": 20, "lineWidth": 1, "scaleDistribution": { "type": "linear" }, "showPoints": "never" },
+          "unit": "watt"
+        }
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+      "id": 3,
+      "options": { "legend": { "calcs": ["mean", "lastNotNull"], "displayMode": "table", "placement": "bottom" }, "tooltip": { "mode": "multi", "sort": "desc" } },
+      "title": "Power Draw",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "node_hwmon_power_average_watt{instance=~\"$instance\"}",
+          "legendFormat": "{{instance}} {{chip}} {{sensor}}",
+          "refId": "A"
+        },
+        {
+          "expr": "node_hwmon_energy_joule_total{instance=~\"$instance\"}",
+          "legendFormat": "",
+          "hide": true,
+          "refId": "B"
+        },
+        {
+          "expr": "rate(node_hwmon_energy_joule_total{instance=~\"$instance\"}[$__rate_interval])",
+          "legendFormat": "{{instance}} {{chip}} energy rate",
+          "refId": "C"
+        }
+      ]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": {
+        "defaults": {
+          "custom": { "align": "auto", "cellOptions": { "type": "auto" }, "inspect": false },
+          "mappings": [
+            { "options": { "0": { "color": "red", "text": "Down" }, "1": { "color": "green", "text": "Up" } }, "type": "value" }
+          ],
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "red", "value": null }, { "color": "green", "value": 1 }] }
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "Value" },
+            "properties": [{ "id": "custom.cellOptions", "value": { "mode": "basic", "type": "color-background" } }]
+          }
+        ]
+      },
+      "gridPos": { "h": 6, "w": 12, "x": 12, "y": 8 },
+      "id": 4,
+      "options": { "showHeader": true, "cellHeight": "sm", "footer": { "show": false } },
+      "title": "Bonding Status",
+      "type": "table",
+      "targets": [
+        {
+          "expr": "node_bonding_slaves{instance=~\"$instance\"}",
+          "format": "table",
+          "instant": true,
+          "refId": "A"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": { "Time": true, "__name__": true, "job": true },
+            "renameByName": { "instance": "Instance", "master": "Bond", "Value": "Active Slaves" }
+          }
+        }
+      ]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": { "axisBorderShow": false, "axisCenteredZero": false, "axisLabel": "", "fillOpacity": 20, "lineWidth": 1, "scaleDistribution": { "type": "linear" }, "showPoints": "never" },
+          "unit": "short"
+        }
+      },
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 16 },
+      "id": 5,
+      "options": { "legend": { "calcs": ["lastNotNull"], "displayMode": "table", "placement": "bottom" }, "tooltip": { "mode": "multi", "sort": "desc" } },
+      "title": "EDAC Errors",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "node_edac_correctable_errors_total{instance=~\"$instance\"}",
+          "legendFormat": "{{instance}} correctable {{controller}}:{{csrow}}",
+          "refId": "A"
+        },
+        {
+          "expr": "node_edac_uncorrectable_errors_total{instance=~\"$instance\"}",
+          "legendFormat": "{{instance}} uncorrectable {{controller}}:{{csrow}}",
+          "refId": "B"
+        }
+      ]
+    }
+  ],
+  "schemaVersion": 39,
+  "tags": ["hardware", "health"],
+  "templating": {
+    "list": [
+      {
+        "current": { "selected": false, "text": "Prometheus", "value": "prometheus" },
+        "hide": 0,
+        "includeAll": false,
+        "name": "datasource",
+        "options": [],
+        "query": "prometheus",
+        "refresh": 1,
+        "type": "datasource"
+      },
+      {
+        "current": {},
+        "datasource": { "type": "prometheus", "uid": "${datasource}" },
+        "definition": "label_values(node_uname_info, instance)",
+        "hide": 0,
+        "includeAll": true,
+        "multi": true,
+        "name": "instance",
+        "query": { "qryType": 1, "query": "label_values(node_uname_info, instance)" },
+        "refresh": 2,
+        "sort": 1,
+        "type": "query"
+      }
+    ]
+  },
+  "time": { "from": "now-6h", "to": "now" },
+  "title": "Hardware Health",
+  "uid": "psyclyx-hardware-health"
+}

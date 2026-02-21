@@ -42,6 +42,19 @@
         default = true;
         description = "Automatically redirect to the OIDC provider.";
       };
+      roleAttributePath = lib.mkOption {
+        type = lib.types.nullOr lib.types.str;
+        default = null;
+        description = "JMESPath expression to map OIDC userinfo claims to Grafana roles.";
+      };
+    };
+    dashboards = {
+      enable = lib.mkEnableOption "built-in homelab monitoring dashboards";
+      extraProviders = lib.mkOption {
+        type = lib.types.listOf lib.types.attrs;
+        default = [];
+        description = "Additional dashboard provider configs.";
+      };
     };
   };
 
@@ -62,6 +75,7 @@
           root_url = lib.mkIf (cfg.domain != null) "https://${cfg.domain}/";
         };
         analytics.reporting_enabled = false;
+        "auth.anonymous".enabled = true;
         "auth.generic_oauth" = lib.mkIf cfg.oidc.enable {
           enabled = true;
           name = cfg.oidc.name;
@@ -76,8 +90,17 @@
           allow_sign_up = true;
           auto_login = cfg.oidc.autoLogin;
           use_pkce = false;
+          role_attribute_path = lib.mkIf (cfg.oidc.roleAttributePath != null) cfg.oidc.roleAttributePath;
         };
       };
+      provision.dashboards.settings.providers =
+        (lib.optional cfg.dashboards.enable {
+          name = "psyclyx";
+          type = "file";
+          disableDeletion = true;
+          options.path = ./dashboards;
+        })
+        ++ cfg.dashboards.extraProviders;
     };
   };
 }
