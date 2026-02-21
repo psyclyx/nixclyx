@@ -19,10 +19,9 @@
     (name: _: "${name}.rack-vpn.${topo.conventions.homeDomain}:9100")
     labHosts;
 
-  # SNMP targets: switches with a br0 address.
+  # SNMP targets: switches with a management address.
   snmpTargets = lib.concatLists (lib.mapAttrsToList (_: sw:
-    lib.optional (sw ? addresses && sw.addresses ? br0)
-      (builtins.head (lib.splitString "/" sw.addresses.br0.address))
+    lib.optional (sw ? mgmtAddress) sw.mgmtAddress
   ) topo.switches);
 
   hubVpnAddress = vpnHosts.${topo.vpn.hub}.vpn.address;
