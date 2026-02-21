@@ -31,8 +31,6 @@
         valid-lifetime = 3600;
         renew-timer = 900;
         rebind-timer = 1800;
-        service-sockets-max-retries = 60;
-        service-sockets-retry-wait-time = 5000;
         subnet4 = cfg.subnets;
         hooks-libraries = cfg.hooksLibraries;
       };
