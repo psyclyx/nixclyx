@@ -38,10 +38,21 @@
     lib,
     ...
   }: let
+    mkSnmpExporter = {
+      enable = true;
+      configuration.auths.public_v2 = {
+        community = "public";
+        version = 2;
+      };
+    };
+
     mkSnmpScrape = snmpTargets: {
       job_name = "snmp";
       metrics_path = "/snmp";
-      params.module = ["if_mib"];
+      params = {
+        module = ["if_mib"];
+        auth = ["public_v2"];
+      };
       static_configs = [{targets = snmpTargets;}];
       relabel_configs = [
         {
@@ -71,9 +82,7 @@
         services.prometheus = {
           enable = true;
           extraFlags = ["--web.enable-remote-write-receiver"];
-          exporters.snmp = lib.mkIf (cfg.server.snmpTargets != []) {
-            enable = true;
-          };
+          exporters.snmp = lib.mkIf (cfg.server.snmpTargets != []) mkSnmpExporter;
           scrapeConfigs =
             [
               {
@@ -90,9 +99,7 @@
       (lib.mkIf cfg.collector.enable {
         services.prometheus = {
           enable = true;
-          exporters.snmp = lib.mkIf (cfg.collector.snmpTargets != []) {
-            enable = true;
-          };
+          exporters.snmp = lib.mkIf (cfg.collector.snmpTargets != []) mkSnmpExporter;
           remoteWrite = [
             {url = cfg.collector.remoteWriteUrl;}
           ];
