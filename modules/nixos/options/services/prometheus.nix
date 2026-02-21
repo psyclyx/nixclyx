@@ -36,14 +36,13 @@
   config = {
     cfg,
     lib,
+    pkgs,
     ...
   }: let
     mkSnmpExporter = {
       enable = true;
-      configuration.auths.public_v2 = {
-        community = "public";
-        version = 2;
-      };
+      configurationPath = "${pkgs.prometheus-snmp-exporter.src}/snmp.yml";
+      enableConfigCheck = false;
     };
 
     mkSnmpScrape = snmpTargets: {
