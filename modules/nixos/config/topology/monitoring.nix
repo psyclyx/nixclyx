@@ -6,7 +6,7 @@
   topo = config.psyclyx.topology;
 
   vpnHosts = lib.filterAttrs (_: host: host.vpn != null) topo.hosts;
-  labHosts = lib.filterAttrs (_: host: host ? labIndex) topo.hosts;
+  labHosts = lib.filterAttrs (_: host: host.labIndex != null) topo.hosts;
 
   # VPN hosts excluding the hub (scraped by collector, not server).
   spokeVpnHosts = lib.filterAttrs (name: _: name != topo.vpn.hub) vpnHosts;
