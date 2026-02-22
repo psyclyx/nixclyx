@@ -14,6 +14,11 @@
         default = [];
         description = "List of SNMP device addresses to scrape via snmp_exporter.";
       };
+      extraScrapeConfigs = lib.mkOption {
+        type = lib.types.listOf lib.types.attrs;
+        default = [];
+        description = "Additional Prometheus scrape_config job objects.";
+      };
     };
     collector = {
       enable = lib.mkEnableOption "Prometheus collector (scrapes local targets, remote-writes to server)";
@@ -27,6 +32,11 @@
         default = [];
         description = "List of SNMP device addresses to scrape via snmp_exporter.";
       };
+      extraScrapeConfigs = lib.mkOption {
+        type = lib.types.listOf lib.types.attrs;
+        default = [];
+        description = "Additional Prometheus scrape_config job objects.";
+      };
       remoteWriteUrl = lib.mkOption {
         type = lib.types.str;
         description = "Prometheus remote_write endpoint URL.";
@@ -35,10 +45,13 @@
   };
   config = {
     cfg,
+    config,
     lib,
     pkgs,
     ...
   }: let
+    topo = config.psyclyx.topology;
+    selfTarget = "${config.psyclyx.nixos.host}.${topo.domain.internal}:9100";
     mkSnmpExporter = {
       enable = true;
       configurationPath = "${pkgs.prometheus-snmp-exporter.src}/snmp.yml";
@@ -80,6 +93,7 @@
       (lib.mkIf cfg.server.enable {
         services.prometheus = {
           enable = true;
+          globalConfig.scrape_interval = "10s";
           extraFlags = ["--web.enable-remote-write-receiver"];
           exporters.snmp = lib.mkIf (cfg.server.snmpTargets != []) mkSnmpExporter;
           scrapeConfigs =
@@ -87,17 +101,19 @@
               {
                 job_name = "node";
                 static_configs = [
-                  {targets = cfg.server.scrapeTargets ++ ["localhost:9100"];}
+                  {targets = cfg.server.scrapeTargets ++ [selfTarget];}
                 ];
               }
             ]
             ++ lib.optional (cfg.server.snmpTargets != [])
-            (mkSnmpScrape cfg.server.snmpTargets);
+            (mkSnmpScrape cfg.server.snmpTargets)
+            ++ cfg.server.extraScrapeConfigs;
         };
       })
       (lib.mkIf cfg.collector.enable {
         services.prometheus = {
           enable = true;
+          globalConfig.scrape_interval = "10s";
           exporters.snmp = lib.mkIf (cfg.collector.snmpTargets != []) mkSnmpExporter;
           remoteWrite = [
             {url = cfg.collector.remoteWriteUrl;}
@@ -117,7 +133,8 @@
               }
             ]
             ++ lib.optional (cfg.collector.snmpTargets != [])
-            (mkSnmpScrape cfg.collector.snmpTargets);
+            (mkSnmpScrape cfg.collector.snmpTargets)
+            ++ cfg.collector.extraScrapeConfigs;
         };
       })
     ];

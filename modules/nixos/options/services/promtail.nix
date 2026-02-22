@@ -8,6 +8,7 @@
     };
   };
   config = {cfg, ...}: {
+    systemd.services.promtail.serviceConfig.StateDirectory = "promtail";
     services.promtail = {
       enable = true;
       configuration = {
