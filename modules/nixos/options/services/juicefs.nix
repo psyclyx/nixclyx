@@ -113,7 +113,7 @@
       );
 
       metaUrl = "redis://${cfg.sentinelMasterName},${sentinelAddrs}:${toString cfg.sentinelPort}/${toString cfg.redisDatabase}";
-      s3Endpoint = "http://${localAddr}:9000";
+      s3Endpoint = "http://127.0.0.1:9000";
       s3Storage = "s3";
 
       juicefs = "${pkgs.juicefs}/bin/juicefs";

@@ -75,7 +75,7 @@
 
     baseEnv = pkgs.writeText "rustfs-cluster.env" ''
       RUSTFS_VOLUMES="${volumeString}"
-      RUSTFS_ADDRESS="${dataAddr}:${toString cfg.dataPort}"
+      RUSTFS_ADDRESS="0.0.0.0:${toString cfg.dataPort}"
       RUSTFS_CONSOLE_ENABLE=true
       RUSTFS_CONSOLE_ADDRESS="${consoleAddr}:${toString cfg.consolePort}"
       RUST_LOG=info
@@ -85,7 +85,7 @@
     services.rustfs = {
       enable = true;
       volumes = volumeString;
-      address = "${dataAddr}:${toString cfg.dataPort}";
+      address = "0.0.0.0:${toString cfg.dataPort}";
       consoleAddress = "${consoleAddr}:${toString cfg.consolePort}";
     };
 
