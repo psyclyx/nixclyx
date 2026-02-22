@@ -19,6 +19,14 @@
     (name: _: "${name}.rack-vpn.${topo.conventions.homeDomain}:9100")
     labHosts;
 
+  mkLabTargets = port: lib.mapAttrsToList
+    (name: _: "${name}.rack-vpn.${topo.conventions.homeDomain}:${toString port}")
+    labHosts;
+
+  redisTargets = mkLabTargets 9121;
+  postgresTargets = mkLabTargets 9187;
+  juicefsTargets = mkLabTargets 9567;
+
   # SNMP targets: switches with a management address.
   snmpTargets = lib.concatLists (lib.mapAttrsToList (_: sw:
     lib.optional (sw ? mgmtAddress) sw.mgmtAddress
@@ -32,6 +40,20 @@ in {
         scrapeTargets = spokeVpnTargets ++ labTargets;
         inherit snmpTargets;
         remoteWriteUrl = lib.mkDefault "http://${hubVpnAddress}:9090/api/v1/write";
+        extraScrapeConfigs = [
+          {
+            job_name = "redis";
+            static_configs = [{targets = redisTargets;}];
+          }
+          {
+            job_name = "postgres";
+            static_configs = [{targets = postgresTargets;}];
+          }
+          {
+            job_name = "juicefs";
+            static_configs = [{targets = juicefsTargets;}];
+          }
+        ];
       };
     })
     (lib.mkIf config.psyclyx.nixos.services.prometheus.server.enable {
