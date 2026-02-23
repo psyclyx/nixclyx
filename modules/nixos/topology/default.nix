@@ -111,6 +111,11 @@
           default = {};
           description = "Per-network interface mapping (bond or raw device).";
         };
+        roles = lib.mkOption {
+          type = lib.types.listOf lib.types.str;
+          default = [];
+          description = "Informational roles for this host (e.g. server, workstation, router).";
+        };
         services = lib.mkOption {
           type = lib.types.attrsOf (lib.types.submodule {
             options = {
