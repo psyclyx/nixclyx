@@ -22,6 +22,7 @@
           labHosts = lib.filterAttrs (_: h: h.labIndex != null) config.psyclyx.topology.hosts;
         in
         lib.mapAttrsToList (name: _: name) labHosts;
+      thisHost = config.psyclyx.topology.hosts.${config.psyclyx.nixos.host};
     in
     {
       boot = {
@@ -38,7 +39,60 @@
         };
       };
 
-      networking.firewall.trustedInterfaces = [ "eno4" ];
+      systemd.network = {
+        netdevs = {
+          "10-bond0" = {
+            netdevConfig = {
+              Name = "bond0";
+              Kind = "bond";
+              MACAddress = thisHost.mac.eno1;
+            };
+            bondConfig = {
+              Mode = "802.3ad";
+              LACPTransmitRate = "fast";
+              TransmitHashPolicy = "layer3+4";
+              MIIMonitorSec = "100ms";
+            };
+          };
+          "10-bond1" = {
+            netdevConfig = {
+              Name = "bond1";
+              Kind = "bond";
+              MACAddress = thisHost.mac.eno3;
+            };
+            bondConfig = {
+              Mode = "802.3ad";
+              LACPTransmitRate = "fast";
+              TransmitHashPolicy = "layer3+4";
+              MIIMonitorSec = "100ms";
+            };
+          };
+        };
+        networks = {
+          "10-bond0-ports" = {
+            matchConfig.Name = "eno1 eno2";
+            networkConfig.Bond = "bond0";
+          };
+          "10-bond1-ports" = {
+            matchConfig.Name = "eno3 eno4";
+            networkConfig.Bond = "bond1";
+          };
+          "20-bond0" = {
+            matchConfig.Name = "bond0";
+            DHCP = "yes";
+            dhcpV4Config.ClientIdentifier = "mac";
+            linkConfig.RequiredForOnline = "routable";
+          };
+          "20-bond1" = {
+            matchConfig.Name = "bond1";
+            DHCP = "yes";
+            dhcpV4Config.ClientIdentifier = "mac";
+            linkConfig.RequiredForOnline = "no";
+          };
+        };
+      };
+
+      networking.firewall.trustedInterfaces = [ "bond0" "bond1" ];
 
       networking.firewall.allowedTCPPorts = [ 9567 ];
 
