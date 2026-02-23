@@ -48,6 +48,10 @@
         description = "JMESPath expression to map OIDC userinfo claims to Grafana roles.";
       };
     };
+    secretKeyFile = lib.mkOption {
+      type = lib.types.str;
+      description = "Path to file containing the secret key used for signing data source settings.";
+    };
     dashboards = {
       enable = lib.mkEnableOption "built-in homelab monitoring dashboards";
       extraProviders = lib.mkOption {
@@ -74,6 +78,7 @@
           enforce_domain = lib.mkIf (cfg.domain != null) true;
           root_url = lib.mkIf (cfg.domain != null) "https://${cfg.domain}/";
         };
+        security.secret_key = "$__file{${cfg.secretKeyFile}}";
         analytics.reporting_enabled = false;
         "auth.anonymous".enabled = true;
         "auth.generic_oauth" = lib.mkIf cfg.oidc.enable {
