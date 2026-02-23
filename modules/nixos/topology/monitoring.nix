@@ -35,7 +35,7 @@
 
   # SNMP targets: switches with a management address.
   snmpTargets = lib.concatLists (lib.mapAttrsToList (_: sw:
-    lib.optional (sw ? mgmtAddress) sw.mgmtAddress
+    lib.optional (sw.mgmt != null) sw.mgmt.ipv4
   ) topo.switches);
 
   hubVpnAddress = wgHosts.${topo.wireguard.hub}.addresses.vpn.ipv4;
