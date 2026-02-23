@@ -14,7 +14,20 @@
     inherit name;
     n = host.labIndex;
     macs = host.mac;
+    ifaces = host.interfaces;
   }) (lib.filterAttrs (_: host: host.labIndex != null) topo.hosts));
+
+  # Get the physical interface name for a lab server on a given network.
+  # For bonded interfaces, use the first bond member; for raw devices, use the device name.
+  labIfaceForNetwork = server: networkName: let
+    iface = server.ifaces.${networkName};
+  in
+    if iface.device != null then iface.device
+    else builtins.head iface.members;
+
+  # Lab servers that have an interface on a given network.
+  labServersOnNetwork = networkName:
+    builtins.filter (s: s.ifaces ? ${networkName}) labServers;
 
   # Build a Kea DHCPv4 subnet from a pool definition.
   mkSubnet4 = _poolName: pool: let
@@ -29,16 +42,13 @@
       { name = "domain-name"; data = net.zoneName; }
       { name = "domain-search"; data = "${net.zoneName}, ${topo.domains.home}"; }
     ];
-    reservations =
-      if net.labIface == null
-      then []
-      else
-        map (s: {
-          "hw-address" = s.macs.${net.labIface};
-          "ip-address" = "${net.prefix}.${toString (conventions.hostBaseOffset + s.n)}";
-          hostname = s.name;
-        })
-        labServers;
+    reservations = let servers = labServersOnNetwork pool.network; in
+      map (s: {
+        "hw-address" = s.macs.${labIfaceForNetwork s pool.network};
+        "ip-address" = "${net.prefix}.${toString (conventions.hostBaseOffset + s.n)}";
+        hostname = s.name;
+      })
+      servers;
   };
 
   # Build a Kea DHCPv6 subnet from a pool definition.
@@ -53,16 +63,13 @@
       { name = "dns-servers"; data = net.gateway6; }
       { name = "domain-search"; data = "${net.zoneName}, ${topo.domains.home}"; }
     ];
-    reservations =
-      if net.labIface == null
-      then []
-      else
-        map (s: {
-          "hw-address" = s.macs.${net.labIface};
-          "ip-addresses" = ["${prefix6}::${dt.utils.intToHex (conventions.hostBaseOffset + s.n)}"];
-          hostname = s.name;
-        })
-        labServers;
+    reservations = let servers = labServersOnNetwork pool.network; in
+      map (s: {
+        "hw-address" = s.macs.${labIfaceForNetwork s pool.network};
+        "ip-addresses" = ["${prefix6}::${dt.utils.intToHex (conventions.hostBaseOffset + s.n)}"];
+        hostname = s.name;
+      })
+      servers;
   };
 
   # Pools that have IPv6 enabled.

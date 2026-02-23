@@ -10,8 +10,12 @@
   labServers = lib.sort (a: b: a.n < b.n) (lib.mapAttrsToList (name: host: {
     inherit name;
     n = host.labIndex;
-    interfaces = host.mac;
+    ifaces = host.interfaces;
   }) (lib.filterAttrs (_: host: host.labIndex != null) topo.hosts));
+
+  # Lab servers that have an interface on a given network.
+  labServersOnNetwork = networkName:
+    builtins.filter (s: s.ifaces ? ${networkName}) labServers;
 
   mkForwardZone = vlanId: let
     name = dt.vlanNameMap.${toString vlanId};
@@ -19,18 +23,13 @@
     prefix6 = "${topo.ipv6UlaPrefix}:${net.vlanHex}";
     gatewayRecord = "iyr.${net.zoneName}. IN A ${net.gateway4}";
     gatewayRecord6 = "iyr.${net.zoneName}. IN AAAA ${net.gateway6}";
+    servers = labServersOnNetwork name;
     serverRecords =
-      if net.labIface == null
-      then []
-      else
-        map (s: "${s.name}.${net.zoneName}. IN A ${net.prefix}.${toString (conventions.hostBaseOffset + s.n)}")
-        labServers;
+      map (s: "${s.name}.${net.zoneName}. IN A ${net.prefix}.${toString (conventions.hostBaseOffset + s.n)}")
+      servers;
     serverRecords6 =
-      if net.labIface == null
-      then []
-      else
-        map (s: "${s.name}.${net.zoneName}. IN AAAA ${prefix6}::${dt.utils.intToHex (conventions.hostBaseOffset + s.n)}")
-        labServers;
+      map (s: "${s.name}.${net.zoneName}. IN AAAA ${prefix6}::${dt.utils.intToHex (conventions.hostBaseOffset + s.n)}")
+      servers;
   in {
     name = net.zoneName;
     value = {
@@ -45,12 +44,10 @@
     octets = lib.splitString "." net.prefix;
     reverseZone = "${lib.concatStringsSep "." (lib.reverseList octets)}.in-addr.arpa";
     gatewayPtr = "${toString conventions.gatewayOffset}.${reverseZone}. IN PTR iyr.${net.zoneName}.";
+    servers = labServersOnNetwork name;
     serverPtrs =
-      if net.labIface == null
-      then []
-      else
-        map (s: "${toString (conventions.hostBaseOffset + s.n)}.${reverseZone}. IN PTR ${s.name}.${net.zoneName}.")
-        labServers;
+      map (s: "${toString (conventions.hostBaseOffset + s.n)}.${reverseZone}. IN PTR ${s.name}.${net.zoneName}.")
+      servers;
   in {
     name = reverseZone;
     value = {
@@ -64,12 +61,10 @@
     net = dt.networks.${name};
     reverseZone = "${net.ip6Reverse}.${dt.ulaReverseBase}.ip6.arpa";
     gatewayPtr = "${dt.utils.hostReverseNibbles (dt.utils.intToHex conventions.gatewayOffset)}.${reverseZone}. IN PTR iyr.${net.zoneName}.";
+    servers = labServersOnNetwork name;
     serverPtrs =
-      if net.labIface == null
-      then []
-      else
-        map (s: "${dt.utils.hostReverseNibbles (dt.utils.intToHex (conventions.hostBaseOffset + s.n))}.${reverseZone}. IN PTR ${s.name}.${net.zoneName}.")
-        labServers;
+      map (s: "${dt.utils.hostReverseNibbles (dt.utils.intToHex (conventions.hostBaseOffset + s.n))}.${reverseZone}. IN PTR ${s.name}.${net.zoneName}.")
+      servers;
   in {
     name = reverseZone;
     value = {
