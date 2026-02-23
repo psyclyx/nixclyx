@@ -95,6 +95,8 @@
         };
         systemd.services.prometheus-smartctl-exporter.serviceConfig = {
           DevicePolicy = lib.mkForce "auto";
+          CapabilityBoundingSet = lib.mkForce ["CAP_SYS_RAWIO" "CAP_DAC_OVERRIDE" "CAP_SYS_ADMIN"];
+          AmbientCapabilities = lib.mkForce ["CAP_SYS_RAWIO" "CAP_DAC_OVERRIDE" "CAP_SYS_ADMIN"];
         };
       }
       (lib.mkIf cfg.server.enable {
