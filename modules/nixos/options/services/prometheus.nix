@@ -89,6 +89,13 @@
           enabledCollectors = ["systemd"];
           openFirewall = true;
         };
+        services.prometheus.exporters.smartctl = {
+          enable = true;
+          openFirewall = true;
+        };
+        systemd.services.prometheus-smartctl-exporter.serviceConfig = {
+          DevicePolicy = lib.mkForce "auto";
+        };
       }
       (lib.mkIf cfg.server.enable {
         services.prometheus = {
