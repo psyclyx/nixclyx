@@ -1,0 +1,401 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": false,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "links": [],
+  "panels": [
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisLabel": "",
+            "fillOpacity": 20,
+            "lineWidth": 1,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never"
+          },
+          "unit": "percent",
+          "min": 0,
+          "max": 100,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 80
+              },
+              {
+                "color": "green",
+                "value": 95
+              }
+            ]
+          }
+        }
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 0
+      },
+      "id": 1,
+      "options": {
+        "legend": {
+          "calcs": [
+            "mean",
+            "lastNotNull"
+          ],
+          "displayMode": "table",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "title": "Btree Cache Hit Rate",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "rate(bcachefs_counter{instance=~\"$instance\",uuid=~\"$uuid\",name=\"btree_cache_hit\"}[$__rate_interval]) / (rate(bcachefs_counter{instance=~\"$instance\",uuid=~\"$uuid\",name=\"btree_cache_hit\"}[$__rate_interval]) + rate(bcachefs_counter{instance=~\"$instance\",uuid=~\"$uuid\",name=\"btree_cache_miss\"}[$__rate_interval])) * 100",
+          "legendFormat": "{{instance}} {{uuid}}",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisLabel": "",
+            "fillOpacity": 20,
+            "lineWidth": 1,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never"
+          },
+          "unit": "ops"
+        }
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 0
+      },
+      "id": 2,
+      "options": {
+        "legend": {
+          "calcs": [
+            "mean",
+            "lastNotNull"
+          ],
+          "displayMode": "table",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "title": "I/O Rate",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "rate(bcachefs_counter{instance=~\"$instance\",uuid=~\"$uuid\",name=\"io_read\"}[$__rate_interval])",
+          "legendFormat": "{{instance}} {{uuid}} read",
+          "refId": "A"
+        },
+        {
+          "expr": "rate(bcachefs_counter{instance=~\"$instance\",uuid=~\"$uuid\",name=\"io_write\"}[$__rate_interval])",
+          "legendFormat": "{{instance}} {{uuid}} write",
+          "refId": "B"
+        }
+      ]
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisLabel": "",
+            "fillOpacity": 20,
+            "lineWidth": 1,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never"
+          },
+          "unit": "ops"
+        }
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 8
+      },
+      "id": 3,
+      "options": {
+        "legend": {
+          "calcs": [
+            "mean",
+            "lastNotNull"
+          ],
+          "displayMode": "table",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "title": "Background I/O (Rebalance / Tiering / CopyGC)",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "rate(bcachefs_counter{instance=~\"$instance\",uuid=~\"$uuid\",name=\"io_move_read\"}[$__rate_interval])",
+          "legendFormat": "{{instance}} {{uuid}} move read",
+          "refId": "A"
+        },
+        {
+          "expr": "rate(bcachefs_counter{instance=~\"$instance\",uuid=~\"$uuid\",name=\"io_move_write\"}[$__rate_interval])",
+          "legendFormat": "{{instance}} {{uuid}} move write",
+          "refId": "B"
+        }
+      ]
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisLabel": "",
+            "fillOpacity": 20,
+            "lineWidth": 1,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never"
+          },
+          "unit": "ops"
+        }
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 8
+      },
+      "id": 4,
+      "options": {
+        "legend": {
+          "calcs": [
+            "mean",
+            "lastNotNull"
+          ],
+          "displayMode": "table",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "title": "Transaction Rate",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "rate(bcachefs_counter{instance=~\"$instance\",uuid=~\"$uuid\",name=\"transaction_commit\"}[$__rate_interval])",
+          "legendFormat": "{{instance}} {{uuid}} commit",
+          "refId": "A"
+        },
+        {
+          "expr": "rate(bcachefs_counter{instance=~\"$instance\",uuid=~\"$uuid\",name=\"transaction_restart\"}[$__rate_interval])",
+          "legendFormat": "{{instance}} {{uuid}} restart",
+          "refId": "B"
+        }
+      ]
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisLabel": "",
+            "fillOpacity": 20,
+            "lineWidth": 1,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never"
+          },
+          "unit": "ops"
+        }
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 16
+      },
+      "id": 5,
+      "options": {
+        "legend": {
+          "calcs": [
+            "mean",
+            "lastNotNull"
+          ],
+          "displayMode": "table",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "title": "Journal Writes",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "rate(bcachefs_counter{instance=~\"$instance\",uuid=~\"$uuid\",name=\"journal_write\"}[$__rate_interval])",
+          "legendFormat": "{{instance}} {{uuid}}",
+          "refId": "A"
+        }
+      ]
+    }
+  ],
+  "schemaVersion": 39,
+  "tags": [
+    "bcachefs",
+    "filesystem",
+    "storage"
+  ],
+  "templating": {
+    "list": [
+      {
+        "current": {
+          "selected": false,
+          "text": "Prometheus",
+          "value": "psyclyx-prometheus"
+        },
+        "hide": 0,
+        "includeAll": false,
+        "name": "datasource",
+        "options": [],
+        "query": "prometheus",
+        "refresh": 1,
+        "type": "datasource"
+      },
+      {
+        "current": {},
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${datasource}"
+        },
+        "definition": "label_values(bcachefs_counter, instance)",
+        "hide": 0,
+        "includeAll": true,
+        "multi": true,
+        "name": "instance",
+        "query": {
+          "qryType": 1,
+          "query": "label_values(bcachefs_counter, instance)"
+        },
+        "refresh": 2,
+        "sort": 1,
+        "type": "query"
+      },
+      {
+        "current": {},
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${datasource}"
+        },
+        "definition": "label_values(bcachefs_counter{instance=~\"$instance\"}, uuid)",
+        "hide": 0,
+        "includeAll": true,
+        "multi": true,
+        "name": "uuid",
+        "query": {
+          "qryType": 1,
+          "query": "label_values(bcachefs_counter{instance=~\"$instance\"}, uuid)"
+        },
+        "refresh": 2,
+        "sort": 1,
+        "type": "query"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "title": "Bcachefs",
+  "uid": "psyclyx-bcachefs"
+}
