@@ -2,6 +2,16 @@
   path = ["psyclyx" "topology"];
   gate = "always";
   imports = [./wireguard.nix ./dns.nix ./monitoring.nix ./deployment.nix];
+  config = {config, lib, ...}: let
+    topo = config.psyclyx.topology;
+  in {
+    # Populate domains from deprecated fields so existing data keeps working.
+    psyclyx.topology.domains = {
+      internal = lib.mkDefault topo.domain.internal;
+      public = lib.mkDefault topo.domain.public;
+      home = lib.mkDefault topo.conventions.homeDomain;
+    };
+  };
   options = {lib, ...}: let
     vpnPeerModule = {
       options = {
@@ -17,6 +27,21 @@
           type = lib.types.listOf lib.types.str;
           default = [];
           description = "Subnets reachable through this peer (added to hub's AllowedIPs)";
+        };
+      };
+    };
+
+    addressModule = {
+      options = {
+        ipv4 = lib.mkOption {
+          type = lib.types.nullOr lib.types.str;
+          default = null;
+          description = "IPv4 address (without prefix length)";
+        };
+        ipv6 = lib.mkOption {
+          type = lib.types.nullOr lib.types.str;
+          default = null;
+          description = "IPv6 address (without prefix length)";
         };
       };
     };
@@ -57,6 +82,11 @@
           type = lib.types.attrsOf lib.types.str;
           default = {};
           description = "MAC addresses keyed by interface name";
+        };
+        addresses = lib.mkOption {
+          type = lib.types.attrsOf (lib.types.submodule addressModule);
+          default = {};
+          description = "Per-network address overrides. Null fields = derived from conventions.";
         };
       };
     };
@@ -146,7 +176,7 @@
           };
           homeDomain = lib.mkOption {
             type = lib.types.str;
-            description = "Home domain suffix for zone names";
+            description = "Home domain suffix for zone names (deprecated: use domains.home)";
           };
         };
       };
@@ -158,15 +188,35 @@
         options = {
           internal = lib.mkOption {
             type = lib.types.str;
+            description = "Internal domain for VPN-resolved names (deprecated: use domains.internal)";
+          };
+          public = lib.mkOption {
+            type = lib.types.str;
+            description = "Public-facing domain (deprecated: use domains.public)";
+          };
+        };
+      };
+      description = "Domain names (deprecated: use domains)";
+    };
+
+    domains = lib.mkOption {
+      type = lib.types.submodule {
+        options = {
+          internal = lib.mkOption {
+            type = lib.types.str;
             description = "Internal domain for VPN-resolved names";
           };
           public = lib.mkOption {
             type = lib.types.str;
-            description = "Public-facing domain";
+            description = "Public-facing / internet-facing domain";
+          };
+          home = lib.mkOption {
+            type = lib.types.str;
+            description = "Per-network local zone suffix (home/lab DNS)";
           };
         };
       };
-      description = "Domain names";
+      description = "Unified domain names block";
     };
 
     vpn = lib.mkOption {

@@ -70,7 +70,24 @@ lib: topo: let
   vlanNameMap = builtins.listToAttrs (lib.mapAttrsToList (name: net:
     lib.nameValuePair (toString net.vlan) name
   ) topo.networks);
+
+  # Resolve a host's IPv4 address on a given network.
+  # Checks host.addresses.${network}.ipv4 first, falls back to convention math.
+  hostAddress4 = network: host:
+    if host.addresses ? ${network} && host.addresses.${network}.ipv4 != null
+    then host.addresses.${network}.ipv4
+    else "${networks.${network}.prefix}.${toString (conventions.hostBaseOffset + host.labIndex)}";
+
+  # Resolve a host's IPv6 address on a given network.
+  # Checks host.addresses.${network}.ipv6 first, falls back to convention math.
+  hostAddress6 = network: host: let
+    net = networks.${network};
+    prefix6 = "${ulaPrefix}:${net.vlanHex}";
+  in
+    if host.addresses ? ${network} && host.addresses.${network}.ipv6 != null
+    then host.addresses.${network}.ipv6
+    else "${prefix6}::${intToHex (conventions.hostBaseOffset + host.labIndex)}";
 in {
-  inherit networks ulaReverseBase vlanNameMap dhcpVlans;
+  inherit networks ulaReverseBase vlanNameMap dhcpVlans hostAddress4 hostAddress6;
   utils = {inherit intToHex hexToReverseNibbles hostReverseNibbles parseCidrPrefix;};
 }
