@@ -45,7 +45,7 @@
         nat = lib.mkOption {
           type = lib.types.attrsOf lib.types.str;
           default = {};
-          description = "1:1 NAT mappings: network name → NAT prefix (e.g. rack-vpn → 10.157.10.0/24)";
+          description = "1:1 NAT mappings: network name → NAT prefix (e.g. rack → 10.157.10.0/24)";
         };
         labIndex = lib.mkOption {
           type = lib.types.nullOr lib.types.int;

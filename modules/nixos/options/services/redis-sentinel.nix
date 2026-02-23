@@ -15,7 +15,7 @@
       };
       dataNetwork = lib.mkOption {
         type = lib.types.str;
-        default = "rack-a";
+        default = "data";
         description = "Topology network name for data traffic.";
       };
       redisPort = lib.mkOption {

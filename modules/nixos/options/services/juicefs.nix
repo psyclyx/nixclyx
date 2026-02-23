@@ -15,7 +15,7 @@
       };
       dataNetwork = lib.mkOption {
         type = lib.types.str;
-        default = "rack-a";
+        default = "data";
         description = "Topology network name for data traffic.";
       };
       mountPoint = lib.mkOption {
@@ -70,7 +70,7 @@
       };
       metricsNetwork = lib.mkOption {
         type = lib.types.str;
-        default = "rack-vpn";
+        default = "rack";
         description = "Topology network name for the metrics endpoint bind address.";
       };
     };

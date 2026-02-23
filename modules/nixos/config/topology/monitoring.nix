@@ -16,16 +16,22 @@
     spokeVpnHosts;
 
   labTargets = lib.mapAttrsToList
-    (name: _: "${name}.rack-vpn.${topo.conventions.homeDomain}:9100")
+    (name: _: "${name}.rack.${topo.conventions.homeDomain}:9100")
     labHosts;
 
   mkLabTargets = port: lib.mapAttrsToList
-    (name: _: "${name}.rack-vpn.${topo.conventions.homeDomain}:${toString port}")
+    (name: _: "${name}.rack.${topo.conventions.homeDomain}:${toString port}")
     labHosts;
 
   redisTargets = mkLabTargets 9121;
   postgresTargets = mkLabTargets 9187;
   juicefsTargets = mkLabTargets 9567;
+
+  smartctlSpokeVpnTargets = lib.mapAttrsToList
+    (name: _: "${name}.${topo.domain.internal}:9633")
+    spokeVpnHosts;
+
+  smartctlLabTargets = mkLabTargets 9633;
 
   # SNMP targets: switches with a management address.
   snmpTargets = lib.concatLists (lib.mapAttrsToList (_: sw:
@@ -53,12 +59,22 @@ in {
             job_name = "juicefs";
             static_configs = [{targets = juicefsTargets;}];
           }
+          {
+            job_name = "smartctl";
+            static_configs = [{targets = smartctlSpokeVpnTargets ++ smartctlLabTargets;}];
+          }
         ];
       };
     })
     (lib.mkIf config.psyclyx.nixos.services.prometheus.server.enable {
       # Server only scrapes itself (localhost:9100 is added automatically).
       # All other targets are scraped by the collector and remote-written.
+      psyclyx.nixos.services.prometheus.server.extraScrapeConfigs = [
+        {
+          job_name = "smartctl";
+          static_configs = [{targets = ["localhost:9633"];}];
+        }
+      ];
     })
   ];
 }
