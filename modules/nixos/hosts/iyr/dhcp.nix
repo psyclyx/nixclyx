@@ -157,7 +157,7 @@
   in {
     id = vlanId;
     subnet = "${net.prefix}.0/${toString net.prefixLen}";
-    pools = [{pool = "${net.pool4Start} - ${net.pool4End}";}];
+    pools = [{pool = "${net.prefix}.100 - ${net.prefix}.199";}];
     "option-data" = [
       {
         name = "routers";
@@ -195,7 +195,7 @@
   in {
     id = vlanId;
     subnet = net.subnet6;
-    pools = [{pool = "${net.pool6Start} - ${net.pool6End}";}];
+    pools = [{pool = "${prefix6}::100 - ${prefix6}::1ff";}];
     "option-data" = [
       {
         name = "dns-servers";

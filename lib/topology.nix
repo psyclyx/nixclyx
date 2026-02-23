@@ -56,10 +56,6 @@ lib: topo: let
       vlanHex = hex;
       zoneName = "${name}.${conventions.homeDomain}";
       ip6Reverse = hexToReverseNibbles hex;
-      pool4Start = "${parsed.prefix}.${toString conventions.dhcpPool.start}";
-      pool4End = "${parsed.prefix}.${toString conventions.dhcpPool.end}";
-      pool6Start = "${prefix6}::100";
-      pool6End = "${prefix6}::1ff";
     };
 
   networks = lib.mapAttrs enrichNetwork topo.networks;

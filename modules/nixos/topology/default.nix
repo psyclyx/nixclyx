@@ -241,21 +241,6 @@
             type = lib.types.int;
             description = "Base offset for host addresses (lab servers get base + index)";
           };
-          dhcpPool = lib.mkOption {
-            type = lib.types.submodule {
-              options = {
-                start = lib.mkOption {
-                  type = lib.types.int;
-                  description = "First address in DHCP pool (last octet)";
-                };
-                end = lib.mkOption {
-                  type = lib.types.int;
-                  description = "Last address in DHCP pool (last octet)";
-                };
-              };
-            };
-            description = "DHCP pool address range";
-          };
           transitVlan = lib.mkOption {
             type = lib.types.int;
             description = "VLAN ID for the transit (upstream) network";
