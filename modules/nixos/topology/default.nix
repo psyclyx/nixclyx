@@ -88,6 +88,29 @@
           default = {};
           description = "Per-network address overrides. Null fields = derived from conventions.";
         };
+        interfaces = lib.mkOption {
+          type = lib.types.attrsOf (lib.types.submodule {
+            options = {
+              bond = lib.mkOption {
+                type = lib.types.nullOr lib.types.str;
+                default = null;
+                description = "Bond interface name (e.g. bond0). Null if using a raw device.";
+              };
+              members = lib.mkOption {
+                type = lib.types.listOf lib.types.str;
+                default = [];
+                description = "Physical interfaces that are members of the bond.";
+              };
+              device = lib.mkOption {
+                type = lib.types.nullOr lib.types.str;
+                default = null;
+                description = "Raw device name when not using a bond (e.g. eno1).";
+              };
+            };
+          });
+          default = {};
+          description = "Per-network interface mapping (bond or raw device).";
+        };
       };
     };
 
