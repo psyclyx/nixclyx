@@ -111,6 +111,23 @@
           default = {};
           description = "Per-network interface mapping (bond or raw device).";
         };
+        services = lib.mkOption {
+          type = lib.types.attrsOf (lib.types.submodule {
+            options = {
+              port = lib.mkOption {
+                type = lib.types.port;
+                description = "Port number this service listens on.";
+              };
+              networks = lib.mkOption {
+                type = lib.types.listOf lib.types.str;
+                default = [];
+                description = "Networks this service is reachable on. Empty = all host networks.";
+              };
+            };
+          });
+          default = {};
+          description = "Services this host exports (for monitoring, DNS, firewall).";
+        };
       };
     };
 
