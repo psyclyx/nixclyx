@@ -1,7 +1,7 @@
 {
   path = ["psyclyx" "common" "system" "nixpkgs"];
   description = "nixpkgs config (unfree, etc)";
-  gate = false;
+  gate = "always";
   config = {
     cfg,
     lib,

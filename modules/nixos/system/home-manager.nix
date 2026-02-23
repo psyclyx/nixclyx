@@ -1,5 +1,5 @@
 {
-  path = ["psyclyx" "darwin" "system" "home-manager"];
+  path = ["psyclyx" "nixos" "system" "home-manager"];
   description = "home-manager config";
   config = {nixclyx, ...}: {
     home-manager = {

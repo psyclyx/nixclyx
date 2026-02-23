@@ -10,15 +10,17 @@
   nixosEval = evalConfig {
     system = "x86_64-linux";
     modules = [
-      nixclyx.modules.nixos.options
-      nixclyx.modules.nixos.config
+      nixclyx.modules.nixos
       {
         # Satisfy required enums so option evaluation doesn't error.
         # The actual values don't affect option definitions.
         psyclyx.nixos.host = "sigil";
         psyclyx.nixos.role = "workstation";
         psyclyx.nixos.system.home-manager.enable = true;
-        home-manager.users.psyc.psyclyx.home.variant = "workstation";
+        home-manager.users.psyc.psyclyx.home.profiles.psyc = {
+          base.enable = true;
+          desktop.enable = true;
+        };
       }
     ];
   };

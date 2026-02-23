@@ -17,9 +17,10 @@
 
     nix-homebrew.user = "psyc";
 
-    home-manager.users.psyc = {
-      psyclyx.home.config.homes.psyc.base.enable = true;
-      psyclyx.home.variant = "darwin";
+    home-manager.users.psyc.psyclyx.home.profiles.psyc = {
+      base.enable = true;
+      desktop.enable = true;
+      darwin.enable = true;
     };
   };
 }

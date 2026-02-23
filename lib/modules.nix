@@ -25,7 +25,15 @@ rec {
     gate =
       if hasVariant
       then (a: lib.getAttrFromPath spec.variant a.config == variantName)
-      else spec.gate or true;
+      else if spec ? gate then
+        (if builtins.isBool spec.gate
+         then throw "spec at ${builtins.concatStringsSep "." spec.path}: gate booleans are removed. Use \"always\" (was false) or \"enable\" (was true)."
+         else if spec.gate == "always" then false
+         else if spec.gate == "enable" then true
+         else spec.gate)
+      else if spec.description or null != null
+      then true
+      else false;
 
     pathOptions = eval (spec.options or {});
   in {

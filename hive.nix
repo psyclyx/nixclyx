@@ -4,10 +4,7 @@
   };
 
   sigil = {...}: {
-    imports = [
-      nixclyx.modules.nixos.options
-      nixclyx.modules.nixos.config
-    ];
+    imports = [nixclyx.modules.nixos];
     config = {
       psyclyx.nixos.host = "sigil";
       deployment = {
@@ -25,10 +22,7 @@
   };
 
   omen = {...}: {
-    imports = [
-      nixclyx.modules.nixos.options
-      nixclyx.modules.nixos.config
-    ];
+    imports = [nixclyx.modules.nixos];
     config = {
       psyclyx.nixos.host = "omen";
       deployment = {
@@ -42,10 +36,7 @@
   };
 
   iyr = {...}: {
-    imports = [
-      nixclyx.modules.nixos.options
-      nixclyx.modules.nixos.config
-    ];
+    imports = [nixclyx.modules.nixos];
     config = {
       psyclyx.nixos.host = "iyr";
       deployment = {
@@ -62,10 +53,7 @@
   };
 
   tleilax = {...}: {
-    imports = [
-      nixclyx.modules.nixos.options
-      nixclyx.modules.nixos.config
-    ];
+    imports = [nixclyx.modules.nixos];
     config = {
       psyclyx.nixos.host = "tleilax";
       deployment = {
@@ -81,10 +69,7 @@
   };
 
   lab-1 = {...}: {
-    imports = [
-      nixclyx.modules.nixos.options
-      nixclyx.modules.nixos.config
-    ];
+    imports = [nixclyx.modules.nixos];
     config = {
       psyclyx.nixos.host = "lab-1";
       deployment = {
@@ -101,10 +86,7 @@
   };
 
   lab-2 = {...}: {
-    imports = [
-      nixclyx.modules.nixos.options
-      nixclyx.modules.nixos.config
-    ];
+    imports = [nixclyx.modules.nixos];
     config = {
       psyclyx.nixos.host = "lab-2";
       deployment = {
@@ -121,10 +103,7 @@
   };
 
   lab-3 = {...}: {
-    imports = [
-      nixclyx.modules.nixos.options
-      nixclyx.modules.nixos.config
-    ];
+    imports = [nixclyx.modules.nixos];
     config = {
       psyclyx.nixos.host = "lab-3";
       deployment = {
@@ -141,10 +120,7 @@
   };
 
   lab-4 = {...}: {
-    imports = [
-      nixclyx.modules.nixos.options
-      nixclyx.modules.nixos.config
-    ];
+    imports = [nixclyx.modules.nixos];
     config = {
       psyclyx.nixos.host = "lab-4";
       deployment = {

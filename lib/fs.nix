@@ -115,34 +115,43 @@ in rec {
             }
         ) (spec.children path entry);
     };
-  # Like collectModules, but imports each path as a spec, handles
-  # variant grouping (auto-generating enum options), wraps with mkModule,
-  # and returns the resulting NixOS modules.
-  collectSpecs = mkModule: root: let
-    last = l: builtins.elemAt l (builtins.length l - 1);
-    init = l: builtins.genList (builtins.elemAt l) (builtins.length l - 1);
-    groupBy = f:
-      builtins.foldl' (acc: x: let
-        k = f x;
-      in
-        acc // {${k} = (acc.${k} or []) ++ [x];}) {};
+  # --- Spec collection and compilation ---
 
-    specs = map import (collectModules root);
+  # Shared helpers for variant processing.
+  _last = l: builtins.elemAt l (builtins.length l - 1);
+  _init = l: builtins.genList (builtins.elemAt l) (builtins.length l - 1);
+  _groupBy = f:
+    builtins.foldl' (acc: x: let
+      k = f x;
+    in
+      acc // {${k} = (acc.${k} or []) ++ [x];}) {};
 
+  # Discover spec files and import them, returning raw spec attrsets.
+  # callSpec controls how each discovered path is turned into a spec —
+  # defaults to builtins.import, but can inject arguments (e.g. secrets).
+  collectRawSpecs = {
+    root,
+    callSpec ? builtins.import,
+  }:
+    map callSpec (collectModules root);
+
+  # Process a list of raw specs: separate variants, generate enum options,
+  # and compile everything through mkModule into NixOS modules.
+  compileSpecs = mkModule: specs: let
     variantSpecs = builtins.filter (s: s ? variant) specs;
     regularSpecs = builtins.filter (s: !(s ? variant)) specs;
 
-    groups = groupBy (s: builtins.concatStringsSep "." s.variant) variantSpecs;
+    groups = _groupBy (s: builtins.concatStringsSep "." s.variant) variantSpecs;
 
     enumSpecs = map (key: let
       group = groups.${key};
       variant = (builtins.head group).variant;
-      parentPath = init variant;
-      optName = last variant;
-      names = map (s: last s.path) group;
+      parentPath = _init variant;
+      optName = _last variant;
+      names = map (s: _last s.path) group;
     in {
       path = parentPath;
-      gate = false;
+      gate = "always";
       options = {lib, ...}: {
         ${optName} = lib.mkOption {
           type = lib.types.enum names;
@@ -151,6 +160,14 @@ in rec {
     }) (builtins.attrNames groups);
   in
     map mkModule (regularSpecs ++ variantSpecs ++ enumSpecs);
+
+  # Like collectModules, but imports each path as a spec, handles
+  # variant grouping (auto-generating enum options), wraps with mkModule,
+  # and returns the resulting NixOS modules.
+  # Preserved for backward compatibility — existing call sites pass a
+  # (possibly wrapping) mkModule function and a root directory.
+  collectSpecs = mkModule: root:
+    compileSpecs mkModule (collectRawSpecs { inherit root; });
 
   # Recursively collect module-importable paths from a directory tree.
   # Returns .nix files (except default.nix) as imports, and directories

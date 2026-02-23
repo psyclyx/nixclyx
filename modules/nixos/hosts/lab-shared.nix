@@ -1,0 +1,142 @@
+{
+  path = [
+    "psyclyx"
+    "nixos"
+    "hosts"
+    "lab"
+    "shared"
+  ];
+  gate =
+    {
+      config,
+      lib,
+      ...
+    }:
+    lib.hasPrefix "lab-" config.psyclyx.nixos.host;
+  config =
+    { config, lib, ... }:
+    let
+      labHostNames =
+        let
+          labHosts = lib.filterAttrs (_: h: h.labIndex != null) config.psyclyx.topology.hosts;
+        in
+        lib.mapAttrsToList (name: _: name) labHosts;
+      thisHost = config.psyclyx.topology.hosts.${config.psyclyx.nixos.host};
+    in
+    {
+      boot = {
+        initrd = {
+          systemd = {
+            network = {
+              networks."10-ethernet-dhcp" = {
+                enable = true;
+                matchConfig.Name = "et* en*";
+                DHCP = "yes";
+              };
+            };
+          };
+        };
+      };
+
+      systemd.network = {
+        netdevs = {
+          "10-bond0" = {
+            netdevConfig = {
+              Name = "bond0";
+              Kind = "bond";
+              MACAddress = thisHost.mac.eno1;
+            };
+            bondConfig = {
+              Mode = "802.3ad";
+              LACPTransmitRate = "fast";
+              TransmitHashPolicy = "layer3+4";
+              MIIMonitorSec = "100ms";
+            };
+          };
+          "10-bond1" = {
+            netdevConfig = {
+              Name = "bond1";
+              Kind = "bond";
+              MACAddress = thisHost.mac.eno3;
+            };
+            bondConfig = {
+              Mode = "802.3ad";
+              LACPTransmitRate = "fast";
+              TransmitHashPolicy = "layer3+4";
+              MIIMonitorSec = "100ms";
+            };
+          };
+        };
+        networks = {
+          "10-bond0-ports" = {
+            matchConfig.Name = "eno1 eno2";
+            networkConfig.Bond = "bond0";
+          };
+          "10-bond1-ports" = {
+            matchConfig.Name = "eno3 eno4";
+            networkConfig.Bond = "bond1";
+          };
+          "20-bond0" = {
+            matchConfig.Name = "bond0";
+            DHCP = "yes";
+            dhcpV4Config.ClientIdentifier = "mac";
+            linkConfig.RequiredForOnline = "routable";
+          };
+          "20-bond1" = {
+            matchConfig.Name = "bond1";
+            DHCP = "yes";
+            dhcpV4Config.ClientIdentifier = "mac";
+            linkConfig.RequiredForOnline = "no";
+          };
+        };
+      };
+
+      networking.firewall.trustedInterfaces = [ "bond0" "bond1" ];
+
+      networking.firewall.allowedTCPPorts = [ 9567 ];
+
+      services.prometheus.exporters.redis = {
+        enable = true;
+        openFirewall = true;
+        extraFlags = [
+          "--redis.addr=${config.services.redis.servers.jfs.bind}:${toString config.services.redis.servers.jfs.port}"
+        ];
+      };
+
+      services.prometheus.exporters.postgres = {
+        enable = true;
+        openFirewall = true;
+      };
+
+      psyclyx.nixos = {
+        boot = {
+          initrd-ssh.enable = true;
+        };
+
+        filesystems.layouts.bcachefs-pool.enable = true;
+
+        hardware.presets.hpe.dl360-gen9.enable = true;
+
+        role = "server";
+
+        services = {
+          rustfs = {
+            enable = true;
+            clusterNodes = labHostNames;
+          };
+          redis-sentinel = {
+            enable = true;
+            clusterNodes = labHostNames;
+          };
+          postgresql-cluster = {
+            enable = true;
+            clusterNodes = labHostNames;
+          };
+          juicefs = {
+            enable = true;
+            clusterNodes = labHostNames;
+          };
+        };
+      };
+    };
+}

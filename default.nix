@@ -8,18 +8,12 @@ let
 
   mkNixclyx = {...}: let
     modules = {
-      nixos = {
-        options = import ./modules/nixos/options {inherit nixclyx;};
-        config = import ./modules/nixos/config {inherit nixclyx;};
-      };
+      nixos = import ./modules/nixos {inherit nixclyx;};
       darwin = {
         options = import ./modules/darwin/options {inherit nixclyx;};
         config = import ./modules/darwin/config {inherit nixclyx;};
       };
-      home = {
-        options = import ./modules/home/options {inherit nixclyx;};
-        config = import ./modules/home/config {inherit nixclyx;};
-      };
+      home = import ./modules/home {inherit nixclyx;};
       common = {
         options = import ./modules/common/options {inherit nixclyx;};
       };
@@ -32,13 +26,12 @@ let
       evalConfig {
         system = "x86_64-linux";
         modules = [
-          modules.nixos.options
-          modules.nixos.config
+          modules.nixos
           {config.psyclyx.nixos.host = name;}
         ];
       };
 
-    hostEntries = builtins.readDir ./modules/nixos/config/hosts;
+    hostEntries = builtins.readDir ./modules/nixos/hosts;
     hostNames =
       builtins.filter
       (n: hostEntries.${n} == "directory")
