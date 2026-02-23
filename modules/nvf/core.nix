@@ -159,7 +159,7 @@
         markdown.enable = true;
         nix.enable = true;
         ocaml.enable = true;
-        odin.enable = true;
+        # odin.enable = true; # disabled: ols broken with current nixpkgs (using-stmt)
         python.enable = true;
         rust = {
           enable = true;
