@@ -29,7 +29,6 @@
 
     # WireGuard extras (topology module handles base wg0 config)
     boot.kernel.sysctl."net.ipv4.ip_forward" = 1;
-    networking.firewall.trustedInterfaces = ["wg0"];
     systemd.network.networks."30-wg0" = {
       address = ["10.0.10.2/24"];
       routes = [{Destination = "10.0.0.0/24";}];
@@ -45,6 +44,45 @@
         fsType = "vfat";
         options = ["umask=0077"];
       };
+    };
+
+    # Handwritten firewall — tleilax is directly on the internet (no router),
+    # so we replace the NixOS firewall with explicit nftables rules.
+    # Everything is reachable over wg0; only public services on bond0.
+    networking.firewall.enable = false;
+    networking.nftables = {
+      enable = true;
+      checkRuleset = false; # wg0 doesn't exist in the build sandbox
+      ruleset = let
+        topo = config.psyclyx.topology;
+        sshPorts = lib.concatMapStringsSep ", " toString config.psyclyx.nixos.network.ports.ssh;
+      in ''
+        table inet filter {
+          chain input {
+            type filter hook input priority 0; policy drop;
+
+            iif lo accept
+            iif wg0 accept
+
+            ct state established,related accept
+            ct state invalid drop
+
+            ip protocol icmp icmp type echo-request accept
+            ip6 nexthdr icmpv6 accept
+
+            tcp dport { 53, 80, 443, ${sshPorts} } accept
+            udp dport { 53, ${toString topo.vpn.port} } accept
+          }
+
+          chain forward {
+            type filter hook forward priority 0; policy accept;
+          }
+
+          chain output {
+            type filter hook output priority 0; policy accept;
+          }
+        }
+      '';
     };
 
     psyclyx.nixos = {
