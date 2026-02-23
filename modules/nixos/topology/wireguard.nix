@@ -55,7 +55,7 @@ in {
               {
                 PublicKey = hubHost.wireguard.publicKey;
                 Endpoint = hubEndpoint;
-                AllowedIPs = [topo.vpn.subnet] ++ allPeerExportedRoutes;
+                AllowedIPs = [topo.wireguard.subnet] ++ allPeerExportedRoutes;
                 PersistentKeepalive = 25;
               }
             ];

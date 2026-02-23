@@ -4,20 +4,26 @@
   imports = [./enrichment.nix ./wireguard.nix ./dns.nix ./monitoring.nix ./deployment.nix ./dhcp.nix];
   config = {config, lib, ...}: let
     topo = config.psyclyx.topology;
-  in {
-    # Populate domains from deprecated fields so existing data keeps working.
-    psyclyx.topology.domains = {
-      internal = lib.mkDefault topo.domain.internal;
-      public = lib.mkDefault topo.domain.public;
-      home = lib.mkDefault topo.conventions.homeDomain;
-    };
-
-    # Forward deprecated vpn.{port,hub} → wireguard.{port,hub}
-    psyclyx.topology.wireguard = {
-      port = lib.mkDefault topo.vpn.port;
-      hub = lib.mkDefault topo.vpn.hub;
-    };
-  };
+  in lib.mkMerge [
+    # Forward deprecated domain fields → domains (only when old fields are set)
+    (lib.mkIf (topo.domain != null) {
+      psyclyx.topology.domains = {
+        internal = lib.mkDefault topo.domain.internal;
+        public = lib.mkDefault topo.domain.public;
+      };
+    })
+    (lib.mkIf (topo.conventions.homeDomain != null) {
+      psyclyx.topology.domains.home = lib.mkDefault topo.conventions.homeDomain;
+    })
+    # Forward deprecated vpn.{subnet,port,hub} → wireguard.{subnet,port,hub}
+    (lib.mkIf (topo.vpn != null) {
+      psyclyx.topology.wireguard = {
+        subnet = lib.mkDefault topo.vpn.subnet;
+        port = lib.mkDefault topo.vpn.port;
+        hub = lib.mkDefault topo.vpn.hub;
+      };
+    })
+  ];
   options = {lib, ...}: let
     # New structured WireGuard peer module (replaces vpnPeerModule)
     wireguardPeerModule = {
@@ -246,7 +252,8 @@
             description = "VLAN ID for the transit (upstream) network";
           };
           homeDomain = lib.mkOption {
-            type = lib.types.str;
+            type = lib.types.nullOr lib.types.str;
+            default = null;
             description = "Home domain suffix for zone names (deprecated: use domains.home)";
           };
         };
@@ -255,7 +262,7 @@
     };
 
     domain = lib.mkOption {
-      type = lib.types.submodule {
+      type = lib.types.nullOr (lib.types.submodule {
         options = {
           internal = lib.mkOption {
             type = lib.types.str;
@@ -266,7 +273,8 @@
             description = "Public-facing domain (deprecated: use domains.public)";
           };
         };
-      };
+      });
+      default = null;
       description = "Domain names (deprecated: use domains)";
     };
 
@@ -293,6 +301,10 @@
     wireguard = lib.mkOption {
       type = lib.types.submodule {
         options = {
+          subnet = lib.mkOption {
+            type = lib.types.str;
+            description = "WireGuard VPN subnet in CIDR notation";
+          };
           port = lib.mkOption {
             type = lib.types.port;
             default = 51820;
@@ -308,7 +320,7 @@
     };
 
     vpn = lib.mkOption {
-      type = lib.types.submodule {
+      type = lib.types.nullOr (lib.types.submodule {
         options = {
           subnet = lib.mkOption {
             type = lib.types.str;
@@ -323,7 +335,8 @@
             description = "Hostname of the VPN hub — deprecated: use wireguard.hub";
           };
         };
-      };
+      });
+      default = null;
       description = "VPN overlay configuration — deprecated: use wireguard";
     };
 
