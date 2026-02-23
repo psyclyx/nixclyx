@@ -184,6 +184,15 @@ in {
       };
       extraDhcp6 = {
         hooks-libraries = hooksLibraries;
+        # Suppress per-packet INFO noise (lab BMC interfaces solicit aggressively).
+        # WARN still surfaces actual errors.
+        loggers = [
+          {
+            name = "kea-dhcp6";
+            output_options = [{output = "stdout";}];
+            severity = "WARN";
+          }
+        ];
       };
     };
 
