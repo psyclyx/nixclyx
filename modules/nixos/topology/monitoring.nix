@@ -5,76 +5,73 @@
 }: let
   topo = config.psyclyx.topology;
 
-  wgHosts = lib.filterAttrs (_: host: host.wireguard != null) topo.hosts;
-  labHosts = lib.filterAttrs (_: host: host.labIndex != null) topo.hosts;
+  # Resolve a host's scrape address based on its service's network.
+  # "vpn" → internal domain FQDN; any physical network → network.home FQDN.
+  resolveAddress = hostName: network:
+    if network == "vpn"
+    then "${hostName}.${topo.domains.internal}"
+    else "${hostName}.${network}.${topo.domains.home}";
 
-  # WireGuard hosts excluding the hub (scraped by collector, not server).
-  spokeWgHosts = lib.filterAttrs (name: _: name != topo.wireguard.hub) wgHosts;
+  # Build a target string from a host's service entry.
+  # Uses the first declared network for address resolution.
+  mkTarget = hostName: svc:
+    "${resolveAddress hostName (builtins.head svc.networks)}:${toString svc.port}";
 
-  spokeWgTargets = lib.mapAttrsToList
-    (name: _: "${name}.${topo.domains.internal}:9100")
-    spokeWgHosts;
+  # Hosts participating in monitoring (have at least one service declared).
+  monitoredHosts = lib.filterAttrs (_: host: host.services != {}) topo.hosts;
 
-  labTargets = lib.mapAttrsToList
-    (name: _: "${name}.rack.${topo.domains.home}:9100")
-    labHosts;
+  # All monitored hosts except the WireGuard hub (hub is scraped by the server, not collector).
+  spokeHosts = lib.filterAttrs (name: _: name != topo.wireguard.hub) monitoredHosts;
 
-  mkLabTargets = port: lib.mapAttrsToList
-    (name: _: "${name}.rack.${topo.domains.home}:${toString port}")
-    labHosts;
+  # Collect all (serviceName, target) pairs from a set of hosts.
+  collectTargets = hosts:
+    lib.concatLists (lib.mapAttrsToList (hostName: host:
+      lib.mapAttrsToList (svcName: svc: {
+        inherit svcName;
+        target = mkTarget hostName svc;
+      }) host.services
+    ) hosts);
 
-  redisTargets = mkLabTargets 9121;
-  postgresTargets = mkLabTargets 9187;
-  juicefsTargets = mkLabTargets 9567;
+  spokeTargetPairs = collectTargets spokeHosts;
 
-  smartctlSpokeWgTargets = lib.mapAttrsToList
-    (name: _: "${name}.${topo.domains.internal}:9633")
-    spokeWgHosts;
+  # Group targets by service name.
+  targetsByService = builtins.groupBy (t: t.svcName) spokeTargetPairs;
 
-  smartctlLabTargets = mkLabTargets 9633;
+  # Extract the "node" targets for scrapeTargets, everything else for extraScrapeConfigs.
+  nodeTargets = map (t: t.target) (targetsByService.node or []);
+  extraServices = lib.filterAttrs (name: _: name != "node") targetsByService;
+
+  extraScrapeConfigs = lib.mapAttrsToList (svcName: targets: {
+    job_name = svcName;
+    static_configs = [{targets = map (t: t.target) targets;}];
+  }) extraServices;
 
   # SNMP targets: switches with a management address.
   snmpTargets = lib.concatLists (lib.mapAttrsToList (_: sw:
     lib.optional (sw.mgmt != null) sw.mgmt.ipv4
   ) topo.switches);
 
-  hubVpnAddress = wgHosts.${topo.wireguard.hub}.addresses.vpn.ipv4;
+  hubVpnAddress = monitoredHosts.${topo.wireguard.hub}.addresses.vpn.ipv4;
+
+  # Hub host's own services (for server self-scrape), excluding "node" (auto-added).
+  hubServices = lib.filterAttrs (name: _: name != "node")
+    (monitoredHosts.${topo.wireguard.hub}.services or {});
+
+  hubExtraScrapeConfigs = lib.mapAttrsToList (svcName: svc: {
+    job_name = svcName;
+    static_configs = [{targets = ["localhost:${toString svc.port}"];}];
+  }) hubServices;
 in {
   config = lib.mkMerge [
     (lib.mkIf config.psyclyx.nixos.services.prometheus.collector.enable {
       psyclyx.nixos.services.prometheus.collector = {
-        scrapeTargets = spokeWgTargets ++ labTargets;
-        inherit snmpTargets;
+        scrapeTargets = nodeTargets;
+        inherit snmpTargets extraScrapeConfigs;
         remoteWriteUrl = lib.mkDefault "http://${hubVpnAddress}:9090/api/v1/write";
-        extraScrapeConfigs = [
-          {
-            job_name = "redis";
-            static_configs = [{targets = redisTargets;}];
-          }
-          {
-            job_name = "postgres";
-            static_configs = [{targets = postgresTargets;}];
-          }
-          {
-            job_name = "juicefs";
-            static_configs = [{targets = juicefsTargets;}];
-          }
-          {
-            job_name = "smartctl";
-            static_configs = [{targets = smartctlSpokeWgTargets ++ smartctlLabTargets;}];
-          }
-        ];
       };
     })
     (lib.mkIf config.psyclyx.nixos.services.prometheus.server.enable {
-      # Server only scrapes itself (localhost:9100 is added automatically).
-      # All other targets are scraped by the collector and remote-written.
-      psyclyx.nixos.services.prometheus.server.extraScrapeConfigs = [
-        {
-          job_name = "smartctl";
-          static_configs = [{targets = ["localhost:9633"];}];
-        }
-      ];
+      psyclyx.nixos.services.prometheus.server.extraScrapeConfigs = hubExtraScrapeConfigs;
     })
   ];
 }

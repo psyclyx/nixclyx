@@ -6,12 +6,10 @@
 }: let
   topo = config.psyclyx.topology;
   dt = topo.enriched;
-  conventions = topo.conventions;
 
   labServers = lib.sort (a: b: a.n < b.n) (lib.mapAttrsToList (name: host: {
     inherit name;
     n = host.labIndex;
-    interfaces = host.mac;
   }) (lib.filterAttrs (_: host: host.labIndex != null) topo.hosts));
 
   protectedHostnames = ["iyr"] ++ map (s: s.name) labServers;
@@ -150,113 +148,42 @@
     exit 0
   '';
 
-  mkSubnet = vlanId: let
-    name = dt.vlanNameMap.${toString vlanId};
-    net = dt.networks.${name};
-  in {
-    id = vlanId;
-    subnet = "${net.prefix}.0/${toString net.prefixLen}";
-    pools = [{pool = "${net.prefix}.100 - ${net.prefix}.199";}];
-    "option-data" = [
-      {
-        name = "routers";
-        data = net.gateway4;
-      }
-      {
-        name = "domain-name-servers";
-        data = net.gateway4;
-      }
-      {
-        name = "domain-name";
-        data = net.zoneName;
-      }
-      {
-        name = "domain-search";
-        data = "${net.zoneName}, ${topo.domains.home}";
-      }
-    ];
-    reservations =
-      if net.labIface == null
-      then []
-      else
-        map (s: {
-          "hw-address" = s.interfaces.${net.labIface};
-          "ip-address" = "${net.prefix}.${toString (conventions.hostBaseOffset + s.n)}";
-          hostname = s.name;
-        })
-        labServers;
-  };
-
-  mkSubnet6 = vlanId: let
-    name = dt.vlanNameMap.${toString vlanId};
-    net = dt.networks.${name};
-    prefix6 = "${topo.ipv6UlaPrefix}:${net.vlanHex}";
-  in {
-    id = vlanId;
-    subnet = net.subnet6;
-    pools = [{pool = "${prefix6}::100 - ${prefix6}::1ff";}];
-    "option-data" = [
-      {
-        name = "dns-servers";
-        data = net.gateway6;
-      }
-      {
-        name = "domain-search";
-        data = "${net.zoneName}, ${topo.domains.home}";
-      }
-    ];
-    reservations =
-      if net.labIface == null
-      then []
-      else
-        map (s: {
-          "hw-address" = s.interfaces.${net.labIface};
-          "ip-addresses" = ["${prefix6}::${dt.utils.intToHex (conventions.hostBaseOffset + s.n)}"];
-          hostname = s.name;
-        })
-        labServers;
-  };
+  hooksLibraries = [
+    {
+      library = "${pkgs.kea}/lib/kea/hooks/libdhcp_run_script.so";
+      parameters = {
+        name = "${keaDnsHookScript}";
+        sync = false;
+      };
+    }
+  ];
 in {
   config = lib.mkIf (config.psyclyx.nixos.host == "iyr") {
-    psyclyx.nixos.services.kea = {
+    psyclyx.topology.dhcp = {
       enable = true;
-      interfaces = map (id: "bond0.${toString id}") dt.dhcpVlans;
-      subnets = map mkSubnet dt.dhcpVlans;
-      hooksLibraries = [
-        {
-          library = "${pkgs.kea}/lib/kea/hooks/libdhcp_run_script.so";
-          parameters = {
-            name = "${keaDnsHookScript}";
-            sync = false;
-          };
-        }
-      ];
-    };
-
-    services.kea.dhcp6 = {
-      enable = true;
-      settings = {
-        interfaces-config.interfaces = map (id: "bond0.${toString id}") dt.dhcpVlans;
-        lease-database = {
-          type = "memfile";
-          persist = true;
-          name = "/var/lib/kea/dhcp6.leases";
+      pools = {
+        main = {
+          network = "main";
+          ipv4Range = { start = "10.0.10.100"; end = "10.0.10.199"; };
         };
-        valid-lifetime = 3600;
-        renew-timer = 900;
-        rebind-timer = 1800;
-        subnet6 = map mkSubnet6 dt.dhcpVlans;
-        hooks-libraries = [
-          {
-            library = "${pkgs.kea}/lib/kea/hooks/libdhcp_run_script.so";
-            parameters = {
-              name = "${keaDnsHookScript}";
-              sync = false;
-            };
-          }
-        ];
-        host-reservation-identifiers = ["hw-address" "duid"];
-        mac-sources = ["ipv6-link-local"];
+        rack = {
+          network = "rack";
+          ipv4Range = { start = "10.0.20.100"; end = "10.0.20.199"; };
+        };
+        data = {
+          network = "data";
+          ipv4Range = { start = "10.0.30.100"; end = "10.0.30.199"; };
+        };
+        mgmt = {
+          network = "mgmt";
+          ipv4Range = { start = "10.0.240.100"; end = "10.0.240.199"; };
+        };
+      };
+      extraDhcp4 = {
+        hooks-libraries = hooksLibraries;
+      };
+      extraDhcp6 = {
+        hooks-libraries = hooksLibraries;
       };
     };
 
