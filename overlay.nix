@@ -16,9 +16,6 @@ in
       clj-nix = clj-nix.packages.${prev.stdenv.hostPlatform.system};
       rustfs = rustfs-flake.packages.${prev.stdenv.hostPlatform.system}.default;
 
-      # nixpkgs deno check phase references wrong test target name
-      deno = prev.deno.overrideAttrs (old: { doCheck = false; });
-
       bitwig-studio4 = prev.bitwig-studio4.overrideAttrs (old: rec {
         version = "4.1.6";
         src = prev.fetchurl {
