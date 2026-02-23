@@ -1,5 +1,5 @@
 {
-  path = ["psyclyx" "darwin" "config" "roles" "base"];
+  path = ["psyclyx" "darwin" "roles" "base"];
   description = "base darwin role";
   config = {
     lib,

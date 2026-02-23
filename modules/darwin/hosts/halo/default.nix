@@ -1,5 +1,5 @@
 {
-  path = ["psyclyx" "darwin" "config" "hosts" "halo"];
+  path = ["psyclyx" "darwin" "hosts" "halo"];
   variant = ["psyclyx" "darwin" "host"];
   config = {
     lib,
@@ -10,15 +10,14 @@
 
     networking.hostName = "halo";
 
-    psyclyx.darwin.config = {
+    psyclyx.darwin = {
       roles = {
         base.enable = true;
         desktop.enable = true;
       };
       users.psyc.enable = true;
+      services.tailscale.enable = true;
     };
-
-    psyclyx.darwin.services.tailscale.enable = true;
 
     homebrew.casks = [
       "orcaslicer"

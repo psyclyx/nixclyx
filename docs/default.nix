@@ -29,8 +29,7 @@
 
   darwinEval = (loadFlake sources.nix-darwin).lib.darwinSystem {
     modules = [
-      nixclyx.modules.darwin.options
-      nixclyx.modules.darwin.config
+      nixclyx.modules.darwin
       {
         nixpkgs.hostPlatform = "aarch64-darwin";
         psyclyx.darwin.system.home-manager.enable = true;

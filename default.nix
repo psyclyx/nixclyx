@@ -9,10 +9,7 @@ let
   mkNixclyx = {...}: let
     modules = {
       nixos = import ./modules/nixos {inherit nixclyx;};
-      darwin = {
-        options = import ./modules/darwin/options {inherit nixclyx;};
-        config = import ./modules/darwin/config {inherit nixclyx;};
-      };
+      darwin = import ./modules/darwin {inherit nixclyx;};
       home = import ./modules/home {inherit nixclyx;};
       common = {
         options = import ./modules/common/options {inherit nixclyx;};
@@ -48,8 +45,7 @@ let
     mkDarwinHost = name:
       darwinSystem {
         modules = [
-          modules.darwin.options
-          modules.darwin.config
+          modules.darwin
           {config.psyclyx.darwin.host = name;}
         ];
       };
