@@ -1,11 +1,10 @@
 {
   config,
   lib,
-  nixclyx,
   ...
 }: let
   topo = config.psyclyx.topology;
-  dt = nixclyx.lib.topology lib topo;
+  dt = topo.enriched;
   conventions = topo.conventions;
 
   labServers = lib.sort (a: b: a.n < b.n) (lib.mapAttrsToList (name: host: {
@@ -82,7 +81,7 @@
   localZones = builtins.listToAttrs (
     [
       {
-        name = conventions.homeDomain;
+        name = topo.domains.home;
         value = {
           type = "static";
           records = [];

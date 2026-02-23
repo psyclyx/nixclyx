@@ -46,12 +46,11 @@
       config,
       lib,
       pkgs,
-      nixclyx,
       ...
     }:
     let
       topo = config.psyclyx.topology;
-      topoLib = nixclyx.lib.topology lib topo;
+      topoLib = topo.enriched;
       hostname = config.psyclyx.nixos.host;
       labIdx = topo.hosts.${hostname}.labIndex;
 

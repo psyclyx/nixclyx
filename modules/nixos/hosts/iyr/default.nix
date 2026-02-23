@@ -5,11 +5,10 @@
   config = {
     lib,
     config,
-    nixclyx,
     ...
   }: let
     topo = config.psyclyx.topology;
-    dt = nixclyx.lib.topology lib topo;
+    dt = topo.enriched;
     sortedNets = map (vlan:
       dt.networks.${dt.vlanNameMap.${toString vlan}})
     dt.dhcpVlans;

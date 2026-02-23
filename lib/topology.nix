@@ -54,7 +54,7 @@ lib: topo: let
       gateway6 = "${prefix6}::${intToHex conventions.gatewayOffset}";
       subnet6 = "${prefix6}::/64";
       vlanHex = hex;
-      zoneName = "${name}.${conventions.homeDomain}";
+      zoneName = "${name}.${topo.domains.home}";
       ip6Reverse = hexToReverseNibbles hex;
     };
 

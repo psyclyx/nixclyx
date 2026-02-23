@@ -2,11 +2,10 @@
   config,
   lib,
   pkgs,
-  nixclyx,
   ...
 }: let
   topo = config.psyclyx.topology;
-  dt = nixclyx.lib.topology lib topo;
+  dt = topo.enriched;
   conventions = topo.conventions;
 
   labServers = lib.sort (a: b: a.n < b.n) (lib.mapAttrsToList (name: host: {
@@ -20,7 +19,7 @@
   unboundControl = "${pkgs.unbound}/bin/unbound-control";
 
   keaDnsHookScript = pkgs.writeShellScript "kea-dns-hook" ''
-    DOMAIN="${conventions.homeDomain}"
+    DOMAIN="${topo.domains.home}"
     STATE_DIR="/run/kea-dns-state"
 
     ${pkgs.coreutils}/bin/mkdir -p "$STATE_DIR"
@@ -173,7 +172,7 @@
       }
       {
         name = "domain-search";
-        data = "${net.zoneName}, ${conventions.homeDomain}";
+        data = "${net.zoneName}, ${topo.domains.home}";
       }
     ];
     reservations =
@@ -203,7 +202,7 @@
       }
       {
         name = "domain-search";
-        data = "${net.zoneName}, ${conventions.homeDomain}";
+        data = "${net.zoneName}, ${topo.domains.home}";
       }
     ];
     reservations =

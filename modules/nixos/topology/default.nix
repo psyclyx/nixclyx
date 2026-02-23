@@ -1,7 +1,7 @@
 {
   path = ["psyclyx" "topology"];
   gate = "always";
-  imports = [./wireguard.nix ./dns.nix ./monitoring.nix ./deployment.nix];
+  imports = [./enrichment.nix ./wireguard.nix ./dns.nix ./monitoring.nix ./deployment.nix];
   config = {config, lib, ...}: let
     topo = config.psyclyx.topology;
   in {

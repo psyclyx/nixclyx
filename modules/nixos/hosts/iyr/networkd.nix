@@ -2,11 +2,10 @@
   config,
   lib,
   pkgs,
-  nixclyx,
   ...
 }: let
   topo = config.psyclyx.topology;
-  dt = nixclyx.lib.topology lib topo;
+  dt = topo.enriched;
   conventions = topo.conventions;
 
   thisHost = topo.hosts.iyr;
