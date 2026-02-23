@@ -12,6 +12,7 @@
         };
         common = {
           path_prefix = "/var/lib/loki";
+          replication_factor = 1;
           storage.filesystem = {
             chunks_directory = "/var/lib/loki/chunks";
             rules_directory = "/var/lib/loki/rules";
