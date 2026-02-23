@@ -11,9 +11,7 @@ let
       nixos = import ./modules/nixos {inherit nixclyx;};
       darwin = import ./modules/darwin {inherit nixclyx;};
       home = import ./modules/home {inherit nixclyx;};
-      common = {
-        options = import ./modules/common/options {inherit nixclyx;};
-      };
+      common = import ./modules/common {inherit nixclyx;};
       nvf = import ./modules/nvf {inherit nixclyx;};
     };
 

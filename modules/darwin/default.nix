@@ -6,7 +6,7 @@ in {
       "${sources.home-manager}/nix-darwin"
       (loadFlake sources.stylix).darwinModules.stylix
       (loadFlake sources.nix-homebrew).darwinModules.nix-homebrew
-      modules.common.options
+      modules.common
     ]
     ++ nixclyx.lib.fs.collectSpecs nixclyx.lib.modules.mkModule ./.;
 
