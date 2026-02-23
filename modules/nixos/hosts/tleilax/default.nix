@@ -71,7 +71,7 @@
             ip6 nexthdr icmpv6 accept
 
             tcp dport { 53, 80, 443, ${sshPorts} } accept
-            udp dport { 53, ${toString topo.vpn.port} } accept
+            udp dport { 53, ${toString topo.wireguard.port} } accept
           }
 
           chain forward {

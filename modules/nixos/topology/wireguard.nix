@@ -6,21 +6,27 @@
   topo = config.psyclyx.topology;
   hostName = config.networking.hostName;
   thisHost = topo.hosts.${hostName} or null;
-  hasVpn = thisHost != null && thisHost.vpn != null;
+  hasWg = thisHost != null && thisHost.wireguard != null;
 
-  hubHost = topo.hosts.${topo.vpn.hub};
-  isHub = hasVpn && hostName == topo.vpn.hub;
+  hubHost = topo.hosts.${topo.wireguard.hub};
+  isHub = hasWg && hostName == topo.wireguard.hub;
 
-  vpnPeers = lib.filterAttrs (name: host:
-    name != hostName && host.vpn != null
+  wgPeers = lib.filterAttrs (name: host:
+    name != hostName && host.wireguard != null
   ) topo.hosts;
 
   allPeerExportedRoutes = lib.concatMap
-    (host: host.vpn.exportedRoutes or [])
-    (lib.attrValues vpnPeers);
+    (host: host.wireguard.exportedRoutes)
+    (lib.attrValues wgPeers);
+
+  # Hub endpoint: prefer explicit endpoint from host data, fall back to constructed
+  hubEndpoint =
+    if hubHost.wireguard.endpoint != null
+    then hubHost.wireguard.endpoint
+    else "vpn.${topo.domains.public}:${toString topo.wireguard.port}";
 in {
-  config = lib.mkIf hasVpn {
-    networking.firewall.allowedUDPPorts = [topo.vpn.port];
+  config = lib.mkIf hasWg {
+    networking.firewall.allowedUDPPorts = [topo.wireguard.port];
 
     systemd.network = {
       netdevs."30-wg0" = {
@@ -31,24 +37,24 @@ in {
 
         wireguardConfig = lib.mkMerge [
           {PrivateKeyFile = "/etc/secrets/wireguard/private.key";}
-          (lib.mkIf isHub {ListenPort = topo.vpn.port;})
+          (lib.mkIf isHub {ListenPort = topo.wireguard.port;})
         ];
 
         wireguardPeers =
           if isHub
           then
-            # Hub: one peer entry per VPN host
+            # Hub: one peer entry per WireGuard host
             lib.mapAttrsToList (_: host: {
-              PublicKey = host.vpn.publicKey;
-              AllowedIPs = ["${host.vpn.address}/32"] ++ host.vpn.exportedRoutes;
+              PublicKey = host.wireguard.publicKey;
+              AllowedIPs = ["${host.addresses.vpn.ipv4}/32"] ++ host.wireguard.exportedRoutes;
             })
-            vpnPeers
+            wgPeers
           else
             # Spoke: single peer entry for the hub
             [
               {
-                PublicKey = hubHost.vpn.publicKey;
-                Endpoint = "vpn.${topo.domain.public}:${toString topo.vpn.port}";
+                PublicKey = hubHost.wireguard.publicKey;
+                Endpoint = hubEndpoint;
                 AllowedIPs = [topo.vpn.subnet] ++ allPeerExportedRoutes;
                 PersistentKeepalive = 25;
               }
@@ -58,12 +64,12 @@ in {
       networks."30-wg0" = lib.mkMerge [
         {
           matchConfig.Name = "wg0";
-          address = ["${thisHost.vpn.address}/24"];
+          address = ["${thisHost.addresses.vpn.ipv4}/24"];
         }
         # Spoke peers: route internal domain queries through VPN DNS
         (lib.mkIf (!isHub) {
-          dns = [hubHost.vpn.address];
-          domains = ["~${topo.domain.internal}"];
+          dns = [hubHost.addresses.vpn.ipv4];
+          domains = ["~${topo.domains.internal}"];
         })
       ];
     };

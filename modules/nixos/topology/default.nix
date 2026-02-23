@@ -11,22 +11,49 @@
       public = lib.mkDefault topo.domain.public;
       home = lib.mkDefault topo.conventions.homeDomain;
     };
+
+    # Forward deprecated vpn.{port,hub} → wireguard.{port,hub}
+    psyclyx.topology.wireguard = {
+      port = lib.mkDefault topo.vpn.port;
+      hub = lib.mkDefault topo.vpn.hub;
+    };
   };
   options = {lib, ...}: let
-    vpnPeerModule = {
+    # New structured WireGuard peer module (replaces vpnPeerModule)
+    wireguardPeerModule = {
       options = {
-        address = lib.mkOption {
-          type = lib.types.str;
-          description = "WireGuard VPN address (without prefix length)";
-        };
         publicKey = lib.mkOption {
           type = lib.types.str;
           description = "WireGuard public key";
         };
+        endpoint = lib.mkOption {
+          type = lib.types.nullOr lib.types.str;
+          default = null;
+          description = "Endpoint address:port (hub only)";
+        };
         exportedRoutes = lib.mkOption {
           type = lib.types.listOf lib.types.str;
           default = [];
-          description = "Subnets reachable through this peer (added to hub's AllowedIPs)";
+          description = "Subnets routable behind this peer";
+        };
+      };
+    };
+
+    # Deprecated: use wireguardPeerModule instead
+    vpnPeerModule = {
+      options = {
+        address = lib.mkOption {
+          type = lib.types.str;
+          description = "WireGuard VPN address (without prefix length) — deprecated: use addresses.vpn.ipv4";
+        };
+        publicKey = lib.mkOption {
+          type = lib.types.str;
+          description = "WireGuard public key — deprecated: use wireguard.publicKey";
+        };
+        exportedRoutes = lib.mkOption {
+          type = lib.types.listOf lib.types.str;
+          default = [];
+          description = "Subnets reachable through this peer — deprecated: use wireguard.exportedRoutes";
         };
       };
     };
@@ -46,12 +73,26 @@
       };
     };
 
-    hostModule = {
+    hostModule = {config, lib, ...}: {
+      config = lib.mkIf (config.vpn != null) {
+        # Forward deprecated vpn.{publicKey,exportedRoutes} → wireguard.*
+        wireguard = lib.mkDefault {
+          publicKey = config.vpn.publicKey;
+          exportedRoutes = config.vpn.exportedRoutes;
+        };
+        # Forward deprecated vpn.address → addresses.vpn.ipv4
+        addresses.vpn.ipv4 = lib.mkDefault config.vpn.address;
+      };
       options = {
+        wireguard = lib.mkOption {
+          type = lib.types.nullOr (lib.types.submodule wireguardPeerModule);
+          default = null;
+          description = "WireGuard configuration for this host (null if not a peer)";
+        };
         vpn = lib.mkOption {
           type = lib.types.nullOr (lib.types.submodule vpnPeerModule);
           default = null;
-          description = "VPN configuration for this host (null if not a VPN peer)";
+          description = "Deprecated: use wireguard + addresses.vpn instead";
         };
         publicIPv4 = lib.mkOption {
           type = lib.types.nullOr lib.types.str;
@@ -264,6 +305,23 @@
       description = "Unified domain names block";
     };
 
+    wireguard = lib.mkOption {
+      type = lib.types.submodule {
+        options = {
+          port = lib.mkOption {
+            type = lib.types.port;
+            default = 51820;
+            description = "WireGuard listen port";
+          };
+          hub = lib.mkOption {
+            type = lib.types.str;
+            description = "Hostname of the WireGuard hub";
+          };
+        };
+      };
+      description = "WireGuard overlay configuration";
+    };
+
     vpn = lib.mkOption {
       type = lib.types.submodule {
         options = {
@@ -273,15 +331,15 @@
           };
           port = lib.mkOption {
             type = lib.types.port;
-            description = "WireGuard listen port";
+            description = "WireGuard listen port — deprecated: use wireguard.port";
           };
           hub = lib.mkOption {
             type = lib.types.str;
-            description = "Hostname of the VPN hub";
+            description = "Hostname of the VPN hub — deprecated: use wireguard.hub";
           };
         };
       };
-      description = "VPN overlay configuration";
+      description = "VPN overlay configuration — deprecated: use wireguard";
     };
 
     uplink = lib.mkOption {

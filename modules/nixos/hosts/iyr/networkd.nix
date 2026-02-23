@@ -196,7 +196,7 @@ in {
 
       extraCommands = let
         wan = vlanIface transitVlan;
-        vpnPort = toString topo.vpn.port;
+        vpnPort = toString topo.wireguard.port;
       in ''
         # Lockdown WAN interface (${wan}): drop unsolicited inbound except
         # DHCP, ICMP, and WireGuard. Services that open firewall ports

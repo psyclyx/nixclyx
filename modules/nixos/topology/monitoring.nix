@@ -5,31 +5,31 @@
 }: let
   topo = config.psyclyx.topology;
 
-  vpnHosts = lib.filterAttrs (_: host: host.vpn != null) topo.hosts;
+  wgHosts = lib.filterAttrs (_: host: host.wireguard != null) topo.hosts;
   labHosts = lib.filterAttrs (_: host: host.labIndex != null) topo.hosts;
 
-  # VPN hosts excluding the hub (scraped by collector, not server).
-  spokeVpnHosts = lib.filterAttrs (name: _: name != topo.vpn.hub) vpnHosts;
+  # WireGuard hosts excluding the hub (scraped by collector, not server).
+  spokeWgHosts = lib.filterAttrs (name: _: name != topo.wireguard.hub) wgHosts;
 
-  spokeVpnTargets = lib.mapAttrsToList
-    (name: _: "${name}.${topo.domain.internal}:9100")
-    spokeVpnHosts;
+  spokeWgTargets = lib.mapAttrsToList
+    (name: _: "${name}.${topo.domains.internal}:9100")
+    spokeWgHosts;
 
   labTargets = lib.mapAttrsToList
-    (name: _: "${name}.rack.${topo.conventions.homeDomain}:9100")
+    (name: _: "${name}.rack.${topo.domains.home}:9100")
     labHosts;
 
   mkLabTargets = port: lib.mapAttrsToList
-    (name: _: "${name}.rack.${topo.conventions.homeDomain}:${toString port}")
+    (name: _: "${name}.rack.${topo.domains.home}:${toString port}")
     labHosts;
 
   redisTargets = mkLabTargets 9121;
   postgresTargets = mkLabTargets 9187;
   juicefsTargets = mkLabTargets 9567;
 
-  smartctlSpokeVpnTargets = lib.mapAttrsToList
-    (name: _: "${name}.${topo.domain.internal}:9633")
-    spokeVpnHosts;
+  smartctlSpokeWgTargets = lib.mapAttrsToList
+    (name: _: "${name}.${topo.domains.internal}:9633")
+    spokeWgHosts;
 
   smartctlLabTargets = mkLabTargets 9633;
 
@@ -38,12 +38,12 @@
     lib.optional (sw ? mgmtAddress) sw.mgmtAddress
   ) topo.switches);
 
-  hubVpnAddress = vpnHosts.${topo.vpn.hub}.vpn.address;
+  hubVpnAddress = wgHosts.${topo.wireguard.hub}.addresses.vpn.ipv4;
 in {
   config = lib.mkMerge [
     (lib.mkIf config.psyclyx.nixos.services.prometheus.collector.enable {
       psyclyx.nixos.services.prometheus.collector = {
-        scrapeTargets = spokeVpnTargets ++ labTargets;
+        scrapeTargets = spokeWgTargets ++ labTargets;
         inherit snmpTargets;
         remoteWriteUrl = lib.mkDefault "http://${hubVpnAddress}:9090/api/v1/write";
         extraScrapeConfigs = [
@@ -61,7 +61,7 @@ in {
           }
           {
             job_name = "smartctl";
-            static_configs = [{targets = smartctlSpokeVpnTargets ++ smartctlLabTargets;}];
+            static_configs = [{targets = smartctlSpokeWgTargets ++ smartctlLabTargets;}];
           }
         ];
       };

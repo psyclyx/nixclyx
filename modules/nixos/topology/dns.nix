@@ -5,15 +5,15 @@
 }: let
   topo = config.psyclyx.topology;
 
-  vpnHosts = lib.filterAttrs (_: host: host.vpn != null) topo.hosts;
+  wgHosts = lib.filterAttrs (_: host: host.wireguard != null) topo.hosts;
 
   dnsRecords = lib.concatLists (lib.mapAttrsToList (name: host: [
-      "${name}.${topo.domain.internal}. IN A ${host.vpn.address}"
+      "${name}.${topo.domains.internal}. IN A ${host.addresses.vpn.ipv4}"
     ])
-    vpnHosts);
+    wgHosts);
 in {
   config = lib.mkIf config.psyclyx.nixos.network.dns.resolver.enable {
-    psyclyx.nixos.network.dns.resolver.localZones.${topo.domain.internal} = {
+    psyclyx.nixos.network.dns.resolver.localZones.${topo.domains.internal} = {
       type = lib.mkDefault "transparent";
       records = dnsRecords;
     };
