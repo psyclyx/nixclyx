@@ -12,6 +12,26 @@
       default = ["/etc/secrets/initrd/ssh_host_ed25519_key"];
       description = "Paths to SSH host keys for initrd";
     };
+
+    network = {
+      netdevs = lib.mkOption {
+        type = lib.types.lazyAttrsOf lib.types.anything;
+        default = {};
+        description = "systemd-networkd netdev units for the initrd";
+      };
+
+      networks = lib.mkOption {
+        type = lib.types.lazyAttrsOf lib.types.anything;
+        default = {};
+        description = "systemd-networkd network units for the initrd";
+      };
+
+      kernelModules = lib.mkOption {
+        type = lib.types.listOf lib.types.str;
+        default = [];
+        description = "Extra kernel modules to include in initrd for networking";
+      };
+    };
   };
   extraOptions = {lib, ...}: {
     psyclyx.nixos.network.ports.initrd-ssh = lib.mkOption {
@@ -27,7 +47,12 @@
   }: {
     psyclyx.nixos.boot.initrd-ssh.authorizedKeys = config.users.users.root.openssh.authorizedKeys.keys;
     boot.initrd = {
-      systemd.network.enable = true;
+      kernelModules = cfg.network.kernelModules;
+      systemd.network = {
+        enable = true;
+        netdevs = cfg.network.netdevs;
+        networks = cfg.network.networks;
+      };
       network.ssh = {
         enable = true;
         authorizedKeys = cfg.authorizedKeys;

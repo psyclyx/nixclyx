@@ -92,6 +92,54 @@ in {
   config = lib.mkIf (config.psyclyx.nixos.host == "iyr") {
     boot.kernelModules = ["sch_cake" "ifb"];
 
+    psyclyx.nixos.boot.initrd-ssh.network = let
+      initrdVlans = [topo.networks.main.vlan topo.networks.mgmt.vlan];
+      mkInitrdVlanNetwork = vlanId: let
+        name = dt.vlanNameMap.${toString vlanId};
+        net = dt.networks.${name};
+      in {
+        matchConfig.Name = vlanIface vlanId;
+        address = ["${net.gateway4}/${toString net.prefixLen}"];
+        linkConfig.RequiredForOnline = "routable";
+      };
+    in {
+      kernelModules = ["bonding" "8021q"];
+      netdevs =
+        {
+          "10-bond0" = {
+            netdevConfig = {
+              Name = "bond0";
+              Kind = "bond";
+            };
+            bondConfig = {
+              Mode = "802.3ad";
+              LACPTransmitRate = "fast";
+              TransmitHashPolicy = "layer3+4";
+              MIIMonitorSec = "1s";
+            };
+          };
+        }
+        // builtins.listToAttrs (map (id:
+          lib.nameValuePair "11-${vlanIface id}" (vlanNetdev id)
+        ) initrdVlans);
+      networks =
+        {
+          "10-bond0-ports" = {
+            matchConfig.Name = "enp1s0 enp3s0";
+            networkConfig.Bond = "bond0";
+          };
+          "10-bond0" = {
+            matchConfig.Name = "bond0";
+            networkConfig.DHCP = "no";
+            vlan = map vlanIface initrdVlans;
+            linkConfig.RequiredForOnline = "carrier";
+          };
+        }
+        // builtins.listToAttrs (map (id:
+          lib.nameValuePair "11-${vlanIface id}" (mkInitrdVlanNetwork id)
+        ) initrdVlans);
+    };
+
     systemd.services.cake-qos = {
       description = "CAKE traffic shaping on ${transitIface}";
       after = [
