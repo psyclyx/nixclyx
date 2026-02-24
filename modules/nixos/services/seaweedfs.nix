@@ -52,6 +52,18 @@
         description = "Path to IAM JSON config (sops-rendered).";
       };
     };
+    webdav = {
+      enable = lib.mkOption {
+        type = lib.types.bool;
+        default = false;
+        description = "Enable WebDAV server.";
+      };
+      port = lib.mkOption {
+        type = lib.types.port;
+        default = 7333;
+        description = "WebDAV server port.";
+      };
+    };
     filer = {
       port = lib.mkOption {
         type = lib.types.port;
@@ -256,6 +268,23 @@
       };
     };
 
+    systemd.services.seaweedfs-webdav = lib.mkIf cfg.webdav.enable {
+      description = "SeaweedFS WebDAV server";
+      after = ["network.target" "seaweedfs-filer.service"];
+      wants = ["seaweedfs-filer.service"];
+      wantedBy = ["multi-user.target"];
+      serviceConfig = {
+        Type = "simple";
+        ExecStart = lib.concatStringsSep " " [
+          weed "webdav"
+          "-port=${toString cfg.webdav.port}"
+          "-filer=${dataAddr}:${toString cfg.filer.port}"
+        ];
+        Restart = "on-failure";
+        RestartSec = 5;
+      };
+    };
+
     systemd.services.seaweedfs-mount = {
       description = "SeaweedFS FUSE mount at ${cfg.mountPoint}";
       after = ["network.target" "seaweedfs-filer.service"];
@@ -308,6 +337,7 @@
       [cfg.volume.port volumeGrpcPort cfg.filer.port filerGrpcPort]
       ++ lib.optionals isMaster [cfg.master.port masterGrpcPort]
       ++ lib.optional cfg.s3.enable cfg.s3.port
+      ++ lib.optional cfg.webdav.enable cfg.webdav.port
       ++ [cfg.metricsPort (cfg.metricsPort + 1) (cfg.metricsPort + 2)]
       ++ lib.optional cfg.s3.enable (cfg.metricsPort + 3);
   };

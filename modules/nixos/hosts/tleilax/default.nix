@@ -118,6 +118,7 @@
                 records = [
                   "metrics.psyclyx.net. IN A 10.157.0.1"
                   "s3.psyclyx.net. IN A 10.157.0.1"
+                  "webdav.psyclyx.net. IN A 10.157.0.1"
                 ];
               };
             };
@@ -215,6 +216,38 @@
         proxy_request_buffering off;
       '';
       locations."/".proxyPass = "http://seaweedfs-s3";
+    };
+
+    # WebDAV upstream — load-balanced across all lab nodes
+    services.nginx.upstreams."seaweedfs-webdav".servers = {
+      "10.157.10.11:7333" = {};
+      "10.157.10.12:7333" = {};
+      "10.157.10.13:7333" = {};
+      "10.157.10.14:7333" = {};
+    };
+
+    # WebDAV endpoint — internal only, via VPN, basic auth
+    services.nginx.virtualHosts."webdav.psyclyx.net" = {
+      useACMEHost = "psyclyx.net";
+      forceSSL = true;
+      listen = [
+        {
+          addr = "10.157.0.1";
+          port = 443;
+          ssl = true;
+        }
+        {
+          addr = "10.157.0.1";
+          port = 80;
+        }
+      ];
+      basicAuth.guest = "guest";
+      extraConfig = ''
+        client_max_body_size 0;
+        proxy_buffering off;
+        proxy_request_buffering off;
+      '';
+      locations."/".proxyPass = "http://seaweedfs-webdav";
     };
 
     # Internal metrics vhost (bypasses psyclyx nginx module — needs DNS-01 cert)
