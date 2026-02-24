@@ -232,18 +232,18 @@
         Type = "simple";
         ExecStartPre = lib.mkIf (cfg.filer.configDir != null) [
           "+${pkgs.writeShellScript "seaweedfs-filer-config" ''
-            mkdir -p /run/seaweedfs
-            cp ${cfg.filer.configDir}/filer.toml /run/seaweedfs/filer.toml
+            mkdir -p /etc/seaweedfs
+            cp ${cfg.filer.configDir}/filer.toml /etc/seaweedfs/filer.toml
           ''}"
         ];
-        ExecStart = lib.concatStringsSep " " ([
+        ExecStart = lib.concatStringsSep " " [
           weed "filer"
           "-ip=${dataAddr}"
           "-port=${toString cfg.filer.port}"
           "-master=${masterPeers}"
           "-metricsPort=${toString (cfg.metricsPort + 2)}"
           "-metricsIp=${metricsAddr}"
-        ] ++ lib.optional (cfg.filer.configDir != null) "-config_dir=/run/seaweedfs");
+        ];
         Restart = "on-failure";
         RestartSec = 5;
       };
