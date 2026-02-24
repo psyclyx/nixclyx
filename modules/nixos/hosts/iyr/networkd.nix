@@ -347,7 +347,10 @@ in {
               IPv6AcceptRA = true;
               DHCPPrefixDelegation = true;
             };
-            dhcpV4Config.UseRoutes = true;
+            dhcpV4Config = {
+              UseRoutes = true;
+              ClientIdentifier = "mac";
+            };
             dhcpV6Config = {
               PrefixDelegationHint = "::/60";
               WithoutRA = "solicit";
