@@ -71,6 +71,13 @@ in {
           dns = [hubHost.addresses.vpn.ipv4];
           domains = ["~${topo.domains.internal}"];
         })
+        # Hub: add kernel routes for subnets exported by peers
+        (lib.mkIf isHub {
+          routes = lib.concatMap (host:
+            map (route: { Destination = route; })
+                (host.wireguard.exportedRoutes or [])
+          ) (lib.attrValues wgPeers);
+        })
       ];
     };
   };
