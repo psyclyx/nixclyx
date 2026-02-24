@@ -65,8 +65,28 @@
   config = {
     cfg,
     lib,
+    pkgs,
     ...
-  }: {
+  }: let
+    dsl = import ./dashboards/lib.nix;
+    dashboardFiles = {
+      "overview.json" = import ./dashboards/overview.nix dsl;
+      "nodes.json" = import ./dashboards/nodes.nix dsl;
+      "hardware.json" = import ./dashboards/hardware.nix dsl;
+      "storage.json" = import ./dashboards/storage.nix dsl;
+      "postgresql.json" = import ./dashboards/postgresql.nix dsl;
+      "redis.json" = import ./dashboards/redis.nix dsl;
+      "seaweedfs.json" = import ./dashboards/seaweedfs.nix dsl;
+      "network.json" = import ./dashboards/network.nix dsl;
+      "bcachefs.json" = import ./dashboards/bcachefs.nix dsl;
+    };
+    dashboardDir = pkgs.linkFarm "grafana-dashboards" (
+      lib.mapAttrsToList (name: dashboard: {
+        inherit name;
+        path = pkgs.writeText name (builtins.toJSON dashboard);
+      }) dashboardFiles
+    );
+  in {
     services.grafana = {
       enable = true;
       settings = {
@@ -80,7 +100,7 @@
         };
         security.secret_key = "$__file{${cfg.secretKeyFile}}";
         dashboards.default_home_dashboard_path =
-          lib.mkIf cfg.dashboards.enable "${./dashboards/infra-overview.json}";
+          lib.mkIf cfg.dashboards.enable "${dashboardDir}/overview.json";
         analytics.reporting_enabled = false;
         "auth.anonymous".enabled = true;
         "auth.generic_oauth" = lib.mkIf cfg.oidc.enable {
@@ -105,7 +125,7 @@
           name = "psyclyx";
           type = "file";
           disableDeletion = true;
-          options.path = ./dashboards;
+          options.path = dashboardDir;
         })
         ++ cfg.dashboards.extraProviders;
     };
