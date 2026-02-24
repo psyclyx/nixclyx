@@ -33,5 +33,10 @@
       program = "${pkgs.firefox}/bin/firefox --kiosk=${cfg.url}";
       environment = {"WLR_LIBINPUT_NO_DEVICES" = "1";};
     };
+
+    systemd.services.cage-tty1.serviceConfig = {
+      Restart = "always";
+      RestartSec = "3";
+    };
   };
 }
