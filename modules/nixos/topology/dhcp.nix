@@ -40,7 +40,7 @@
       { name = "routers"; data = net.gateway4; }
       { name = "domain-name-servers"; data = net.gateway4; }
       { name = "domain-name"; data = net.zoneName; }
-      { name = "domain-search"; data = "${net.zoneName}, ${topo.domains.home}"; }
+      { name = "domain-search"; data = "${net.zoneName}, ${topo.domains.home}, ${topo.domains.internal}"; }
     ];
     reservations = let servers = labServersOnNetwork pool.network; in
       map (s: {
@@ -61,7 +61,7 @@
     pools = [{pool = "${prefix6}::${pool.ipv6Suffix.start} - ${prefix6}::${pool.ipv6Suffix.end}";}];
     "option-data" = [
       { name = "dns-servers"; data = net.gateway6; }
-      { name = "domain-search"; data = "${net.zoneName}, ${topo.domains.home}"; }
+      { name = "domain-search"; data = "${net.zoneName}, ${topo.domains.home}, ${topo.domains.internal}"; }
     ];
     reservations = let servers = labServersOnNetwork pool.network; in
       map (s: {

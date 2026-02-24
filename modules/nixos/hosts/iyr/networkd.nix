@@ -53,6 +53,7 @@
       Managed = true;
       OtherInformation = true;
       DNS = "_link_local";
+      Domains = "${net.zoneName} ${topo.domains.home} ${topo.domains.internal}";
     };
     linkConfig.RequiredForOnline = "routable";
   };
