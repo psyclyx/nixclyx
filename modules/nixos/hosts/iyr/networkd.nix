@@ -103,7 +103,7 @@ in {
         linkConfig.RequiredForOnline = "routable";
       };
     in {
-      kernelModules = ["bonding" "8021q"];
+      kernelModules = ["bonding" "8021q" "igc"];
       netdevs =
         {
           "10-bond0" = {
