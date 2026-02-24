@@ -93,7 +93,15 @@
 
       networking.firewall.trustedInterfaces = [ "bond0" "bond1" ];
 
-      networking.firewall.allowedTCPPorts = [ 9567 ];
+      boot.kernel.sysctl = {
+        "vm.swappiness" = 10;
+        "net.core.rmem_max" = 16777216;
+        "net.core.wmem_max" = 16777216;
+        "net.ipv4.tcp_rmem" = "4096 87380 16777216";
+        "net.ipv4.tcp_wmem" = "4096 65536 16777216";
+        "net.ipv4.tcp_congestion_control" = "bbr";
+        "net.core.default_qdisc" = "fq";
+      };
 
       services.prometheus.exporters.redis = {
         enable = true;
@@ -120,19 +128,22 @@
         role = "server";
 
         services = {
-          rustfs = {
+          seaweedfs = {
             enable = true;
             clusterNodes = labHostNames;
+            masterNodes = let
+              labHosts = lib.filterAttrs (_: h: h.labIndex != null) config.psyclyx.topology.hosts;
+              sorted = lib.sort (a: b: labHosts.${a}.labIndex < labHosts.${b}.labIndex)
+                (lib.attrNames labHosts);
+            in lib.take 3 sorted;
+            s3.enable = true;
+            buckets = ["backups"];
           };
           redis-sentinel = {
             enable = true;
             clusterNodes = labHostNames;
           };
           postgresql-cluster = {
-            enable = true;
-            clusterNodes = labHostNames;
-          };
-          juicefs = {
             enable = true;
             clusterNodes = labHostNames;
           };
