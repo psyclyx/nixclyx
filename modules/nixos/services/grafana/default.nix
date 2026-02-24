@@ -79,6 +79,8 @@
           root_url = lib.mkIf (cfg.domain != null) "https://${cfg.domain}/";
         };
         security.secret_key = "$__file{${cfg.secretKeyFile}}";
+        dashboards.default_home_dashboard_path =
+          lib.mkIf cfg.dashboards.enable "${./dashboards/infra-overview.json}";
         analytics.reporting_enabled = false;
         "auth.anonymous".enabled = true;
         "auth.generic_oauth" = lib.mkIf cfg.oidc.enable {
