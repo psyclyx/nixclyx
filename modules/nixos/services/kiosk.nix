@@ -14,11 +14,22 @@
   };
   config = {
     cfg,
+    lib,
     pkgs,
     ...
   }: let
     domain = builtins.head (builtins.match "https?://([^/:]+).*" cfg.url);
-    cageCmd = "${pkgs.cage}/bin/cage -s -- ${pkgs.firefox}/bin/firefox --kiosk=${cfg.url}";
+    kioskSession = pkgs.writeShellScript "kiosk-session" ''
+      ${pkgs.wlr-randr}/bin/wlr-randr | ${pkgs.gawk}/bin/awk '/^[^ ]/{print $1}' | while read -r output; do
+        ${pkgs.wlr-randr}/bin/wlr-randr --output "$output" --scale 2
+      done
+      rm -rf /var/lib/${cfg.user}/.config/mozilla /var/lib/${cfg.user}/.cache/mozilla
+      ${pkgs.firefox}/bin/firefox --kiosk ${cfg.url} &
+      PID=$!
+      trap 'kill $PID 2>/dev/null' EXIT TERM INT HUP
+      wait $PID
+    '';
+    cageCmd = "${pkgs.cage}/bin/cage -s -- ${kioskSession}";
   in {
     users.users.${cfg.user} = {
       isNormalUser = true;
@@ -47,6 +58,8 @@
     systemd.services.greetd.serviceConfig = {
       Restart = "always";
       RestartSec = "3";
+      KillMode = "control-group";
+      TimeoutStopSec = lib.mkForce 10;
     };
   };
 }
