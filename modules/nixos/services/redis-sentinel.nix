@@ -142,7 +142,6 @@
             ${lib.optionalString (cfg.requirePassFile != null) ''
               PASS=$(cat ${cfg.requirePassFile})
               echo "sentinel auth-pass ${cfg.masterName} $PASS" >> ${sentinelConf}.tmp
-              echo "requirepass $PASS" >> ${sentinelConf}.tmp
             ''}
 
             mv ${sentinelConf}.tmp ${sentinelConf}
@@ -151,12 +150,10 @@
           ${lib.optionalString (cfg.requirePassFile != null) ''
             PASS=$(cat ${cfg.requirePassFile})
             ${pkgs.gnused}/bin/sed -i "s/^sentinel auth-pass ${cfg.masterName} .*/sentinel auth-pass ${cfg.masterName} $PASS/" ${sentinelConf}
-            if ${pkgs.gnugrep}/bin/grep -q "^requirepass " ${sentinelConf}; then
-              ${pkgs.gnused}/bin/sed -i "s/^requirepass .*/requirepass $PASS/" ${sentinelConf}
-            else
-              echo "requirepass $PASS" >> ${sentinelConf}
-            fi
           ''}
+
+          # Remove requirepass if present (SeaweedFS redis2_sentinel can't authenticate to sentinel)
+          ${pkgs.gnused}/bin/sed -i '/^requirepass /d' ${sentinelConf}
         '';
       };
 
