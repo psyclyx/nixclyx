@@ -117,6 +117,7 @@
                 type = "transparent";
                 records = [
                   "metrics.psyclyx.net. IN A 10.157.0.1"
+                  "s3.psyclyx.net. IN A 10.157.0.1"
                 ];
               };
             };
@@ -184,6 +185,37 @@
         chmod g+r /etc/nsd/nsd_control.key /etc/nsd/nsd_control.pem /etc/nsd/nsd_server.pem
       '';
     in ["+${script}"];
+
+    # S3 upstream — load-balanced across all lab nodes
+    services.nginx.upstreams."seaweedfs-s3".servers = {
+      "10.157.10.11:8333" = {};
+      "10.157.10.12:8333" = {};
+      "10.157.10.13:8333" = {};
+      "10.157.10.14:8333" = {};
+    };
+
+    # S3 endpoint — internal only, via VPN
+    services.nginx.virtualHosts."s3.psyclyx.net" = {
+      useACMEHost = "psyclyx.net";
+      forceSSL = true;
+      listen = [
+        {
+          addr = "10.157.0.1";
+          port = 443;
+          ssl = true;
+        }
+        {
+          addr = "10.157.0.1";
+          port = 80;
+        }
+      ];
+      extraConfig = ''
+        client_max_body_size 0;
+        proxy_buffering off;
+        proxy_request_buffering off;
+      '';
+      locations."/".proxyPass = "http://seaweedfs-s3";
+    };
 
     # Internal metrics vhost (bypasses psyclyx nginx module — needs DNS-01 cert)
     services.nginx.virtualHosts."metrics.psyclyx.net" = {
