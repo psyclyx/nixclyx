@@ -18,6 +18,7 @@
     ...
   }: let
     domain = builtins.head (builtins.match "https?://([^/:]+).*" cfg.url);
+    cageCmd = "${pkgs.cage}/bin/cage -s -- ${pkgs.firefox}/bin/firefox --kiosk=${cfg.url}";
   in {
     users.users.${cfg.user} = {
       isNormalUser = true;
@@ -27,14 +28,23 @@
     };
     users.groups.${cfg.user} = {};
 
-    services.cage = {
+    services.greetd = {
       enable = true;
-      inherit (cfg) user;
-      program = "${pkgs.firefox}/bin/firefox --kiosk=${cfg.url}";
-      environment = {"WLR_LIBINPUT_NO_DEVICES" = "1";};
+      settings = {
+        default_session = {
+          command = cageCmd;
+          user = cfg.user;
+        };
+        initial_session = {
+          command = cageCmd;
+          user = cfg.user;
+        };
+      };
     };
 
-    systemd.services.cage-tty1.serviceConfig = {
+    environment.variables.WLR_LIBINPUT_NO_DEVICES = "1";
+
+    systemd.services.greetd.serviceConfig = {
       Restart = "always";
       RestartSec = "3";
     };
