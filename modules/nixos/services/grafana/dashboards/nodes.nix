@@ -56,11 +56,10 @@ mkDashboard {
     })
 
     (timeseries {
-      title = "PSI Pressure"; unit = "percentunit";
+      title = "PSI Pressure (CPU / Memory)"; unit = "percentunit";
       targets = [
         (q { expr = ''rate(node_pressure_cpu_waiting_seconds_total{instance=~"$instance"}[$__rate_interval])''; legendFormat = "{{instance}} cpu"; })
         (q { expr = ''rate(node_pressure_memory_waiting_seconds_total{instance=~"$instance"}[$__rate_interval])''; legendFormat = "{{instance}} memory"; })
-        (q { expr = ''rate(node_pressure_io_waiting_seconds_total{instance=~"$instance"}[$__rate_interval])''; legendFormat = "{{instance}} io"; })
       ];
     })
 
@@ -84,6 +83,37 @@ mkDashboard {
       thresholds = thresholds.percentage;
       targets = [
         (q { expr = ''node_filefd_allocated{instance=~"$instance"} / node_filefd_maximum{instance=~"$instance"} * 100''; })
+      ];
+    })
+
+    (timeseries {
+      title = "Swap Usage"; unit = "bytes";
+      targets = [
+        (q { expr = ''node_memory_SwapTotal_bytes{instance=~"$instance"} - node_memory_SwapFree_bytes{instance=~"$instance"}''; legendFormat = "{{instance}} used"; })
+        (q { expr = ''node_memory_SwapTotal_bytes{instance=~"$instance"}''; legendFormat = "{{instance}} total"; })
+      ];
+    })
+
+    (timeseries {
+      title = "Context Switches"; unit = "ops";
+      targets = [
+        (q { expr = ''rate(node_context_switches_total{instance=~"$instance"}[$__rate_interval])''; })
+      ];
+    })
+
+    (timeseries {
+      title = "TCP Connections";
+      targets = [
+        (q { expr = ''node_tcp_connection_states{instance=~"$instance",state="established"}''; legendFormat = "{{instance}} established"; })
+        (q { expr = ''node_tcp_connection_states{instance=~"$instance",state="time_wait"}''; legendFormat = "{{instance}} time_wait"; })
+        (q { expr = ''node_tcp_connection_states{instance=~"$instance",state="close_wait"}''; legendFormat = "{{instance}} close_wait"; })
+      ];
+    })
+
+    (timeseries {
+      title = "TCP Retransmits"; unit = "ops";
+      targets = [
+        (q { expr = ''rate(node_netstat_Tcp_RetransSegs{instance=~"$instance"}[$__rate_interval])''; })
       ];
     })
   ];

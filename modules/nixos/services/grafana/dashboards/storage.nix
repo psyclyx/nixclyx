@@ -18,6 +18,13 @@ mkDashboard {
       ];
     })
 
+    (bargauge {
+      title = "Inode Usage"; w = 24;
+      targets = [
+        (q { expr = ''100 - (node_filesystem_files_free{instance=~"$instance",fstype!~"tmpfs|overlay|squashfs",mountpoint!~"/boot.*"} / node_filesystem_files{instance=~"$instance",fstype!~"tmpfs|overlay|squashfs",mountpoint!~"/boot.*"} * 100)''; legendFormat = "{{instance}} {{mountpoint}}"; })
+      ];
+    })
+
     (timeseries {
       title = "Disk Read Throughput"; unit = "Bps";
       targets = [
@@ -29,6 +36,14 @@ mkDashboard {
       title = "Disk Write Throughput"; unit = "Bps";
       targets = [
         (q { expr = ''rate(node_disk_written_bytes_total{instance=~"$instance",device=~"$device"}[$__rate_interval])''; legendFormat = "{{instance}} {{device}}"; })
+      ];
+    })
+
+    (timeseries {
+      title = "Disk IOPS"; unit = "iops";
+      targets = [
+        (q { expr = ''rate(node_disk_reads_completed_total{instance=~"$instance",device=~"$device"}[$__rate_interval])''; legendFormat = "{{instance}} {{device}} reads"; })
+        (q { expr = ''rate(node_disk_writes_completed_total{instance=~"$instance",device=~"$device"}[$__rate_interval])''; legendFormat = "{{instance}} {{device}} writes"; })
       ];
     })
 
@@ -57,6 +72,13 @@ mkDashboard {
       title = "Disk I/O Weighted Time";
       targets = [
         (q { expr = ''rate(node_disk_io_time_weighted_seconds_total{instance=~"$instance",device=~"$device"}[$__rate_interval])''; legendFormat = "{{instance}} {{device}}"; })
+      ];
+    })
+
+    (timeseries {
+      title = "Disk Queue Depth";
+      targets = [
+        (q { expr = ''node_disk_io_now{instance=~"$instance",device=~"$device"}''; legendFormat = "{{instance}} {{device}}"; })
       ];
     })
   ];

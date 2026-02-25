@@ -69,5 +69,28 @@ mkDashboard {
         (q { expr = ''rate(redis_evicted_keys_total{instance=~"$instance"}[$__rate_interval])''; })
       ];
     })
+
+    (timeseries {
+      title = "Total Keys";
+      legendCalcs = [ "lastNotNull" ];
+      targets = [
+        (q { expr = ''redis_db_keys{instance=~"$instance"}''; legendFormat = "{{instance}} {{db}}"; })
+      ];
+    })
+
+    (timeseries {
+      title = "Expired Keys"; unit = "ops";
+      targets = [
+        (q { expr = ''rate(redis_expired_keys_total{instance=~"$instance"}[$__rate_interval])''; })
+      ];
+    })
+
+    (timeseries {
+      title = "Last RDB Save Age"; unit = "s";
+      legendCalcs = [ "lastNotNull" ];
+      targets = [
+        (q { expr = ''time() - redis_rdb_last_save_timestamp_seconds{instance=~"$instance"}''; })
+      ];
+    })
   ];
 }

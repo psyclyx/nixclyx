@@ -112,5 +112,37 @@ mkDashboard {
         (q { expr = ''rate(pg_stat_bgwriter_checkpoints_req_total{instance=~"$instance"}[$__rate_interval])''; legendFormat = "{{instance}} requested"; })
       ];
     })
+
+    (timeseries {
+      title = "Dead Tuples (Top 10)";
+      legendCalcs = [ "lastNotNull" ];
+      targets = [
+        (q { expr = ''topk(10, pg_stat_user_tables_n_dead_tup{instance=~"$instance"})''; legendFormat = "{{datname}}.{{schemaname}}.{{relname}}"; })
+      ];
+    })
+
+    (timeseries {
+      title = "Autovacuum Activity"; unit = "ops";
+      targets = [
+        (q { expr = ''sum by(instance) (rate(pg_stat_user_tables_autovacuum_count{instance=~"$instance"}[$__rate_interval]))''; legendFormat = "{{instance}} vacuums"; })
+        (q { expr = ''sum by(instance) (rate(pg_stat_user_tables_autoanalyze_count{instance=~"$instance"}[$__rate_interval]))''; legendFormat = "{{instance}} analyzes"; })
+      ];
+    })
+
+    (timeseries {
+      title = "Scans (Seq vs Index)"; unit = "ops";
+      targets = [
+        (q { expr = ''sum by(instance) (rate(pg_stat_user_tables_seq_scan{instance=~"$instance"}[$__rate_interval]))''; legendFormat = "{{instance}} sequential"; })
+        (q { expr = ''sum by(instance) (rate(pg_stat_user_tables_idx_scan{instance=~"$instance"}[$__rate_interval]))''; legendFormat = "{{instance}} index"; })
+      ];
+    })
+
+    (timeseries {
+      title = "Locks";
+      legendCalcs = [ "lastNotNull" ];
+      targets = [
+        (q { expr = ''sum by(instance, mode) (pg_locks_count{instance=~"$instance", datname!=""})''; legendFormat = "{{instance}} {{mode}}"; })
+      ];
+    })
   ];
 }
