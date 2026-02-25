@@ -258,6 +258,7 @@
         Type = "simple";
         ExecStart = lib.concatStringsSep " " ([
           weed "s3"
+          "-ip=${dataAddr}"
           "-port=${toString cfg.s3.port}"
           "-filer=${dataAddr}:${toString cfg.filer.port}"
           "-metricsPort=${toString (cfg.metricsPort + 3)}"
@@ -277,6 +278,7 @@
         Type = "simple";
         ExecStart = lib.concatStringsSep " " [
           weed "webdav"
+          "-ip=${dataAddr}"
           "-port=${toString cfg.webdav.port}"
           "-filer=${dataAddr}:${toString cfg.filer.port}"
         ];
