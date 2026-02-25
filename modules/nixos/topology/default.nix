@@ -1,9 +1,55 @@
 {
   path = ["psyclyx" "topology"];
   gate = "always";
-  imports = [./enrichment.nix ./wireguard.nix ./dns.nix ./monitoring.nix ./deployment.nix ./dhcp.nix];
+  imports = [./enrichment.nix ./wireguard.nix ./dns.nix ./monitoring.nix ./deployment.nix ./dhcp.nix ./ha.nix];
   config = {};
   options = {lib, ...}: let
+    haGroupServiceModule = {
+      options = {
+        port = lib.mkOption {
+          type = lib.types.port;
+          description = "Frontend port the HA proxy listens on.";
+        };
+        backendPort = lib.mkOption {
+          type = lib.types.nullOr lib.types.port;
+          default = null;
+          description = "Backend port on members (defaults to frontend port if null).";
+        };
+        mode = lib.mkOption {
+          type = lib.types.enum ["http" "tcp"];
+          default = "http";
+          description = "HAProxy mode (http or tcp).";
+        };
+        check = lib.mkOption {
+          type = lib.types.nullOr lib.types.str;
+          default = null;
+          description = "HTTP health check path (null = TCP check only).";
+        };
+      };
+    };
+
+    haGroupModule = {
+      options = {
+        network = lib.mkOption {
+          type = lib.types.str;
+          description = "Topology network this HA group operates on.";
+        };
+        vipOffset = lib.mkOption {
+          type = lib.types.int;
+          description = "Host offset for the virtual IP within the network subnet.";
+        };
+        members = lib.mkOption {
+          type = lib.types.listOf lib.types.str;
+          description = "Hostnames of cluster members.";
+        };
+        services = lib.mkOption {
+          type = lib.types.attrsOf (lib.types.submodule haGroupServiceModule);
+          default = {};
+          description = "Services fronted by this HA group.";
+        };
+      };
+    };
+
     # New structured WireGuard peer module (replaces vpnPeerModule)
     wireguardPeerModule = {
       options = {
@@ -408,6 +454,12 @@
       type = lib.types.attrsOf (lib.types.submodule networkModule);
       default = {};
       description = "Network segment definitions (VLANs)";
+    };
+
+    haGroups = lib.mkOption {
+      type = lib.types.attrsOf (lib.types.submodule haGroupModule);
+      default = {};
+      description = "High-availability groups (keepalived VIP + haproxy).";
     };
   };
 }

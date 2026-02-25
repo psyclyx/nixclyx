@@ -17,6 +17,15 @@
   labServersOnNetwork = networkName:
     builtins.filter (s: s.ifaces ? ${networkName}) labServers;
 
+  # Derive VIP A records for haGroups on a given network.
+  vipRecordsForNetwork = networkName: let
+    net = dt.networks.${networkName};
+    groups = lib.filterAttrs (_: g: g.network == networkName) topo.haGroups;
+  in
+    lib.mapAttrsToList (groupName: group:
+      "${groupName}-vip.${net.zoneName}. IN A ${net.prefix}.${toString group.vipOffset}"
+    ) groups;
+
   mkForwardZone = vlanId: let
     name = dt.vlanNameMap.${toString vlanId};
     net = dt.networks.${name};
@@ -30,11 +39,12 @@
     serverRecords6 =
       map (s: "${s.name}.${net.zoneName}. IN AAAA ${prefix6}::${dt.utils.intToHex (conventions.hostBaseOffset + s.n)}")
       servers;
+    vipRecords = vipRecordsForNetwork name;
   in {
     name = net.zoneName;
     value = {
       type = "static";
-      records = [gatewayRecord gatewayRecord6] ++ serverRecords ++ serverRecords6;
+      records = [gatewayRecord gatewayRecord6] ++ serverRecords ++ serverRecords6 ++ vipRecords;
     };
   };
 

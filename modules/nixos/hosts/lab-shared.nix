@@ -138,7 +138,11 @@
                 (lib.attrNames labHosts);
             in lib.take 3 sorted;
             s3.enable = true;
-            buckets = ["backups"];
+            buckets = ["backups" "attic"];
+          };
+          attic = {
+            enable = true;
+            clusterNodes = labHostNames;
           };
           redis-sentinel = {
             enable = true;

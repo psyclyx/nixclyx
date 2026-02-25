@@ -168,7 +168,7 @@ in {
         };
         rack = {
           network = "rack";
-          ipv4Range = { start = "10.0.20.100"; end = "10.0.20.199"; };
+          ipv4Range = { start = "10.157.10.100"; end = "10.157.10.199"; };
         };
         data = {
           network = "data";
