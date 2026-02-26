@@ -34,7 +34,7 @@
       };
 
       programs = {
-        glasgow.enable = true;
+        #glasgow.enable = true;
         steam.enable = true;
       };
 
