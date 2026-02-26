@@ -92,9 +92,9 @@
       }) group.members;
       checkDirective =
         if svc.check != null
-        then "option httpchk GET ${svc.check}"
+        then "option httpchk GET ${svc.check} HTTP/1.1\\r\\nHost:\\ localhost"
         else if svc.mode == "http"
-        then "option httpchk"
+        then "option httpchk GET / HTTP/1.1\\r\\nHost:\\ localhost"
         else "";
       checkPortSuffix =
         if svc.checkPort != null
