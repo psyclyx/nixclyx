@@ -65,6 +65,19 @@
       default = null;
       description = "Path to file containing the HS256 JWT signing secret (shared across all nodes).";
     };
+    watchStore = {
+      enable = lib.mkEnableOption "automatic Nix store push to Attic cache";
+      cacheName = lib.mkOption {
+        type = lib.types.str;
+        default = "psyclyx";
+        description = "Name of the Attic cache to push to.";
+      };
+      tokenFile = lib.mkOption {
+        type = lib.types.nullOr lib.types.str;
+        default = null;
+        description = "Path to file containing the push token for Attic.";
+      };
+    };
   };
 
   config = {
@@ -127,7 +140,7 @@
 
       [garbage-collection]
       interval = "24 hours"
-      default-retention-period = "6 months"
+      default-retention-period = "2 years"
     '' + lib.optionalString (cfg.tokenSecretFile != null) ''
 
       [jwt.signing]
@@ -211,6 +224,75 @@
           grep -q 1 || \
           ${pkgs.postgresql}/bin/psql -h ${pgHost} -U postgres -c \
             "CREATE DATABASE ${cfg.database.name} OWNER ${cfg.database.user};"
+      '';
+    };
+
+    # Cache init on primary node — creates cache and configures retention.
+    systemd.services.atticd-cache-init = lib.mkIf (isFirst && cfg.watchStore.enable) {
+      description = "Initialize Attic cache";
+      after = ["atticd.service"];
+      requires = ["atticd.service"];
+      wantedBy = ["multi-user.target"];
+      serviceConfig = {
+        Type = "oneshot";
+        RemainAfterExit = true;
+      };
+      script = let
+        attic = "${pkgs.attic-client}/bin/attic";
+        cache = cfg.watchStore.cacheName;
+      in ''
+        set -euo pipefail
+
+        # Wait for atticd to be ready
+        for i in $(seq 1 30); do
+          if ${pkgs.curl}/bin/curl -sf http://localhost:${toString cfg.port}/ >/dev/null 2>&1; then
+            break
+          fi
+          sleep 2
+        done
+
+        # Login with push token
+        TOKEN=$(cat "${toString cfg.watchStore.tokenFile}" | ${pkgs.coreutils}/bin/tr -d '\n')
+        ${attic} login local "http://localhost:${toString cfg.port}/" "$TOKEN"
+
+        # Create cache (idempotent — fails gracefully if exists)
+        ${attic} cache create ${cache} || true
+
+        # Configure retention
+        ${attic} cache configure ${cache} --retention-period '2 years'
+      '';
+    };
+
+    # Watch-store service — pushes built derivations to Attic cache.
+    systemd.services.attic-watch-store = lib.mkIf cfg.watchStore.enable {
+      description = "Attic Nix store watcher";
+      after = ["atticd.service"];
+      wants = ["atticd.service"];
+      wantedBy = ["multi-user.target"];
+      serviceConfig = {
+        Type = "simple";
+        StateDirectory = "attic-watch-store";
+        Restart = "always";
+        RestartSec = 10;
+      };
+      script = let
+        attic = "${pkgs.attic-client}/bin/attic";
+        cache = cfg.watchStore.cacheName;
+        stateDir = "/var/lib/attic-watch-store";
+      in ''
+        set -euo pipefail
+
+        # Generate config.toml from push token
+        TOKEN=$(cat "${toString cfg.watchStore.tokenFile}" | ${pkgs.coreutils}/bin/tr -d '\n')
+        umask 077
+        cat > ${stateDir}/config.toml <<TOML
+[default-server]
+endpoint = "http://localhost:${toString cfg.port}/"
+token = "$TOKEN"
+TOML
+
+        export ATTIC_CONFIG_DIR="${stateDir}"
+        exec ${attic} watch-store ${cache}
       '';
     };
 

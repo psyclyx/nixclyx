@@ -49,7 +49,9 @@
       labIdx = topo.hosts.${hostname}.labIndex;
 
       dataNet = topoLib.networks.${cfg.dataNetwork};
+      rackNet = topoLib.networks."rack";
       bindAddr = "${dataNet.prefix}.${toString (topo.conventions.hostBaseOffset + labIdx)}";
+      rackAddr = "${rackNet.prefix}.${toString (topo.conventions.hostBaseOffset + labIdx)}";
 
       memberAddr = name: let
         idx = topo.hosts.${name}.labIndex;
@@ -65,6 +67,7 @@
         name = hostname;
         listenClientUrls = [
           "http://${bindAddr}:${toString cfg.clientPort}"
+          "http://${rackAddr}:${toString cfg.clientPort}"
           "http://127.0.0.1:${toString cfg.clientPort}"
         ];
         advertiseClientUrls = [
