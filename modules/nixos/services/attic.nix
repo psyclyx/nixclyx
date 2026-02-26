@@ -84,6 +84,11 @@
     sortedIndices = builtins.sort builtins.lessThan clusterLabIndices;
     isFirst = labIdx == builtins.head sortedIndices;
 
+    # PostgreSQL via HAProxy VIP (Patroni routes to current primary)
+    labGroup = topo.haGroups.lab;
+    haNet = topoLib.networks.${labGroup.network};
+    pgVip = "${haNet.prefix}.${toString labGroup.vipOffset}";
+
     s3Endpoint =
       if cfg.storage.endpoint != null
       then cfg.storage.endpoint
@@ -98,7 +103,7 @@
       listen = "${listenAddr}:${toString cfg.port}"
 
       [database]
-      url = "postgresql://${cfg.database.user}:__DB_PASSWORD__@${dataAddr}:5432/${cfg.database.name}"
+      url = "postgresql://${cfg.database.user}:__DB_PASSWORD__@${pgVip}:5432/${cfg.database.name}"
 
       [storage]
       type = "s3"
@@ -120,8 +125,8 @@
       default-retention-period = "6 months"
     '' + lib.optionalString (cfg.tokenSecretFile != null) ''
 
-      [token-hs256-secret]
-      file = "${cfg.tokenSecretFile}"
+      [jwt.signing]
+      token-hs256-secret-base64 = "__TOKEN_SECRET_B64__"
     '');
 
     setupScript = pkgs.writeShellScript "atticd-setup" ''
@@ -134,13 +139,19 @@
         DB_PASS=$(cat "${toString cfg.database.passwordFile}" | ${pkgs.coreutils}/bin/tr -d '\n')
         ${pkgs.gnused}/bin/sed -i "s|__DB_PASSWORD__|''${DB_PASS}|" ${configDir}/server.toml
       fi
+
+      # Substitute token secret (base64-encoded)
+      if [ -n "${toString cfg.tokenSecretFile}" ] && [ -f "${toString cfg.tokenSecretFile}" ]; then
+        TOKEN_B64=$(${pkgs.coreutils}/bin/base64 -w0 < "${toString cfg.tokenSecretFile}")
+        ${pkgs.gnused}/bin/sed -i "s|__TOKEN_SECRET_B64__|''${TOKEN_B64}|" ${configDir}/server.toml
+      fi
     '';
   in {
     environment.systemPackages = [pkgs.attic-client];
 
     systemd.services.atticd = {
       description = "Attic Nix binary cache server";
-      after = ["network-online.target" "postgresql.service"];
+      after = ["network-online.target"];
       wants = ["network-online.target"];
       wantedBy = ["multi-user.target"];
       serviceConfig = {
@@ -159,8 +170,8 @@
     # Database init on primary node only.
     systemd.services.atticd-db-init = lib.mkIf isFirst {
       description = "Initialize Attic PostgreSQL database";
-      after = ["postgresql.service"];
-      wants = ["postgresql.service"];
+      after = ["network-online.target"];
+      wants = ["network-online.target"];
       before = ["atticd.service"];
       wantedBy = ["multi-user.target"];
       serviceConfig = {
@@ -168,7 +179,7 @@
         RemainAfterExit = true;
       };
       script = let
-        pgHost = dataAddr;
+        pgHost = pgVip;
       in ''
         # Wait for PostgreSQL to be ready
         for i in $(seq 1 60); do

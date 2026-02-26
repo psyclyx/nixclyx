@@ -148,7 +148,11 @@
             enable = true;
             clusterNodes = labHostNames;
           };
-          postgresql-cluster = {
+          etcd-cluster = {
+            enable = true;
+            clusterNodes = labHostNames;
+          };
+          patroni = {
             enable = true;
             clusterNodes = labHostNames;
           };
