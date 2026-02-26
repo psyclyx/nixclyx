@@ -112,6 +112,7 @@
                 parameters = {
                   wal_level = "replica";
                   hot_standby = "on";
+                  max_connections = 200;
                   max_wal_senders = 10;
                   max_replication_slots = 10;
                   wal_log_hints = "on";
@@ -162,6 +163,11 @@
 
       # Patroni manages PostgreSQL — do not enable the NixOS postgresql service.
       # services.postgresql.enable is intentionally not set.
+
+      # Create /run/postgresql for the PostgreSQL Unix socket lock file.
+      systemd.tmpfiles.rules = [
+        "d /run/postgresql 0755 patroni patroni -"
+      ];
 
       systemd.services.patroni = {
         after = ["etcd.service"];
