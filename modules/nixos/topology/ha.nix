@@ -95,7 +95,8 @@
         if svc.check != null || svc.mode == "http"
         then ''
         option httpchk
-        http-check send meth GET uri ${checkUri} ver HTTP/1.1 hdr Host localhost''
+        http-check send meth GET uri ${checkUri} ver HTTP/1.1 hdr Host localhost
+        http-check expect status 200''
         else "";
       checkPortSuffix =
         if svc.checkPort != null
@@ -113,7 +114,7 @@
         balance roundrobin
         ${checkDirective}
     '' + lib.concatMapStringsSep "\n" (m:
-      "    server ${m.member} ${m.addr}:${toString backendPort} check${checkPortSuffix}"
+      "    server ${m.member} ${m.addr}:${toString backendPort} check${checkPortSuffix} inter 5s fall 3 rise 2"
     ) memberAddrs + "\n";
 
     serviceSections = lib.concatStringsSep "" (lib.flatten (
