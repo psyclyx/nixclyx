@@ -13,6 +13,10 @@ in
       colmena = colmena.packages.${prev.stdenv.hostPlatform.system};
       astal = astal.packages.${prev.stdenv.hostPlatform.system};
       clj-nix = clj-nix.packages.${prev.stdenv.hostPlatform.system};
+      # python-etcd tests are broken on Python 3.13 (getheader removed from HTTPResponse)
+      pythonPackagesExtensions = prev.pythonPackagesExtensions ++ [(pyFinal: pyPrev: {
+        python-etcd = pyPrev.python-etcd.overridePythonAttrs { doCheck = false; };
+      })];
       bitwig-studio4 = prev.bitwig-studio4.overrideAttrs (old: rec {
         version = "4.1.6";
         src = prev.fetchurl {
