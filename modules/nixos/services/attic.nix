@@ -245,7 +245,7 @@
 
         # Wait for atticd to be ready
         for i in $(seq 1 30); do
-          if ${pkgs.curl}/bin/curl -sf http://localhost:${toString cfg.port}/ >/dev/null 2>&1; then
+          if ${pkgs.curl}/bin/curl -sf "http://${listenAddr}:${toString cfg.port}/" >/dev/null 2>&1; then
             break
           fi
           sleep 2
@@ -253,7 +253,7 @@
 
         # Login with push token
         TOKEN=$(cat "${toString cfg.watchStore.tokenFile}" | ${pkgs.coreutils}/bin/tr -d '\n')
-        ${attic} login local "http://localhost:${toString cfg.port}/" "$TOKEN"
+        ${attic} login local "http://${listenAddr}:${toString cfg.port}/" "$TOKEN"
 
         # Create cache (idempotent — fails gracefully if exists)
         ${attic} cache create ${cache} || true
@@ -285,13 +285,16 @@
         # Generate config.toml from push token
         TOKEN=$(cat "${toString cfg.watchStore.tokenFile}" | ${pkgs.coreutils}/bin/tr -d '\n')
         umask 077
-        cat > ${stateDir}/config.toml <<TOML
-[default-server]
-endpoint = "http://localhost:${toString cfg.port}/"
+        mkdir -p ${stateDir}/attic
+        cat > ${stateDir}/attic/config.toml <<TOML
+default-server = "local"
+
+[servers.local]
+endpoint = "http://${listenAddr}:${toString cfg.port}/"
 token = "$TOKEN"
 TOML
 
-        export ATTIC_CONFIG_DIR="${stateDir}"
+        export XDG_CONFIG_HOME="${stateDir}"
         exec ${attic} watch-store ${cache}
       '';
     };
