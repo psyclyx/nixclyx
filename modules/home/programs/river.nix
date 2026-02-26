@@ -19,6 +19,7 @@
     wayland-logout = lib.getExe pkgs.wayland-logout;
     wl-copy = lib.getExe' pkgs.wl-clipboard "wl-copy";
     wlr-randr = lib.getExe pkgs.wlr-randr;
+    tidepool = lib.getExe pkgs.psyclyx.tidepool;
 
     power-menu = pkgs.writeShellScriptBin "river-power-menu" ''
       options="Lock\nLogout\nSuspend\nReboot\nShutdown"
@@ -60,7 +61,12 @@
       spacing = 16;
       modules-left = ["river/tags" "river/mode"];
       modules-center = ["clock"];
-      modules-right = ["network" "backlight" "pulseaudio" "memory" "cpu" "battery" "tray"];
+      modules-right = ["custom/layout" "network" "backlight" "pulseaudio" "memory" "cpu" "battery" "tray"];
+      "custom/layout" = {
+        exec = "cat $XDG_RUNTIME_DIR/tidepool-layout 2>/dev/null || echo master-stack";
+        interval = 1;
+        format = "LAYOUT: {}";
+      };
       "river/tags" = {num-tags = 10;};
       pulseaudio = {
         format = "VOL: {volume}%";
@@ -132,6 +138,7 @@
           color: @base05;
           padding: 0 8px;
       }
+      #custom-layout,
       #clock,
       #network,
       #backlight,
@@ -163,89 +170,106 @@
         monitors)
     );
 
+    # River 0.4 init script: minimal compositor bootstrap.
+    # In 0.4, the WM (tidepool) handles borders, backgrounds, focus,
+    # keybindings, and layout via the river-window-management protocol.
+    # The init script only does output setup and launches services.
     initScript = pkgs.writeShellScript "river-init" ''
-      riverctl background-color 0x${c.base00}
-      riverctl border-color-focused 0x${c.base07}
-      riverctl border-color-unfocused 0x${c.base03}
-      riverctl border-color-urgent 0x${c.base08}
-      riverctl border-width 4
-
-      riverctl set-repeat 50 300
-      riverctl default-layout rivertile
-      riverctl focus-follows-cursor normal
-
-      riverctl map -repeat normal Super J focus-view next
-      riverctl map -repeat normal Super K focus-view previous
-      riverctl map normal Super+Shift J swap next
-      riverctl map normal Super+Shift K swap previous
-
-      riverctl map -repeat normal Super H send-layout-cmd rivertile "main-ratio -0.05"
-      riverctl map -repeat normal Super L send-layout-cmd rivertile "main-ratio +0.05"
-      riverctl map normal Super+Shift H send-layout-cmd rivertile "main-count +1"
-      riverctl map normal Super+Shift L send-layout-cmd rivertile "main-count -1"
-
-      for i in $(seq 1 9); do
-          tags=$((1 << (i - 1)))
-          riverctl map normal Super "$i" set-focused-tags $tags
-          riverctl map normal Super+Shift "$i" set-view-tags $tags
-          riverctl map normal Super+Control "$i" toggle-focused-tags $tags
-          riverctl map normal Super+Control+Shift "$i" toggle-view-tags $tags
-      done
-      tags=$((1 << 9))
-      riverctl map normal Super 0 set-focused-tags $tags
-      riverctl map normal Super+Shift 0 set-view-tags $tags
-      riverctl map normal Super+Control 0 toggle-focused-tags $tags
-      riverctl map normal Super+Control+Shift 0 toggle-view-tags $tags
-
-      all_tags=$(((1 << 32) - 1))
-      riverctl map normal Super A set-focused-tags $all_tags
-      riverctl map normal Super+Shift A set-view-tags $all_tags
-
-      riverctl map normal Super Semicolon toggle-float
-      riverctl map normal Super Slash toggle-fullscreen
-
-      riverctl map normal Super Period focus-output next
-      riverctl map normal Super Comma focus-output previous
-      riverctl map normal Super+Shift Period send-to-output next
-      riverctl map normal Super+Shift Comma send-to-output previous
-
-      riverctl map normal Super Return spawn "uwsm app -- ${fuzzel}"
-      riverctl map normal Super I spawn "uwsm app -- xdg-terminal-exec"
-      riverctl map normal Super U spawn "uwsm app -- firefox"
-      riverctl map normal Super X spawn "uwsm app -- ${lib.getExe power-menu}"
-      riverctl map normal Super S spawn "uwsm app -- ${lib.getExe screenshot-menu}"
-
-      riverctl map normal Super+Shift Q close
-      riverctl map normal Super+Shift E exit
-
-      riverctl declare-mode resize
-      riverctl map normal Super R enter-mode resize
-      riverctl map resize None Escape enter-mode normal
-      riverctl map -repeat resize None H send-layout-cmd rivertile "main-ratio -0.05"
-      riverctl map -repeat resize None L send-layout-cmd rivertile "main-ratio +0.05"
-      riverctl map resize None K send-layout-cmd rivertile "main-count +1"
-      riverctl map resize None J send-layout-cmd rivertile "main-count -1"
-
-      for mode in normal locked; do
-          riverctl map -repeat $mode None XF86AudioRaiseVolume spawn "pactl set-sink-volume @DEFAULT_SINK@ +5%"
-          riverctl map -repeat $mode None XF86AudioLowerVolume spawn "pactl set-sink-volume @DEFAULT_SINK@ -5%"
-          riverctl map $mode None XF86AudioMute spawn "pactl set-sink-mute @DEFAULT_SINK@ toggle"
-          riverctl map -repeat $mode None XF86MonBrightnessUp spawn "light -A 10"
-          riverctl map -repeat $mode None XF86MonBrightnessDown spawn "light -U 10"
-      done
-
-      riverctl map-pointer normal Super BTN_LEFT move-view
-      riverctl map-pointer normal Super BTN_RIGHT resize-view
-
-      riverctl rule-add -app-id "xdg-desktop-portal-gtk" float
-      riverctl rule-add -app-id "firefox" -title "Library" float
-
       ${outputSetup}
 
-      rivertile -view-padding 8 -outer-padding 4 &
+      ${tidepool} &
       uwsm app -- waybar -c ${waybarConfig} -s ${waybarCss} &
 
       uwsm finalize
+    '';
+
+    # Tidepool config: keybindings, colors, layout, and rules.
+    # This Janet file is loaded by tidepool at startup.
+    tidepoolConfig = pkgs.writeText "tidepool-init.janet" ''
+      # Colors from stylix
+      (put config :background 0x${c.base00})
+      (put config :border-focused 0x${c.base07})
+      (put config :border-normal 0x${c.base03})
+      (put config :border-urgent 0x${c.base08})
+      (put config :border-width 4)
+      (put config :outer-padding 4)
+      (put config :inner-padding 8)
+      (put config :main-ratio 0.55)
+
+      # Window rules
+      (array/push (config :rules)
+        {:app-id "xdg-desktop-portal-gtk" :float true}
+        {:app-id "firefox" :title "Library" :float true})
+
+      # Keybindings
+      (array/push
+        (config :xkb-bindings)
+
+        # Window management
+        [:j {:mod4 true} (action/focus :next)]
+        [:k {:mod4 true} (action/focus :prev)]
+        [:j {:mod4 true :shift true} (action/swap :next)]
+        [:k {:mod4 true :shift true} (action/swap :prev)]
+        [:h {:mod4 true} (action/adjust-ratio -0.05)]
+        [:l {:mod4 true} (action/adjust-ratio 0.05)]
+        [:space {:mod4 true} (action/zoom)]
+        [:semicolon {:mod4 true} (action/float)]
+        [:slash {:mod4 true} (action/fullscreen)]
+
+        # Output management
+        [:period {:mod4 true} (action/focus-output)]
+        [:comma {:mod4 true :shift true} (action/send-to-output)]
+
+        # Application launchers
+        [:Return {:mod4 true} (action/spawn ["uwsm" "app" "--" "${fuzzel}"])]
+        [:i {:mod4 true} (action/spawn ["uwsm" "app" "--" "xdg-terminal-exec"])]
+        [:u {:mod4 true} (action/spawn ["uwsm" "app" "--" "firefox"])]
+        [:x {:mod4 true} (action/spawn ["uwsm" "app" "--" "${lib.getExe power-menu}"])]
+        [:s {:mod4 true} (action/spawn ["uwsm" "app" "--" "${lib.getExe screenshot-menu}"])]
+
+        # Layout cycling
+        [:Tab {:mod4 true} (action/cycle-layout :next)]
+        [:Tab {:mod4 true :shift true} (action/cycle-layout :prev)]
+
+        # Main count adjustment
+        [:equal {:mod4 true} (action/adjust-main-count 1)]
+        [:minus {:mod4 true} (action/adjust-main-count -1)]
+
+        # Session
+        [:q {:mod4 true :shift true} (action/close)]
+        [:e {:mod4 true :shift true} (action/exit)]
+
+        # All tags
+        [:a {:mod4 true} (action/focus-all-tags)]
+
+        # Media keys (no modifier)
+        [:XF86AudioRaiseVolume {} (action/spawn ["pactl" "set-sink-volume" "@DEFAULT_SINK@" "+5%"])]
+        [:XF86AudioLowerVolume {} (action/spawn ["pactl" "set-sink-volume" "@DEFAULT_SINK@" "-5%"])]
+        [:XF86AudioMute {} (action/spawn ["pactl" "set-sink-mute" "@DEFAULT_SINK@" "toggle"])]
+        [:XF86MonBrightnessUp {} (action/spawn ["light" "-A" "10"])]
+        [:XF86MonBrightnessDown {} (action/spawn ["light" "-U" "10"])])
+
+      # Tag keybindings (1-9 → tags 1-9, 0 → tag 10)
+      (for i 1 10
+        (def keysym (keyword (string i)))
+        (array/push
+          (config :xkb-bindings)
+          [keysym {:mod4 true} (action/focus-tag i)]
+          [keysym {:mod4 true :shift true} (action/set-tag i)]
+          [keysym {:mod4 true :ctrl true} (action/toggle-tag i)]))
+
+      # Tag 10 on key 0
+      (array/push
+        (config :xkb-bindings)
+        [:0 {:mod4 true} (action/focus-tag 10)]
+        [:0 {:mod4 true :shift true} (action/set-tag 10)]
+        [:0 {:mod4 true :ctrl true} (action/toggle-tag 10)])
+
+      # Pointer bindings
+      (array/push
+        (config :pointer-bindings)
+        [:left {:mod4 true} (action/pointer-move)]
+        [:right {:mod4 true} (action/pointer-resize)])
     '';
   in {
     home.packages = [
@@ -254,6 +278,7 @@
       pkgs.slurp
       pkgs.libnotify
       pkgs.wayland-logout
+      pkgs.psyclyx.tidepool
       power-menu
       screenshot-menu
     ];
@@ -285,6 +310,10 @@
     xdg.configFile."river/init" = {
       source = initScript;
       executable = true;
+    };
+
+    xdg.configFile."tidepool/init.janet" = {
+      source = tidepoolConfig;
     };
   };
 }
