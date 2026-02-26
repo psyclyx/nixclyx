@@ -25,6 +25,11 @@
           default = null;
           description = "HTTP health check path (null = TCP check only).";
         };
+        checkPort = lib.mkOption {
+          type = lib.types.nullOr lib.types.port;
+          default = null;
+          description = "Port for health checks if different from backend port.";
+        };
       };
     };
 

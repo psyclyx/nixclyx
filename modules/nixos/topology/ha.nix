@@ -91,10 +91,14 @@
         inherit member;
       }) group.members;
       checkDirective =
-        if svc.mode == "http" && svc.check != null
+        if svc.check != null
         then "option httpchk GET ${svc.check}"
         else if svc.mode == "http"
         then "option httpchk"
+        else "";
+      checkPortSuffix =
+        if svc.checkPort != null
+        then " port ${toString svc.checkPort}"
         else "";
     in ''
 
@@ -108,7 +112,7 @@
         balance roundrobin
         ${checkDirective}
     '' + lib.concatMapStringsSep "\n" (m:
-      "    server ${m.member} ${m.addr}:${toString backendPort} check"
+      "    server ${m.member} ${m.addr}:${toString backendPort} check${checkPortSuffix}"
     ) memberAddrs + "\n";
 
     serviceSections = lib.concatStringsSep "" (lib.flatten (
