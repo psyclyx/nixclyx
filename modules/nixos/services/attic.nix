@@ -37,6 +37,11 @@
         default = null;
         description = "Path to file containing the database password.";
       };
+      superuserPasswordFile = lib.mkOption {
+        type = lib.types.nullOr lib.types.str;
+        default = null;
+        description = "Path to file containing the PostgreSQL superuser password (for db-init).";
+      };
     };
     storage = {
       bucket = lib.mkOption {
@@ -181,6 +186,11 @@
       script = let
         pgHost = pgVip;
       in ''
+        # Authenticate as superuser via PGPASSWORD
+        ${lib.optionalString (cfg.database.superuserPasswordFile != null) ''
+          export PGPASSWORD="$(cat "${cfg.database.superuserPasswordFile}" | ${pkgs.coreutils}/bin/tr -d '\n')"
+        ''}
+
         # Wait for PostgreSQL to be ready
         for i in $(seq 1 60); do
           if ${pkgs.postgresql}/bin/pg_isready -h ${pgHost} -p 5432 -q; then
