@@ -146,6 +146,16 @@
                 username = "postgres";
               };
             };
+            # Patroni manages pg_hba.conf from this list (bootstrap.pg_hba only
+            # applies during initial cluster creation).
+            pg_hba = [
+              "local all all trust"
+              "host all all 127.0.0.1/32 md5"
+              "host all all ${dataNet.prefix}.0/${toString dataNet.prefixLen} md5"
+              "host all all ${rackNet.prefix}.0/${toString rackNet.prefixLen} md5"
+              "host replication ${cfg.replicationUser} 127.0.0.1/32 md5"
+              "host replication ${cfg.replicationUser} ${dataNet.prefix}.0/${toString dataNet.prefixLen} md5"
+            ];
             parameters = {
               max_connections = 200;
             };
