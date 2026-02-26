@@ -76,32 +76,16 @@
         add)
           echo "$address" > "$STATE_FILE"
           rebuild_forward "$HOSTNAME" "$ZONE" "$FQDN"
-          if [ "$proto" = "v4" ]; then
-            local LAST_OCTET THIRD_OCTET PTR_NAME
-            LAST_OCTET=$(echo "$address" | ${pkgs.coreutils}/bin/cut -d. -f4)
-            THIRD_OCTET=$(echo "$address" | ${pkgs.coreutils}/bin/cut -d. -f3)
-            PTR_NAME="''${LAST_OCTET}.''${THIRD_OCTET}.0.10.in-addr.arpa"
-            ${unboundControl} local_data "''${PTR_NAME}. 300 IN PTR ''${FQDN}." || true
-          else
-            local PTR_NAME
-            PTR_NAME=$(${pkgs.python3}/bin/python3 -c "import ipaddress; print(ipaddress.ip_address('$address').reverse_pointer)")
-            ${unboundControl} local_data "''${PTR_NAME}. 300 IN PTR ''${FQDN}." || true
-          fi
+          local PTR_NAME
+          PTR_NAME=$(${pkgs.python3}/bin/python3 -c "import ipaddress; print(ipaddress.ip_address('$address').reverse_pointer)")
+          ${unboundControl} local_data "''${PTR_NAME}. 300 IN PTR ''${FQDN}." || true
           ;;
         remove)
           ${pkgs.coreutils}/bin/rm -f "$STATE_FILE"
           rebuild_forward "$HOSTNAME" "$ZONE" "$FQDN"
-          if [ "$proto" = "v4" ]; then
-            local LAST_OCTET THIRD_OCTET PTR_NAME
-            LAST_OCTET=$(echo "$address" | ${pkgs.coreutils}/bin/cut -d. -f4)
-            THIRD_OCTET=$(echo "$address" | ${pkgs.coreutils}/bin/cut -d. -f3)
-            PTR_NAME="''${LAST_OCTET}.''${THIRD_OCTET}.0.10.in-addr.arpa"
-            ${unboundControl} local_data_remove "''${PTR_NAME}." || true
-          else
-            local PTR_NAME
-            PTR_NAME=$(${pkgs.python3}/bin/python3 -c "import ipaddress; print(ipaddress.ip_address('$address').reverse_pointer)")
-            ${unboundControl} local_data_remove "''${PTR_NAME}." || true
-          fi
+          local PTR_NAME
+          PTR_NAME=$(${pkgs.python3}/bin/python3 -c "import ipaddress; print(ipaddress.ip_address('$address').reverse_pointer)")
+          ${unboundControl} local_data_remove "''${PTR_NAME}." || true
           ;;
       esac
     }
