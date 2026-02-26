@@ -78,9 +78,9 @@
       },
       "branch": "master",
       "submodules": false,
-      "revision": "9a4b494b1aa1b93d8edf167f46dc8e0c0011280c",
-      "url": "https://github.com/nix-community/home-manager/archive/9a4b494b1aa1b93d8edf167f46dc8e0c0011280c.tar.gz",
-      "hash": "sha256-gFgE6mGUftwseV3DUENMb0k0EiHd739lZexPo5O/sdQ="
+      "revision": "ce9b6e52500a0ea0ec48f0bbf6d7a3e431d9dfa4",
+      "url": "https://github.com/nix-community/home-manager/archive/ce9b6e52500a0ea0ec48f0bbf6d7a3e431d9dfa4.tar.gz",
+      "hash": "sha256-VuyRptb8v1lVGMlLp4/1vRX3Efwec0CN0S6mKmDPzLg="
     },
     "llm-agents.nix": {
       "type": "Git",
@@ -91,9 +91,9 @@
       },
       "branch": "main",
       "submodules": false,
-      "revision": "c4c64459db15bb02c5c67b862581c1bfd28144f8",
-      "url": "https://github.com/numtide/llm-agents.nix/archive/c4c64459db15bb02c5c67b862581c1bfd28144f8.tar.gz",
-      "hash": "sha256-/m1I+ZGvA+7C6flVzQZrktOKdb4RRbXX/gup0VrhP4Q="
+      "revision": "1f2e6207d85e40ec92d812e0a9fdb844b4a1d967",
+      "url": "https://github.com/numtide/llm-agents.nix/archive/1f2e6207d85e40ec92d812e0a9fdb844b4a1d967.tar.gz",
+      "hash": "sha256-3dNeY/0OR9CvYyde/HU72mutXe/nIdccuMj6lW49LdQ="
     },
     "nix-darwin": {
       "type": "Git",
@@ -104,9 +104,9 @@
       },
       "branch": "master",
       "submodules": false,
-      "revision": "6a7fdcd5839ec8b135821179eea3b58092171bcf",
-      "url": "https://github.com/LnL7/nix-darwin/archive/6a7fdcd5839ec8b135821179eea3b58092171bcf.tar.gz",
-      "hash": "sha256-9SeTZ4Pwr730YfT7V8Azb8GFbwk1ZwiQDAwft3qAD+o="
+      "revision": "3bfa436c1975674ca465ce34586467be301ff509",
+      "url": "https://github.com/LnL7/nix-darwin/archive/3bfa436c1975674ca465ce34586467be301ff509.tar.gz",
+      "hash": "sha256-Y/ijH/unOPxzUicbla6yT/14RJgubUWnY2I2A6Ast2Q="
     },
     "nix-homebrew": {
       "type": "Git",
@@ -130,9 +130,9 @@
       },
       "branch": "nixos-unstable",
       "submodules": false,
-      "revision": "0182a361324364ae3f436a63005877674cf45efb",
-      "url": "https://github.com/nixos/nixpkgs/archive/0182a361324364ae3f436a63005877674cf45efb.tar.gz",
-      "hash": "sha256-0NBlEBKkN3lufyvFegY4TYv5mCNHbi5OmBDrzihbBMQ="
+      "revision": "2fc6539b481e1d2569f25f8799236694180c0993",
+      "url": "https://github.com/nixos/nixpkgs/archive/2fc6539b481e1d2569f25f8799236694180c0993.tar.gz",
+      "hash": "sha256-0MAd+0mun3K/Ns8JATeHT1sX28faLII5hVLq0L3BdZU="
     },
     "nvf": {
       "type": "Git",
@@ -143,9 +143,9 @@
       },
       "branch": "main",
       "submodules": false,
-      "revision": "5c38b357da7e8c870350cd1847fb5b2602a28eb0",
-      "url": "https://github.com/notashelf/nvf/archive/5c38b357da7e8c870350cd1847fb5b2602a28eb0.tar.gz",
-      "hash": "sha256-8U9xnN4HdxPfAXAft3lBsArWSv1ZTTxJci1lOA/xpno="
+      "revision": "d07d8f62f03a313cfcf55feb3797e4cbda8d08a5",
+      "url": "https://github.com/notashelf/nvf/archive/d07d8f62f03a313cfcf55feb3797e4cbda8d08a5.tar.gz",
+      "hash": "sha256-VpDCSVIwiHdcezsksOTnRmqPqpkssGRi4wMsA+46dvc="
     },
     "robotnix": {
       "type": "Git",
@@ -156,9 +156,9 @@
       },
       "branch": "master",
       "submodules": true,
-      "revision": "4df3c9bd751f17f975b041f4b15c4921c3c82704",
+      "revision": "f8c5d5a0eaf72ff7d473894b1fb424548d098deb",
       "url": null,
-      "hash": "sha256-4bspcM+6kAxm4Kk9J8jNPeaJ5FcWNltCEwGQ+Z9Qz+0="
+      "hash": "sha256-kf+L3hiUWse/5WtSupH0rHtoJek6V+5Hy2g6XJpbndI="
     },
     "rustfs-flake": {
       "type": "Git",
@@ -182,9 +182,9 @@
       },
       "branch": "master",
       "submodules": false,
-      "revision": "d7755d820f5fa8acf7f223309c33e25d4f92e74f",
-      "url": "https://github.com/Mic92/sops-nix/archive/d7755d820f5fa8acf7f223309c33e25d4f92e74f.tar.gz",
-      "hash": "sha256-MJuVJeszZEziquykEHh/hmgIHYxUcuoG/1aowpLiSeU="
+      "revision": "334daa7c273dd8bf7a0cd370e4e16022b64e55e9",
+      "url": "https://github.com/Mic92/sops-nix/archive/334daa7c273dd8bf7a0cd370e4e16022b64e55e9.tar.gz",
+      "hash": "sha256-/wA0OaH6kZ/pFA+nXR/tvg5oupOmEDmMS5us79JT60o="
     },
     "stylix": {
       "type": "Git",
