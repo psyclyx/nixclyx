@@ -67,6 +67,7 @@
       dataNet = topoLib.networks.${cfg.dataNetwork};
       rackNet = topoLib.networks."rack";
       dataAddr = "${dataNet.prefix}.${toString (topo.conventions.hostBaseOffset + labIdx)}";
+      rackAddr = "${rackNet.prefix}.${toString (topo.conventions.hostBaseOffset + labIdx)}";
 
       memberAddr = name: let
         idx = topo.hosts.${name}.labIndex;
@@ -136,7 +137,7 @@
           # Override listen to also bind localhost (for local psql access).
           # nixpkgs sets listen/connect_address from nodeIp — connect_address is correct.
           postgresql = {
-            listen = lib.mkForce "${dataAddr},127.0.0.1:${toString cfg.port}";
+            listen = lib.mkForce "${dataAddr},${rackAddr},127.0.0.1:${toString cfg.port}";
             authentication = {
               replication = {
                 username = cfg.replicationUser;
