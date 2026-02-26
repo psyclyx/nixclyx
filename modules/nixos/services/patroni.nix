@@ -107,6 +107,7 @@
               loop_wait = 10;
               retry_timeout = 10;
               maximum_lag_on_failover = 1048576;
+              check_timeline = true;
               postgresql = {
                 use_pg_rewind = true;
                 use_slots = true;
@@ -159,6 +160,10 @@
             parameters = {
               max_connections = 200;
             };
+            # Automatically re-clone from the leader when a replica's timeline has
+            # diverged (e.g. after failovers) and pg_rewind isn't possible.
+            remove_data_directory_on_diverged_timelines = true;
+            remove_data_directory_on_rewind_failure = true;
           };
         };
 
@@ -183,6 +188,37 @@
       systemd.services.patroni = {
         after = ["etcd.service"];
         wants = ["etcd.service"];
+      };
+
+      # Sync DCS configuration from the module into the live cluster.
+      # bootstrap.dcs only applies on initial cluster creation — this
+      # oneshot idempotently patches the running DCS via Patroni's REST API.
+      systemd.services.patroni-dcs-sync = {
+        description = "Sync Patroni DCS configuration";
+        after = ["patroni.service"];
+        requires = ["patroni.service"];
+        wantedBy = ["multi-user.target"];
+        serviceConfig = {
+          Type = "oneshot";
+          RemainAfterExit = true;
+        };
+        path = [pkgs.curl];
+        script = let
+          dcsConfig = builtins.toJSON {
+            check_timeline = true;
+          };
+        in ''
+          # Wait for Patroni REST API to become available
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:${toString cfg.restApiPort}/config > /dev/null 2>&1; then
+              break
+            fi
+            sleep 2
+          done
+          curl -sf -XPATCH -H 'Content-Type: application/json' \
+            -d '${dcsConfig}' \
+            http://localhost:${toString cfg.restApiPort}/config
+        '';
       };
 
       networking.firewall.allowedTCPPorts = [
