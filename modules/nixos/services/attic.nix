@@ -257,9 +257,6 @@
 
         # Create cache (idempotent — fails gracefully if exists)
         ${attic} cache create ${cache} || true
-
-        # Configure retention
-        ${attic} cache configure ${cache} --retention-period '2 years'
       '';
     };
 
