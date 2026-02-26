@@ -90,11 +90,12 @@
         addr = "${net.prefix}.${toString (conventions.hostBaseOffset + idx)}";
         inherit member;
       }) group.members;
+      checkUri = if svc.check != null then svc.check else "/";
       checkDirective =
-        if svc.check != null
-        then "option httpchk GET ${svc.check} HTTP/1.1\\r\\nHost:\\ localhost"
-        else if svc.mode == "http"
-        then "option httpchk GET / HTTP/1.1\\r\\nHost:\\ localhost"
+        if svc.check != null || svc.mode == "http"
+        then ''
+        option httpchk
+        http-check send meth GET uri ${checkUri} ver HTTP/1.1 hdr Host localhost''
         else "";
       checkPortSuffix =
         if svc.checkPort != null
