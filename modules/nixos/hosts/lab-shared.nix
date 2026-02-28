@@ -53,12 +53,23 @@
           kernelModules = ["bonding" "igb" "tg3"];
           systemd = {
             network = {
-              netdevs."10-bond1" = bond1Netdev;
-              networks."10-bond1-ports" = bond1PortNetwork;
-              networks."20-bond1" = {
-                matchConfig.Name = "bond1";
-                DHCP = "yes";
-                dhcpV4Config.ClientIdentifier = "mac";
+              netdevs = {
+                "10-bond0" = bond0Netdev;
+                "10-bond1" = bond1Netdev;
+              };
+              networks = {
+                "10-bond0-ports" = bond0PortNetwork;
+                "10-bond1-ports" = bond1PortNetwork;
+                "20-bond0" = {
+                  matchConfig.Name = "bond0";
+                  DHCP = "yes";
+                  dhcpV4Config.ClientIdentifier = "mac";
+                };
+                "20-bond1" = {
+                  matchConfig.Name = "bond1";
+                  DHCP = "yes";
+                  dhcpV4Config.ClientIdentifier = "mac";
+                };
               };
             };
           };

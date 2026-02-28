@@ -57,6 +57,15 @@
     boot.zfs.forceImportRoot = false;
     boot.zfs.requestEncryptionCredentials = lib.mkIf cfg.encryption.enable cfg.pools;
 
+    # Disable the default 90s timeout on ZFS import services in initrd so the
+    # encryption passphrase prompt doesn't time out and drop to emergency mode.
+    # See: https://github.com/NixOS/nixpkgs/issues/250003
+    boot.initrd.systemd.services = lib.mkIf cfg.encryption.enable (
+      lib.listToAttrs (map (pool: lib.nameValuePair "zfs-import-${pool}" {
+        serviceConfig.TimeoutStartSec = "infinity";
+      }) cfg.pools)
+    );
+
     networking.hostId = cfg.hostId;
 
     boot.kernelParams =
