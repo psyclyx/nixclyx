@@ -4,10 +4,19 @@
   config = {lib, ...}: {
     networking.hostName = "lab-2";
     psyclyx.nixos = {
-      filesystems.layouts.bcachefs-pool.UUID = {
-        root = "2d2c95b3-cad6-4d9c-b11c-fe8abe7b8014";
-        boot = "208E-CA68";
+      filesystems.layouts.zfs-pool = {
+        enable = true;
+        hostId = "9f6057a5";
+        boot.UUID = "F629-CAC1";
+        arc.maxBytes = 34359738368; # 32GB
       };
     };
+
+    swapDevices = [
+      { device = "/dev/disk/by-id/scsi-35000c50085e8525b-part2"; }
+      { device = "/dev/disk/by-id/scsi-35000c50085e87d1b-part2"; }
+      { device = "/dev/disk/by-id/scsi-350000394780aef44-part2"; }
+      { device = "/dev/disk/by-id/scsi-35000c5009792f3b7-part2"; }
+    ];
   };
 }

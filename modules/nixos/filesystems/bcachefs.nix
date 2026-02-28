@@ -1,7 +1,6 @@
 {
   path = ["psyclyx" "nixos" "filesystems" "bcachefs"];
   description = "bcachefs";
-  gate = "always";
   extraOptions = {
     config,
     lib,

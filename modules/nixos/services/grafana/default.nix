@@ -79,6 +79,7 @@
       "seaweedfs.json" = import ./dashboards/seaweedfs.nix dsl;
       "network.json" = import ./dashboards/network.nix dsl;
       "bcachefs.json" = import ./dashboards/bcachefs.nix dsl;
+      "zfs.json" = import ./dashboards/zfs.nix dsl;
       "etcd.json" = import ./dashboards/etcd.nix dsl;
       "patroni.json" = import ./dashboards/patroni.nix dsl;
       "haproxy.json" = import ./dashboards/haproxy.nix dsl;

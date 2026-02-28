@@ -22,16 +22,43 @@
         in
         lib.mapAttrsToList (name: _: name) labHosts;
       thisHost = config.psyclyx.topology.hosts.${config.psyclyx.nixos.host};
+
+      mkBondNetdev = name: macIface: {
+        netdevConfig = {
+          Name = name;
+          Kind = "bond";
+          MACAddress = thisHost.mac.${macIface};
+        };
+        bondConfig = {
+          Mode = "802.3ad";
+          LACPTransmitRate = "fast";
+          TransmitHashPolicy = "layer3+4";
+          MIIMonitorSec = "100ms";
+        };
+      };
+
+      mkBondPortNetwork = bondName: members: {
+        matchConfig.Name = builtins.concatStringsSep " " members;
+        networkConfig.Bond = bondName;
+      };
+
+      bond0Netdev = mkBondNetdev "bond0" "eno1";
+      bond0PortNetwork = mkBondPortNetwork "bond0" [ "eno1" "eno2" ];
+      bond1Netdev = mkBondNetdev "bond1" "eno3";
+      bond1PortNetwork = mkBondPortNetwork "bond1" [ "eno3" "eno4" ];
     in
     {
       boot = {
         initrd = {
+          kernelModules = ["bonding" "igb" "tg3"];
           systemd = {
             network = {
-              networks."10-ethernet-dhcp" = {
-                enable = true;
-                matchConfig.Name = "et* en*";
+              netdevs."10-bond1" = bond1Netdev;
+              networks."10-bond1-ports" = bond1PortNetwork;
+              networks."20-bond1" = {
+                matchConfig.Name = "bond1";
                 DHCP = "yes";
+                dhcpV4Config.ClientIdentifier = "mac";
               };
             };
           };
@@ -40,42 +67,12 @@
 
       systemd.network = {
         netdevs = {
-          "10-bond0" = {
-            netdevConfig = {
-              Name = "bond0";
-              Kind = "bond";
-              MACAddress = thisHost.mac.eno1;
-            };
-            bondConfig = {
-              Mode = "802.3ad";
-              LACPTransmitRate = "fast";
-              TransmitHashPolicy = "layer3+4";
-              MIIMonitorSec = "100ms";
-            };
-          };
-          "10-bond1" = {
-            netdevConfig = {
-              Name = "bond1";
-              Kind = "bond";
-              MACAddress = thisHost.mac.eno3;
-            };
-            bondConfig = {
-              Mode = "802.3ad";
-              LACPTransmitRate = "fast";
-              TransmitHashPolicy = "layer3+4";
-              MIIMonitorSec = "100ms";
-            };
-          };
+          "10-bond0" = bond0Netdev;
+          "10-bond1" = bond1Netdev;
         };
         networks = {
-          "10-bond0-ports" = {
-            matchConfig.Name = "eno1 eno2";
-            networkConfig.Bond = "bond0";
-          };
-          "10-bond1-ports" = {
-            matchConfig.Name = "eno3 eno4";
-            networkConfig.Bond = "bond1";
-          };
+          "10-bond0-ports" = bond0PortNetwork;
+          "10-bond1-ports" = bond1PortNetwork;
           "20-bond0" = {
             matchConfig.Name = "bond0";
             DHCP = "yes";
@@ -121,8 +118,6 @@
         boot = {
           initrd-ssh.enable = true;
         };
-
-        filesystems.layouts.bcachefs-pool.enable = true;
 
         hardware.presets.hpe.dl360-gen9.enable = true;
 

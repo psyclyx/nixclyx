@@ -119,6 +119,7 @@
     pkgs,
     ...
   }: let
+    bcachefsEnabled = config.psyclyx.nixos.filesystems.bcachefs.enable;
     topo = config.psyclyx.topology;
     topoLib = topo.enriched;
     hostname = config.psyclyx.nixos.host;
@@ -155,7 +156,7 @@
     environment.systemPackages = [pkgs.seaweedfs];
 
     systemd.services.seaweedfs-volume-setup = {
-      description = "Set up SeaweedFS volume directories with bcachefs attributes";
+      description = "Set up SeaweedFS volume directories";
       wantedBy = ["multi-user.target"];
       before = ["seaweedfs-master.service" "seaweedfs-volume.service"];
       after = ["local-fs.target"];
@@ -166,8 +167,12 @@
       script = ''
         for dir in ${cfg.volumeBasePath}/data ${cfg.volumeBasePath}/cache; do
           mkdir -p "$dir"
-          ${pkgs.bcachefs-tools}/bin/bcachefs set-file-option --nocow --data_replicas=1 "$dir"
         done
+        ${lib.optionalString bcachefsEnabled ''
+          for dir in ${cfg.volumeBasePath}/data ${cfg.volumeBasePath}/cache; do
+            ${pkgs.bcachefs-tools}/bin/bcachefs set-file-option --nocow --data_replicas=1 --data_checksum=none "$dir"
+          done
+        ''}
       '';
     };
 

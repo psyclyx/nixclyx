@@ -188,6 +188,20 @@
       systemd.services.patroni = {
         after = ["etcd.service"];
         wants = ["etcd.service"];
+        serviceConfig.ExecStartPre = let
+          requiredFiles = lib.filter (f: f != null) [
+            cfg.replicationPasswordFile
+            cfg.superuserPasswordFile
+          ];
+          checkScript = pkgs.writeShellScript "check-patroni-secrets" ''
+            ${lib.concatMapStringsSep "\n" (f: ''
+              if [ ! -f ${lib.escapeShellArg f} ]; then
+                echo "patroni: required secret missing: ${f}" >&2
+                exit 1
+              fi
+            '') requiredFiles}
+          '';
+        in lib.mkIf (requiredFiles != []) [checkScript];
       };
 
       # Sync DCS configuration from the module into the live cluster.
