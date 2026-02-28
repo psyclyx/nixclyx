@@ -62,12 +62,12 @@
                 "10-bond1-ports" = bond1PortNetwork;
                 "20-bond0" = {
                   matchConfig.Name = "bond0";
-                  DHCP = "yes";
+                  DHCP = "ipv4";
                   dhcpV4Config.ClientIdentifier = "mac";
                 };
                 "20-bond1" = {
                   matchConfig.Name = "bond1";
-                  DHCP = "yes";
+                  DHCP = "ipv4";
                   dhcpV4Config.ClientIdentifier = "mac";
                 };
               };
@@ -88,7 +88,10 @@
             matchConfig.Name = "bond0";
             DHCP = "yes";
             networkConfig.IPv6AcceptRA = true;
-            dhcpV4Config.ClientIdentifier = "mac";
+            dhcpV4Config = {
+              ClientIdentifier = "mac";
+              UseDomains = true;
+            };
             dhcpV6Config.WithoutRA = "solicit";
             linkConfig.RequiredForOnline = "routable";
           };
@@ -96,7 +99,10 @@
             matchConfig.Name = "bond1";
             DHCP = "yes";
             networkConfig.IPv6AcceptRA = true;
-            dhcpV4Config.ClientIdentifier = "mac";
+            dhcpV4Config = {
+              ClientIdentifier = "mac";
+              UseDomains = true;
+            };
             dhcpV6Config.WithoutRA = "solicit";
             linkConfig.RequiredForOnline = "no";
           };

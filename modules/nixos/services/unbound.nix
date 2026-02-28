@@ -86,6 +86,12 @@
               ]
               ++ cfg.accessControl;
             do-not-query-localhost = false;
+
+            # Refresh popular cache entries before they expire
+            prefetch = true;
+            # Serve stale records while fetching fresh ones in the background
+            serve-expired = true;
+            serve-expired-ttl = 86400;
           }
           // lib.optionalAttrs (cfg.localZones != {}) {
             local-zone = lib.mapAttrsToList (name: type: ''"${name}." ${type}'') cfg.localZones;
