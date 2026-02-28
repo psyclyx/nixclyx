@@ -4,6 +4,8 @@ builtins.mapAttrs (_: x: pkgs.callPackage x {}) {
   ensure-key = ./ensure-key.nix;
   sign-key = ./sign-key.nix;
   pki = ./pki;
+  river = ./river;
+  tidepool = ./tidepool;
   ssacli = ./ssacli.nix;
   upscale-image = ./upscale-image;
 }

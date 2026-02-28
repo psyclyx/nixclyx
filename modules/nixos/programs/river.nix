@@ -3,7 +3,7 @@
   description = "River wayland compositor with UWSM session management";
   config = {pkgs, lib, ...}: {
     environment.systemPackages = [
-      pkgs.river-classic
+      pkgs.psyclyx.river
       pkgs.dbus
       pkgs.qt5.qtwayland
       pkgs.wl-clipboard

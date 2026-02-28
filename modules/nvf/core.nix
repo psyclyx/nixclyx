@@ -176,6 +176,7 @@
         autotagHtml = true;
         context.enable = true;
         fold = true;
+        grammars = [pkgs.vimPlugins.nvim-treesitter-parsers.janet_simple];
         textobjects.enable = true;
       };
       ui = {

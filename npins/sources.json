@@ -147,6 +147,20 @@
       "url": "https://github.com/notashelf/nvf/archive/d07d8f62f03a313cfcf55feb3797e4cbda8d08a5.tar.gz",
       "hash": "sha256-VpDCSVIwiHdcezsksOTnRmqPqpkssGRi4wMsA+46dvc="
     },
+    "river": {
+      "type": "Git",
+      "repository": {
+        "type": "Forgejo",
+        "server": "https://codeberg.org/",
+        "owner": "river",
+        "repo": "river"
+      },
+      "branch": "main",
+      "submodules": false,
+      "revision": "24ace530c102c0e4c9cfc835f77a86cb080ec2ba",
+      "url": "https://codeberg.org/river/river/archive/24ace530c102c0e4c9cfc835f77a86cb080ec2ba.tar.gz",
+      "hash": "sha256-w42vXsAkrR6AdhVrSLWV/N3wI+RAHOHsORg2dJh9hDQ="
+    },
     "robotnix": {
       "type": "Git",
       "repository": {

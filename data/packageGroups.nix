@@ -129,6 +129,10 @@
     pkgs.zig
     pkgs.zls
 
+    # Janet
+    pkgs.janet
+    pkgs.jpm
+
     # Mobile
     pkgs.android-tools
   ];

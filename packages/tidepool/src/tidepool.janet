@@ -214,6 +214,72 @@
       (when (rule :tag)
         (put window :tag (rule :tag))))))
 
+# --- Seat / Input ---
+
+(defn seat/focus-output [seat output]
+  (unless (= output (seat :focused-output))
+    (put seat :focused-output output)
+    (when output (:set-default (output :layer-shell)))))
+
+(defn seat/focus [seat window]
+  (defn focus-window [window]
+    (unless (= (seat :focused) window)
+      (:focus-window (seat :obj) (window :obj))
+      (put seat :focused window)
+      (if-let [i (find-index |(= $ window) (wm :render-order))]
+        (array/remove (wm :render-order) i))
+      (array/push (wm :render-order) window)
+      (:place-top (window :node))))
+
+  (defn clear-focus []
+    (when (seat :focused)
+      (:clear-focus (seat :obj))
+      (put seat :focused nil)))
+
+  (defn focus-non-layer []
+    (when window
+      (when-let [output (window/tag-output window)]
+        (seat/focus-output seat output)))
+    (when-let [output (seat :focused-output)]
+      (defn visible? [w] (and w ((output :tags) (w :tag))))
+      (def visible (output/visible output (wm :render-order)))
+      (cond
+        (def fullscreen (last (filter |($ :fullscreen) visible)))
+        (focus-window fullscreen)
+
+        (visible? window) (focus-window window)
+        (visible? (seat :focused)) (do)
+        (def top-visible (last visible)) (focus-window top-visible)
+        (clear-focus))))
+
+  (case (seat :layer-focus)
+    :exclusive (put seat :focused nil)
+    :non-exclusive (if window
+                     (do (put seat :layer-focus :none) (focus-non-layer))
+                     (put seat :focused nil))
+    :none (focus-non-layer)))
+
+(defn seat/pointer-move [seat window]
+  (unless (seat :op)
+    (seat/focus seat window)
+    (window/set-float window true)
+    (:op-start-pointer (seat :obj))
+    (put seat :op @{:type :move :window window
+                    :start-x (window :x) :start-y (window :y)
+                    :dx 0 :dy 0})))
+
+(defn seat/pointer-resize [seat window edges]
+  (unless (seat :op)
+    (seat/focus seat window)
+    (window/set-float window true)
+    (:op-start-pointer (seat :obj))
+    (put seat :op @{:type :resize :window window :edges edges
+                    :start-x (window :x) :start-y (window :y)
+                    :start-w (window :w) :start-h (window :h)
+                    :dx 0 :dy 0})))
+
+# --- Window Management ---
+
 (defn window/manage-start [window]
   (if (window :closed)
     (do
@@ -305,70 +371,6 @@
   (if (find |(= ($ :focused) window) (wm :seats))
     (set-borders window :focused)
     (set-borders window :normal)))
-
-# --- Seat / Input ---
-
-(defn seat/focus-output [seat output]
-  (unless (= output (seat :focused-output))
-    (put seat :focused-output output)
-    (when output (:set-default (output :layer-shell)))))
-
-(defn seat/focus [seat window]
-  (defn focus-window [window]
-    (unless (= (seat :focused) window)
-      (:focus-window (seat :obj) (window :obj))
-      (put seat :focused window)
-      (if-let [i (find-index |(= $ window) (wm :render-order))]
-        (array/remove (wm :render-order) i))
-      (array/push (wm :render-order) window)
-      (:place-top (window :node))))
-
-  (defn clear-focus []
-    (when (seat :focused)
-      (:clear-focus (seat :obj))
-      (put seat :focused nil)))
-
-  (defn focus-non-layer []
-    (when window
-      (when-let [output (window/tag-output window)]
-        (seat/focus-output seat output)))
-    (when-let [output (seat :focused-output)]
-      (defn visible? [w] (and w ((output :tags) (w :tag))))
-      (def visible (output/visible output (wm :render-order)))
-      (cond
-        (def fullscreen (last (filter |($ :fullscreen) visible)))
-        (focus-window fullscreen)
-
-        (visible? window) (focus-window window)
-        (visible? (seat :focused)) (do)
-        (def top-visible (last visible)) (focus-window top-visible)
-        (clear-focus))))
-
-  (case (seat :layer-focus)
-    :exclusive (put seat :focused nil)
-    :non-exclusive (if window
-                     (do (put seat :layer-focus :none) (focus-non-layer))
-                     (put seat :focused nil))
-    :none (focus-non-layer)))
-
-(defn seat/pointer-move [seat window]
-  (unless (seat :op)
-    (seat/focus seat window)
-    (window/set-float window true)
-    (:op-start-pointer (seat :obj))
-    (put seat :op @{:type :move :window window
-                    :start-x (window :x) :start-y (window :y)
-                    :dx 0 :dy 0})))
-
-(defn seat/pointer-resize [seat window edges]
-  (unless (seat :op)
-    (seat/focus seat window)
-    (window/set-float window true)
-    (:op-start-pointer (seat :obj))
-    (put seat :op @{:type :resize :window window :edges edges
-                    :start-x (window :x) :start-y (window :y)
-                    :start-w (window :w) :start-h (window :h)
-                    :dx 0 :dy 0})))
 
 # --- XKB and Pointer Bindings ---
 
@@ -886,7 +888,7 @@
   (fn [seat binding]
     (when-let [output (seat :focused-output)]
       (def params (output :layout-params))
-      (put params :main-ratio (math/max 0.1 (math/min 0.9 (+ (params :main-ratio) delta)))))))
+      (put params :main-ratio (max 0.1 (min 0.9 (+ (params :main-ratio) delta)))))))
 
 (defn action/adjust-main-count [delta]
   (fn [seat binding]
@@ -916,7 +918,7 @@
   (fn [seat binding]
     (when-let [output (seat :focused-output)]
       (def params (output :layout-params))
-      (put params :column-width (math/max 0.1 (math/min 1.0 (+ (params :column-width) delta)))))))
+      (put params :column-width (max 0.1 (min 1.0 (+ (params :column-width) delta)))))))
 
 (defn action/pointer-move []
   (fn [seat binding]
