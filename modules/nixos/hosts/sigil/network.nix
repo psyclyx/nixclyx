@@ -31,7 +31,10 @@
           matchConfig.Name = "bond0";
           networkConfig = {
             DHCP = "yes";
+            IPv6AcceptRA = true;
           };
+          dhcpV4Config.UseDomains = true;
+          dhcpV6Config.WithoutRA = "solicit";
         };
         # "20-sfp" = {
         #   dhcpV4Config = {
