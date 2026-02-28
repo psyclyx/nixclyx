@@ -29,6 +29,7 @@
 
     # WireGuard extras (topology module handles base wg0 config)
     boot.kernel.sysctl."net.ipv4.ip_forward" = 1;
+    boot.kernel.sysctl."net.ipv4.tcp_synack_retries" = 2; # default 5 — reduce SYN-ACK retransmit amplification
     systemd.network.networks."30-wg0" = {
       address = ["10.0.10.2/24"];
       routes = [{Destination = "10.0.0.0/24";}];
@@ -69,6 +70,10 @@
 
             ip protocol icmp icmp type echo-request accept
             ip6 nexthdr icmpv6 accept
+
+            # SYN flood mitigation — rate-limit new TCP handshakes, drop excess
+            tcp flags syn limit rate 25/second burst 50 packets accept
+            tcp flags syn drop
 
             tcp dport { 53, 80, 443, ${sshPorts} } accept
             udp dport { 53, ${toString topo.wireguard.port} } accept
