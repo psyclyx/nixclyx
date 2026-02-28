@@ -7,7 +7,7 @@
       filesystems.layouts.zfs-pool = {
         enable = true;
         hostId = "e5955fc5";
-        boot.UUID = "6CBD-53CD";
+        boot.UUID = "C9AE-DE06";
         arc.maxBytes = 42949672960; # 40GB
       };
     };
