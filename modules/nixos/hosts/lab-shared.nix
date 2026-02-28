@@ -87,13 +87,17 @@
           "20-bond0" = {
             matchConfig.Name = "bond0";
             DHCP = "yes";
+            networkConfig.IPv6AcceptRA = true;
             dhcpV4Config.ClientIdentifier = "mac";
+            dhcpV6Config.WithoutRA = "solicit";
             linkConfig.RequiredForOnline = "routable";
           };
           "20-bond1" = {
             matchConfig.Name = "bond1";
             DHCP = "yes";
+            networkConfig.IPv6AcceptRA = true;
             dhcpV4Config.ClientIdentifier = "mac";
+            dhcpV6Config.WithoutRA = "solicit";
             linkConfig.RequiredForOnline = "no";
           };
         };
@@ -104,12 +108,30 @@
       psyclyx.nixos.system.swap.swappiness = 10;
 
       boot.kernel.sysctl = {
+        # TCP memory / congestion
         "net.core.rmem_max" = 16777216;
         "net.core.wmem_max" = 16777216;
         "net.ipv4.tcp_rmem" = "4096 87380 16777216";
         "net.ipv4.tcp_wmem" = "4096 65536 16777216";
         "net.ipv4.tcp_congestion_control" = "bbr";
         "net.core.default_qdisc" = "fq";
+
+        # Scheduler: disable desktop autogroup for proper CFS fairness
+        "kernel.sched_autogroup_enabled" = 0;
+
+        # VM: reduce VFS cache pressure (ZFS manages its own caching via ARC)
+        "vm.vfs_cache_pressure" = 50;
+
+        # Network: keep congestion window across idle periods (bursty cluster traffic)
+        "net.ipv4.tcp_slow_start_after_idle" = 0;
+        # Network: larger NIC backlog for multi-core / bonded NICs
+        "net.core.netdev_max_backlog" = 5000;
+        # Network: enable TCP Fast Open for both client and server
+        "net.ipv4.tcp_fastopen" = 3;
+        # Network: halve TIME_WAIT duration (many short-lived internal connections)
+        "net.ipv4.tcp_fin_timeout" = 30;
+        # Network: reuse TIME_WAIT sockets for outgoing connections
+        "net.ipv4.tcp_tw_reuse" = 1;
       };
 
       services.prometheus.exporters.redis = {

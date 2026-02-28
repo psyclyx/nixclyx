@@ -37,6 +37,7 @@
         };
 
         services = {
+          chrony.enable = lib.mkDefault true;
           fwupd.enable = lib.mkDefault true;
           locate.enable = lib.mkDefault true;
           openssh.enable = lib.mkDefault true;

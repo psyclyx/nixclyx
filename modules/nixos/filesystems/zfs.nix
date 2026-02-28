@@ -71,7 +71,9 @@
     boot.kernelParams =
       ["nohibernate"]
       ++ lib.optional (cfg.arc.maxBytes != null) "zfs.zfs_arc_max=${toString cfg.arc.maxBytes}"
-      ++ lib.optional (cfg.arc.minBytes != null) "zfs.zfs_arc_min=${toString cfg.arc.minBytes}";
+      ++ lib.optional (cfg.arc.minBytes != null) "zfs.zfs_arc_min=${toString cfg.arc.minBytes}"
+      # Start async write flushing earlier (10% vs 30%) for smoother write latency
+      ++ ["zfs.zfs_vdev_async_write_active_min_dirty_percent=10"];
 
     services.zfs.autoScrub = lib.mkIf cfg.scrub.enable {
       enable = true;

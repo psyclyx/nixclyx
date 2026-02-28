@@ -58,6 +58,7 @@
   in {
     id = net.vlan;
     subnet = net.subnet6;
+    interface = "${cfg.interface}.${toString net.vlan}";
     pools = [{pool = "${prefix6}::${pool.ipv6Suffix.start} - ${prefix6}::${pool.ipv6Suffix.end}";}];
     "option-data" = [
       { name = "dns-servers"; data = net.gateway6; }
