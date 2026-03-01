@@ -8,7 +8,6 @@
   makeOptionsDoc = import (sources.nixpkgs + "/nixos/lib/make-options-doc/default.nix");
 
   nixosEval = evalConfig {
-    system = "x86_64-linux";
     modules = [
       nixclyx.modules.nixos
       {

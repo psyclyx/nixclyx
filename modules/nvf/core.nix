@@ -69,6 +69,7 @@
       };
 
       lsp = {
+        enable = true;
         formatOnSave = true;
         inlayHints.enable = true;
         trouble.enable = true;
@@ -143,7 +144,6 @@
         enableDAP = true;
         enableExtraDiagnostics = true;
         enableFormat = true;
-        enableLSP = true;
         enableTreesitter = true;
         assembly.enable = true;
         bash.enable = true;
