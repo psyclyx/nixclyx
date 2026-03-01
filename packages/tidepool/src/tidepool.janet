@@ -756,6 +756,39 @@
       (:show (window :obj))
       (:hide (window :obj)))))
 
+# --- Indicators ---
+
+(defn indicator/tags-changed []
+  (when ((wm :config) :indicator-file)
+    (when-let [rd (os/getenv "XDG_RUNTIME_DIR")]
+      (def focused-output (when-let [seat (first (wm :seats))]
+                            (seat :focused-output)))
+      (def occupied @{})
+      (each window (wm :windows)
+        (unless (window :closed)
+          (put occupied (window :tag) true)))
+      (def occupied-tags (sorted (keys occupied)))
+      (def occupied-str (string/join (map string occupied-tags) ","))
+
+      # Global file (backward compat)
+      (def focused-tags
+        (if focused-output
+          (sorted (keys (focused-output :tags)))
+          @[]))
+      (def focused-str (string/join (map string focused-tags) ","))
+      (spit (string rd "/tidepool-tags")
+            (string "focused:" focused-str " occupied:" occupied-str))
+
+      # Per-output files
+      (each output (wm :outputs)
+        (def output-tags (sorted (keys (output :tags))))
+        (def output-str (string/join (map string output-tags) ","))
+        (def active (= output focused-output))
+        (spit (string rd "/tidepool-tags-" (output :x) "," (output :y))
+              (string "focused:" output-str
+                      " occupied:" occupied-str
+                      " active:" (if active "true" "false")))))))
+
 # --- Manage / Render Phases ---
 
 (defn wm/manage []
@@ -777,6 +810,7 @@
   (each window (wm :windows) (window/manage-finish window))
   (each seat (wm :seats) (seat/manage-finish seat))
 
+  (indicator/tags-changed)
   (:manage-finish (registry "river_window_manager_v1")))
 
 (defn wm/render []

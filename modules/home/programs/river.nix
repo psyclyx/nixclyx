@@ -20,6 +20,7 @@
     wl-copy = lib.getExe' pkgs.wl-clipboard "wl-copy";
     wlr-randr = lib.getExe pkgs.wlr-randr;
     tidepool = lib.getExe pkgs.psyclyx.tidepool;
+    inotifywait = lib.getExe' pkgs.inotify-tools "inotifywait";
 
     power-menu = pkgs.writeShellScriptBin "river-power-menu" ''
       options="Lock\nLogout\nSuspend\nReboot\nShutdown"
@@ -57,15 +58,64 @@
       esac
     '';
 
-    waybarConfig = pkgs.writeText "waybar-river.json" (builtins.toJSON {
-      layer = "top";
-      spacing = 16;
-      modules-left = ["custom/layout"];
-      modules-center = ["clock"];
-      modules-right = ["network" "backlight" "pulseaudio" "memory" "cpu" "battery" "tray"];
+    mkTagsScript = { file, watchFile ? file }: pkgs.writeShellScript "waybar-tags" ''
+      render_tags() {
+        local file="$XDG_RUNTIME_DIR/${file}"
+        local focused="" occupied="" active="true"
+        if [ -f "$file" ]; then
+          local content
+          content=$(cat "$file")
+          focused=$(echo "$content" | grep -o 'focused:[^ ]*' | cut -d: -f2)
+          occupied=$(echo "$content" | grep -o 'occupied:[^ ]*' | cut -d: -f2)
+          active=$(echo "$content" | grep -o 'active:[^ ]*' | cut -d: -f2)
+        fi
+
+        local IFS=','
+        local -A focus_set occupy_set
+        for t in $focused; do focus_set[$t]=1; done
+        for t in $occupied; do occupy_set[$t]=1; done
+
+        local focused_color='#${c.base07}' occupied_color='#${c.base05}' empty_color='#${c.base03}'
+        if [ "$active" = "false" ]; then
+          focused_color='#${c.base05}'
+          occupied_color='#${c.base04}'
+          empty_color='#${c.base02}'
+        fi
+
+        local out=""
+        for i in 1 2 3 4 5 6 7 8 9 10; do
+          local label=$i
+          [ "$i" -eq 10 ] && label=0
+          if [ "''${focus_set[$i]+x}" ]; then
+            out="$out<span color='$focused_color' weight='bold'>$label</span> "
+          elif [ "''${occupy_set[$i]+x}" ]; then
+            out="$out<span color='$occupied_color'>$label</span> "
+          else
+            out="$out<span color='$empty_color'>$label</span> "
+          fi
+        done
+        echo "$out"
+      }
+
+      render_tags
+      while ${inotifywait} -qq -e close_write "$XDG_RUNTIME_DIR/${watchFile}"; do
+        render_tags
+      done
+    '';
+
+    tagsScript = mkTagsScript { file = "tidepool-tags"; };
+
+    layoutScript = pkgs.writeShellScript "waybar-layout" ''
+      cat "$XDG_RUNTIME_DIR/tidepool-layout" 2>/dev/null || echo "master-stack"
+      while ${inotifywait} -qq -e close_write "$XDG_RUNTIME_DIR/tidepool-layout"; do
+        cat "$XDG_RUNTIME_DIR/tidepool-layout"
+      done
+    '';
+
+    waybarModules = {
       "custom/layout" = {
-        exec = "cat $XDG_RUNTIME_DIR/tidepool-layout 2>/dev/null || echo master-stack";
-        interval = 1;
+        exec = layoutScript;
+        restart-interval = 5;
         format = "LAYOUT: {}";
       };
       pulseaudio = {
@@ -100,7 +150,36 @@
         icon-size = 24;
         spacing = 16;
       };
-    });
+    };
+
+    mkBarConfig = tagsExec: extra: {
+      layer = "top";
+      spacing = 16;
+      modules-left = ["custom/tags" "custom/layout"];
+      modules-center = ["clock"];
+      modules-right = ["network" "backlight" "pulseaudio" "memory" "cpu" "battery" "tray"];
+      "custom/tags" = {
+        exec = tagsExec;
+        restart-interval = 5;
+        format = "{}";
+        tooltip = false;
+      };
+    } // waybarModules // extra;
+
+    enabledMonitors = lib.filterAttrs (_: m: m.enable) monitors;
+
+    waybarConfig = pkgs.writeText "waybar-river.json" (builtins.toJSON (
+      if enabledMonitors != {} then
+        lib.mapAttrsToList (_: m: mkBarConfig
+          (mkTagsScript {
+            file = "tidepool-tags-${toString m.position.x},${toString m.position.y}";
+            watchFile = "tidepool-tags-${toString m.position.x},${toString m.position.y}";
+          })
+          { output = m.connector; })
+        enabledMonitors
+      else
+        mkBarConfig tagsScript {}
+    ));
 
     waybarCss = pkgs.writeText "waybar-river.css" ''
       * {
@@ -119,6 +198,7 @@
       tooltip label {
           color: #${c.base05};
       }
+      #custom-tags,
       #custom-layout,
       #clock,
       #network,
@@ -304,6 +384,7 @@
       pkgs.slurp
       pkgs.libnotify
       pkgs.wayland-logout
+      pkgs.inotify-tools
       pkgs.psyclyx.tidepool
       power-menu
       screenshot-menu
