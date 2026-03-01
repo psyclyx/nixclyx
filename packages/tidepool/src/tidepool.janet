@@ -1070,6 +1070,19 @@
     (each other (seat :pointer-bindings)
       (unless (= other binding) (request (other :obj))))))
 
+(defn action/toggle-scratchpad []
+  (fn [seat binding]
+    (when-let [output (seat :focused-output)]
+      (if ((output :tags) 0)
+        (put (output :tags) 0 nil)
+        (put (output :tags) 0 true)))))
+
+(defn action/send-to-scratchpad []
+  (fn [seat binding]
+    (when-let [window (seat :focused)]
+      (put window :tag 0)
+      (window/set-float window true))))
+
 (defn action/exit []
   (fn [seat binding]
     (:stop (registry "river_window_manager_v1"))))

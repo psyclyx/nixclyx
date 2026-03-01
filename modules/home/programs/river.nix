@@ -254,6 +254,10 @@
         [:e {:mod4 true :shift true} (action/exit)]
         [:r {:mod4 true :shift true} (fn [seat binding] (reload-config))]
 
+        # Scratchpad
+        [:grave {:mod4 true} (action/toggle-scratchpad)]
+        [:grave {:mod4 true :shift true} (action/send-to-scratchpad)]
+
         # All tags
         [:a {:mod4 true} (action/focus-all-tags)]
 
