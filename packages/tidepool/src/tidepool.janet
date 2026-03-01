@@ -769,6 +769,114 @@
 
 # --- Actions ---
 
+(defn- clamp [x lo hi] (min hi (max lo x)))
+(defn- wrap [x n] (% (+ (% x n) n) n))
+
+# Layout-aware spatial navigation. Each layout defines a function
+# (fn [n main-count i dir]) -> target index, where n is window count,
+# main-count is the layout's main pane count, i is the focused index,
+# and dir is :left/:right/:up/:down.
+
+(defn- navigate/master-stack [n main-count i dir]
+  (def in-main (< i main-count))
+  (if in-main
+    (case dir
+      :right (when (> n main-count) main-count)
+      :left nil
+      :down (when (< (+ i 1) main-count) (+ i 1))
+      :up (when (> i 0) (- i 1)))
+    (let [si (- i main-count)
+          sc (- n main-count)]
+      (case dir
+        :left 0
+        :right nil
+        :down (when (< (+ si 1) sc) (+ main-count si 1))
+        :up (when (> si 0) (+ main-count si -1))))))
+
+(defn- navigate/monocle [n _ i dir]
+  (case dir
+    :right (when (< (+ i 1) n) (+ i 1))
+    :down (when (< (+ i 1) n) (+ i 1))
+    :left (when (> i 0) (- i 1))
+    :up (when (> i 0) (- i 1))))
+
+(defn- navigate/grid [n _ i dir]
+  (def cols (math/ceil (math/sqrt n)))
+  (def row (div i cols))
+  (def col (% i cols))
+  (def rows (math/ceil (/ n cols)))
+  (def last-row-cols (- n (* (- rows 1) cols)))
+  (case dir
+    :left (when (> col 0) (- i 1))
+    :right (let [row-len (if (= row (- rows 1)) last-row-cols cols)]
+             (when (< (+ col 1) row-len) (+ i 1)))
+    :up (when (> row 0) (- i cols))
+    :down (let [target (+ i cols)]
+            (when (< target n) target))))
+
+(defn- navigate/centered-master [n _ i dir]
+  (cond
+    (<= n 2) (navigate/master-stack n 1 i dir)
+    (do
+      (def side-count (- n 1))
+      (def left-count (math/ceil (/ side-count 2)))
+      (def right-count (- side-count left-count))
+      (cond
+        # Master (index 0): center column
+        (= i 0)
+        (case dir
+          :left (when (> left-count 0) 1)
+          :right (when (> right-count 0) (+ 1 left-count))
+          :up nil :down nil)
+        # Left stack (indices 1..left-count)
+        (<= i left-count)
+        (let [li (- i 1)]
+          (case dir
+            :right 0
+            :left nil
+            :down (when (< (+ li 1) left-count) (+ i 1))
+            :up (when (> li 0) (- i 1))))
+        # Right stack (indices left-count+1..)
+        (let [ri (- i 1 left-count)]
+          (case dir
+            :left 0
+            :right nil
+            :down (when (< (+ ri 1) right-count) (+ i 1))
+            :up (when (> ri 0) (- i 1))))))))
+
+(defn- navigate/dwindle [n _ i dir]
+  # Dwindle alternates vertical/horizontal splits. At each level,
+  # even splits go left|right, odd splits go top|bottom.
+  # Navigate by checking parent/child split orientation.
+  (cond
+    (< i (- n 1))
+    (let [split-horizontal (= 0 (% i 2))]
+      (case dir
+        # Into the split: go to child
+        :right (when (and split-horizontal (< (+ i 1) n)) (+ i 1))
+        :down (when (and (not split-horizontal) (< (+ i 1) n)) (+ i 1))
+        # Against the split or parallel: go to parent
+        :left (when (and split-horizontal (> i 0)) (- i 1))
+        :up (when (and (not split-horizontal) (> i 0)) (- i 1))
+        # Parallel movement within sibling
+        (when (> i 0) (- i 1))))
+    # Last window: can only go back
+    (when (> i 0) (- i 1))))
+
+(defn- navigate/columns [n _ i dir]
+  (case dir
+    :left (when (> i 0) (- i 1))
+    :right (when (< (+ i 1) n) (+ i 1))
+    :up nil :down nil))
+
+(def navigate-fns
+  @{:master-stack navigate/master-stack
+    :monocle navigate/monocle
+    :grid navigate/grid
+    :centered-master navigate/centered-master
+    :dwindle navigate/dwindle
+    :columns navigate/columns})
+
 (defn action/target [seat dir]
   (when-let [window (seat :focused)
              output (window/tag-output window)
@@ -776,7 +884,13 @@
              i (assert (index-of window visible))]
     (case dir
       :next (get visible (+ i 1) (first visible))
-      :prev (get visible (- i 1) (last visible)))))
+      :prev (get visible (- i 1) (last visible))
+      (let [n (length visible)
+            layout (output :layout)
+            main-count (get-in output [:layout-params :main-count] 1)
+            nav-fn (get navigate-fns layout navigate/master-stack)
+            target-i (nav-fn n main-count i dir)]
+        (when target-i (get visible target-i))))))
 
 (defn action/spawn [command]
   (fn [seat binding]
