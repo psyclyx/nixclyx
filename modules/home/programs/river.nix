@@ -105,19 +105,14 @@
 
     tagsScript = mkTagsScript { file = "tidepool-tags"; };
 
-    layoutScript = pkgs.writeShellScript "waybar-layout" ''
-      cat "$XDG_RUNTIME_DIR/tidepool-layout" 2>/dev/null || echo "master-stack"
-      while ${inotifywait} -qq -e close_write "$XDG_RUNTIME_DIR/tidepool-layout"; do
-        cat "$XDG_RUNTIME_DIR/tidepool-layout"
+    mkLayoutScript = file: pkgs.writeShellScript "waybar-layout" ''
+      cat "$XDG_RUNTIME_DIR/${file}" 2>/dev/null || echo "master-stack"
+      while ${inotifywait} -qq -e close_write "$XDG_RUNTIME_DIR/${file}"; do
+        cat "$XDG_RUNTIME_DIR/${file}"
       done
     '';
 
     waybarModules = {
-      "custom/layout" = {
-        exec = layoutScript;
-        restart-interval = 5;
-        format = "LAYOUT: {}";
-      };
       pulseaudio = {
         format = "VOL: {volume}%";
         format-muted = "VOL: MUTE";
@@ -152,7 +147,7 @@
       };
     };
 
-    mkBarConfig = tagsExec: extra: {
+    mkBarConfig = { tagsExec, layoutExec }: extra: {
       layer = "top";
       spacing = 16;
       modules-left = ["custom/tags" "custom/layout"];
@@ -164,27 +159,39 @@
         format = "{}";
         tooltip = false;
       };
+      "custom/layout" = {
+        exec = layoutExec;
+        restart-interval = 5;
+        format = "LAYOUT: {}";
+      };
     } // waybarModules // extra;
 
     enabledMonitors = lib.filterAttrs (_: m: m.enable) monitors;
 
     waybarConfig = pkgs.writeText "waybar-river.json" (builtins.toJSON (
       if enabledMonitors != {} then
-        lib.mapAttrsToList (_: m: mkBarConfig
-          (mkTagsScript {
-            file = "tidepool-tags-${toString m.position.x},${toString m.position.y}";
-            watchFile = "tidepool-tags-${toString m.position.x},${toString m.position.y}";
-          })
-          { output = m.connector; })
+        lib.mapAttrsToList (_: m: let
+          pos = "${toString m.position.x},${toString m.position.y}";
+        in mkBarConfig {
+          tagsExec = mkTagsScript {
+            file = "tidepool-tags-${pos}";
+            watchFile = "tidepool-tags-${pos}";
+          };
+          layoutExec = mkLayoutScript "tidepool-layout-${pos}";
+        } { output = m.connector; })
         enabledMonitors
       else
-        mkBarConfig tagsScript {}
+        mkBarConfig {
+          tagsExec = tagsScript;
+          layoutExec = mkLayoutScript "tidepool-layout";
+        } {}
     ));
 
     waybarCss = pkgs.writeText "waybar-river.css" ''
       * {
           border: none;
           border-radius: 0;
+          font-family: "${config.stylix.fonts.monospace.name}", monospace;
       }
       window#waybar {
           background: alpha(#${c.base01}, ${opacity});
@@ -234,17 +241,11 @@
     # River 0.4 init script: minimal compositor bootstrap.
     # In 0.4, the WM (tidepool) handles borders, backgrounds, focus,
     # keybindings, and layout via the river-window-management protocol.
-    # The init script only does output setup and launches services.
+    # The init script starts systemd user services and finalizes UWSM.
     # Note: tidepool must start before wlr-randr because River 0.4
     # only advertises wlr-output-management when a WM is connected.
     initScript = pkgs.writeShellScript "river-init" ''
-      (
-        while true; do
-          ${tidepool}
-          exit_code=$?
-          [ "$exit_code" -ne 42 ] && break
-        done
-      ) &
+      systemctl --user start tidepool.service
 
       # Wait for tidepool to be ready (REPL socket appears)
       for i in $(seq 1 50); do
@@ -254,7 +255,7 @@
 
       ${outputSetup}
 
-      uwsm app -- waybar -c ${waybarConfig} -s ${waybarCss} &
+      systemctl --user start waybar-river.service
 
       uwsm finalize
     '';
@@ -339,7 +340,9 @@
         [:q {:mod4 true :shift true} (action/close)]
         [:e {:mod4 true :shift true} (action/exit)]
         [:r {:mod4 true :shift true} (fn [seat binding] (reload-config))]
-        [:r {:mod4 true :ctrl true :shift true} (action/restart)]
+        [:r {:mod4 true :ctrl true :shift true}
+         (fn [seat binding]
+           (os/spawn ["systemctl" "--user" "restart" "tidepool.service"] :pd))]
 
         # Scratchpad
         [:grave {:mod4 true} (action/toggle-scratchpad)]
@@ -411,6 +414,28 @@
         indicator-thickness = lib.mkDefault 4;
         effect-pixelate = lib.mkDefault 8;
         grace = lib.mkDefault 3;
+      };
+    };
+
+    systemd.user.services.tidepool = {
+      Unit.Description = "Tidepool window manager";
+      Service = {
+        ExecStart = tidepool;
+        Restart = "on-failure";
+        RestartSec = 1;
+      };
+    };
+
+    systemd.user.services.waybar-river = {
+      Unit = {
+        Description = "Waybar for River";
+        PartOf = ["tidepool.service"];
+        After = ["tidepool.service"];
+      };
+      Service = {
+        ExecStart = "${lib.getExe config.programs.waybar.package} -c ${waybarConfig} -s ${waybarCss}";
+        Restart = "on-failure";
+        RestartSec = 1;
       };
     };
 
