@@ -58,16 +58,16 @@
     '';
 
     waybarConfig = pkgs.writeText "waybar-river.json" (builtins.toJSON {
+      layer = "top";
       spacing = 16;
-      modules-left = ["river/tags" "river/mode"];
+      modules-left = ["custom/layout"];
       modules-center = ["clock"];
-      modules-right = ["custom/layout" "network" "backlight" "pulseaudio" "memory" "cpu" "battery" "tray"];
+      modules-right = ["network" "backlight" "pulseaudio" "memory" "cpu" "battery" "tray"];
       "custom/layout" = {
         exec = "cat $XDG_RUNTIME_DIR/tidepool-layout 2>/dev/null || echo master-stack";
         interval = 1;
         format = "LAYOUT: {}";
       };
-      "river/tags" = {num-tags = 10;};
       pulseaudio = {
         format = "VOL: {volume}%";
         format-muted = "VOL: MUTE";
@@ -108,35 +108,16 @@
           border-radius: 0;
       }
       window#waybar {
-          background: alpha(@base01, ${opacity});
-          color: @base04;
+          background: alpha(#${c.base01}, ${opacity});
+          color: #${c.base04};
           padding: 0;
           margin: 0;
       }
       tooltip {
-          background-color: alpha(@base01, ${opacity});
+          background-color: alpha(#${c.base01}, ${opacity});
       }
       tooltip label {
-          color: @base05;
-      }
-      #tags button {
-          color: @base04;
-          background: transparent;
-      }
-      #tags button.focused {
-          background: @base00;
-          color: @base05;
-      }
-      #tags button.occupied {
-          color: @base05;
-      }
-      #tags button.urgent {
-          background: @base02;
-          color: @base05;
-      }
-      #mode {
-          color: @base05;
-          padding: 0 8px;
+          color: #${c.base05};
       }
       #custom-layout,
       #clock,
@@ -147,7 +128,7 @@
       #cpu,
       #battery,
       #tray {
-          color: @base05;
+          color: #${c.base05};
           padding: 0 8px;
       }
     '';
@@ -174,10 +155,19 @@
     # In 0.4, the WM (tidepool) handles borders, backgrounds, focus,
     # keybindings, and layout via the river-window-management protocol.
     # The init script only does output setup and launches services.
+    # Note: tidepool must start before wlr-randr because River 0.4
+    # only advertises wlr-output-management when a WM is connected.
     initScript = pkgs.writeShellScript "river-init" ''
+      ${tidepool} &
+
+      # Wait for tidepool to be ready (REPL socket appears)
+      for i in $(seq 1 50); do
+        [ -S "$XDG_RUNTIME_DIR/tidepool-$WAYLAND_DISPLAY" ] && break
+        sleep 0.1
+      done
+
       ${outputSetup}
 
-      ${tidepool} &
       uwsm app -- waybar -c ${waybarConfig} -s ${waybarCss} &
 
       uwsm finalize
@@ -201,17 +191,41 @@
         {:app-id "xdg-desktop-portal-gtk" :float true}
         {:app-id "firefox" :title "Library" :float true})
 
+      # Config reload: destroys all bindings, re-reads init.janet, recreates bindings
+      (def- reload-env (curenv))
+      (defn reload-config []
+        (each seat (wm :seats)
+          (each b (seat :xkb-bindings) (:destroy (b :obj)))
+          (each b (seat :pointer-bindings) (:destroy (b :obj)))
+          (put seat :xkb-bindings @[])
+          (put seat :pointer-bindings @[]))
+        (put config :xkb-bindings @[])
+        (put config :pointer-bindings @[])
+        (put config :rules @[])
+        (def config-dir (or (os/getenv "XDG_CONFIG_HOME")
+                            (string (os/getenv "HOME") "/.config")))
+        (dofile (string config-dir "/tidepool/init.janet") :env reload-env)
+        (each seat (wm :seats)
+          (each binding (config :xkb-bindings)
+            (xkb-binding/create seat ;binding))
+          (each binding (config :pointer-bindings)
+            (pointer-binding/create seat ;binding))))
+
       # Keybindings
       (array/push
         (config :xkb-bindings)
 
-        # Window management
-        [:j {:mod4 true} (action/focus :next)]
-        [:k {:mod4 true} (action/focus :prev)]
-        [:j {:mod4 true :shift true} (action/swap :next)]
-        [:k {:mod4 true :shift true} (action/swap :prev)]
-        [:h {:mod4 true} (action/adjust-ratio -0.05)]
-        [:l {:mod4 true} (action/adjust-ratio 0.05)]
+        # Spatial window focus/swap (vim-style hjkl)
+        [:h {:mod4 true} (action/focus :left)]
+        [:j {:mod4 true} (action/focus :down)]
+        [:k {:mod4 true} (action/focus :up)]
+        [:l {:mod4 true} (action/focus :right)]
+        [:h {:mod4 true :shift true} (action/swap :left)]
+        [:j {:mod4 true :shift true} (action/swap :down)]
+        [:k {:mod4 true :shift true} (action/swap :up)]
+        [:l {:mod4 true :shift true} (action/swap :right)]
+        [:bracketleft {:mod4 true} (action/adjust-ratio -0.05)]
+        [:bracketright {:mod4 true} (action/adjust-ratio 0.05)]
         [:space {:mod4 true} (action/zoom)]
         [:semicolon {:mod4 true} (action/float)]
         [:slash {:mod4 true} (action/fullscreen)]
@@ -238,6 +252,7 @@
         # Session
         [:q {:mod4 true :shift true} (action/close)]
         [:e {:mod4 true :shift true} (action/exit)]
+        [:r {:mod4 true :shift true} (fn [seat binding] (reload-config))]
 
         # All tags
         [:a {:mod4 true} (action/focus-all-tags)]
