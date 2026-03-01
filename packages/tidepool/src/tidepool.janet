@@ -1158,6 +1158,48 @@
   (protect (os/rm path))
   (netrepl/server :unix path repl-env))
 
+# --- Design: Workspace Abstraction ("Pools") ---
+#
+# Current model: outputs have a set of visible tags (integers 0-N).
+# Each window has a single tag. Tags are global — any output can show
+# any tag, and toggling a tag on one output removes it from others.
+#
+# Limitation: no way to group related tags, name them, or create
+# ephemeral workspaces. Power users want named contexts (e.g., "code",
+# "comms", "media") that persist across output changes and can contain
+# multiple tags. The current flat tag model can't express this.
+#
+# Proposed: "Pools" — a composable workspace layer on top of tags.
+#
+#   (def pool @{:name "code"
+#               :tags #{1 2 3}       # tags belonging to this pool
+#               :sticky false        # if true, pool stays on its output
+#               :output nil})        # preferred output (or nil for floating)
+#
+# A pool groups tags into a named unit. Switching to a pool activates
+# all its tags on the target output. Pools can be:
+#   - Static: defined in config (e.g., "code" = tags 1-3)
+#   - Dynamic: created on the fly, tags allocated from a free pool
+#   - Sticky: bound to a specific output (e.g., "chat" always on right monitor)
+#
+# Composable views: an output can show multiple pools simultaneously.
+# This is already supported by the tag model — just union the tag sets.
+# Pools add naming and grouping, not new visibility semantics.
+#
+# Transition path:
+#   1. Pools are opt-in. Without pool config, behavior is unchanged.
+#   2. action/focus-pool, action/send-to-pool, action/create-pool
+#   3. Bar indicator shows pool names instead of/alongside tag numbers
+#   4. Dynamic pools: action/create-pool allocates unused tags
+#
+# Open questions:
+#   - Should tags be hidden from the user entirely when pools are active?
+#   - How to handle tag conflicts (two pools wanting the same tag)?
+#   - Per-output pool stacks (MRU pool switching per monitor)?
+#
+# This is a future direction. The current tag system is the right
+# foundation — pools are sugar on top, not a replacement.
+
 # --- Entry Point ---
 
 (defn main [& args]
