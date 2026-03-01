@@ -20,7 +20,7 @@
   @{"wl_compositor" 4
     "wp_viewporter" 1
     "wp_single_pixel_buffer_manager_v1" 1
-    "river_window_manager_v1" 2
+    "river_window_manager_v1" 3
     "river_layer_shell_v1" 1
     "river_xkb_bindings_v1" 1})
 
@@ -45,6 +45,7 @@
     :xkb-bindings @[]
     :pointer-bindings @[]
     :rules @[]
+    :warp-pointer false
     :xcursor-theme "Adwaita"
     :xcursor-size 24})
 
@@ -229,7 +230,13 @@
       (if-let [i (find-index |(= $ window) (wm :render-order))]
         (array/remove (wm :render-order) i))
       (array/push (wm :render-order) window)
-      (:place-top (window :node))))
+      (:place-top (window :node))
+      (when (and ((wm :config) :warp-pointer)
+                 (= (seat :focus-source) :keyboard)
+                 (window :w) (window :h))
+        (:pointer-warp (seat :obj)
+                       (+ (window :x) (div (window :w) 2))
+                       (+ (window :y) (div (window :h) 2))))))
 
   (defn clear-focus []
     (when (seat :focused)
@@ -417,15 +424,18 @@
           ((seat :focused-output) :removed))
     (seat/focus-output seat (first (wm :outputs))))
 
+  (put seat :focus-source :pointer)
   (seat/focus seat nil)
   (each window (wm :windows)
     (when (window :new) (seat/focus seat window)))
   (if-let [window (seat :window-interaction)]
     (seat/focus seat window))
 
+  (put seat :focus-source :keyboard)
   (when-let [[binding action] (seat :pending-action)]
     (action seat binding))
 
+  (put seat :focus-source :pointer)
   (seat/focus seat nil)
 
   (when-let [op (seat :op)]
@@ -443,7 +453,8 @@
   (put seat :new nil)
   (put seat :window-interaction nil)
   (put seat :pending-action nil)
-  (put seat :op-release nil))
+  (put seat :op-release nil)
+  (put seat :focus-source nil))
 
 (defn seat/render [seat]
   (when-let [op (seat :op)]
@@ -464,6 +475,7 @@
       [:removed] (put seat :removed true)
       [:pointer-enter window] (put seat :pointer-target (:get-user-data window))
       [:pointer-leave] (put seat :pointer-target nil)
+      [:pointer-position x y] (do (put seat :pointer-x x) (put seat :pointer-y y))
       [:window-interaction window] (put seat :window-interaction (:get-user-data window))
       [:shell-surface-interaction _] (do)
       [:op-delta dx dy] (do (put (seat :op) :dx dx) (put (seat :op) :dy dy))
