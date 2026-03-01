@@ -158,7 +158,13 @@
     # Note: tidepool must start before wlr-randr because River 0.4
     # only advertises wlr-output-management when a WM is connected.
     initScript = pkgs.writeShellScript "river-init" ''
-      ${tidepool} &
+      (
+        while true; do
+          ${tidepool}
+          exit_code=$?
+          [ "$exit_code" -ne 42 ] && break
+        done
+      ) &
 
       # Wait for tidepool to be ready (REPL socket appears)
       for i in $(seq 1 50); do
@@ -253,6 +259,7 @@
         [:q {:mod4 true :shift true} (action/close)]
         [:e {:mod4 true :shift true} (action/exit)]
         [:r {:mod4 true :shift true} (fn [seat binding] (reload-config))]
+        [:r {:mod4 true :ctrl true :shift true} (action/restart)]
 
         # Scratchpad
         [:grave {:mod4 true} (action/toggle-scratchpad)]

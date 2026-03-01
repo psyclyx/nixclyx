@@ -1083,6 +1083,10 @@
       (put window :tag 0)
       (window/set-float window true))))
 
+(defn action/restart []
+  (fn [seat binding]
+    (os/exit 42)))
+
 (defn action/exit []
   (fn [seat binding]
     (:stop (registry "river_window_manager_v1"))))
