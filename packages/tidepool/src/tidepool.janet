@@ -704,12 +704,16 @@
 
   (for i 0 n
     (def x-off (- (* i col-w) scroll))
-    (window/set-position (get windows i)
-                         (+ (usable :x) outer x-off inner)
-                         (+ (usable :y) outer inner))
-    (window/propose-dimensions (get windows i)
-                               (- col-w (* 2 inner))
-                               (- total-h (* 2 inner)))))
+    (def win (get windows i))
+    (if (or (<= (+ x-off col-w) 0) (>= x-off total-w))
+      (put win :layout-hidden true)
+      (do
+        (window/set-position win
+                             (+ (usable :x) outer x-off inner)
+                             (+ (usable :y) outer inner))
+        (window/propose-dimensions win
+                                   (- col-w (* 2 inner))
+                                   (- total-h (* 2 inner)))))))
 
 (def layout-fns
   @{:master-stack layout/master-stack
@@ -736,7 +740,7 @@
       (when (and (window :fullscreen) ((output :tags) (window :tag)))
         (:fullscreen (window :obj) (output :obj)))))
   (each window (wm :windows)
-    (if (all-tags (window :tag))
+    (if (and (all-tags (window :tag)) (not (window :layout-hidden)))
       (:show (window :obj))
       (:hide (window :obj)))))
 
@@ -753,6 +757,7 @@
   (each window (wm :windows) (window/manage window))
   (each seat (wm :seats) (seat/manage seat))
 
+  (each window (wm :windows) (put window :layout-hidden nil))
   (each output (wm :outputs) (layout/apply output))
   (wm/show-hide)
 
