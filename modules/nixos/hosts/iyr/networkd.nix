@@ -56,7 +56,7 @@
       Domains = "${net.zoneName} ${topo.domains.home} ${topo.domains.internal}";
     };
     ipv6Prefixes = [
-      { ipv6PrefixConfig.Prefix = "${topo.ipv6UlaPrefix}:${net.vlanHex}::/64"; }
+      { Prefix = "${topo.ipv6UlaPrefix}:${net.vlanHex}::/64"; }
     ];
     linkConfig.RequiredForOnline = "routable";
   };

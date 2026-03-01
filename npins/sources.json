@@ -78,9 +78,9 @@
       },
       "branch": "master",
       "submodules": false,
-      "revision": "ce9b6e52500a0ea0ec48f0bbf6d7a3e431d9dfa4",
-      "url": "https://github.com/nix-community/home-manager/archive/ce9b6e52500a0ea0ec48f0bbf6d7a3e431d9dfa4.tar.gz",
-      "hash": "sha256-VuyRptb8v1lVGMlLp4/1vRX3Efwec0CN0S6mKmDPzLg="
+      "revision": "58fd7ff0eec2cda43e705c4c0585729ec471d400",
+      "url": "https://github.com/nix-community/home-manager/archive/58fd7ff0eec2cda43e705c4c0585729ec471d400.tar.gz",
+      "hash": "sha256-UZjPc/d5XRxvjDbk4veAO4XFdvx6BUum2l40V688Xq8="
     },
     "llm-agents.nix": {
       "type": "Git",
@@ -91,9 +91,9 @@
       },
       "branch": "main",
       "submodules": false,
-      "revision": "1f2e6207d85e40ec92d812e0a9fdb844b4a1d967",
-      "url": "https://github.com/numtide/llm-agents.nix/archive/1f2e6207d85e40ec92d812e0a9fdb844b4a1d967.tar.gz",
-      "hash": "sha256-3dNeY/0OR9CvYyde/HU72mutXe/nIdccuMj6lW49LdQ="
+      "revision": "45656c46d998310ea6306a0036d581bf77091213",
+      "url": "https://github.com/numtide/llm-agents.nix/archive/45656c46d998310ea6306a0036d581bf77091213.tar.gz",
+      "hash": "sha256-1f5WHVW5jwO0TEBZNIK3GkgkwTqBaUFrNCf0WQ4/sM8="
     },
     "nix-darwin": {
       "type": "Git",
@@ -130,9 +130,9 @@
       },
       "branch": "nixos-unstable",
       "submodules": false,
-      "revision": "2fc6539b481e1d2569f25f8799236694180c0993",
-      "url": "https://github.com/nixos/nixpkgs/archive/2fc6539b481e1d2569f25f8799236694180c0993.tar.gz",
-      "hash": "sha256-0MAd+0mun3K/Ns8JATeHT1sX28faLII5hVLq0L3BdZU="
+      "revision": "dd9b079222d43e1943b6ebd802f04fd959dc8e61",
+      "url": "https://github.com/nixos/nixpkgs/archive/dd9b079222d43e1943b6ebd802f04fd959dc8e61.tar.gz",
+      "hash": "sha256-I45esRSssFtJ8p/gLHUZ1OUaaTaVLluNkABkk6arQwE="
     },
     "nvf": {
       "type": "Git",
@@ -143,9 +143,9 @@
       },
       "branch": "main",
       "submodules": false,
-      "revision": "d07d8f62f03a313cfcf55feb3797e4cbda8d08a5",
-      "url": "https://github.com/notashelf/nvf/archive/d07d8f62f03a313cfcf55feb3797e4cbda8d08a5.tar.gz",
-      "hash": "sha256-VpDCSVIwiHdcezsksOTnRmqPqpkssGRi4wMsA+46dvc="
+      "revision": "c07410f1838ce6a44708c49b8ed6fb061babc5ac",
+      "url": "https://github.com/notashelf/nvf/archive/c07410f1838ce6a44708c49b8ed6fb061babc5ac.tar.gz",
+      "hash": "sha256-8RH/xcZOEDf2fJ5h/PSXKxmTnsIMV4AXBj3F8ZdJgyw="
     },
     "river": {
       "type": "Git",
@@ -157,9 +157,9 @@
       },
       "branch": "main",
       "submodules": false,
-      "revision": "24ace530c102c0e4c9cfc835f77a86cb080ec2ba",
-      "url": "https://codeberg.org/river/river/archive/24ace530c102c0e4c9cfc835f77a86cb080ec2ba.tar.gz",
-      "hash": "sha256-w42vXsAkrR6AdhVrSLWV/N3wI+RAHOHsORg2dJh9hDQ="
+      "revision": "5193644c54792db26f06391637c73ef10ad74260",
+      "url": "https://codeberg.org/river/river/archive/5193644c54792db26f06391637c73ef10ad74260.tar.gz",
+      "hash": "sha256-dVcSXTYtkRDS/37g49dnq22Wtkgv1MsVzoDFTVXu77g="
     },
     "robotnix": {
       "type": "Git",
@@ -170,9 +170,9 @@
       },
       "branch": "master",
       "submodules": true,
-      "revision": "f8c5d5a0eaf72ff7d473894b1fb424548d098deb",
+      "revision": "4d90d2ddd61fb11492b2302f91274b5f02579020",
       "url": null,
-      "hash": "sha256-kf+L3hiUWse/5WtSupH0rHtoJek6V+5Hy2g6XJpbndI="
+      "hash": "sha256-pWNd1zJBf+A5k0rClKpm/r7FcKflBlQ6WMT5upVp8eg="
     },
     "rustfs-flake": {
       "type": "Git",
@@ -209,9 +209,9 @@
       },
       "branch": "master",
       "submodules": false,
-      "revision": "786fedbd455431902d51a6a8f51b03c0e797f9b8",
-      "url": "https://github.com/psyclyx/stylix/archive/786fedbd455431902d51a6a8f51b03c0e797f9b8.tar.gz",
-      "hash": "sha256-0MGpukmlXeSCSKCtaDkKEZRhJVE1qWpwVbfV+shRIjs="
+      "revision": "b9cd7f668a6435c06b7b93a9ee7861a63c11fe51",
+      "url": "https://github.com/psyclyx/stylix/archive/b9cd7f668a6435c06b7b93a9ee7861a63c11fe51.tar.gz",
+      "hash": "sha256-ZwbSPSpq0j0sKWueaoen7FNXG2MbjiXXwCPNy520KII="
     },
     "zsh-pure": {
       "type": "Git",
