@@ -20,6 +20,7 @@
             width = 3840;
             height = 2560;
           };
+          position.x = 3840;
         };
 
         gawfolk = {
@@ -29,7 +30,6 @@
             width = 3840;
             height = 2560;
           };
-          position.x = -3840;
         };
 
         dell = {
@@ -39,7 +39,7 @@
             width = 3840;
             height = 2160;
           };
-          position.x = 3840;
+          position.x = 7680;
         };
       };
     };
