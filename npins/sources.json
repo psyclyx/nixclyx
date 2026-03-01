@@ -150,16 +150,15 @@
     "river": {
       "type": "Git",
       "repository": {
-        "type": "Forgejo",
-        "server": "https://codeberg.org/",
-        "owner": "river",
+        "type": "GitHub",
+        "owner": "psyclyx",
         "repo": "river"
       },
-      "branch": "main",
+      "branch": "server-decoration",
       "submodules": false,
-      "revision": "5193644c54792db26f06391637c73ef10ad74260",
-      "url": "https://codeberg.org/river/river/archive/5193644c54792db26f06391637c73ef10ad74260.tar.gz",
-      "hash": "sha256-dVcSXTYtkRDS/37g49dnq22Wtkgv1MsVzoDFTVXu77g="
+      "revision": "6bfd96e6e7a6afd20f053a7ca56a90757b263369",
+      "url": "https://github.com/psyclyx/river/archive/6bfd96e6e7a6afd20f053a7ca56a90757b263369.tar.gz",
+      "hash": "sha256-04+mwkVsGvSTI7065466oSn6C2chyZcME5bS8PMSQO0="
     },
     "robotnix": {
       "type": "Git",
@@ -212,6 +211,19 @@
       "revision": "b9cd7f668a6435c06b7b93a9ee7861a63c11fe51",
       "url": "https://github.com/psyclyx/stylix/archive/b9cd7f668a6435c06b7b93a9ee7861a63c11fe51.tar.gz",
       "hash": "sha256-ZwbSPSpq0j0sKWueaoen7FNXG2MbjiXXwCPNy520KII="
+    },
+    "tidepool": {
+      "type": "Git",
+      "repository": {
+        "type": "GitHub",
+        "owner": "psyclyx",
+        "repo": "tidepool"
+      },
+      "branch": "main",
+      "submodules": false,
+      "revision": "64e9bd47e7eac8b5571fea54f6ed50892a0aa276",
+      "url": "https://github.com/psyclyx/tidepool/archive/64e9bd47e7eac8b5571fea54f6ed50892a0aa276.tar.gz",
+      "hash": "sha256-acH1B2wyh02SdivV+tilxFKGaILya2LTu4QQDaA0vxw="
     },
     "zsh-pure": {
       "type": "Git",
