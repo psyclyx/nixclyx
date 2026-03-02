@@ -186,6 +186,32 @@
       "url": "https://github.com/rustfs/rustfs-flake/archive/74dcf53ca87d741034be3588fea36b84a3cfef7e.tar.gz",
       "hash": "sha256-CTxdmLgRhUC9fWdiJz+C/6PAExBn0IvnO90x7IqNS2U="
     },
+    "base24-gen": {
+      "type": "Git",
+      "repository": {
+        "type": "GitHub",
+        "owner": "psyclyx",
+        "repo": "base24-gen"
+      },
+      "branch": "main",
+      "submodules": false,
+      "revision": "0000000000000000000000000000000000000000",
+      "url": "https://github.com/psyclyx/base24-gen/archive/0000000000000000000000000000000000000000.tar.gz",
+      "hash": "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
+    },
+    "shoal": {
+      "type": "Git",
+      "repository": {
+        "type": "GitHub",
+        "owner": "psyclyx",
+        "repo": "shoal"
+      },
+      "branch": "main",
+      "submodules": false,
+      "revision": "0000000000000000000000000000000000000000",
+      "url": "https://github.com/psyclyx/shoal/archive/0000000000000000000000000000000000000000.tar.gz",
+      "hash": "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
+    },
     "sops-nix": {
       "type": "Git",
       "repository": {
