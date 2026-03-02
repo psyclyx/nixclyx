@@ -2,8 +2,8 @@
   path = ["psyclyx" "common" "system" "stylix"];
   description = "stylix configuration";
   options = {lib, ...}: {
-    flavours = lib.mkOption {
-      description = "replace stylix's palette generator with flavours";
+    base24Gen = lib.mkOption {
+      description = "replace stylix's palette generator with base24-gen";
       default = true;
       type = lib.types.bool;
     };
@@ -15,19 +15,18 @@
     pkgs,
     ...
   }: let
-    flavours-palette-generator = let
-      flavours = lib.getExe pkgs.flavours;
-      yq = lib.getExe pkgs.yq;
+    base24-gen-palette-generator = let
+      base24-gen = lib.getExe pkgs.psyclyx."base24-gen";
     in
       pkgs.writeShellScriptBin "palette-generator" ''
-        ${flavours} generate "$1" "$2" --stdout | ${yq} > "$3"
+        ${base24-gen} --mode "$2" --output "$3" "$1"
       '';
   in {
     stylix = {
       enable = true;
 
-      polarity = lib.mkIf cfg.flavours (lib.mkDefault "light");
-      paletteGenerator = lib.mkIf cfg.flavours flavours-palette-generator;
+      polarity = lib.mkIf cfg.base24Gen (lib.mkDefault "dark");
+      paletteGenerator = lib.mkIf cfg.base24Gen base24-gen-palette-generator;
 
       image = lib.mkDefault "${pkgs.nixos-artwork.wallpapers.catppuccin-macchiato}/share/backgrounds/nixos/nixos-wallpaper-catppuccin-macchiato.png";
 
