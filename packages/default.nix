@@ -6,6 +6,8 @@ builtins.mapAttrs (_: x: pkgs.callPackage x {}) {
   pki = ./pki;
   river = ./river;
   tidepool = ./tidepool;
+  "base24-gen" = ./base24-gen;
+  shoal = ./shoal;
   ssacli = ./ssacli.nix;
   upscale-image = ./upscale-image;
 }
