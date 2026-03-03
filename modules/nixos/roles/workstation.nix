@@ -15,6 +15,7 @@
       nixclyx.packageGroups.dev pkgs
       ++ [
         pkgs.mpv
+        pkgs.psyclyx.ilo4-console
         pkgs.vlc
       ];
 
