@@ -249,6 +249,7 @@
       (put config :main-ratio 0.55)
       (put config :default-layout :scroll)
       (put config :warp-pointer true)
+      (put config :wallpaper true)
       (put config :struts {:left 32 :right 32 :top 0 :bottom 0})
       (put config :column-row-height 1.0)
 ${lib.optionalString (monitors != {}) ''
@@ -389,6 +390,7 @@ ${lib.optionalString (monitors != {}) ''
       pkgs.libnotify
       pkgs.wayland-logout
       pkgs.inotify-tools
+      pkgs.swaybg
       pkgs.psyclyx.tidepool
       power-menu
       screenshot-menu
@@ -439,6 +441,19 @@ ${lib.optionalString (monitors != {}) ''
       };
       Service = {
         ExecStart = "${lib.getExe config.programs.waybar.package} -c ${waybarConfig} -s ${waybarCss}";
+        Restart = "on-failure";
+        RestartSec = 2;
+      };
+      Install.WantedBy = ["graphical-session.target"];
+    };
+
+    systemd.user.services.swaybg = {
+      Unit = {
+        Description = "Wallpaper daemon";
+        PartOf = ["graphical-session.target"];
+      };
+      Service = {
+        ExecStart = "${lib.getExe pkgs.swaybg} -i ${config.stylix.image} -m fill";
         Restart = "on-failure";
         RestartSec = 2;
       };
