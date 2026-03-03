@@ -19,7 +19,7 @@
       base24-gen = lib.getExe pkgs.psyclyx."base24-gen";
     in
       pkgs.writeShellScriptBin "palette-generator" ''
-        ${base24-gen} --mode "$2" --output "$3" "$1"
+        ${base24-gen} --mode "$1" --output "$3" "$2"
       '';
   in {
     stylix = {
