@@ -26,6 +26,19 @@
       "url": "https://github.com/aylur/astal/archive/eb235f8813bdea2a4a38ac228f2efc4e2a8a90af.tar.gz",
       "hash": "sha256-8Ve6VdUpcYbl8bS5oyDwVnnNobyPxdPmUHGgSDyOazQ="
     },
+    "base24-gen": {
+      "type": "Git",
+      "repository": {
+        "type": "GitHub",
+        "owner": "psyclyx",
+        "repo": "base24-gen"
+      },
+      "branch": "main",
+      "submodules": false,
+      "revision": "0000000000000000000000000000000000000000",
+      "url": "https://github.com/psyclyx/base24-gen/archive/0000000000000000000000000000000000000000.tar.gz",
+      "hash": "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
+    },
     "clj-nix": {
       "type": "GitRelease",
       "repository": {
@@ -185,19 +198,6 @@
       "revision": "74dcf53ca87d741034be3588fea36b84a3cfef7e",
       "url": "https://github.com/rustfs/rustfs-flake/archive/74dcf53ca87d741034be3588fea36b84a3cfef7e.tar.gz",
       "hash": "sha256-CTxdmLgRhUC9fWdiJz+C/6PAExBn0IvnO90x7IqNS2U="
-    },
-    "base24-gen": {
-      "type": "Git",
-      "repository": {
-        "type": "GitHub",
-        "owner": "psyclyx",
-        "repo": "base24-gen"
-      },
-      "branch": "main",
-      "submodules": false,
-      "revision": "0000000000000000000000000000000000000000",
-      "url": "https://github.com/psyclyx/base24-gen/archive/0000000000000000000000000000000000000000.tar.gz",
-      "hash": "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
     },
     "shoal": {
       "type": "Git",
