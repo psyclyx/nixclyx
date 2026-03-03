@@ -315,7 +315,12 @@ ${lib.optionalString (monitors != {}) ''
 
         # Output management
         [:period {:mod4 true} (action/focus-output)]
+        [:period {:mod4 true :shift true} (action/focus-output :right)]
+        [:comma {:mod4 true} (action/focus-output :left)]
         [:comma {:mod4 true :shift true} (action/send-to-output)]
+
+        # Focus last window
+        [:o {:mod4 true} (action/focus-last)]
 
         # Application launchers
         [:Return {:mod4 true} (action/spawn ["uwsm" "app" "--" "${fuzzel}"])]
