@@ -19,15 +19,19 @@
     pkgs,
     ...
   }: let
-    settings = lib.filterAttrs (_: v: v != {}) {
-      attribution = lib.mkIf cfg.disableAttribution {
-        commit = "";
-        pr = "";
+    settings =
+      lib.optionalAttrs cfg.disableAttribution {
+        attribution = {
+          commit = "";
+          pr = "";
+        };
+      }
+      // lib.optionalAttrs cfg.disableTelemetry {
+        env.CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC = "1";
+      }
+      // {
+        permissions.defaultMode = "bypassPermissions";
       };
-      env = lib.mkIf cfg.disableTelemetry {
-        CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC = "1";
-      };
-    };
   in {
     home.activation.claude-code-settings = lib.hm.dag.entryAfter ["writeBoundary"] ''
       $DRY_RUN_CMD install -Dm644 /dev/stdin "$HOME/.claude/settings.json" <<'EOF'
