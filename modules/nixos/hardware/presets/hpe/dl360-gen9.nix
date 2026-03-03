@@ -3,6 +3,7 @@
   description = "HPE ProLiant DL360 Gen 9";
   config = {lib, ...}: {
     boot.initrd.availableKernelModules = [
+      "bnx2x"
       "mlx4_core"
       "tg3"
     ];
