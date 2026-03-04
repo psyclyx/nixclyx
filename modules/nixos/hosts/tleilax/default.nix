@@ -87,6 +87,13 @@
             type filter hook output priority 0; policy accept;
           }
         }
+
+        table ip nat {
+          chain postrouting {
+            type nat hook postrouting priority 100; policy accept;
+            iifname "wg0" oifname "bond0" masquerade
+          }
+        }
       '';
     };
 
