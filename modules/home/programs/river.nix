@@ -18,7 +18,7 @@
     slurp = lib.getExe pkgs.slurp;
     wayland-logout = lib.getExe pkgs.wayland-logout;
     wl-copy = lib.getExe' pkgs.wl-clipboard "wl-copy";
-    inotifywait = lib.getExe' pkgs.inotify-tools "inotifywait";
+    tidepoolmsg = lib.getExe' config.services.tidepool.package "tidepoolmsg";
 
     power-menu = pkgs.writeShellScriptBin "river-power-menu" ''
       options="Lock\nLogout\nSuspend\nReboot\nShutdown"
@@ -56,70 +56,51 @@
       esac
     '';
 
-    mkTagsScript = { file, watchFile ? file }: pkgs.writeShellScript "waybar-tags" ''
-      render_tags() {
-        local file="$XDG_RUNTIME_DIR/${file}"
-        local focused="" occupied="" active="true"
-        if [ -f "$file" ]; then
-          local content
-          content=$(cat "$file")
-          focused=$(echo "$content" | grep -o 'focused:[^ ]*' | cut -d: -f2)
-          occupied=$(echo "$content" | grep -o 'occupied:[^ ]*' | cut -d: -f2)
-          active=$(echo "$content" | grep -o 'active:[^ ]*' | cut -d: -f2)
-        fi
-
-        local IFS=','
-        local -A focus_set occupy_set
-        for t in $focused; do focus_set[$t]=1; done
-        for t in $occupied; do occupy_set[$t]=1; done
-
-        local focused_color='#${c.base07}' occupied_color='#${c.base05}' empty_color='#${c.base03}'
-        if [ "$active" = "false" ]; then
-          focused_color='#${c.base05}'
-          occupied_color='#${c.base04}'
-          empty_color='#${c.base02}'
-        fi
-
-        local out=""
-        for i in 1 2 3 4 5 6 7 8 9 10; do
-          local label=$i
-          [ "$i" -eq 10 ] && label=0
-          if [ "''${focus_set[$i]+x}" ]; then
-            out="$out<span color='$focused_color' weight='bold'>$label</span> "
-          elif [ "''${occupy_set[$i]+x}" ]; then
-            out="$out<span color='$occupied_color'>$label</span> "
-          else
-            out="$out<span color='$empty_color'>$label</span> "
-          fi
-        done
-        echo "$out"
-      }
-
-      file="$XDG_RUNTIME_DIR/${watchFile}"
-      while true; do
-        while [ ! -f "$file" ]; do
-          ${inotifywait} -qq -t 5 -e create -e moved_to "$(dirname "$file")" 2>/dev/null || true
-        done
-        render_tags
-        while ${inotifywait} -qq -e close_write "$file"; do
-          render_tags
-        done
-      done
+    # Waybar tag/layout scripts using tidepoolmsg IPC.
+    # Each script runs a Janet expression that subscribes to state changes
+    # and formats output for waybar's custom module protocol (one line per update).
+    mkTagsScript = { outputX ? null, outputY ? null }: let
+      outputFilter = if outputX != null
+        then ''(find |(and (= ($ :x) ${toString outputX}) (= ($ :y) ${toString outputY})) (s :outputs))''
+        else ''(find |($ :focused) (s :outputs))'';
+    in pkgs.writeShellScript "waybar-tags" ''
+      exec ${tidepoolmsg} '(do
+        (def ch (ipc/subscribe :state))
+        (forever
+          (def s (ev/take ch))
+          (def o ${outputFilter})
+          (when o
+            (def focus-set @{})
+            (each t (o :tags) (put focus-set t true))
+            (def occupy-set @{})
+            (each t (s :occupied) (put occupy-set t true))
+            (def [fc oc ec]
+              (if (o :focused)
+                ["#${c.base07}" "#${c.base05}" "#${c.base03}"]
+                ["#${c.base05}" "#${c.base04}" "#${c.base02}"]))
+            (def parts @[])
+            (each i [1 2 3 4 5 6 7 8 9 10]
+              (def label (if (= i 10) "0" (string i)))
+              (cond
+                (focus-set i)
+                (array/push parts (string "<span color='\''" fc "'\'' weight='\'bold'\''>" label "</span>"))
+                (occupy-set i)
+                (array/push parts (string "<span color='\''" oc "'\''>" label "</span>"))
+                (array/push parts (string "<span color='\''" ec "'\''>" label "</span>"))))
+            (print (string/join parts " ")))))'
     '';
 
-    tagsScript = mkTagsScript { file = "tidepool-tags"; };
-
-    mkLayoutScript = file: pkgs.writeShellScript "waybar-layout" ''
-      file="$XDG_RUNTIME_DIR/${file}"
-      while true; do
-        while [ ! -f "$file" ]; do
-          ${inotifywait} -qq -t 5 -e create -e moved_to "$(dirname "$file")" 2>/dev/null || true
-        done
-        cat "$file"
-        while ${inotifywait} -qq -e close_write "$file"; do
-          cat "$file"
-        done
-      done
+    mkLayoutScript = { outputX ? null, outputY ? null }: let
+      outputFilter = if outputX != null
+        then ''(find |(and (= ($ :x) ${toString outputX}) (= ($ :y) ${toString outputY})) (s :outputs))''
+        else ''(find |($ :focused) (s :outputs))'';
+    in pkgs.writeShellScript "waybar-layout" ''
+      exec ${tidepoolmsg} '(do
+        (def ch (ipc/subscribe :state))
+        (forever
+          (def s (ev/take ch))
+          (def o ${outputFilter})
+          (when o (print (o :layout)))))'
     '';
 
     waybarModules = {
@@ -180,20 +161,21 @@
 
     waybarConfig = pkgs.writeText "waybar-river.json" (builtins.toJSON (
       if enabledMonitors != {} then
-        lib.mapAttrsToList (_: m: let
-          pos = "${toString m.position.x},${toString m.position.y}";
-        in mkBarConfig {
+        lib.mapAttrsToList (_: m: mkBarConfig {
           tagsExec = mkTagsScript {
-            file = "tidepool-tags-${pos}";
-            watchFile = "tidepool-tags-${pos}";
+            outputX = m.position.x;
+            outputY = m.position.y;
           };
-          layoutExec = mkLayoutScript "tidepool-layout-${pos}";
+          layoutExec = mkLayoutScript {
+            outputX = m.position.x;
+            outputY = m.position.y;
+          };
         } { output = m.connector; })
         enabledMonitors
       else
         mkBarConfig {
-          tagsExec = tagsScript;
-          layoutExec = mkLayoutScript "tidepool-layout";
+          tagsExec = mkTagsScript {};
+          layoutExec = mkLayoutScript {};
         } {}
     ));
 
@@ -347,6 +329,7 @@ ${lib.optionalString (monitors != {}) ''
         [:r {:mod4 true :shift true} (fn [seat binding] (reload-config))]
         [:r {:mod4 true :ctrl true :shift true}
          (fn [seat binding]
+           (ipc/save-state)
            (os/spawn ["systemctl" "--user" "restart" "tidepool.service"] :pd))]
 
         # Scratchpad
@@ -392,7 +375,6 @@ ${lib.optionalString (monitors != {}) ''
       pkgs.slurp
       pkgs.libnotify
       pkgs.wayland-logout
-      pkgs.inotify-tools
       power-menu
       screenshot-menu
     ];
