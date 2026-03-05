@@ -1,5 +1,0 @@
-{:paths ["src"]
- :deps {org.babashka/cli {:mvn/version "0.8.60"}}
- :tasks
- {pki {:doc "PKI management tool"
-       :task (exec 'pki.cli/-main)}}}

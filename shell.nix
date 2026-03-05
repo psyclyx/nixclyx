@@ -11,9 +11,6 @@ in
   pkgs.mkShell {
     packages = with pkgs; [
       pkgs.colmena.colmena
-      pkgs.psyclyx.ensure-key
-      pkgs.psyclyx.sign-key
-      pkgs.psyclyx.pki
       nixfmt
       nixd
       nix-tree

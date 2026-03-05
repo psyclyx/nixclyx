@@ -1,9 +1,6 @@
 {pkgs}:
 builtins.mapAttrs (_: x: pkgs.callPackage x {}) {
   print256colors = ./print256colors.nix;
-  ensure-key = ./ensure-key.nix;
-  sign-key = ./sign-key.nix;
-  pki = ./pki;
   river = ./river;
   tidepool = ./tidepool;
   "base24-gen" = ./base24-gen;
