@@ -35,7 +35,6 @@
 
       programs = {
         #glasgow.enable = true;
-        river.enable = true;
         steam.enable = true;
       };
 
@@ -53,8 +52,6 @@
         swap.swappiness = 5;
       };
     };
-
-    home-manager.users.psyc.psyclyx.home.programs.river.enable = true;
 
     stylix = {
       image = nixclyx.assets.wallpapers."4x-ppmm-mami.jpg";

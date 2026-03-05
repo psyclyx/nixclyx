@@ -25,6 +25,7 @@
         desktop.enable = true;
       };
       psyclyx.home.programs.nvf.enable = lib.mkDefault true;
+      psyclyx.home.programs.river.enable = lib.mkDefault true;
     };
 
     psyclyx.nixos = {
@@ -34,6 +35,7 @@
       network.dns.client.enable = true;
 
       programs = {
+        river.enable = lib.mkDefault true;
         sway.enable = lib.mkDefault true;
         qmk.enable = lib.mkDefault true;
       };
