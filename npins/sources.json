@@ -247,9 +247,9 @@
       },
       "branch": "main",
       "submodules": false,
-      "revision": "98fcedf6bfea70826feea17330fc3c5b40319948",
-      "url": "https://github.com/psyclyx/tidepool/archive/98fcedf6bfea70826feea17330fc3c5b40319948.tar.gz",
-      "hash": "sha256-iyTRdD9qRUIddNh9dmr/2mLzQfIEst1USF5rPprNnck="
+      "revision": "e680ac8d804ccc86ae276cbd35039e89daab2f7c",
+      "url": "https://github.com/psyclyx/tidepool/archive/e680ac8d804ccc86ae276cbd35039e89daab2f7c.tar.gz",
+      "hash": "sha256-UALuzJ/i8nCa4jEiExZnYshub0+pYajyT90Zn74gldI="
     },
     "zsh-pure": {
       "type": "Git",

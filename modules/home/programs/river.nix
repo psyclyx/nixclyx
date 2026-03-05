@@ -56,51 +56,56 @@
       esac
     '';
 
-    # Waybar tag/layout scripts using tidepoolmsg IPC.
-    # Each script runs a Janet expression that subscribes to state changes
-    # and formats output for waybar's custom module protocol (one line per update).
+    jq = lib.getExe pkgs.jq;
+
+    # Waybar tag/layout scripts using tidepoolmsg watch + jq.
     mkTagsScript = { outputX ? null, outputY ? null }: let
       outputFilter = if outputX != null
-        then ''(find |(and (= ($ :x) ${toString outputX}) (= ($ :y) ${toString outputY})) (s :outputs))''
-        else ''(find |($ :focused) (s :outputs))'';
+        then ''.outputs[] | select(.x == ${toString outputX} and .y == ${toString outputY})''
+        else ''.outputs[] | select(.focused)'';
+      fc-focused = "#${c.base07}";
+      oc-focused = "#${c.base05}";
+      ec-focused = "#${c.base03}";
+      fc-unfocused = "#${c.base05}";
+      oc-unfocused = "#${c.base04}";
+      ec-unfocused = "#${c.base02}";
     in pkgs.writeShellScript "waybar-tags" ''
-      exec ${tidepoolmsg} '(do
-        (def ch (ipc/subscribe :state))
-        (forever
-          (def s (ev/take ch))
-          (def o ${outputFilter})
-          (when o
-            (def focus-set @{})
-            (each t (o :tags) (put focus-set t true))
-            (def occupy-set @{})
-            (each t (s :occupied) (put occupy-set t true))
-            (def [fc oc ec]
-              (if (o :focused)
-                ["#${c.base07}" "#${c.base05}" "#${c.base03}"]
-                ["#${c.base05}" "#${c.base04}" "#${c.base02}"]))
-            (def parts @[])
-            (each i [1 2 3 4 5 6 7 8 9 10]
-              (def label (if (= i 10) "0" (string i)))
-              (cond
-                (focus-set i)
-                (array/push parts (string "<span color='\''" fc "'\'' weight='\'bold'\''>" label "</span>"))
-                (occupy-set i)
-                (array/push parts (string "<span color='\''" oc "'\''>" label "</span>"))
-                (array/push parts (string "<span color='\''" ec "'\''>" label "</span>"))))
-            (print (string/join parts " ")))))'
+      ${tidepoolmsg} watch tags | while IFS= read -r line; do
+        echo "$line" | ${jq} -rj '
+          (${outputFilter}) as $o |
+          if $o then
+            ($o.focused) as $foc |
+            (if $foc then ["${fc-focused}","${oc-focused}","${ec-focused}"]
+             else ["${fc-unfocused}","${oc-unfocused}","${ec-unfocused}"] end) as [$fc,$oc,$ec] |
+            (.occupied // []) as $occ |
+            [range(1;11)] | map(
+              . as $i |
+              (if $i == 10 then "0" else ($i | tostring) end) as $label |
+              if ($o.tags | index($i)) then
+                "<span color=\"" + $fc + "\" weight=\"bold\">" + $label + "</span>"
+              elif ($occ | index($i)) then
+                "<span color=\"" + $oc + "\">" + $label + "</span>"
+              else
+                "<span color=\"" + $ec + "\">" + $label + "</span>"
+              end
+            ) | join(" ")
+          else empty end
+        '
+        echo
+      done
     '';
 
     mkLayoutScript = { outputX ? null, outputY ? null }: let
       outputFilter = if outputX != null
-        then ''(find |(and (= ($ :x) ${toString outputX}) (= ($ :y) ${toString outputY})) (s :outputs))''
-        else ''(find |($ :focused) (s :outputs))'';
+        then ''.outputs[] | select(.x == ${toString outputX} and .y == ${toString outputY})''
+        else ''.outputs[] | select(.focused)'';
     in pkgs.writeShellScript "waybar-layout" ''
-      exec ${tidepoolmsg} '(do
-        (def ch (ipc/subscribe :state))
-        (forever
-          (def s (ev/take ch))
-          (def o ${outputFilter})
-          (when o (print (o :layout)))))'
+      ${tidepoolmsg} watch layout | while IFS= read -r line; do
+        echo "$line" | ${jq} -r '
+          (${outputFilter}) as $o |
+          if $o then $o.layout else empty end
+        '
+      done
     '';
 
     waybarModules = {
@@ -146,13 +151,13 @@
       modules-right = ["network" "backlight" "pulseaudio" "memory" "cpu" "battery" "tray"];
       "custom/tags" = {
         exec = tagsExec;
-        restart-interval = 5;
+        restart-interval = 2;
         format = "{}";
         tooltip = false;
       };
       "custom/layout" = {
         exec = layoutExec;
-        restart-interval = 5;
+        restart-interval = 2;
         format = "LAYOUT: {}";
       };
     } // waybarModules // extra;
@@ -327,10 +332,6 @@ ${lib.optionalString (monitors != {}) ''
         [:q {:mod4 true :shift true} (action/close)]
         [:e {:mod4 true :shift true} (action/exit)]
         [:r {:mod4 true :shift true} (fn [seat binding] (reload-config))]
-        [:r {:mod4 true :ctrl true :shift true}
-         (fn [seat binding]
-           (ipc/save-state)
-           (os/spawn ["systemctl" "--user" "restart" "tidepool.service"] :pd))]
 
         # Scratchpad
         [:grave {:mod4 true} (action/toggle-scratchpad)]
@@ -373,6 +374,7 @@ ${lib.optionalString (monitors != {}) ''
       pkgs.pulseaudio
       pkgs.grim
       pkgs.slurp
+      pkgs.jq
       pkgs.libnotify
       pkgs.wayland-logout
       power-menu
@@ -412,7 +414,7 @@ ${lib.optionalString (monitors != {}) ''
       };
       Service = {
         ExecStart = "${lib.getExe config.programs.waybar.package} -c ${waybarConfig} -s ${waybarCss}";
-        Restart = "on-failure";
+        Restart = "always";
         RestartSec = 2;
       };
       Install.WantedBy = ["graphical-session.target"];
