@@ -9,7 +9,7 @@
     home.packages = [
       pkgs.element-desktop
       pkgs.firefox-bin
-      pkgs.signal-desktop-bin
+      pkgs.signal-desktop
     ];
 
     psyclyx.home = {
