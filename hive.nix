@@ -35,6 +35,23 @@
     };
   };
 
+  glyph = {...}: {
+    imports = [
+      nixclyx.modules.nixos
+      "${nixclyx.sources.nixos-apple-silicon}/apple-silicon-support"
+    ];
+    config = {
+      psyclyx.nixos.host = "glyph";
+      deployment = {
+        tags = [
+          "workstation"
+          "laptop"
+        ];
+        allowLocalDeployment = true;
+      };
+    };
+  };
+
   iyr = {...}: {
     imports = [nixclyx.modules.nixos];
     config = {
