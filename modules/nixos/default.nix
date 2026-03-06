@@ -1,4 +1,4 @@
-{nixclyx}: _: let
+{nixclyx}: {lib, ...}: let
   inherit (nixclyx) modules sources loadFlake;
 in {
   imports =
@@ -6,11 +6,13 @@ in {
       "${sources.home-manager}/nixos"
       (loadFlake sources.stylix).nixosModules.stylix
       modules.common
+      "${sources.nixos-apple-silicon}/apple-silicon-support"
     ]
     ++ nixclyx.lib.fs.collectSpecs nixclyx.lib.modules.mkModule ./.;
 
   config = {
     _module.args.nixclyx = nixclyx;
     system.stateVersion = "25.11";
+    hardware.asahi.enable = lib.mkDefault false;
   };
 }

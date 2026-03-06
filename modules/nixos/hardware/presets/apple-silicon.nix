@@ -1,28 +1,17 @@
 {
   path = ["psyclyx" "nixos" "hardware" "presets" "apple-silicon"];
   description = "Apple Silicon (Asahi Linux)";
-  config = {
-    lib,
-    options,
-    ...
-  }:
-    lib.mkMerge [
-      {
-        nixpkgs.hostPlatform = "aarch64-linux";
+  config = {lib, ...}: {
+    nixpkgs.hostPlatform = "aarch64-linux";
 
-        boot.loader.efi.canTouchEfiVariables = lib.mkForce false;
+    hardware.asahi.enable = true;
 
-        boot.extraModprobeConfig = ''
-          options hid_apple iso_layout=0
-        '';
-      }
+    boot.loader.efi.canTouchEfiVariables = lib.mkForce false;
 
-      (lib.optionalAttrs (options ? hardware && options.hardware ? asahi) {
-        hardware.asahi.enable = true;
-      })
+    boot.extraModprobeConfig = ''
+      options hid_apple iso_layout=0
+    '';
 
-      (lib.optionalAttrs (options ? hardware && options.hardware ? apple) {
-        hardware.apple.touchBar.enable = true;
-      })
-    ];
+    hardware.apple.touchBar.enable = true;
+  };
 }

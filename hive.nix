@@ -36,10 +36,7 @@
   };
 
   glyph = {...}: {
-    imports = [
-      nixclyx.modules.nixos
-      "${nixclyx.sources.nixos-apple-silicon}/apple-silicon-support"
-    ];
+    imports = [nixclyx.modules.nixos];
     config = {
       psyclyx.nixos.host = "glyph";
       deployment = {
