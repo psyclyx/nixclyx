@@ -6,6 +6,7 @@ in {
       "${sources.home-manager}/nixos"
       (loadFlake sources.stylix).nixosModules.stylix
       modules.common
+      "${sources.nixos-apple-silicon}/apple-silicon-support"
     ]
     ++ nixclyx.lib.fs.collectSpecs nixclyx.lib.modules.mkModule ./.;
 
