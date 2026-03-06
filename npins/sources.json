@@ -134,6 +134,19 @@
       "url": "https://github.com/zhaofengli-wip/nix-homebrew/archive/a5409abd0d5013d79775d3419bcac10eacb9d8c5.tar.gz",
       "hash": "sha256-8d7KnCpT2LweRvSzZYEGd9IM3eFX+A78opcnDM0+ndk="
     },
+    "nixos-apple-silicon": {
+      "type": "Git",
+      "repository": {
+        "type": "GitHub",
+        "owner": "nix-community",
+        "repo": "nixos-apple-silicon"
+      },
+      "branch": "main",
+      "submodules": false,
+      "revision": "f76cf1b902f3ab2bc8cd0fab1c9aa87f740459be",
+      "url": "https://github.com/nix-community/nixos-apple-silicon/archive/f76cf1b902f3ab2bc8cd0fab1c9aa87f740459be.tar.gz",
+      "hash": "sha256-BAk4UlLaZ5KiDLVpODbOTHSei0KwK5h44T338s132ew="
+    },
     "nixpkgs": {
       "type": "Git",
       "repository": {
