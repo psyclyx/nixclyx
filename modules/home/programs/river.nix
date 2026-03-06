@@ -240,7 +240,6 @@
       (put config :default-layout :scroll)
       (put config :warp-pointer true)
       (put config :wallpaper "${config.services.tidepool.wallpaper}")
-      (put config :struts {:left 32 :right 32 :top 0 :bottom 0})
       (put config :column-row-height 1.0)
 ${lib.optionalString (monitors != {}) ''
       # Output configuration (applied at startup via zwlr_output_manager_v1)
