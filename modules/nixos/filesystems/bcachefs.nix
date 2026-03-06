@@ -12,6 +12,18 @@
     getDeviceUnit = {bindsTo ? [], ...}:
       lib.findFirst (lib.hasSuffix ".device") null bindsTo;
 
+    # Unescape a systemd device unit name back to a device path.
+    # e.g. "dev-disk-by\\x2dpartlabel-nvme0\\x2droot" -> "/dev/disk/by-partlabel/nvme0-root"
+    #
+    # Systemd escaping: "/" -> "-", literal "-" -> "\\x2d".
+    # Reverse: protect literal hyphens, convert separators, restore hyphens.
+    unescapeDevicePath = escaped: let
+      protected = builtins.replaceStrings ["\\x2d"] ["\x00"] escaped;
+      withSlashes = builtins.replaceStrings ["-"] ["/"] protected;
+      restored = builtins.replaceStrings ["\x00"] ["-"] withSlashes;
+    in
+      "/" + restored;
+
     bcachefsUnlockSubmodule = systemdPkg: {
       name,
       config,
@@ -22,13 +34,14 @@
           deviceUnit = getDeviceUnit config;
           escaped = lib.removeSuffix ".device" deviceUnit;
           targetName = "bcachefs-unlocked@${escaped}";
+          devicePath = unescapeDevicePath escaped;
         in
           lib.mkIf (deviceUnit != null) {
             conflicts = ["${targetName}.target"];
             unitConfig.OnSuccess = ["${targetName}.target"];
-            serviceConfig.ExecCondition = lib.mkForce ''
-              !${pkgs.bcachefs-tools}/bin/bcachefs mount -k fail "$(${systemdPkg}/bin/systemd-escape --unescape --path "${escaped}")"
-            '';
+            serviceConfig.KeyringMode = "inherit";
+            serviceConfig.ExecCondition = lib.mkForce
+              "!${pkgs.bcachefs-tools}/bin/bcachefs mount -k fail ${lib.escapeShellArg devicePath}";
           }
       );
     };
