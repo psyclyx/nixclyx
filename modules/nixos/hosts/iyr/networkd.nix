@@ -8,14 +8,6 @@
   dt = topo.enriched;
   conventions = topo.conventions;
 
-  thisHost = topo.hosts.iyr;
-
-  natRules = lib.mapAttrsToList (netName: natPrefix: let
-    realPrefix = topo.networks.${netName}.ipv4;
-  in {
-    inherit natPrefix realPrefix;
-  }) (thisHost.nat or {});
-
   transitVlan = conventions.transitVlan;
   vlanIds = dt.dhcpVlans ++ [transitVlan];
 
@@ -239,61 +231,73 @@ in {
       "connection_active_thr_kbps=5000"
     ];
 
-    networking.firewall = {
+    networking.firewall.enable = false;
+    networking.nftables = {
       enable = true;
-      trustedInterfaces =
-        ["bond0"]
-        ++ map (id: "bond0.${toString id}") dt.dhcpVlans;
-
-      extraCommands = let
+      checkRuleset = false; # interfaces don't exist in the build sandbox
+      ruleset = let
         wan = vlanIface transitVlan;
         vpnPort = toString topo.wireguard.port;
+        internalIfaces = lib.concatMapStringsSep ", " (i: ''"${i}"'')
+          (["bond0"] ++ map (id: "bond0.${toString id}") dt.dhcpVlans);
       in ''
-        # Lockdown WAN interface (${wan}): drop unsolicited inbound except
-        # DHCP, ICMP, and WireGuard. Services that open firewall ports
-        # globally (SSH, prometheus, etc.) won't be reachable from WAN.
-        iptables -N nixos-fw-wan 2>/dev/null || iptables -F nixos-fw-wan
-        iptables -A nixos-fw-wan -p icmp -j RETURN
-        iptables -A nixos-fw-wan -p udp --sport 67 --dport 68 -j RETURN
-        iptables -A nixos-fw-wan -p udp --dport ${vpnPort} -j RETURN
-        iptables -A nixos-fw-wan -j DROP
-        iptables -I nixos-fw -i ${wan} -m conntrack --ctstate NEW -j nixos-fw-wan
+        define INTERNAL = { ${internalIfaces} }
 
-        ip6tables -N nixos-fw-wan 2>/dev/null || ip6tables -F nixos-fw-wan
-        ip6tables -A nixos-fw-wan -p icmpv6 -j RETURN
-        ip6tables -A nixos-fw-wan -p udp --dport 546 -j RETURN
-        ip6tables -A nixos-fw-wan -p udp --dport ${vpnPort} -j RETURN
-        ip6tables -A nixos-fw-wan -j DROP
-        ip6tables -I nixos-fw -i ${wan} -m conntrack --ctstate NEW -j nixos-fw-wan
+        table inet filter {
+          chain input {
+            type filter hook input priority 0; policy drop;
+
+            iif lo accept
+            iifname $INTERNAL accept
+            iifname "wg0" accept
+            iifname "tailscale0" accept
+
+            ct state established,related accept
+            ct state invalid drop
+
+            ip protocol icmp accept
+            ip6 nexthdr icmpv6 accept
+
+            # WAN (${wan}): DHCP + WireGuard only
+            iifname "${wan}" udp sport 67 udp dport 68 accept
+            iifname "${wan}" udp dport 546 accept
+            iifname "${wan}" udp dport ${vpnPort} accept
+          }
+
+          chain forward {
+            type filter hook forward priority 0; policy drop;
+
+            ct state established,related accept
+            ct state invalid drop
+
+            # Internal → WAN (internet, NATed)
+            iifname $INTERNAL oifname "${wan}" accept
+
+            # Internal ↔ wg0
+            iifname $INTERNAL oifname "wg0" accept
+            iifname "wg0" oifname $INTERNAL accept
+
+            # wg0 ↔ wg0 (VPN peers reach each other)
+            iifname "wg0" oifname "wg0" accept
+
+            # Inter-VLAN (all internal trusted)
+            iifname $INTERNAL oifname $INTERNAL accept
+          }
+
+          chain output {
+            type filter hook output priority 0; policy accept;
+          }
+        }
+
+        table ip nat {
+          chain postrouting {
+            type nat hook postrouting priority 100; policy accept;
+
+            # Masquerade internal → WAN
+            iifname $INTERNAL oifname "${wan}" masquerade
+          }
+        }
       '';
-
-      extraStopCommands = let
-        wan = vlanIface transitVlan;
-      in ''
-        iptables -D nixos-fw -i ${wan} -m conntrack --ctstate NEW -j nixos-fw-wan 2>/dev/null || true
-        iptables -F nixos-fw-wan 2>/dev/null || true
-        iptables -X nixos-fw-wan 2>/dev/null || true
-
-        ip6tables -D nixos-fw -i ${wan} -m conntrack --ctstate NEW -j nixos-fw-wan 2>/dev/null || true
-        ip6tables -F nixos-fw-wan 2>/dev/null || true
-        ip6tables -X nixos-fw-wan 2>/dev/null || true
-      '';
-    };
-
-    networking.nat = {
-      enable = true;
-      externalInterface = "bond0.${toString transitVlan}";
-      internalInterfaces = map (id: "bond0.${toString id}") dt.dhcpVlans;
-
-      extraCommands = lib.concatMapStringsSep "\n" (r: ''
-        iptables -t nat -A PREROUTING -d ${r.natPrefix} -j NETMAP --to ${r.realPrefix}
-        iptables -t nat -A POSTROUTING -s ${r.realPrefix} -o wg0 -j NETMAP --to ${r.natPrefix}
-      '') natRules;
-
-      extraStopCommands = lib.concatMapStringsSep "\n" (r: ''
-        iptables -t nat -D PREROUTING -d ${r.natPrefix} -j NETMAP --to ${r.realPrefix} || true
-        iptables -t nat -D POSTROUTING -s ${r.realPrefix} -o wg0 -j NETMAP --to ${r.natPrefix} || true
-      '') natRules;
     };
 
     boot.kernel.sysctl."net.ipv4.ip_forward" = 1;

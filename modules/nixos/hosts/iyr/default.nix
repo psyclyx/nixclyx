@@ -15,12 +15,8 @@
   in {
     networking.hostName = "iyr";
 
-    # WireGuard extras (topology module handles base wg0 config)
-    networking.firewall.trustedInterfaces = ["wg0"];
-
-    # Restrict metrics to VPN interface only.  Internal VLANs are trusted
-    # (bypass iptables entirely), so openFirewall alone is not sufficient —
-    # binding to the WireGuard address is the actual enforcement point.
+    # Restrict metrics to VPN interface only.  Binding to the WireGuard
+    # address is the actual enforcement point.
     services.prometheus.exporters.node.listenAddress = topo.hosts.iyr.addresses.vpn.ipv4;
     services.prometheus.exporters.smartctl.listenAddress = topo.hosts.iyr.addresses.vpn.ipv4;
     # SNMP exporter is only queried by the local prometheus instance.
