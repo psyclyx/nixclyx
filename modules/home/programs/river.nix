@@ -344,8 +344,8 @@ ${lib.optionalString (monitors != {}) ''
         [:XF86AudioRaiseVolume {} (action/spawn ["pactl" "set-sink-volume" "@DEFAULT_SINK@" "+5%"])]
         [:XF86AudioLowerVolume {} (action/spawn ["pactl" "set-sink-volume" "@DEFAULT_SINK@" "-5%"])]
         [:XF86AudioMute {} (action/spawn ["pactl" "set-sink-mute" "@DEFAULT_SINK@" "toggle"])]
-        [:XF86MonBrightnessUp {} (action/spawn ["light" "-A" "10"])]
-        [:XF86MonBrightnessDown {} (action/spawn ["light" "-U" "10"])])
+        [:XF86MonBrightnessUp {} (action/spawn ["brightnessctl" "set" "+10%"])]
+        [:XF86MonBrightnessDown {} (action/spawn ["brightnessctl" "set" "10%-"])])
 
       # Tag keybindings (1-9 → tags 1-9, 0 → tag 10)
       (for i 1 10
@@ -371,6 +371,7 @@ ${lib.optionalString (monitors != {}) ''
     '';
   in {
     home.packages = [
+      pkgs.brightnessctl
       pkgs.pulseaudio
       pkgs.grim
       pkgs.slurp

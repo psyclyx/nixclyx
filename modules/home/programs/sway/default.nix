@@ -14,6 +14,7 @@
     monitors = config.psyclyx.home.hardware.monitors;
   in {
     home.packages = with pkgs; [
+      brightnessctl
       pulseaudio
     ];
 
