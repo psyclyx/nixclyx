@@ -1,14 +1,14 @@
 {
   path = ["psyclyx" "nixos" "boot" "systemd" "loader"];
   description = "systemd-boot";
-  config = _: {
+  config = {lib, ...}: {
     boot = {
       loader = {
         efi.canTouchEfiVariables = true;
         systemd-boot = {
           enable = true;
           configurationLimit = 8;
-          consoleMode = "max";
+          consoleMode = lib.mkDefault "max";
         };
 
         timeout = 1;
