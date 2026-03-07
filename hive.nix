@@ -45,6 +45,8 @@
           "laptop"
         ];
         allowLocalDeployment = true;
+        targetHost = "10.1.0.240";
+        targetUser = "root";
       };
     };
   };
