@@ -71,7 +71,7 @@
       ec-unfocused = "#${c.base02}";
     in pkgs.writeShellScript "waybar-tags" ''
       ${tidepoolmsg} watch tags | while IFS= read -r line; do
-        echo "$line" | ${jq} -rj '
+        echo "$line" | ${jq} -r '
           (${outputFilter}) as $o |
           if $o then
             ($o.focused) as $foc |
@@ -91,7 +91,6 @@
             ) | join(" ")
           else empty end
         '
-        echo
       done
     '';
 
