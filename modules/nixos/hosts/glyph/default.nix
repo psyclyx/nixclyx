@@ -17,6 +17,7 @@
 
       services = {
         fstrim.enable = true;
+        kanata.enable = true;
         resolved.enable = true;
       };
 
