@@ -80,7 +80,16 @@
           }
 
           chain forward {
-            type filter hook forward priority 0; policy accept;
+            type filter hook forward priority 0; policy drop;
+
+            ct state established,related accept
+            ct state invalid drop
+
+            # VPN peers can reach each other and exported subnets
+            iifname "wg0" oifname "wg0" accept
+
+            # VPN peers can reach the internet (NATed via postrouting)
+            iifname "wg0" oifname "bond0" accept
           }
 
           chain output {
