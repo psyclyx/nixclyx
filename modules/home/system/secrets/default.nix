@@ -19,12 +19,9 @@
     home = config.home.homeDirectory;
     isDarwin = pkgs.stdenv.hostPlatform.isDarwin;
   in {
-    home.packages =
-      [
-        pkgs.bitwarden-cli
-        pkgs.rbw
-      ]
-      ++ lib.optionals config.psyclyx.home.programs.fuzzel.enable [pkgs.rofi-rbw];
+    home.packages = [
+      pkgs.bitwarden-cli
+    ];
 
     sops.age.keyFile =
       if isDarwin

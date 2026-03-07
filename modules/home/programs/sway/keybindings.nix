@@ -11,6 +11,7 @@
   power-menu = lib.getExe menus.power-menu;
   screenshot-menu = lib.getExe menus.screenshot-menu;
 
+  rofi-rbw = lib.getExe pkgs.rofi-rbw-wayland;
   browser = "firefox";
   terminal = "xdg-terminal-exec";
 
@@ -96,6 +97,7 @@
 
     "${leaderKey}+s" = "exec ${screenshot-menu}";
 
+    "${leaderKey}+p" = "exec ${rofi-rbw}";
     "${leaderKey}+u" = "exec ${browser}";
     "${leaderKey}+i" = "exec ${terminal}";
   };

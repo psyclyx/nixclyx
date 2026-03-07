@@ -12,6 +12,7 @@
     opacity = builtins.toString config.stylix.opacity.desktop;
 
     fuzzel = lib.getExe config.programs.fuzzel.package;
+    rofi-rbw = lib.getExe pkgs.rofi-rbw-wayland;
     swaylock = lib.getExe config.programs.swaylock.package;
     grim = lib.getExe pkgs.grim;
     notify-send = lib.getExe' pkgs.libnotify "notify-send";
@@ -317,6 +318,7 @@ ${lib.optionalString (monitors != {}) ''
         [:u {:mod4 true} (action/spawn ["uwsm" "app" "--" "firefox"])]
         [:x {:mod4 true} (action/spawn ["uwsm" "app" "--" "${lib.getExe power-menu}"])]
         [:s {:mod4 true} (action/spawn ["uwsm" "app" "--" "${lib.getExe screenshot-menu}"])]
+        [:p {:mod4 true} (action/spawn ["uwsm" "app" "--" "${rofi-rbw}"])]
 
         # Layout cycling
         [:Tab {:mod4 true} (action/cycle-layout :next)]
