@@ -32,6 +32,12 @@
         neededForBoot = true;
       };
 
+      "/home/psyc" = {
+        device = "/dev/disk/by-partlabel/nvme0-root";
+        fsType = "bcachefs";
+        options = ["X-mount.subdir=subvolumes/home_psyc/@live"];
+      };
+
       "/root" = {
         device = "/dev/disk/by-partlabel/nvme0-root";
         fsType = "bcachefs";
