@@ -83,6 +83,7 @@
         directories = [
           "/var/lib/nixos"
           "/var/lib/systemd"
+          {directory = "/etc/secrets/wireguard"; mode = "0700";}
         ];
         files = [
           {file = "/etc/machine-id"; inInitrd = true;}
