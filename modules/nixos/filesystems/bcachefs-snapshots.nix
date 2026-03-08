@@ -75,6 +75,7 @@
           ExecStart = let
             script = pkgs.writeShellScript "bcachefs-snapshot-${name}" ''
               set -euo pipefail
+              export PATH=${lib.makeBinPath [pkgs.util-linux pkgs.coreutils pkgs.bcachefs-tools]}:$PATH
               mnt=$(mktemp -d /run/bcachefs-snapshot-${name}.XXXXXX)
               mount -t bcachefs ${lib.escapeShellArg target.device} "$mnt"
 
