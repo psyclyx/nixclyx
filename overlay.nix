@@ -17,6 +17,10 @@ in
       pythonPackagesExtensions = prev.pythonPackagesExtensions ++ [(pyFinal: pyPrev: {
         python-etcd = pyPrev.python-etcd.overridePythonAttrs { doCheck = false; };
       })];
+      # __multf3 (128-bit float multiply) missing on aarch64 — link libgcc_s
+      pam_ssh_agent_auth = prev.pam_ssh_agent_auth.overrideAttrs (old: prev.lib.optionalAttrs prev.stdenv.hostPlatform.isAarch64 {
+        buildInputs = (old.buildInputs or []) ++ [prev.stdenv.cc.cc.lib];
+      });
       bitwig-studio4 = prev.bitwig-studio4.overrideAttrs (old: rec {
         version = "4.1.6";
         src = prev.fetchurl {

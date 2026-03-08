@@ -54,6 +54,11 @@
   }: let
     pruneScript = import ../../../lib/bcachefs-prune.nix {inherit lib;};
   in {
+    # preservation bind-mounts /etc/machine-id from /persist, making it a
+    # mount point. This triggers systemd-machine-id-commit which then fails
+    # because the mount isn't tmpfs. The machine-id is already persistent.
+    systemd.services.systemd-machine-id-commit.enable = false;
+
     boot.initrd.systemd.services.impermanence-root-rollback = {
       description = "Roll back root to blank bcachefs snapshot";
       wantedBy = ["initrd.target"];

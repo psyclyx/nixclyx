@@ -64,6 +64,7 @@
 
             iif lo accept
             iif wg0 accept
+            iif "veth-mv0" accept
 
             ct state established,related accept
             ct state invalid drop
