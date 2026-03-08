@@ -86,10 +86,10 @@
         ];
         files = [
           {file = "/etc/machine-id"; inInitrd = true;}
-          "/etc/ssh/ssh_host_ed25519_key"
-          "/etc/ssh/ssh_host_ed25519_key.pub"
-          "/etc/ssh/ssh_host_rsa_key"
-          "/etc/ssh/ssh_host_rsa_key.pub"
+          {file = "/etc/ssh/ssh_host_ed25519_key"; inInitrd = true;}
+          {file = "/etc/ssh/ssh_host_ed25519_key.pub"; inInitrd = true;}
+          {file = "/etc/ssh/ssh_host_rsa_key"; inInitrd = true;}
+          {file = "/etc/ssh/ssh_host_rsa_key.pub"; inInitrd = true;}
         ];
       };
     };
