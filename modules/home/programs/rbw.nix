@@ -9,7 +9,6 @@
   }: {
     email = lib.mkOption {
       type = lib.types.str;
-      default = config.psyclyx.home.info.email;
       description = "Email address for Bitwarden account";
     };
     pinentry = lib.mkOption {
@@ -21,9 +20,11 @@
   config = {
     cfg,
     config,
+    lib,
     pkgs,
     ...
   }: {
+    psyclyx.home.programs.rbw.email = lib.mkDefault config.psyclyx.home.info.email;
     programs.rbw = {
       enable = true;
       settings = {
