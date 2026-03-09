@@ -13,10 +13,12 @@
     tsCfg = config.services.tailscale;
   in {
     environment.systemPackages = [pkgs.tailscale];
-    networking.firewall.trustedInterfaces = [tsCfg.interfaceName];
+    psyclyx.nixos.network = {
+      firewall.trustedInterfaces = [tsCfg.interfaceName];
+      ports.tailscale = {udp = [tsCfg.port];};
+    };
     services.tailscale = {
       enable = true;
-      openFirewall = true;
       useRoutingFeatures =
         if cfg.exitNode
         then "both"

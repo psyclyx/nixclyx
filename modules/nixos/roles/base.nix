@@ -29,6 +29,7 @@
         };
 
         network = {
+          firewall.enable = lib.mkDefault true;
           networkd.enable = true;
         };
 

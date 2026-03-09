@@ -166,12 +166,9 @@ in {
     };
 
     # Firewall: VRRP protocol + HA service ports + stats port.
-    networking.firewall.extraCommands = ''
-      iptables -A nixos-fw -p vrrp -j nixos-fw-accept
-    '';
-    networking.firewall.extraStopCommands = ''
-      iptables -D nixos-fw -p vrrp -j nixos-fw-accept 2>/dev/null || true
-    '';
+    psyclyx.nixos.network.firewall.input = [
+      {"ip protocol" = "vrrp";}
+    ];
     psyclyx.nixos.network.ports.haproxy = allServicePorts ++ [9101];
   };
 }
