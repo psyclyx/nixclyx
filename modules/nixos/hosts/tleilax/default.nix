@@ -8,23 +8,7 @@
     pkgs,
     nixclyx,
     ...
-  }: let
-    acmeHook = pkgs.writeShellScript "acme-dns-hook" ''
-      action="$1"
-      value="$3"
-      ACME_FILE="/var/lib/nsd/dynamic/psyclyx.net.acme"
-      case "$action" in
-        present)
-          echo "_acme-challenge IN TXT \"$value\"" >> "$ACME_FILE"
-          ${pkgs.nsd}/bin/nsd-control reload psyclyx.net
-          ;;
-        cleanup)
-          : > "$ACME_FILE"
-          ${pkgs.nsd}/bin/nsd-control reload psyclyx.net
-          ;;
-      esac
-    '';
-  in {
+  }: {
     networking.hostName = "tleilax";
 
     # WireGuard extras (topology module handles base wg0 config)
@@ -74,15 +58,15 @@
             ns = "199.255.18.171";
             interfaces = ["199.255.18.171" "2606:7940:32:26::10"];
             port = 53;
+            tsigKeyName = "acme-tleilax";
             zones = {
               "psyclyx.xyz" = {
                 ttl = 3600;
-                extraRecords = ''
-                  vpn    IN A     199.255.18.171
-                '';
+                ddns = true;
               };
               "psyclyx.net" = {
                 ttl = 3600;
+                ddns = true;
               };
             };
           };
@@ -142,32 +126,21 @@
       };
     };
 
-    # NSD remote control for ACME DNS hook
-    services.nsd.remoteControl.enable = true;
-
-    # Generate remote control TLS certs if missing (NSD module doesn't auto-generate),
-    # then inject ACME $INCLUDE after upstream preStart copies zone files from the store
-    # (can't be in zone data directly — nsd-checkzone runs at build time in the sandbox)
-    systemd.services.nsd.serviceConfig.WorkingDirectory = "/";
-    systemd.services.nsd.serviceConfig.StateDirectoryMode = "0751";
-    systemd.services.nsd.preStart = lib.mkMerge [
-      (lib.mkBefore ''
-        if [ ! -f /etc/nsd/nsd_server.pem ]; then
-          PATH="${pkgs.openssl}/bin:$PATH" ${pkgs.nsd}/bin/nsd-control-setup
-        fi
-      '')
-      (lib.mkAfter ''
-        echo '$INCLUDE /dynamic/psyclyx.net.acme' >> /var/lib/nsd/zones/psyclyx.net
-      '')
-    ];
-
-    # Grant acme user access to NSD control + server certs
-    systemd.services.nsd.serviceConfig.ExecStartPost = let
-      script = pkgs.writeShellScript "nsd-control-acme-perms" ''
-        chgrp acme /etc/nsd/nsd_control.key /etc/nsd/nsd_control.pem /etc/nsd/nsd_server.pem
-        chmod g+r /etc/nsd/nsd_control.key /etc/nsd/nsd_control.pem /etc/nsd/nsd_server.pem
-      '';
-    in ["+${script}"];
+    # ACME wildcard cert for *.psyclyx.net via DNS-01 (RFC 2136 → Knot)
+    security.acme.certs."psyclyx.net" = let
+      authCfg = config.psyclyx.nixos.network.dns.authoritative;
+    in {
+      domain = "psyclyx.net";
+      extraDomainNames = ["*.psyclyx.net"];
+      dnsProvider = "rfc2136";
+      credentialFiles = {
+        "RFC2136_NAMESERVER_FILE" = pkgs.writeText "rfc2136-ns" "${builtins.head authCfg.interfaces}:${toString authCfg.port}";
+        "RFC2136_TSIG_ALGORITHM_FILE" = pkgs.writeText "rfc2136-algo" "hmac-sha256.";
+        "RFC2136_TSIG_KEY_FILE" = pkgs.writeText "rfc2136-keyname" authCfg.tsigKeyName;
+        "RFC2136_TSIG_SECRET_FILE" = authCfg.tsigSecretFile;
+      };
+      group = "nginx";
+    };
 
     # Internal metrics vhost (bypasses psyclyx nginx module — needs DNS-01 cert)
     services.nginx.virtualHosts."metrics.psyclyx.net" = {
@@ -186,25 +159,5 @@
       ];
       locations."/".proxyPass = "http://127.0.0.1:2134";
     };
-
-    # ACME wildcard cert for *.psyclyx.net via DNS-01
-    security.acme.certs."psyclyx.net" = {
-      domain = "psyclyx.net";
-      extraDomainNames = ["*.psyclyx.net"];
-      dnsProvider = "exec";
-      credentialFiles."EXEC_PATH_FILE" = pkgs.writeText "acme-exec-path" "${acmeHook}";
-      group = "nginx";
-    };
-
-    # Allow ACME renewal service to write challenge records into NSD zone
-    systemd.services."acme-order-renew-psyclyx.net".serviceConfig.ReadWritePaths = ["/var/lib/nsd/dynamic"];
-
-    # Ensure ACME challenge file exists for NSD $INCLUDE
-    # /var/lib/nsd needs o+x so the acme user can traverse to /dynamic/
-    systemd.tmpfiles.rules = [
-      "d /var/lib/nsd 0751 nsd nsd -"
-      "d /var/lib/nsd/dynamic 0775 nsd acme -"
-      "f /var/lib/nsd/dynamic/psyclyx.net.acme 0664 acme nsd -"
-    ];
   };
 }
