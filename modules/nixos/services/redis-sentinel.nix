@@ -157,9 +157,6 @@
         '';
       };
 
-      networking.firewall.allowedTCPPorts = [
-        cfg.redisPort
-        cfg.sentinelPort
-      ];
+      psyclyx.nixos.network.ports.redis = [cfg.redisPort cfg.sentinelPort];
     };
 }

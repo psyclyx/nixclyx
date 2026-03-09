@@ -1,22 +1,15 @@
 {
   path = ["psyclyx" "nixos" "services" "home-assistant"];
   description = "Enables Home Assistant, with @psyclyx's config";
-  extraOptions = {lib, ...}: {
-    psyclyx.nixos.network.ports.home-assistant = lib.mkOption {
-      type = lib.types.port;
-      default = 8123;
-    };
-  };
-  config = {config, ...}: let
-    port = config.psyclyx.nixos.network.ports.home-assistant;
-  in {
-    networking.firewall.allowedTCPPorts = [port];
+  config = {config, lib, ...}: {
+    psyclyx.nixos.network.ports.home-assistant = lib.mkDefault 8123;
+
     services = {
       home-assistant = {
         enable = true;
         config = {
           default_config = {};
-          http.server_port = port;
+          http.server_port = builtins.head config.psyclyx.nixos.network.ports.home-assistant.tcp;
         };
 
         extraComponents = [

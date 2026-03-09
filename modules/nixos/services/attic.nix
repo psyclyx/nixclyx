@@ -296,6 +296,6 @@ TOML
       '';
     };
 
-    networking.firewall.allowedTCPPorts = [cfg.port];
+    psyclyx.nixos.network.ports.attic = cfg.port;
   };
 }

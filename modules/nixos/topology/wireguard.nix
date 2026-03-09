@@ -26,7 +26,7 @@
     else "vpn.${topo.domains.public}:${toString topo.wireguard.port}";
 in {
   config = lib.mkIf hasWg {
-    networking.firewall.allowedUDPPorts = [topo.wireguard.port];
+    psyclyx.nixos.network.ports.wireguard = {udp = [topo.wireguard.port];};
 
     systemd.network = {
       netdevs."30-wg0" = {

@@ -19,13 +19,6 @@
       '';
     };
   };
-  extraOptions = {lib, ...}: {
-    psyclyx.nixos.network.ports.ssh = lib.mkOption {
-      type = lib.types.listOf lib.types.port;
-      default = [22];
-      description = "Ports for OpenSSH to listen on.";
-    };
-  };
   config = {
     cfg,
     config,
@@ -33,6 +26,8 @@
     nixclyx,
     ...
   }: {
+    psyclyx.nixos.network.ports.ssh = lib.mkDefault [22];
+
     security.pam.sshAgentAuth.enable = lib.mkIf cfg.agentAuth.enable cfg.agentAuth.enable;
 
     psyclyx.nixos.services.openssh.authPrincipals = {
@@ -42,7 +37,7 @@
 
     services.openssh = {
       enable = true;
-      ports = config.psyclyx.nixos.network.ports.ssh;
+      ports = config.psyclyx.nixos.network.ports.ssh.tcp;
       hostKeys = [
         {
           type = "ed25519";

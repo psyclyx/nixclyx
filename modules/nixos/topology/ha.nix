@@ -172,6 +172,6 @@ in {
     networking.firewall.extraStopCommands = ''
       iptables -D nixos-fw -p vrrp -j nixos-fw-accept 2>/dev/null || true
     '';
-    networking.firewall.allowedTCPPorts = allServicePorts ++ [9101];
+    psyclyx.nixos.network.ports.haproxy = allServicePorts ++ [9101];
   };
 }

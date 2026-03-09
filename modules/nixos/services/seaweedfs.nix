@@ -340,7 +340,7 @@
       '';
     };
 
-    networking.firewall.allowedTCPPorts =
+    psyclyx.nixos.network.ports.seaweedfs =
       [cfg.volume.port volumeGrpcPort cfg.filer.port filerGrpcPort]
       ++ lib.optionals isMaster [cfg.master.port masterGrpcPort]
       ++ lib.optional cfg.s3.enable cfg.s3.port

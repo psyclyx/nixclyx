@@ -235,9 +235,6 @@
         '';
       };
 
-      networking.firewall.allowedTCPPorts = [
-        cfg.port
-        cfg.restApiPort
-      ];
+      psyclyx.nixos.network.ports.patroni = [cfg.port cfg.restApiPort];
     };
 }

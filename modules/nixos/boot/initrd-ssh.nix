@@ -33,18 +33,14 @@
       };
     };
   };
-  extraOptions = {lib, ...}: {
-    psyclyx.nixos.network.ports.initrd-ssh = lib.mkOption {
-      type = lib.types.port;
-      default = 8022;
-      description = "SSH port to listen on in initrd";
-    };
-  };
   config = {
     cfg,
     config,
+    lib,
     ...
   }: {
+    psyclyx.nixos.network.ports.initrd-ssh = lib.mkDefault 8022;
+
     psyclyx.nixos.boot.initrd-ssh.authorizedKeys = config.users.users.root.openssh.authorizedKeys.keys;
     boot.initrd = {
       kernelModules = cfg.network.kernelModules;
@@ -57,7 +53,7 @@
         enable = true;
         authorizedKeys = cfg.authorizedKeys;
         hostKeys = cfg.hostKeyPaths;
-        port = config.psyclyx.nixos.network.ports.initrd-ssh;
+        port = builtins.head config.psyclyx.nixos.network.ports.initrd-ssh.tcp;
       };
     };
   };

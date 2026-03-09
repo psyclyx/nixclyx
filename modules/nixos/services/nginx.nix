@@ -48,7 +48,7 @@
   }: let
     domains = builtins.attrNames cfg.virtualHosts;
   in {
-    networking.firewall.allowedTCPPorts = [80 443];
+    psyclyx.nixos.network.ports.nginx = [80 443];
 
     security.acme = {
       acceptTerms = true;

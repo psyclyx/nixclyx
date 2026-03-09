@@ -40,9 +40,6 @@
     };
 
     # Open firewall for public DNS
-    networking.firewall = lib.mkIf (cfg.port == 53) {
-      allowedTCPPorts = [53];
-      allowedUDPPorts = [53];
-    };
+    psyclyx.nixos.network.ports.dns = lib.mkIf (cfg.port == 53) {tcp = [53]; udp = [53];};
   };
 }
