@@ -17,7 +17,9 @@ writeShellApplication {
 
     echo "Authenticating to iLO 4 at ''${ILO_HOST}..."
     session_key=$(
-      curl -fsS --insecure "''${base}/json/login_session" \
+      curl -fsS --insecure \
+        --tls-max 1.2 --tlsv1 \
+        "''${base}/json/login_session" \
         --data "{\"method\":\"login\",\"user_login\":\"''${ILO_USER}\",\"password\":\"''${ILO_PASSWORD}\"}" |
         sed 's/.*"session_key":"\([a-f0-9]\{32\}\)".*/\1/'
     ) || die "authentication failed"
@@ -28,11 +30,14 @@ writeShellApplication {
     security_override=$(mktemp --suffix=.security)
     trap 'rm -f "$jnlp" "$security_override"' EXIT
 
-    # Re-enable legacy TLS for iLO 4 — Java 8u292+ blacklists TLSv1/TLSv1.1
-    # in jdk.tls.disabledAlgorithms which overrides jdk.tls.client.protocols.
+    # Re-enable legacy TLS + ciphers for iLO 4.
+    # OpenJDK 8u292+ disables TLSv1/TLSv1.1; 8u351+ disables 3DES_EDE_CBC;
+    # 8u401+ disables ECDH. iLO4 needs some combination of these.
+    # Also re-enable MD5 JAR signatures — iLO4 applet JARs use MD5.
     cat >"$security_override" <<'SECPROPS'
     jdk.tls.disabledAlgorithms=SSLv3, RC4, DES, MD5withRSA, \
         DH keySize < 1024, EC keySize < 224, anon, NULL
+    jdk.jar.disabledAlgorithms=MD2
     SECPROPS
 
     cat >"$jnlp" <<JNLP
@@ -65,6 +70,7 @@ writeShellApplication {
     javaws -Xnofork \
       -J-Djava.security.properties="$security_override" \
       -J-Djdk.tls.client.protocols=TLSv1,TLSv1.1,TLSv1.2 \
+      -J-Dhttps.protocols=TLSv1,TLSv1.1,TLSv1.2 \
       "$jnlp"
   '';
 }
