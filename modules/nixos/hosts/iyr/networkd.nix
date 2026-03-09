@@ -231,77 +231,28 @@ in {
       "connection_active_thr_kbps=5000"
     ];
 
-    networking.firewall.enable = false;
-    networking.nftables = {
+    psyclyx.nixos.network.firewall = let
+      wan = vlanIface transitVlan;
+      internal = ["bond0"] ++ map (id: "bond0.${toString id}") dt.dhcpVlans;
+    in {
       enable = true;
-      checkRuleset = false; # interfaces don't exist in the build sandbox
-      ruleset = let
-        wan = vlanIface transitVlan;
-        vpnPort = toString topo.wireguard.port;
-        internalIfaces = lib.concatMapStringsSep ", " (i: ''"${i}"'')
-          (["bond0"] ++ map (id: "bond0.${toString id}") dt.dhcpVlans);
-      in ''
-        define INTERNAL = { ${internalIfaces} }
-
-        table inet filter {
-          chain input {
-            type filter hook input priority 0; policy drop;
-
-            iif lo accept
-            iifname $INTERNAL accept
-            iifname "wg0" accept
-            iifname "tailscale0" accept
-
-            ct state established,related accept
-            ct state invalid drop
-
-            ip protocol icmp accept
-            ip6 nexthdr icmpv6 accept
-
-            # WAN (${wan}): DHCP + WireGuard only
-            iifname "${wan}" udp sport 67 udp dport 68 accept
-            iifname "${wan}" udp dport 546 accept
-            iifname "${wan}" udp dport ${vpnPort} accept
-          }
-
-          chain forward {
-            type filter hook forward priority 0; policy drop;
-
-            ct state established,related accept
-            ct state invalid drop
-
-            # Internal → WAN (internet, NATed)
-            iifname $INTERNAL oifname "${wan}" accept
-
-            # Internal ↔ wg0
-            iifname $INTERNAL oifname "wg0" accept
-            iifname "wg0" oifname $INTERNAL accept
-
-            # wg0 ↔ wg0 (VPN peers reach each other)
-            iifname "wg0" oifname "wg0" accept
-
-            # Inter-VLAN (all internal trusted)
-            iifname $INTERNAL oifname $INTERNAL accept
-          }
-
-          chain output {
-            type filter hook output priority 0; policy accept;
-          }
-        }
-
-        table ip nat {
-          chain postrouting {
-            type nat hook postrouting priority 100; policy accept;
-
-            # Masquerade internal → WAN
-            iifname $INTERNAL oifname "${wan}" masquerade
-          }
-        }
+      trustedInterfaces = internal ++ ["wg0" "tailscale0"];
+      allowedUDPPorts = config.psyclyx.nixos.network.ports.wireguard.udp;
+      forwardRules = [
+        {from = internal; to = [wan];}
+        {from = internal; to = ["wg0"];}
+        {from = ["wg0"]; to = internal;}
+        {from = ["wg0"]; to = ["wg0"];}
+        {from = internal; to = internal;}
+      ];
+      masqueradeRules = [
+        {from = internal; to = [wan];}
+      ];
+      inputRules = ''
+        iifname "${wan}" udp sport 67 udp dport 68 accept
+        iifname "${wan}" udp dport 546 accept
       '';
     };
-
-    boot.kernel.sysctl."net.ipv4.ip_forward" = 1;
-    boot.kernel.sysctl."net.ipv6.conf.all.forwarding" = 1;
 
     systemd.network = {
       netdevs =

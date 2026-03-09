@@ -28,7 +28,6 @@
     networking.hostName = "tleilax";
 
     # WireGuard extras (topology module handles base wg0 config)
-    boot.kernel.sysctl."net.ipv4.ip_forward" = 1;
     boot.kernel.sysctl."net.ipv4.tcp_synack_retries" = 2; # default 5 — reduce SYN-ACK retransmit amplification
     systemd.network.networks."30-wg0" = {
       address = ["10.0.10.2/24"];
@@ -47,61 +46,21 @@
       };
     };
 
-    # Handwritten firewall — tleilax is directly on the internet (no router),
-    # so we replace the NixOS firewall with explicit nftables rules.
-    # Everything is reachable over wg0; only public services on bond0.
-    networking.firewall.enable = false;
-    networking.nftables = {
+    psyclyx.nixos.network.firewall = {
       enable = true;
-      checkRuleset = false; # wg0 doesn't exist in the build sandbox
-      ruleset = let
-        topo = config.psyclyx.topology;
-        sshPorts = lib.concatMapStringsSep ", " toString config.psyclyx.nixos.network.ports.ssh;
-      in ''
-        table inet filter {
-          chain input {
-            type filter hook input priority 0; policy drop;
-
-            iif lo accept
-            iif wg0 accept
-            iif "veth-mv0" accept
-
-            ct state established,related accept
-            ct state invalid drop
-
-            ip protocol icmp icmp type echo-request accept
-            ip6 nexthdr icmpv6 accept
-
-            # SYN flood mitigation — rate-limit new TCP handshakes on public ports
-            tcp dport { 53, 80, 443, ${sshPorts} } limit rate 25/second burst 50 packets accept
-            udp dport { 53, ${toString topo.wireguard.port} } accept
-          }
-
-          chain forward {
-            type filter hook forward priority 0; policy drop;
-
-            ct state established,related accept
-            ct state invalid drop
-
-            # VPN peers can reach each other and exported subnets
-            iifname "wg0" oifname "wg0" accept
-
-            # VPN peers can reach the internet (NATed via postrouting)
-            iifname "wg0" oifname "bond0" accept
-          }
-
-          chain output {
-            type filter hook output priority 0; policy accept;
-          }
-        }
-
-        table ip nat {
-          chain postrouting {
-            type nat hook postrouting priority 100; policy accept;
-            iifname "wg0" oifname "bond0" masquerade
-          }
-        }
-      '';
+      collectServicePorts = false;
+      trustedInterfaces = ["wg0" "veth-mv0"];
+      allowedTCPPorts = with config.psyclyx.nixos.network.ports;
+        dns.tcp ++ nginx.tcp ++ ssh.tcp;
+      allowedUDPPorts = with config.psyclyx.nixos.network.ports;
+        dns.udp ++ wireguard.udp;
+      forwardRules = [
+        {from = ["wg0"]; to = ["wg0"];}
+        {from = ["wg0"]; to = ["bond0"];}
+      ];
+      masqueradeRules = [
+        {from = ["wg0"]; to = ["bond0"];}
+      ];
     };
 
     psyclyx.nixos = {
