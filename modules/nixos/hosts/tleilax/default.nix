@@ -46,27 +46,27 @@
       };
     };
 
-    psyclyx.nixos.network.firewall = {
-      enable = true;
-      collectServicePorts = false;
-      trustedInterfaces = ["wg0" "veth-mv0"];
-      allowedTCPPorts = with config.psyclyx.nixos.network.ports;
-        dns.tcp ++ nginx.tcp ++ ssh.tcp;
-      allowedUDPPorts = with config.psyclyx.nixos.network.ports;
-        dns.udp ++ wireguard.udp;
-      forwardRules = [
-        {from = ["wg0"]; to = ["wg0"];}
-        {from = ["wg0"]; to = ["bond0"];}
-      ];
-      masqueradeRules = [
-        {from = ["wg0"]; to = ["bond0"];}
-      ];
-    };
-
     psyclyx.nixos = {
       hardware.presets.hpe.dl20-gen10.enable = true;
 
       network = {
+        firewall = {
+          enable = true;
+          collectServicePorts = false;
+          trustedInterfaces = ["wg0" "veth-mv0"];
+          allowedTCPPorts = with config.psyclyx.nixos.network.ports;
+            dns.tcp ++ nginx.tcp ++ ssh.tcp;
+          allowedUDPPorts = with config.psyclyx.nixos.network.ports;
+            dns.udp ++ wireguard.udp;
+          forward = [
+            {iifname = ["wg0"]; oifname = ["wg0"];}
+            {iifname = ["wg0"]; oifname = ["bond0"];}
+          ];
+          masquerade = [
+            {iifname = ["wg0"]; oifname = ["bond0"];}
+          ];
+        };
+
         ports.ssh = [17891];
 
         dns = {

@@ -109,7 +109,7 @@
         };
       };
 
-      networking.firewall.trustedInterfaces = [ "bond0" "bond1" ];
+      psyclyx.nixos.network.firewall.trustedInterfaces = [ "bond0" "bond1" ];
 
       psyclyx.nixos.system.swap.swappiness = 10;
 

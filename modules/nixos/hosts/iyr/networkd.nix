@@ -236,22 +236,22 @@ in {
       internal = ["bond0"] ++ map (id: "bond0.${toString id}") dt.dhcpVlans;
     in {
       enable = true;
-      trustedInterfaces = internal ++ ["wg0" "tailscale0"];
+      trustedInterfaces = internal ++ ["wg0"];
       allowedUDPPorts = config.psyclyx.nixos.network.ports.wireguard.udp;
-      forwardRules = [
-        {from = internal; to = [wan];}
-        {from = internal; to = ["wg0"];}
-        {from = ["wg0"]; to = internal;}
-        {from = ["wg0"]; to = ["wg0"];}
-        {from = internal; to = internal;}
+      input = [
+        {iifname = [wan]; "udp sport" = 67; "udp dport" = 68;}
+        {iifname = [wan]; "udp dport" = 546;}
       ];
-      masqueradeRules = [
-        {from = internal; to = [wan];}
+      forward = [
+        {iifname = internal; oifname = [wan];}
+        {iifname = internal; oifname = ["wg0"];}
+        {iifname = ["wg0"]; oifname = internal;}
+        {iifname = ["wg0"]; oifname = ["wg0"];}
+        {iifname = internal; oifname = internal;}
       ];
-      inputRules = ''
-        iifname "${wan}" udp sport 67 udp dport 68 accept
-        iifname "${wan}" udp dport 546 accept
-      '';
+      masquerade = [
+        {iifname = internal; oifname = [wan];}
+      ];
     };
 
     systemd.network = {
