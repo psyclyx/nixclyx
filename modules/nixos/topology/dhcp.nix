@@ -42,13 +42,16 @@
       { name = "domain-name"; data = net.zoneName; }
       { name = "domain-search"; data = "${net.zoneName}, ${topo.domains.home}, ${topo.domains.internal}"; }
     ];
-    reservations = let servers = labServersOnNetwork pool.network; in
-      map (s: {
+    ddns-qualifying-suffix = "${net.zoneName}.";
+    reservations = let
+      servers = labServersOnNetwork pool.network;
+      labReservations = map (s: {
         "hw-address" = s.macs.${labIfaceForNetwork s pool.network};
         "ip-address" = "${net.prefix}.${toString (conventions.hostBaseOffset + s.n)}";
         hostname = s.name;
-      })
-      servers;
+      }) servers;
+    in
+      labReservations ++ pool.extraReservations;
   };
 
   # Build a Kea DHCPv6 subnet from a pool definition.
@@ -64,13 +67,16 @@
       { name = "dns-servers"; data = net.gateway6; }
       { name = "domain-search"; data = "${net.zoneName}, ${topo.domains.home}, ${topo.domains.internal}"; }
     ];
-    reservations = let servers = labServersOnNetwork pool.network; in
-      map (s: {
+    ddns-qualifying-suffix = "${net.zoneName}.";
+    reservations = let
+      servers = labServersOnNetwork pool.network;
+      labReservations = map (s: {
         "hw-address" = s.macs.${labIfaceForNetwork s pool.network};
         "ip-addresses" = ["${prefix6}::${dt.utils.intToHex (conventions.hostBaseOffset + s.n)}"];
         hostname = s.name;
-      })
-      servers;
+      }) servers;
+    in
+      labReservations;
   };
 
   # Pools that have IPv6 enabled.
@@ -115,6 +121,11 @@ in {
             };
             default = {};
             description = "IPv6 pool host-part suffix range (default ::100 - ::1ff).";
+          };
+          extraReservations = lib.mkOption {
+            type = lib.types.listOf lib.types.attrs;
+            default = [];
+            description = "Additional DHCPv4 reservations (Kea format: hw-address, ip-address, hostname).";
           };
         };
       });
