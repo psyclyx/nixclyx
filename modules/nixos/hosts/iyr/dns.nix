@@ -22,85 +22,117 @@
     net = dt.networks.${networkName};
     groups = lib.filterAttrs (_: g: g.network == networkName) topo.haGroups;
   in
-    lib.mapAttrsToList (groupName: group:
-      "${groupName}-vip.${net.zoneName}. IN A ${net.prefix}.${toString group.vipOffset}"
-    ) groups;
+    lib.concatStringsSep "\n" (lib.mapAttrsToList (groupName: group:
+      "${groupName}-vip IN A ${net.prefix}.${toString group.vipOffset}"
+    ) groups);
 
-  mkForwardZone = vlanId: let
+  # Build a forward zone file for a VLAN's network.
+  mkForwardZoneData = vlanId: let
     name = dt.vlanNameMap.${toString vlanId};
     net = dt.networks.${name};
     prefix6 = "${topo.ipv6UlaPrefix}:${net.vlanHex}";
-    gatewayRecord = "iyr.${net.zoneName}. IN A ${net.gateway4}";
-    gatewayRecord6 = "iyr.${net.zoneName}. IN AAAA ${net.gateway6}";
     servers = labServersOnNetwork name;
-    serverRecords =
-      map (s: "${s.name}.${net.zoneName}. IN A ${net.prefix}.${toString (conventions.hostBaseOffset + s.n)}")
-      servers;
-    serverRecords6 =
-      map (s: "${s.name}.${net.zoneName}. IN AAAA ${prefix6}::${dt.utils.intToHex (conventions.hostBaseOffset + s.n)}")
-      servers;
+    serverRecords = lib.concatMapStringsSep "\n" (s:
+      "${s.name} IN A ${net.prefix}.${toString (conventions.hostBaseOffset + s.n)}\n" +
+      "${s.name} IN AAAA ${prefix6}::${dt.utils.intToHex (conventions.hostBaseOffset + s.n)}"
+    ) servers;
     vipRecords = vipRecordsForNetwork name;
   in {
     name = net.zoneName;
     value = {
-      type = "static";
-      records = [gatewayRecord gatewayRecord6] ++ serverRecords ++ serverRecords6 ++ vipRecords;
+      ddns = true;
+      data = ''
+        $ORIGIN ${net.zoneName}.
+        $TTL 300
+        @    IN SOA  ns1.${net.zoneName}. admin.${net.zoneName}. (
+                     1 3600 900 604800 300 )
+        @    IN NS   ns1.${net.zoneName}.
+        ns1  IN A    ${net.gateway4}
+        iyr  IN A    ${net.gateway4}
+        iyr  IN AAAA ${net.gateway6}
+        ${serverRecords}
+        ${vipRecords}
+      '';
     };
   };
 
-  mkReverseZone = vlanId: let
+  # Build a reverse (PTR) zone file for a VLAN's IPv4 network.
+  mkReverseZoneData = vlanId: let
     name = dt.vlanNameMap.${toString vlanId};
     net = dt.networks.${name};
     octets = lib.splitString "." net.prefix;
     reverseZone = "${lib.concatStringsSep "." (lib.reverseList octets)}.in-addr.arpa";
-    gatewayPtr = "${toString conventions.gatewayOffset}.${reverseZone}. IN PTR iyr.${net.zoneName}.";
     servers = labServersOnNetwork name;
-    serverPtrs =
-      map (s: "${toString (conventions.hostBaseOffset + s.n)}.${reverseZone}. IN PTR ${s.name}.${net.zoneName}.")
-      servers;
+    serverPtrs = lib.concatMapStringsSep "\n" (s:
+      "${toString (conventions.hostBaseOffset + s.n)} IN PTR ${s.name}.${net.zoneName}."
+    ) servers;
   in {
     name = reverseZone;
     value = {
-      type = "static";
-      records = [gatewayPtr] ++ serverPtrs;
+      ddns = true;
+      data = ''
+        $ORIGIN ${reverseZone}.
+        $TTL 300
+        @    IN SOA  ns1.${net.zoneName}. admin.${net.zoneName}. (
+                     1 3600 900 604800 300 )
+        @    IN NS   ns1.${net.zoneName}.
+        ${toString conventions.gatewayOffset} IN PTR iyr.${net.zoneName}.
+        ${serverPtrs}
+      '';
     };
   };
 
-  mkIp6ReverseZone = vlanId: let
+  # Build a reverse (PTR) zone file for a VLAN's IPv6 ULA network.
+  mkIp6ReverseZoneData = vlanId: let
     name = dt.vlanNameMap.${toString vlanId};
     net = dt.networks.${name};
     reverseZone = "${net.ip6Reverse}.${dt.ulaReverseBase}.ip6.arpa";
-    gatewayPtr = "${dt.utils.hostReverseNibbles (dt.utils.intToHex conventions.gatewayOffset)}.${reverseZone}. IN PTR iyr.${net.zoneName}.";
     servers = labServersOnNetwork name;
-    serverPtrs =
-      map (s: "${dt.utils.hostReverseNibbles (dt.utils.intToHex (conventions.hostBaseOffset + s.n))}.${reverseZone}. IN PTR ${s.name}.${net.zoneName}.")
-      servers;
+    serverPtrs = lib.concatMapStringsSep "\n" (s:
+      "${dt.utils.hostReverseNibbles (dt.utils.intToHex (conventions.hostBaseOffset + s.n))} IN PTR ${s.name}.${net.zoneName}."
+    ) servers;
   in {
     name = reverseZone;
     value = {
-      type = "static";
-      records = [gatewayPtr] ++ serverPtrs;
+      ddns = true;
+      data = ''
+        $ORIGIN ${reverseZone}.
+        $TTL 300
+        @    IN SOA  ns1.${net.zoneName}. admin.${net.zoneName}. (
+                     1 3600 900 604800 300 )
+        @    IN NS   ns1.${net.zoneName}.
+        ${dt.utils.hostReverseNibbles (dt.utils.intToHex conventions.gatewayOffset)} IN PTR iyr.${net.zoneName}.
+        ${serverPtrs}
+      '';
     };
   };
 
-  localZones = builtins.listToAttrs (
-    [
-      {
-        name = topo.domains.home;
-        value = {
-          type = "static";
-          records = [];
-        };
-      }
-    ]
-    ++ (map mkForwardZone dt.dhcpVlans)
-    ++ (map mkReverseZone dt.dhcpVlans)
-    ++ (map mkIp6ReverseZone dt.dhcpVlans)
+  # Parent zone for home.psyclyx.net (transparent in unbound so DHCP names resolve)
+  homeZone = {
+    name = topo.domains.home;
+    value = {
+      ddns = false;
+      data = ''
+        $ORIGIN ${topo.domains.home}.
+        $TTL 300
+        @    IN SOA  ns1.${topo.domains.home}. admin.${topo.domains.home}. (
+                     1 3600 900 604800 300 )
+        @    IN NS   ns1.${topo.domains.home}.
+        ns1  IN A    10.0.10.1
+      '';
+    };
+  };
+
+  authoritativeZones = builtins.listToAttrs (
+    [homeZone]
+    ++ (map mkForwardZoneData dt.dhcpVlans)
+    ++ (map mkReverseZoneData dt.dhcpVlans)
+    ++ (map mkIp6ReverseZoneData dt.dhcpVlans)
   );
 in {
   config = lib.mkIf (config.psyclyx.nixos.host == "iyr") {
-    psyclyx.nixos.network.dns.resolver.localZones = localZones;
+    psyclyx.nixos.network.dns.authoritative.zones = authoritativeZones;
+    # tsigKeyFile/tsigKeyName and sops secrets are in modules/nixos/hosts/iyr.nix (private layer)
 
-    services.unbound.localControlSocketPath = "/run/unbound/unbound.ctl";
   };
 }
