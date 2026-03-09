@@ -22,7 +22,41 @@
       description = "Service port registry. Services declare ports here; the firewall collects from it.";
     };
   };
-  options = {lib, ...}: {
+  options = {lib, ...}: let
+    ruleValueType = lib.mkOptionType {
+      name = "nftables-rule-value";
+      description = "string, int, bool, or list of strings/ints";
+      check = v:
+        builtins.isString v || builtins.isInt v || builtins.isBool v
+        || (builtins.isList v
+          && (v == [] || builtins.all builtins.isString v || builtins.all builtins.isInt v));
+      merge = lib.options.mergeEqualOption;
+    };
+
+    ruleType = lib.types.submodule {
+      freeformType = lib.types.attrsOf ruleValueType;
+      options.verdict = lib.mkOption {
+        type = lib.types.str;
+        default = "accept";
+      };
+      options.comment = lib.mkOption {
+        type = lib.types.nullOr lib.types.str;
+        default = null;
+      };
+    };
+
+    masqueradeRuleType = lib.types.submodule {
+      freeformType = lib.types.attrsOf ruleValueType;
+      options.verdict = lib.mkOption {
+        type = lib.types.str;
+        default = "masquerade";
+      };
+      options.comment = lib.mkOption {
+        type = lib.types.nullOr lib.types.str;
+        default = null;
+      };
+    };
+  in {
     trustedInterfaces = lib.mkOption {
       type = lib.types.listOf lib.types.str;
       default = [];
@@ -43,41 +77,11 @@
       default = true;
       description = "Merge ports from the registry and networking.firewall.allowed*Ports.";
     };
-    chains = lib.mkOption {
-      type = lib.types.attrsOf lib.types.lines;
-      default = {};
-      description = "Custom chains in table inet filter.";
-    };
-    inputRules = lib.mkOption {
-      type = lib.types.lines;
-      default = "";
-      description = "Rules inserted after ICMP accept, before port accepts.";
-    };
-    forwardRules = lib.mkOption {
-      type = lib.types.listOf (lib.types.submodule {
-        options = {
-          from = lib.mkOption {type = lib.types.listOf lib.types.str;};
-          to = lib.mkOption {type = lib.types.listOf lib.types.str;};
-        };
-      });
-      default = [];
-      description = "Forwarding pairs (from/to are lists of interface names).";
-    };
-    masqueradeRules = lib.mkOption {
-      type = lib.types.listOf (lib.types.submodule {
-        options = {
-          from = lib.mkOption {type = lib.types.listOf lib.types.str;};
-          to = lib.mkOption {type = lib.types.listOf lib.types.str;};
-        };
-      });
-      default = [];
-      description = "NAT masquerade pairs.";
-    };
     synFloodProtection = {
       enable = lib.mkOption {
         type = lib.types.bool;
         default = true;
-        description = "Add syn-flood chain + jump via chains/inputRules.";
+        description = "Add syn-flood rate-limiting chain.";
       };
       rate = lib.mkOption {
         type = lib.types.str;
@@ -90,15 +94,20 @@
         description = "Burst packets for SYN flood limiting.";
       };
     };
-    extraForwardRules = lib.mkOption {
-      type = lib.types.lines;
-      default = "";
-      description = "Raw nftables appended to the forward chain.";
+    input = lib.mkOption {
+      type = lib.types.listOf ruleType;
+      default = [];
+      description = "Structured input rules inserted after ICMP accept, before port accepts.";
     };
-    extraRules = lib.mkOption {
-      type = lib.types.lines;
-      default = "";
-      description = "Raw nftables appended after all tables.";
+    forward = lib.mkOption {
+      type = lib.types.listOf ruleType;
+      default = [];
+      description = "Structured forwarding rules.";
+    };
+    masquerade = lib.mkOption {
+      type = lib.types.listOf masqueradeRuleType;
+      default = [];
+      description = "NAT masquerade rules (verdict defaults to masquerade).";
     };
   };
   config = {
@@ -125,116 +134,80 @@
       then lib.unique (cfg.allowedUDPPorts ++ registryUDP ++ nixosUDP)
       else lib.unique cfg.allowedUDPPorts;
 
-    # SYN flood protection contributes to chains + inputRules
-    synChains =
-      if cfg.synFloodProtection.enable
-      then {
-        syn-flood = ''
-          limit rate ${cfg.synFloodProtection.rate} burst ${toString cfg.synFloodProtection.burst} packets return
-          drop
-        '';
-      }
-      else {};
+    hasMasquerade = cfg.masquerade != [];
+    hasForward = cfg.forward != [];
 
-    synInputRules =
-      if cfg.synFloodProtection.enable
-      then "tcp flags syn jump syn-flood"
-      else "";
+    inputRules =
+      [{iif = "lo";}]
+      ++ lib.optional (cfg.trustedInterfaces != []) {iifname = cfg.trustedInterfaces;}
+      ++ [
+        {"ct state" = "established,related";}
+        {"ct state" = "invalid"; verdict = "drop";}
+        {"ip protocol" = "icmp";}
+        {"ip6 nexthdr" = "icmpv6";}
+      ]
+      ++ lib.optional cfg.synFloodProtection.enable
+        {"tcp flags" = "syn"; verdict = "jump syn-flood";}
+      ++ cfg.input
+      ++ lib.optional (effectiveTCP != []) {"tcp dport" = effectiveTCP;}
+      ++ lib.optional (effectiveUDP != []) {"udp dport" = effectiveUDP;};
 
-    allChains = synChains // cfg.chains;
-    allInputRules = lib.concatStringsSep "\n" (lib.filter (s: s != "") [
-      synInputRules
-      cfg.inputRules
-    ]);
-
-    chainsText = lib.concatStringsSep "\n" (lib.mapAttrsToList (name: body: ''
-      chain ${name} {
-        ${body}
-      }
-    '') allChains);
-
-    trustedText =
-      if cfg.trustedInterfaces != []
-      then ''iifname { ${lib.concatMapStringsSep ", " (i: ''"${i}"'') cfg.trustedInterfaces} } accept''
-      else "";
-
-    tcpAccept =
-      if effectiveTCP != []
-      then "tcp dport { ${lib.concatMapStringsSep ", " toString effectiveTCP} } accept"
-      else "";
-
-    udpAccept =
-      if effectiveUDP != []
-      then "udp dport { ${lib.concatMapStringsSep ", " toString effectiveUDP} } accept"
-      else "";
-
-    forwardEntries = lib.concatMapStringsSep "\n" (rule: let
-      fromSet = lib.concatMapStringsSep ", " (i: ''"${i}"'') rule.from;
-      toSet = lib.concatMapStringsSep ", " (i: ''"${i}"'') rule.to;
-    in "    iifname { ${fromSet} } oifname { ${toSet} } accept") cfg.forwardRules;
-
-    masqueradeEntries = lib.concatMapStringsSep "\n" (rule: let
-      fromSet = lib.concatMapStringsSep ", " (i: ''"${i}"'') rule.from;
-      toSet = lib.concatMapStringsSep ", " (i: ''"${i}"'') rule.to;
-    in "    iifname { ${fromSet} } oifname { ${toSet} } masquerade") cfg.masqueradeRules;
-
-    hasMasquerade = cfg.masqueradeRules != [];
-    hasForward = cfg.forwardRules != [] || cfg.extraForwardRules != "";
-
-    natTable =
-      if hasMasquerade
-      then ''
-
-        table ip nat {
-          chain postrouting {
-            type nat hook postrouting priority 100; policy accept;
-        ${masqueradeEntries}
-          }
-        }
-      ''
-      else "";
-
-    ruleset = ''
-      table inet filter {
-      ${chainsText}
-        chain input {
-          type filter hook input priority 0; policy drop;
-
-          iif lo accept
-          ${trustedText}
-
-          ct state established,related accept
-          ct state invalid drop
-
-          ip protocol icmp accept
-          ip6 nexthdr icmpv6 accept
-
-          ${allInputRules}
-
-          ${tcpAccept}
-          ${udpAccept}
-        }
-
-        chain forward {
-          type filter hook forward priority 0; policy drop;
-          ct state established,related accept
-          ct state invalid drop
-      ${forwardEntries}
-          ${cfg.extraForwardRules}
-        }
-
-        chain output { type filter hook output priority 0; policy accept; }
-      }
-      ${natTable}
-      ${cfg.extraRules}
-    '';
+    forwardRules =
+      [
+        {"ct state" = "established,related";}
+        {"ct state" = "invalid"; verdict = "drop";}
+      ]
+      ++ cfg.forward;
   in {
     networking.firewall.enable = false;
-    networking.nftables = {
-      enable = true;
-      checkRuleset = false;
-      inherit ruleset;
-    };
+
+    psyclyx.nixos.network.nftables.tables =
+      {
+        filter = {
+          family = "inet";
+          chains =
+            {
+              input = {
+                type = "filter";
+                hook = "input";
+                priority = 0;
+                policy = "drop";
+                rules = inputRules;
+              };
+              forward = {
+                type = "filter";
+                hook = "forward";
+                priority = 0;
+                policy = "drop";
+                rules = forwardRules;
+              };
+              output = {
+                type = "filter";
+                hook = "output";
+                priority = 0;
+                policy = "accept";
+              };
+            }
+            // lib.optionalAttrs cfg.synFloodProtection.enable {
+              syn-flood.rules = [
+                {"limit rate" = "${cfg.synFloodProtection.rate} burst ${toString cfg.synFloodProtection.burst} packets"; verdict = "return";}
+                {verdict = "drop";}
+              ];
+            };
+        };
+      }
+      // lib.optionalAttrs hasMasquerade {
+        nat = {
+          family = "ip";
+          chains.postrouting = {
+            type = "nat";
+            hook = "postrouting";
+            priority = 100;
+            policy = "accept";
+            rules = cfg.masquerade;
+          };
+        };
+      };
 
     boot.kernel.sysctl = lib.mkIf hasForward {
       "net.ipv4.ip_forward" = 1;
