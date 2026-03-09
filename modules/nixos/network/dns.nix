@@ -36,6 +36,11 @@
               default = null;
               description = "Admin email (SOA). Defaults to admin.<zone>.";
             };
+            ddns = lib.mkOption {
+              type = lib.types.bool;
+              default = false;
+              description = "Allow RFC 2136 dynamic updates (authenticated by TSIG).";
+            };
           };
         });
         default = {};
@@ -55,6 +60,21 @@
         type = lib.types.port;
         default = 5353;
         description = "Port for authoritative DNS.";
+      };
+      tsigKeyFile = lib.mkOption {
+        type = lib.types.nullOr lib.types.path;
+        default = null;
+        description = "Path to a file containing TSIG key config for DDNS/ACME.";
+      };
+      tsigKeyName = lib.mkOption {
+        type = lib.types.nullOr lib.types.str;
+        default = null;
+        description = "Name of the TSIG key (must match key defined in tsigKeyFile).";
+      };
+      tsigSecretFile = lib.mkOption {
+        type = lib.types.nullOr lib.types.path;
+        default = null;
+        description = "Path to a file containing the base64 TSIG secret (for ACME DNS-01).";
       };
     };
 
@@ -151,11 +171,11 @@
     # Stub zone names for resolver
     stubZoneNames = (lib.attrNames cfg.authoritative.zones) ++ cfg.resolver.extraStubZones;
 
-    # When NSD uses port 53, it can't also bind localhost (unbound needs that).
-    # In that case, stub via NSD's first public interface instead.
-    nsdConflictsWithResolver = cfg.resolver.enable && cfg.authoritative.port == 53;
+    # When Knot uses port 53, it can't also bind localhost (unbound needs that).
+    # In that case, stub via Knot's first public interface instead.
+    knotConflictsWithResolver = cfg.resolver.enable && cfg.authoritative.port == 53;
     stubAddr =
-      if nsdConflictsWithResolver
+      if knotConflictsWithResolver
       then "${builtins.head cfg.authoritative.interfaces}@${toString cfg.authoritative.port}"
       else "127.0.0.1@${toString cfg.authoritative.port}";
   in
@@ -168,21 +188,25 @@
         };
       })
 
-      # Authoritative DNS via NSD (auto-enabled by gate when zones != {})
+      # Authoritative DNS via Knot
       (lib.mkIf hasZones {
-        psyclyx.nixos.services.nsd = {
-          # Add localhost for stub resolution, unless NSD is on port 53 (conflicts with unbound)
-          interfaces =
+        psyclyx.nixos.services.knot = {
+          # Add localhost for stub resolution, unless Knot is on port 53 (conflicts with unbound)
+          interfaces = lib.unique (
             cfg.authoritative.interfaces
-            ++ lib.optionals (cfg.resolver.enable && !nsdConflictsWithResolver) ["127.0.0.1" "::1"];
+            ++ lib.optionals (cfg.resolver.enable && !knotConflictsWithResolver) ["127.0.0.1" "::1"]
+          );
           port = cfg.authoritative.port;
+          tsigKeyFile = cfg.authoritative.tsigKeyFile;
+          tsigKeyName = cfg.authoritative.tsigKeyName;
           zones =
             lib.mapAttrs (name: zoneCfg: {
               data = mkZoneData name zoneCfg;
+              inherit (zoneCfg) ddns;
             })
             cfg.authoritative.zones;
         };
-        # Disable avahi when NSD is using port 5353 (mDNS port conflict)
+        # Disable avahi when Knot is using port 5353 (mDNS port conflict)
         services.avahi.enable = lib.mkIf (cfg.authoritative.port == 5353) (lib.mkForce false);
       })
 
