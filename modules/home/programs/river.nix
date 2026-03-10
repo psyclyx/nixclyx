@@ -236,11 +236,9 @@
       (put config :border-width 4)
       (put config :outer-padding 4)
       (put config :inner-padding 8)
-      (put config :main-ratio 0.55)
       (put config :default-layout :scroll)
       (put config :warp-pointer true)
       (put config :wallpaper "${config.services.tidepool.wallpaper}")
-      (put config :column-row-height 1.0)
 ${lib.optionalString (monitors != {}) ''
       # Output configuration (applied at startup via zwlr_output_manager_v1)
       (put config :outputs
@@ -320,13 +318,9 @@ ${lib.optionalString (monitors != {}) ''
         [:s {:mod4 true} (action/spawn ["uwsm" "app" "--" "${lib.getExe screenshot-menu}"])]
         [:p {:mod4 true} (action/spawn ["uwsm" "app" "--" "${rofi-rbw}"])]
 
-        # Layout cycling
+        # Layout mode cycling
         [:Tab {:mod4 true} (action/cycle-layout :next)]
         [:Tab {:mod4 true :shift true} (action/cycle-layout :prev)]
-
-        # Main count adjustment
-        [:equal {:mod4 true} (action/adjust-main-count 1)]
-        [:minus {:mod4 true} (action/adjust-main-count -1)]
 
         # Session
         [:q {:mod4 true :shift true} (action/close)]
