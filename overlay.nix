@@ -21,6 +21,14 @@ in
       pam_ssh_agent_auth = prev.pam_ssh_agent_auth.overrideAttrs (old: prev.lib.optionalAttrs prev.stdenv.hostPlatform.isAarch64 {
         buildInputs = (old.buildInputs or []) ++ [prev.stdenv.cc.cc.lib];
       });
+      rofi-rbw = prev.rofi-rbw.overrideAttrs {
+        src = prev.fetchFromGitHub {
+          owner = "psyclyx";
+          repo = "rofi-rbw";
+          rev = "psyclyx/feat-fuzzel-keybindings";
+          hash = "sha256-+BtxrbAqEUhyRGdWocH36A01oKYAnScSLljgu6oPMxs=";
+        };
+      };
       bitwig-studio4 = prev.bitwig-studio4.overrideAttrs (old: rec {
         version = "4.1.6";
         src = prev.fetchurl {
