@@ -56,6 +56,7 @@
       zonefile-load = if zoneCfg.ddns then "difference" else "whole";
     } // lib.optionalAttrs zoneCfg.ddns {
       journal-content = "all";
+      zonefile-sync = -1;
       acl = ["acl-ddns"];
     }) cfg.zones;
   in {
