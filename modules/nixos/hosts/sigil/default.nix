@@ -38,7 +38,13 @@
         steam.enable = true;
       };
 
-      network.dns.client.enable = true;
+      network = {
+        dns.client.enable = true;
+        firewall = {
+          zones.lan.interfaces = ["bond0" "wg0"];
+          input.lan.policy = "accept";
+        };
+      };
 
       role = "workstation";
 

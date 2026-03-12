@@ -14,7 +14,10 @@
   in {
     environment.systemPackages = [pkgs.tailscale];
     psyclyx.nixos.network = {
-      firewall.trustedInterfaces = [tsCfg.interfaceName];
+      firewall = {
+        zones.tailscale.interfaces = [tsCfg.interfaceName];
+        input.tailscale.policy = "accept";
+      };
       ports.tailscale = {udp = [tsCfg.port];};
     };
     services.tailscale = {

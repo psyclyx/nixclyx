@@ -165,10 +165,8 @@ in {
       serviceConfig.RuntimeDirectory = "haproxy";
     };
 
-    # Firewall: VRRP protocol + HA service ports + stats port.
-    psyclyx.nixos.network.firewall.legacyInput = [
-      {"ip protocol" = "vrrp";}
-    ];
+    # HA service ports + stats port (port registry only — VRRP is
+    # permitted by the host's accept-all zone on the HA network).
     psyclyx.nixos.network.ports.haproxy = allServicePorts ++ [9101];
   };
 }

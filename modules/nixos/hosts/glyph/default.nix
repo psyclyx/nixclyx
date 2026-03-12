@@ -13,7 +13,13 @@
     psyclyx.nixos = {
       hardware.presets.apple-silicon.enable = true;
 
-      network.wireless.enable = true;
+      network = {
+        wireless.enable = true;
+        firewall = {
+          zones.local.interfaces = ["wl*" "wg0"];
+          input.local.policy = "accept";
+        };
+      };
 
       services = {
         fstrim.enable = true;

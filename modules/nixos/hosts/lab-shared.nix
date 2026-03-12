@@ -109,7 +109,10 @@
         };
       };
 
-      psyclyx.nixos.network.firewall.trustedInterfaces = [ "bond0" "bond1" ];
+      psyclyx.nixos.network.firewall = {
+        zones.lan.interfaces = ["bond0" "bond1"];
+        input.lan.policy = "accept";
+      };
 
       psyclyx.nixos.system.swap.swappiness = 10;
 
