@@ -36,18 +36,33 @@
       network = {
         firewall = {
           enable = true;
-          collectServicePorts = false;
-          trustedInterfaces = ["wg0" "veth-mv0"];
-          allowedTCPPorts = with config.psyclyx.nixos.network.ports;
-            dns.tcp ++ nginx.tcp ++ ssh.tcp;
-          allowedUDPPorts = with config.psyclyx.nixos.network.ports;
-            dns.udp ++ wireguard.udp;
+          zones = {
+            wg.interfaces = ["wg0"];
+            mullvad.interfaces = ["veth-mv0"];
+            public.interfaces = ["bond0"];
+          };
+          input = {
+            wg.policy = "accept";
+            mullvad = {
+              policy = "drop";
+              allowICMP = true;
+              allowedTCPPorts = [8080]; # qBittorrent web UI
+            };
+            public = {
+              policy = "drop";
+              allowICMP = true;
+              allowedTCPPorts = with config.psyclyx.nixos.network.ports;
+                dns.tcp ++ nginx.tcp ++ ssh.tcp;
+              allowedUDPPorts = with config.psyclyx.nixos.network.ports;
+                dns.udp ++ wireguard.udp;
+            };
+          };
           forward = [
-            {iifname = ["wg0"]; oifname = ["wg0"];}
-            {iifname = ["wg0"]; oifname = ["bond0"];}
+            {from = "wg"; to = "wg";}
+            {from = "wg"; to = "public";}
           ];
           masquerade = [
-            {iifname = ["wg0"]; oifname = ["bond0"];}
+            {from = "wg"; to = "public";}
           ];
         };
 

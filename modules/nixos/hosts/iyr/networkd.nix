@@ -231,26 +231,35 @@ in {
       "connection_active_thr_kbps=5000"
     ];
 
+    psyclyx.nixos.network.ports.ssh = [17891];
+
     psyclyx.nixos.network.firewall = let
       wan = vlanIface transitVlan;
       internal = ["bond0"] ++ map (id: "bond0.${toString id}") dt.dhcpVlans;
     in {
       enable = true;
-      trustedInterfaces = internal ++ ["wg0"];
-      allowedUDPPorts = config.psyclyx.nixos.network.ports.wireguard.udp;
-      input = [
-        {iifname = [wan]; "udp sport" = 67; "udp dport" = 68;}
-        {iifname = [wan]; "udp dport" = 546;}
-      ];
+      zones = {
+        lan.interfaces = internal ++ ["wg0"];
+        wan.interfaces = [wan];
+      };
+      input = {
+        lan.policy = "accept";
+        wan = {
+          policy = "drop";
+          allowICMP = true;
+          allowedTCPPorts = config.psyclyx.nixos.network.ports.ssh.tcp;
+          rules = [
+            {"udp sport" = 67; "udp dport" = 68; comment = "DHCPv4 client";}
+            {"udp dport" = 546; comment = "DHCPv6 client";}
+          ];
+        };
+      };
       forward = [
-        {iifname = internal; oifname = [wan];}
-        {iifname = internal; oifname = ["wg0"];}
-        {iifname = ["wg0"]; oifname = internal;}
-        {iifname = ["wg0"]; oifname = ["wg0"];}
-        {iifname = internal; oifname = internal;}
+        {from = "lan"; to = "wan";}
+        {from = "lan"; to = "lan";}
       ];
       masquerade = [
-        {iifname = internal; oifname = [wan];}
+        {from = "lan"; to = "wan";}
       ];
     };
 

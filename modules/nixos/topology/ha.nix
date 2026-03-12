@@ -166,7 +166,7 @@ in {
     };
 
     # Firewall: VRRP protocol + HA service ports + stats port.
-    psyclyx.nixos.network.firewall.input = [
+    psyclyx.nixos.network.firewall.legacyInput = [
       {"ip protocol" = "vrrp";}
     ];
     psyclyx.nixos.network.ports.haproxy = allServicePorts ++ [9101];
