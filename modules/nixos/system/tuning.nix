@@ -5,8 +5,6 @@
     boot.kernel.sysctl = {
       # --- VM / Memory ---
 
-      # Prefer evicting file cache over swapping anonymous pages
-      "vm.swappiness" = 10;
       # Start async writeback at 3% dirty (smoother I/O, fewer stalls)
       "vm.dirty_background_ratio" = 3;
       # Force synchronous writeback at 10% dirty (default 20% is too much on high-RAM systems)

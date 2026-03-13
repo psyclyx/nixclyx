@@ -114,15 +114,10 @@
         input.lan.policy = "accept";
       };
 
-      psyclyx.nixos.system.swap.swappiness = 10;
-
-      # TCP/IP tuning is now in network/tuning.nix (applies to all hosts).
-      # Lab-specific sysctls only:
+      # Lab-specific sysctls only (shared tuning in system/tuning.nix and network/tuning.nix)
       boot.kernel.sysctl = {
-        # Scheduler: disable desktop autogroup for proper CFS fairness
+        # Disable desktop autogroup for proper CFS fairness in batch workloads
         "kernel.sched_autogroup_enabled" = 0;
-        # VM: reduce VFS cache pressure (ZFS manages its own caching via ARC)
-        "vm.vfs_cache_pressure" = 50;
       };
 
       services.prometheus.exporters.redis = {

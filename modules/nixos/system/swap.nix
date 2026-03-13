@@ -4,7 +4,7 @@
   options = {lib, ...}: {
     swappiness = lib.mkOption {
       type = lib.types.ints.between 0 200;
-      default = 60;
+      default = 10;
       description = ''
         RAM/swap bias (0=max ram preference, 200=max swap preference).
         Lower values are suitable for database workloads, desktops, machines with plenty of ram, etc.
