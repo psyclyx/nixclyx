@@ -35,6 +35,7 @@
       network.dns.client.enable = true;
 
       programs = {
+        ccache.enable = lib.mkDefault true;
         river.enable = lib.mkDefault true;
         sway.enable = lib.mkDefault true;
       };
