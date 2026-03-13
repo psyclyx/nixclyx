@@ -12,19 +12,11 @@ lib: topo: let
   in
     go n;
 
-  hexToReverseNibbles = hex: let
-    padded = lib.fixedWidthString 4 "0" hex;
+  reverseNibbles = width: hex: let
+    padded = lib.fixedWidthString width "0" hex;
     chars = lib.stringToCharacters padded;
-    reversed = lib.reverseList chars;
   in
-    lib.concatStringsSep "." reversed;
-
-  hostReverseNibbles = hexStr: let
-    padded = lib.fixedWidthString 16 "0" hexStr;
-    chars = lib.stringToCharacters padded;
-    reversed = lib.reverseList chars;
-  in
-    lib.concatStringsSep "." reversed;
+    lib.concatStringsSep "." (lib.reverseList chars);
 
   parseCidrPrefix = cidr: let
     parts = lib.splitString "/" cidr;
@@ -37,9 +29,8 @@ lib: topo: let
   ulaReverseBase = let
     stripped = lib.replaceStrings [":"] [""] ulaPrefix;
     chars = lib.stringToCharacters stripped;
-    reversed = lib.reverseList chars;
   in
-    lib.concatStringsSep "." reversed;
+    lib.concatStringsSep "." (lib.reverseList chars);
 
   enrichNetwork = name: net: let
     parsed = parseCidrPrefix net.ipv4;
@@ -55,7 +46,7 @@ lib: topo: let
       subnet6 = "${prefix6}::/64";
       vlanHex = hex;
       zoneName = "${name}.${topo.domains.home}";
-      ip6Reverse = hexToReverseNibbles hex;
+      ip6Reverse = reverseNibbles 4 hex;
     };
 
   networks = lib.mapAttrs enrichNetwork topo.networks;
@@ -67,18 +58,19 @@ lib: topo: let
     lib.nameValuePair (toString net.vlan) name
   ) topo.networks);
 
-  # Resolve a host's IPv4 address on a given network.
   hostAddress4 = network: host:
     if host.addresses ? ${network} && host.addresses.${network}.ipv4 != null
     then host.addresses.${network}.ipv4
-    else throw "Host has no IPv4 address on network '${network}'. Add it to addresses.${network}.ipv4.";
+    else throw "Host has no IPv4 on network '${network}'.";
 
-  # Resolve a host's IPv6 address on a given network.
   hostAddress6 = network: host:
     if host.addresses ? ${network} && host.addresses.${network}.ipv6 != null
     then host.addresses.${network}.ipv6
-    else throw "Host has no IPv6 address on network '${network}'. Add it to addresses.${network}.ipv6.";
+    else throw "Host has no IPv6 on network '${network}'.";
 in {
   inherit networks ulaReverseBase vlanNameMap dhcpVlans hostAddress4 hostAddress6;
-  utils = {inherit intToHex hexToReverseNibbles hostReverseNibbles parseCidrPrefix;};
+  utils = {inherit intToHex parseCidrPrefix; inherit (lib) reverseList;
+    hexToReverseNibbles = reverseNibbles 4;
+    hostReverseNibbles = reverseNibbles 16;
+  };
 }

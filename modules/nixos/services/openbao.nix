@@ -16,27 +16,23 @@
       dataNetwork = lib.mkOption {
         type = lib.types.str;
         default = "data";
-        description = "Topology network name for Raft and API traffic.";
+        description = "Network for Raft and API traffic.";
       };
       apiPort = lib.mkOption {
         type = lib.types.port;
         default = 8200;
-        description = "Port for OpenBao API.";
       };
       clusterPort = lib.mkOption {
         type = lib.types.port;
         default = 8201;
-        description = "Port for Raft cluster communication.";
       };
       storagePath = lib.mkOption {
         type = lib.types.str;
         default = "/var/lib/openbao";
-        description = "Path for Raft storage data.";
       };
       uiEnable = lib.mkOption {
         type = lib.types.bool;
         default = true;
-        description = "Enable the web UI.";
       };
     };
 
@@ -54,17 +50,11 @@
 
       bindAddr = fleet.hostAddress hostname cfg.dataNetwork;
       unsealMethod = fleet.unsealMethod hostname;
-
-      apiAddr = "http://${bindAddr}:${toString cfg.apiPort}";
-      clusterAddr = "http://${bindAddr}:${toString cfg.clusterPort}";
-
       otherNodes = builtins.filter (n: n != hostname) cfg.clusterNodes;
 
-      retryJoinStanzas = lib.concatMapStrings (node: let
-        addr = fleet.hostAddress node cfg.dataNetwork;
-      in ''
+      retryJoinStanzas = lib.concatMapStrings (node: ''
         retry_join {
-          leader_api_addr = "http://${addr}:${toString cfg.apiPort}"
+          leader_api_addr = "http://${fleet.hostAddress node cfg.dataNetwork}:${toString cfg.apiPort}"
         }
       '') otherNodes;
 
@@ -81,24 +71,20 @@
         ''
         else if unsealMethod == "transit" then
           let
-            # Find a TPM-enabled peer to use as transit unseal source.
             tpmPeer = lib.findFirst
               (n: n != hostname && (fleet.hosts.${n}.hardware.tpm or false))
-              (builtins.head otherNodes)
+              (throw "transit unseal requires a TPM-enabled peer")
               cfg.clusterNodes;
-            transitAddr = fleet.hostAddress tpmPeer cfg.dataNetwork;
           in ''
             seal "transit" {
-              address = "http://${transitAddr}:${toString cfg.apiPort}"
-              token = "" # Populated by operator/automation
+              address = "http://${fleet.hostAddress tpmPeer cfg.dataNetwork}:${toString cfg.apiPort}"
+              token = ""
               disable_renewal = "false"
               key_name = "autounseal"
               mount_path = "transit/"
             }
           ''
-        else
-          # Shamir — no seal stanza needed (default behavior).
-          "";
+        else "";
 
       configFile = pkgs.writeText "openbao.hcl" ''
         ui = ${lib.boolToString cfg.uiEnable}
@@ -120,8 +106,8 @@
           ${retryJoinStanzas}
         }
 
-        api_addr     = "${apiAddr}"
-        cluster_addr = "${clusterAddr}"
+        api_addr     = "http://${bindAddr}:${toString cfg.apiPort}"
+        cluster_addr = "http://${bindAddr}:${toString cfg.clusterPort}"
 
         ${sealStanza}
       '';
@@ -130,8 +116,6 @@
       users.users.openbao = {
         isSystemUser = true;
         group = "openbao";
-        home = cfg.storagePath;
-        createHome = true;
       };
       users.groups.openbao = {};
 
@@ -141,9 +125,7 @@
         wants = ["network-online.target"];
         wantedBy = ["multi-user.target"];
 
-        environment = {
-          BAO_ADDR = "http://127.0.0.1:${toString cfg.apiPort}";
-        };
+        environment.BAO_ADDR = "http://127.0.0.1:${toString cfg.apiPort}";
 
         serviceConfig = {
           User = "openbao";
@@ -165,7 +147,6 @@
         };
       };
 
-      # Firewall: allow API and cluster ports on the data network.
       networking.firewall.allowedTCPPorts = [cfg.apiPort cfg.clusterPort];
     };
 }

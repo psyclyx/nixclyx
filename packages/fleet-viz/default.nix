@@ -1,8 +1,3 @@
-# Fleet visualization — generates a static site and graphviz diagrams
-# from fleet topology data.
-#
-# Usage: nix build .#fleet-viz
-# The result contains index.html, fleet.json, topology.svg
 { pkgs, fleetData }:
 let
   fleetJson = pkgs.writeText "fleet.json" (builtins.toJSON fleetData);

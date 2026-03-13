@@ -2,7 +2,6 @@
   path = ["psyclyx" "topology"];
   gate = "always";
   imports = [./enrichment.nix ./validation.nix ./wireguard.nix ./dns.nix ./monitoring.nix ./deployment.nix ./dhcp.nix ./ha.nix];
-  config = {};
   options = {lib, ...}: let
     haGroupServiceModule = {
       options = {
@@ -78,7 +77,6 @@
       };
     };
 
-    # New structured WireGuard peer module (replaces vpnPeerModule)
     wireguardPeerModule = {
       options = {
         publicKey = lib.mkOption {
@@ -118,7 +116,7 @@
         wireguard = lib.mkOption {
           type = lib.types.nullOr (lib.types.submodule wireguardPeerModule);
           default = null;
-          description = "WireGuard configuration for this host (null if not a peer)";
+          description = "WireGuard configuration for this host.";
         };
         publicIPv4 = lib.mkOption {
           type = lib.types.nullOr lib.types.str;
@@ -138,24 +136,24 @@
         nat = lib.mkOption {
           type = lib.types.attrsOf lib.types.str;
           default = {};
-          description = "1:1 NAT mappings: network name → NAT prefix (e.g. rack → 10.157.10.0/24)";
+          description = "1:1 NAT mappings (network name → NAT prefix).";
         };
         kind = lib.mkOption {
           type = lib.types.enum ["physical" "vm" "container" "cloud"];
           default = "physical";
-          description = "Device kind — determines which config backend and capabilities apply.";
+          description = "Device kind.";
         };
         parent = lib.mkOption {
           type = lib.types.nullOr lib.types.str;
           default = null;
-          description = "Parent host (for VMs/containers — which host this runs on).";
+          description = "Parent host for VMs/containers.";
         };
         hardware = lib.mkOption {
           type = lib.types.submodule {
             options.tpm = lib.mkOption {
               type = lib.types.bool;
               default = false;
-              description = "Whether this host has a TPM 2.0 module installed.";
+              description = "Host has a TPM 2.0.";
             };
           };
           default = {};
@@ -169,7 +167,7 @@
         addresses = lib.mkOption {
           type = lib.types.attrsOf (lib.types.submodule addressModule);
           default = {};
-          description = "Per-network address overrides. Null fields = derived from conventions.";
+          description = "Per-network addresses.";
         };
         interfaces = lib.mkOption {
           type = lib.types.attrsOf (lib.types.submodule {
@@ -177,27 +175,27 @@
               bond = lib.mkOption {
                 type = lib.types.nullOr lib.types.str;
                 default = null;
-                description = "Bond interface name (e.g. bond0). Null if using a raw device.";
+                description = "Bond interface name.";
               };
               members = lib.mkOption {
                 type = lib.types.listOf lib.types.str;
                 default = [];
-                description = "Physical interfaces that are members of the bond.";
+                description = "Bond member interfaces.";
               };
               device = lib.mkOption {
                 type = lib.types.nullOr lib.types.str;
                 default = null;
-                description = "Raw device name when not using a bond (e.g. eno1).";
+                description = "Raw device name (when not bonded).";
               };
             };
           });
           default = {};
-          description = "Per-network interface mapping (bond or raw device).";
+          description = "Per-network interface mapping.";
         };
         roles = lib.mkOption {
           type = lib.types.listOf lib.types.str;
           default = [];
-          description = "Informational roles for this host (e.g. server, workstation, router).";
+          description = "Host roles.";
         };
         services = lib.mkOption {
           type = lib.types.attrsOf (lib.types.submodule {
@@ -209,12 +207,12 @@
               networks = lib.mkOption {
                 type = lib.types.listOf lib.types.str;
                 default = [];
-                description = "Networks this service is reachable on. Empty = all host networks.";
+                description = "Networks this service is reachable on (empty = all).";
               };
             };
           });
           default = {};
-          description = "Services this host exports (for monitoring, DNS, firewall).";
+          description = "Exported services.";
         };
       };
     };

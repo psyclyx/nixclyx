@@ -90,7 +90,6 @@
     net = fleet.networks.${name};
     reverseZone = "${net.ip6Reverse}.${fleet.enriched.ulaReverseBase}.ip6.arpa";
     servers = labServersOnNetwork name;
-    # Extract the host part (after "::") from a full IPv6 address and reverse-nibble it.
     hostPartReverseNibbles = addr: let
       parts = lib.splitString "::" addr;
       hostHex = builtins.elemAt parts 1;
