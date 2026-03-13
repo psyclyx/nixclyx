@@ -35,9 +35,9 @@
       },
       "branch": "main",
       "submodules": false,
-      "revision": "bfbe5ff60c9344792974d257647210482597e519",
-      "url": "https://github.com/psyclyx/base24-gen/archive/bfbe5ff60c9344792974d257647210482597e519.tar.gz",
-      "hash": "sha256-SHNCh21xKOLVfleUgz8BnOC9jtJ3mXsDGQ7Jw4UD9HA="
+      "revision": "c1e9f40f965bcc33614af18f1dad1078a9814281",
+      "url": "https://github.com/psyclyx/base24-gen/archive/c1e9f40f965bcc33614af18f1dad1078a9814281.tar.gz",
+      "hash": "sha256-6Jok2khdy7Nwm1l2O9QaiSNELH4urjOTQyO/nTfGtng="
     },
     "clj-nix": {
       "type": "GitRelease",
