@@ -7,6 +7,16 @@
   dt = topo.enriched;
   conventions = topo.conventions;
 
+  labServers = lib.sort (a: b: a.n < b.n) (lib.mapAttrsToList (name: host: {
+    inherit name;
+    n = host.labIndex;
+    ifaces = host.interfaces;
+  }) (lib.filterAttrs (_: host: host.labIndex != null) topo.hosts));
+
+  # Lab servers that have an interface on a given network.
+  labServersOnNetwork = networkName:
+    builtins.filter (s: s.ifaces ? ${networkName}) labServers;
+
   # Derive VIP A records for haGroups on a given network.
   vipRecordsForNetwork = networkName: let
     net = dt.networks.${networkName};
@@ -20,6 +30,12 @@
   mkForwardZoneData = vlanId: let
     name = dt.vlanNameMap.${toString vlanId};
     net = dt.networks.${name};
+    prefix6 = "${topo.ipv6UlaPrefix}:${net.vlanHex}";
+    servers = labServersOnNetwork name;
+    serverRecords = lib.concatMapStringsSep "\n" (s:
+      "${s.name} IN A ${net.prefix}.${toString (conventions.hostBaseOffset + s.n)}\n" +
+      "${s.name} IN AAAA ${prefix6}::${dt.utils.intToHex (conventions.hostBaseOffset + s.n)}"
+    ) servers;
     vipRecords = vipRecordsForNetwork name;
   in {
     name = net.zoneName;
@@ -34,6 +50,7 @@
         ns1  IN A    ${net.gateway4}
         iyr  IN A    ${net.gateway4}
         iyr  IN AAAA ${net.gateway6}
+        ${serverRecords}
         ${vipRecords}
       '';
     };
@@ -45,6 +62,10 @@
     net = dt.networks.${name};
     octets = lib.splitString "." net.prefix;
     reverseZone = "${lib.concatStringsSep "." (lib.reverseList octets)}.in-addr.arpa";
+    servers = labServersOnNetwork name;
+    serverPtrs = lib.concatMapStringsSep "\n" (s:
+      "${toString (conventions.hostBaseOffset + s.n)} IN PTR ${s.name}.${net.zoneName}."
+    ) servers;
   in {
     name = reverseZone;
     value = {
@@ -56,6 +77,7 @@
                      1 3600 900 604800 300 )
         @    IN NS   ns1.${net.zoneName}.
         ${toString conventions.gatewayOffset} IN PTR iyr.${net.zoneName}.
+        ${serverPtrs}
       '';
     };
   };
@@ -65,6 +87,10 @@
     name = dt.vlanNameMap.${toString vlanId};
     net = dt.networks.${name};
     reverseZone = "${net.ip6Reverse}.${dt.ulaReverseBase}.ip6.arpa";
+    servers = labServersOnNetwork name;
+    serverPtrs = lib.concatMapStringsSep "\n" (s:
+      "${dt.utils.hostReverseNibbles (dt.utils.intToHex (conventions.hostBaseOffset + s.n))} IN PTR ${s.name}.${net.zoneName}."
+    ) servers;
   in {
     name = reverseZone;
     value = {
@@ -76,6 +102,7 @@
                      1 3600 900 604800 300 )
         @    IN NS   ns1.${net.zoneName}.
         ${dt.utils.hostReverseNibbles (dt.utils.intToHex conventions.gatewayOffset)} IN PTR iyr.${net.zoneName}.
+        ${serverPtrs}
       '';
     };
   };
