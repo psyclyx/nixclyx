@@ -26,6 +26,27 @@
       "net.ipv4.tcp_tw_reuse" = 1;
       # Reduce SYN-ACK retransmit amplification
       "net.ipv4.tcp_synack_retries" = 2;
+
+      # Enable PMTU discovery — avoids black holes from broken path MTU
+      "net.ipv4.tcp_mtu_probing" = 1;
+      # Larger listen backlog for burst connections
+      "net.core.somaxconn" = 8192;
+      # Widen ephemeral port range
+      "net.ipv4.ip_local_port_range" = "1024 65535";
+
+      # Detect dead connections faster (10min instead of 2hr)
+      "net.ipv4.tcp_keepalive_time" = 600;
+      "net.ipv4.tcp_keepalive_intvl" = 15;
+      "net.ipv4.tcp_keepalive_probes" = 5;
+
+      # Ignore ICMP redirects — prevents route injection
+      "net.ipv4.conf.all.accept_redirects" = 0;
+      "net.ipv4.conf.default.accept_redirects" = 0;
+      "net.ipv6.conf.all.accept_redirects" = 0;
+      "net.ipv6.conf.default.accept_redirects" = 0;
+      # Don't send ICMP redirects
+      "net.ipv4.conf.all.send_redirects" = 0;
+      "net.ipv4.conf.default.send_redirects" = 0;
     };
   };
 }
