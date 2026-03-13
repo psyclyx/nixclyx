@@ -16,6 +16,7 @@
       ++ [
         pkgs.mpv
         pkgs.vlc
+        pkgs.psyclyx.ilo
       ];
 
     home-manager.users.psyc = {
