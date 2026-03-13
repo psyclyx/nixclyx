@@ -44,7 +44,7 @@ mkDashboard {
         (organize {
           excludeByName = { "Time" = true; "__name__" = true; "job" = true; };
           renameByName = {
-            "instance" = "Switch"; "ifName" = "Interface";
+            "instance" = "Device"; "ifName" = "Interface";
             "ifAlias" = "Alias"; "ifIndex" = "Index"; "Value" = "Status";
           };
         })
