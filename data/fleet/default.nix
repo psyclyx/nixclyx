@@ -20,5 +20,4 @@ in {
 
   inherit hosts devices;
   groups = import ./groups.nix;
-  secrets = import ./secrets.nix;
 }
