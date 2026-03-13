@@ -316,6 +316,9 @@ in {
             dhcpV6Config = {
               PrefixDelegationHint = "::/60";
               WithoutRA = "solicit";
+              UseAddress = false;
+              RapidCommit = true;
+              IAID = 250;
             };
             linkConfig.RequiredForOnline = "carrier";
           };
