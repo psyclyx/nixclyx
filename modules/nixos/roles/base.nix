@@ -7,7 +7,9 @@
     nixclyx,
     ...
   }: {
-    environment.systemPackages = nixclyx.packageGroups.shell pkgs;
+    environment.systemPackages =
+      nixclyx.packageGroups.core pkgs
+      ++ nixclyx.packageGroups.shell pkgs;
 
     psyclyx = {
       common = {

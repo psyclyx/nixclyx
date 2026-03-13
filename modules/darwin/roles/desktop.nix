@@ -7,7 +7,9 @@
     nixclyx,
     ...
   }: {
-    environment.systemPackages = nixclyx.packageGroups.dev pkgs;
+    environment.systemPackages =
+      nixclyx.packageGroups.dev pkgs
+      ++ nixclyx.packageGroups.media pkgs;
 
     psyclyx.darwin = {
       programs = {

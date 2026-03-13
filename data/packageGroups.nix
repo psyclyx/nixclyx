@@ -1,30 +1,22 @@
 {
-  shell = pkgs: [
-    # Text and file utilities
+  # Essential CLI tools — every host, including mobile.
+  core = pkgs: [
+    # File utilities
     pkgs.file
     pkgs.moreutils
     (pkgs.lib.meta.hiPrio pkgs.parallel)
     pkgs.ripgrep
     pkgs.fd
-    pkgs.fzf
-    pkgs.bat
-    pkgs.eza
     pkgs.tree
     pkgs.pv
-    pkgs.sleuthkit
 
-    # Compression and archiving
+    # Compression
     pkgs.zip
     pkgs.unzip
     pkgs.p7zip
-    pkgs.unar
-    pkgs.btar
 
-    # Network tools
+    # Network diagnostics
     pkgs.wget
-    pkgs.aria2
-    pkgs.rclone
-    pkgs.magic-wormhole
     pkgs.bind # dig, nslookup
     pkgs.ethtool
     pkgs.mtr
@@ -32,6 +24,7 @@
     pkgs.iperf3
     pkgs.iproute2
     pkgs.wireguard-tools
+    pkgs.tcpdump
 
     # System monitoring
     pkgs.btop
@@ -41,20 +34,46 @@
     pkgs.iotop
     pkgs.psmisc
 
-    # Terminal multiplexing and process management
+    # Terminal
     pkgs.tmux
-    pkgs.screen
-    pkgs.shpool
     pkgs.dtach
-    pkgs.reptyr
 
     # Editor and VCS
     pkgs.vim
     pkgs.git
+  ];
+
+  # Interactive shell experience — servers and workstations.
+  shell = pkgs: [
+    # Shell enhancements
+    pkgs.fzf
+    pkgs.bat
+    pkgs.eza
+
+    # Extra archive tools
+    pkgs.unar
+    pkgs.btar
+
+    # Transfer tools
+    pkgs.aria2
+    pkgs.rclone
+    pkgs.magic-wormhole
+
+    # Extra terminal tools
+    pkgs.screen
+    pkgs.shpool
+    pkgs.reptyr
+
+    # TUI apps
     pkgs.lazygit
     pkgs.yazi
 
-    # Encoding tools
+    # Forensics
+    pkgs.sleuthkit
+  ];
+
+  # Media processing — workstations only.
+  media = pkgs: [
     pkgs.ffmpeg
     pkgs.imagemagick
   ];
