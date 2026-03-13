@@ -12,7 +12,6 @@
     networking.hostName = "tleilax";
 
     # WireGuard extras (topology module handles base wg0 config)
-    boot.kernel.sysctl."net.ipv4.tcp_synack_retries" = 2; # default 5 — reduce SYN-ACK retransmit amplification
     systemd.network.networks."30-wg0" = {
       address = ["10.0.10.2/24"];
       routes = [{Destination = "10.0.0.0/24";}];
@@ -65,8 +64,6 @@
             {from = "wg"; to = "public";}
           ];
         };
-
-        ports.ssh = [17891];
 
         dns = {
           authoritative = {
