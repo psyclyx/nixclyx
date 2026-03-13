@@ -1,5 +1,3 @@
-# Derives keepalived (VRRP VIP) and haproxy (load balancer) configuration
-# from topology haGroups for hosts that are members of an HA group.
 {
   config,
   lib,
@@ -10,15 +8,12 @@
   fleet = config.psyclyx.fleet;
   hostname = config.psyclyx.nixos.host;
 
-  # Find all haGroups this host is a member of.
   myGroups = lib.filterAttrs
     (_: group: builtins.elem hostname group.members)
     topo.haGroups;
 
   hasGroups = myGroups != {};
 
-  # Collect unique VIPs across all groups (for keepalived).
-  # Key by "network-vipOffset" to deduplicate.
   uniqueVips = lib.unique (lib.mapAttrsToList (groupName: group: {
     vip = fleet.groupVip groupName;
     iface = fleet.hostInterface hostname group.network;
@@ -26,7 +21,6 @@
     priority = fleet.memberPriority groupName hostname;
   }) myGroups);
 
-  # Build haproxy config from all groups.
   haproxyConfig = let
     metricsAddr = fleet.hostAddress hostname (builtins.head (lib.attrValues myGroups)).network;
 
@@ -101,7 +95,6 @@
   in
     globalSection + statsSection + serviceSections;
 
-  # Collect all service ports for firewall.
   allServicePorts = lib.unique (lib.flatten (
     lib.mapAttrsToList (_: group:
       lib.mapAttrsToList (_: svc: svc.port) group.services
@@ -109,7 +102,7 @@
   ));
 in {
   config = lib.mkIf hasGroups {
-    # Allow haproxy to bind the VIP before keepalived assigns it.
+    # haproxy needs to bind the VIP before keepalived assigns it
     boot.kernel.sysctl."net.ipv4.ip_nonlocal_bind" = 1;
 
     services.keepalived = {
@@ -139,8 +132,6 @@ in {
       serviceConfig.RuntimeDirectory = "haproxy";
     };
 
-    # HA service ports + stats port (port registry only — VRRP is
-    # permitted by the host's accept-all zone on the HA network).
     psyclyx.nixos.network.ports.haproxy = allServicePorts ++ [9101];
   };
 }

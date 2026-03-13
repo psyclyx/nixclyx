@@ -14,7 +14,6 @@ let
   leader = nodeList:
     builtins.head (builtins.sort builtins.lessThan nodeList);
 
-  # Prefers explicit vip, falls back to vipOffset.
   groupVip = groupName:
     if haGroups.${groupName} ? vip
     then haGroups.${groupName}.vip.ipv4

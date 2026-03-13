@@ -85,10 +85,7 @@
         ];
       };
 
-      # Inject masterauth into the runtime redis config.  The NixOS redis
-      # module's prep-conf ExecStartPre generates /run/redis-jfs/nixos.conf
-      # (with requirepass from requirePassFile).  We append masterauth to that
-      # same file via a second root-level ExecStartPre that runs after it.
+      # NixOS redis module doesn't support masterauth; inject after prep-conf
       systemd.services.redis-jfs.serviceConfig.ExecStartPre = lib.mkIf (cfg.requirePassFile != null) (
         lib.mkAfter [
           "+${pkgs.writeShellScript "redis-jfs-masterauth" ''

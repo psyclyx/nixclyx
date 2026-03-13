@@ -2,8 +2,6 @@ let
   hosts = (import ./hosts/lab.nix) // (import ./hosts/infra.nix);
   devices = (import ./devices/switches.nix) // (import ./devices/aps.nix);
 in {
-  # topology is what the NixOS module system consumes via psyclyx.topology.
-  # Adding fields outside it won't break module eval.
   topology = {
     conventions = {
       gatewayOffset = 1;

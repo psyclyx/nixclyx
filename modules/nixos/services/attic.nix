@@ -95,7 +95,6 @@
 
     isFirst = hostname == fleet.leader cfg.clusterNodes;
 
-    # PostgreSQL via HAProxy VIP (Patroni routes to current primary)
     pgVip = fleet.groupVip "lab";
 
     s3Endpoint =
@@ -107,7 +106,6 @@
 
     atticd = "${pkgs.attic-server}/bin/atticd";
 
-    # Build-time TOML template. DB password placeholder is substituted at runtime.
     configTemplate = pkgs.writeText "attic-server.toml" (''
       listen = "${listenAddr}:${toString cfg.port}"
 
@@ -143,13 +141,11 @@
       umask 077
       cp ${configTemplate} ${configDir}/server.toml
 
-      # Substitute database password
       if [ -n "${toString cfg.database.passwordFile}" ] && [ -f "${toString cfg.database.passwordFile}" ]; then
         DB_PASS=$(cat "${toString cfg.database.passwordFile}" | ${pkgs.coreutils}/bin/tr -d '\n')
         ${pkgs.gnused}/bin/sed -i "s|__DB_PASSWORD__|''${DB_PASS}|" ${configDir}/server.toml
       fi
 
-      # Substitute token secret (base64-encoded)
       if [ -n "${toString cfg.tokenSecretFile}" ] && [ -f "${toString cfg.tokenSecretFile}" ]; then
         TOKEN_B64=$(${pkgs.coreutils}/bin/base64 -w0 < "${toString cfg.tokenSecretFile}")
         ${pkgs.gnused}/bin/sed -i "s|__TOKEN_SECRET_B64__|''${TOKEN_B64}|" ${configDir}/server.toml
@@ -176,7 +172,6 @@
       };
     };
 
-    # Database init on primary node only.
     systemd.services.atticd-db-init = lib.mkIf isFirst {
       description = "Initialize Attic PostgreSQL database";
       after = ["network-online.target"];
@@ -218,7 +213,6 @@
       '';
     };
 
-    # Cache init on primary node — creates cache and configures retention.
     systemd.services.atticd-cache-init = lib.mkIf (isFirst && cfg.watchStore.enable) {
       description = "Initialize Attic cache";
       after = ["atticd.service"];
@@ -251,7 +245,6 @@
       '';
     };
 
-    # Watch-store service — pushes built derivations to Attic cache.
     systemd.services.attic-watch-store = lib.mkIf cfg.watchStore.enable {
       description = "Attic Nix store watcher";
       after = ["atticd.service"];

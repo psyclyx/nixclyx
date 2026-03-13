@@ -91,9 +91,7 @@
         softwareWatchdog = false;
 
         settings = {
-          # Override listen to bind on all interfaces (HAProxy checks from rack network)
-          # nixpkgs sets listen/connect_address from nodeIp — connect_address is correct,
-          # but listen needs 0.0.0.0 so we mkForce it.
+          # nixpkgs sets listen from nodeIp; override to bind all interfaces for HAProxy
           restapi.listen = lib.mkForce "0.0.0.0:${toString cfg.restApiPort}";
 
           etcd3 = {
@@ -134,8 +132,7 @@
             ];
           };
 
-          # Override listen to also bind localhost (for local psql access).
-          # nixpkgs sets listen/connect_address from nodeIp — connect_address is correct.
+          # nixpkgs sets listen from nodeIp; add localhost for local psql
           postgresql = {
             listen = lib.mkForce "${dataAddr},${rackAddr},127.0.0.1:${toString cfg.port}";
             authentication = {
@@ -146,8 +143,7 @@
                 username = "postgres";
               };
             };
-            # Patroni manages pg_hba.conf from this list (bootstrap.pg_hba only
-            # applies during initial cluster creation).
+            # Runtime pg_hba (bootstrap.pg_hba only applies on initial creation)
             pg_hba = [
               "local all all trust"
               "host all all 127.0.0.1/32 md5"
@@ -159,8 +155,6 @@
             parameters = {
               max_connections = 200;
             };
-            # Automatically re-clone from the leader when a replica's timeline has
-            # diverged (e.g. after failovers) and pg_rewind isn't possible.
             remove_data_directory_on_diverged_timelines = true;
             remove_data_directory_on_rewind_failure = true;
           };
@@ -176,10 +170,6 @@
         ];
       };
 
-      # Patroni manages PostgreSQL — do not enable the NixOS postgresql service.
-      # services.postgresql.enable is intentionally not set.
-
-      # Create /run/postgresql for the PostgreSQL Unix socket lock file.
       systemd.tmpfiles.rules = [
         "d /run/postgresql 0755 patroni patroni -"
       ];
@@ -203,9 +193,7 @@
         in lib.mkIf (requiredFiles != []) [checkScript];
       };
 
-      # Sync DCS configuration from the module into the live cluster.
-      # bootstrap.dcs only applies on initial cluster creation — this
-      # oneshot idempotently patches the running DCS via Patroni's REST API.
+      # bootstrap.dcs only applies on initial creation; sync at runtime
       systemd.services.patroni-dcs-sync = {
         description = "Sync Patroni DCS configuration";
         after = ["patroni.service"];
@@ -221,7 +209,6 @@
             check_timeline = true;
           };
         in ''
-          # Wait for Patroni REST API to become available
           for i in $(seq 1 30); do
             if curl -sf http://localhost:${toString cfg.restApiPort}/config > /dev/null 2>&1; then
               break

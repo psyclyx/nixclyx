@@ -8,16 +8,13 @@
 
   cfg = config.psyclyx.topology.dhcp;
 
-  # Lab servers sorted alphabetically by name (for stable reservation ordering).
   labServers = lib.sort (a: b: a.name < b.name) (lib.mapAttrsToList (name: _host: {
     inherit name;
   }) (lib.filterAttrs (_: host: host.mac != {}) topo.hosts));
 
-  # Lab servers that have an interface on a given network.
   labServersOnNetwork = networkName:
     builtins.filter (s: topo.hosts.${s.name}.interfaces ? ${networkName}) labServers;
 
-  # Build a Kea DHCPv4 subnet from a pool definition.
   mkSubnet4 = _poolName: pool: let
     net = fleet.networks.${pool.network};
   in {
@@ -42,7 +39,6 @@
       labReservations ++ pool.extraReservations;
   };
 
-  # Build a Kea DHCPv6 subnet from a pool definition.
   mkSubnet6 = _poolName: pool: let
     net = fleet.networks.${pool.network};
     prefix6 = "${topo.ipv6UlaPrefix}:${net.vlanHex}";
@@ -67,10 +63,8 @@
       labReservations;
   };
 
-  # Pools that have IPv6 enabled.
   ipv6Pools = lib.filterAttrs (_: pool: pool.ipv6) cfg.pools;
 
-  # Sorted VLAN IDs from the pools (for deterministic interface ordering).
   poolVlans = lib.sort builtins.lessThan
     (lib.mapAttrsToList (_: pool: topo.networks.${pool.network}.vlan) cfg.pools);
 
