@@ -248,6 +248,8 @@ in {
       ];
     };
 
+    systemd.network.config.dhcpV6Config.DUIDType = "link-layer";
+
     systemd.network = {
       netdevs =
         # LAN VLANs on lanIface
