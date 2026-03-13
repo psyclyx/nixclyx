@@ -139,7 +139,5 @@
 in {
   config = lib.mkIf (config.psyclyx.nixos.host == "iyr") {
     psyclyx.nixos.network.dns.authoritative.zones = authoritativeZones;
-    # tsigKeyFile/tsigKeyName and sops secrets are in modules/nixos/hosts/iyr.nix (private layer)
-
   };
 }

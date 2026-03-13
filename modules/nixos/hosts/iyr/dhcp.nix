@@ -102,7 +102,6 @@ in {
     };
 
     # Kea D2 (DHCP-DDNS) sends RFC 2136 updates to Knot
-    # tsig-keys are in modules/nixos/hosts/iyr.nix (private layer, needs sops)
     services.kea.dhcp-ddns = {
       enable = true;
       settings = {

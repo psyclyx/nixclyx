@@ -5,8 +5,8 @@
       endpoint = "vpn.psyclyx.xyz:51820";
     };
     addresses.vpn.ipv4 = "10.157.0.1";
-    publicIPv4 = "198.51.100.1";   # example — override in private layer
-    publicIPv6 = "2001:db8::1";    # example — override in private layer
+    publicIPv4 = "198.51.100.1";
+    publicIPv6 = "2001:db8::1";
     sshPort = 17891;
     roles = ["server" "vpn-hub"];
     services = {
