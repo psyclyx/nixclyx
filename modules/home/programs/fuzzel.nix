@@ -30,9 +30,9 @@
         };
         colors = {
           # Muted prompt so it doesn't compete with input text
-          prompt = "${c.base04}ff";
-          counter = "${c.base04}ff";
-          placeholder = "${c.base03}ff";
+          prompt = lib.mkForce "${c.base04}ff";
+          counter = lib.mkForce "${c.base04}ff";
+          placeholder = lib.mkForce "${c.base03}ff";
         };
         border = {
           width = 2;
