@@ -59,19 +59,18 @@
       ...
     }:
     let
-      topo = config.psyclyx.topology;
-      topoLib = topo.enriched;
+      fleet = config.psyclyx.fleet;
       hostname = config.psyclyx.nixos.host;
-      labIdx = topo.hosts.${hostname}.labIndex;
 
-      dataNet = topoLib.networks.${cfg.dataNetwork};
-      rackNet = topoLib.networks."rack";
-      dataAddr = "${dataNet.prefix}.${toString (topo.conventions.hostBaseOffset + labIdx)}";
-      rackAddr = "${rackNet.prefix}.${toString (topo.conventions.hostBaseOffset + labIdx)}";
+      dataAddr = fleet.hostAddress hostname cfg.dataNetwork;
+      rackAddr = fleet.hostAddress hostname "rack";
 
-      memberAddr = name: let
-        idx = topo.hosts.${name}.labIndex;
-      in "${dataNet.prefix}.${toString (topo.conventions.hostBaseOffset + idx)}";
+      memberAddr = name: fleet.hostAddress name cfg.dataNetwork;
+
+      dataNetPrefix = fleet.networkPrefix cfg.dataNetwork;
+      dataNetPrefixLen = fleet.networkPrefixLen cfg.dataNetwork;
+      rackNetPrefix = fleet.networkPrefix "rack";
+      rackNetPrefixLen = fleet.networkPrefixLen "rack";
 
       otherNodes = builtins.filter (name: name != hostname) cfg.clusterNodes;
 
@@ -128,10 +127,10 @@
             pg_hba = [
               "local all all trust"
               "host all all 127.0.0.1/32 md5"
-              "host all all ${dataNet.prefix}.0/${toString dataNet.prefixLen} md5"
-              "host all all ${rackNet.prefix}.0/${toString rackNet.prefixLen} md5"
+              "host all all ${dataNetPrefix}.0/${toString dataNetPrefixLen} md5"
+              "host all all ${rackNetPrefix}.0/${toString rackNetPrefixLen} md5"
               "host replication ${cfg.replicationUser} 127.0.0.1/32 md5"
-              "host replication ${cfg.replicationUser} ${dataNet.prefix}.0/${toString dataNet.prefixLen} md5"
+              "host replication ${cfg.replicationUser} ${dataNetPrefix}.0/${toString dataNetPrefixLen} md5"
             ];
           };
 
@@ -152,10 +151,10 @@
             pg_hba = [
               "local all all trust"
               "host all all 127.0.0.1/32 md5"
-              "host all all ${dataNet.prefix}.0/${toString dataNet.prefixLen} md5"
-              "host all all ${rackNet.prefix}.0/${toString rackNet.prefixLen} md5"
+              "host all all ${dataNetPrefix}.0/${toString dataNetPrefixLen} md5"
+              "host all all ${rackNetPrefix}.0/${toString rackNetPrefixLen} md5"
               "host replication ${cfg.replicationUser} 127.0.0.1/32 md5"
-              "host replication ${cfg.replicationUser} ${dataNet.prefix}.0/${toString dataNet.prefixLen} md5"
+              "host replication ${cfg.replicationUser} ${dataNetPrefix}.0/${toString dataNetPrefixLen} md5"
             ];
             parameters = {
               max_connections = 200;

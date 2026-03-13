@@ -43,19 +43,13 @@
       ...
     }:
     let
-      topo = config.psyclyx.topology;
-      topoLib = topo.enriched;
+      fleet = config.psyclyx.fleet;
       hostname = config.psyclyx.nixos.host;
-      labIdx = topo.hosts.${hostname}.labIndex;
 
-      dataNet = topoLib.networks.${cfg.dataNetwork};
-      rackNet = topoLib.networks."rack";
-      bindAddr = "${dataNet.prefix}.${toString (topo.conventions.hostBaseOffset + labIdx)}";
-      rackAddr = "${rackNet.prefix}.${toString (topo.conventions.hostBaseOffset + labIdx)}";
+      bindAddr = fleet.hostAddress hostname cfg.dataNetwork;
+      rackAddr = fleet.hostAddress hostname "rack";
 
-      memberAddr = name: let
-        idx = topo.hosts.${name}.labIndex;
-      in "${dataNet.prefix}.${toString (topo.conventions.hostBaseOffset + idx)}";
+      memberAddr = name: fleet.hostAddress name cfg.dataNetwork;
 
       initialCluster = map (name:
         "${name}=http://${memberAddr name}:${toString cfg.peerPort}"

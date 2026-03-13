@@ -87,25 +87,16 @@
     pkgs,
     ...
   }: let
-    topo = config.psyclyx.topology;
-    topoLib = topo.enriched;
+    fleet = config.psyclyx.fleet;
     hostname = config.psyclyx.nixos.host;
-    labIdx = topo.hosts.${hostname}.labIndex;
 
-    listenNet = topoLib.networks.${cfg.listenNetwork};
-    dataNet = topoLib.networks.${cfg.dataNetwork};
+    listenAddr = fleet.hostAddress hostname cfg.listenNetwork;
+    dataAddr = fleet.hostAddress hostname cfg.dataNetwork;
 
-    listenAddr = "${listenNet.prefix}.${toString (topo.conventions.hostBaseOffset + labIdx)}";
-    dataAddr = "${dataNet.prefix}.${toString (topo.conventions.hostBaseOffset + labIdx)}";
-
-    clusterLabIndices = map (name: topo.hosts.${name}.labIndex) cfg.clusterNodes;
-    sortedIndices = builtins.sort builtins.lessThan clusterLabIndices;
-    isFirst = labIdx == builtins.head sortedIndices;
+    isFirst = hostname == fleet.leader cfg.clusterNodes;
 
     # PostgreSQL via HAProxy VIP (Patroni routes to current primary)
-    labGroup = topo.haGroups.lab;
-    haNet = topoLib.networks.${labGroup.network};
-    pgVip = "${haNet.prefix}.${toString labGroup.vipOffset}";
+    pgVip = fleet.groupVip "lab";
 
     s3Endpoint =
       if cfg.storage.endpoint != null

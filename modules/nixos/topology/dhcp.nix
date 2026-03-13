@@ -4,34 +4,22 @@
   ...
 }: let
   topo = config.psyclyx.topology;
-  dt = topo.enriched;
-  conventions = topo.conventions;
+  fleet = config.psyclyx.fleet;
 
   cfg = config.psyclyx.topology.dhcp;
 
-  # Lab servers sorted by index (for stable reservation ordering).
-  labServers = lib.sort (a: b: a.n < b.n) (lib.mapAttrsToList (name: host: {
+  # Lab servers sorted alphabetically by name (for stable reservation ordering).
+  labServers = lib.sort (a: b: a.name < b.name) (lib.mapAttrsToList (name: _host: {
     inherit name;
-    n = host.labIndex;
-    macs = host.mac;
-    ifaces = host.interfaces;
-  }) (lib.filterAttrs (_: host: host.labIndex != null) topo.hosts));
-
-  # Get the physical interface name for a lab server on a given network.
-  # For bonded interfaces, use the first bond member; for raw devices, use the device name.
-  labIfaceForNetwork = server: networkName: let
-    iface = server.ifaces.${networkName};
-  in
-    if iface.device != null then iface.device
-    else builtins.head iface.members;
+  }) (lib.filterAttrs (_: host: host.mac != {}) topo.hosts));
 
   # Lab servers that have an interface on a given network.
   labServersOnNetwork = networkName:
-    builtins.filter (s: s.ifaces ? ${networkName}) labServers;
+    builtins.filter (s: topo.hosts.${s.name}.interfaces ? ${networkName}) labServers;
 
   # Build a Kea DHCPv4 subnet from a pool definition.
   mkSubnet4 = _poolName: pool: let
-    net = dt.networks.${pool.network};
+    net = fleet.networks.${pool.network};
   in {
     id = net.vlan;
     subnet = "${net.prefix}.0/${toString net.prefixLen}";
@@ -46,8 +34,8 @@
     reservations = let
       servers = labServersOnNetwork pool.network;
       labReservations = map (s: {
-        "hw-address" = s.macs.${labIfaceForNetwork s pool.network};
-        "ip-address" = "${net.prefix}.${toString (conventions.hostBaseOffset + s.n)}";
+        "hw-address" = fleet.hostMacForNetwork s.name pool.network;
+        "ip-address" = fleet.hostAddress s.name pool.network;
         hostname = s.name;
       }) servers;
     in
@@ -56,7 +44,7 @@
 
   # Build a Kea DHCPv6 subnet from a pool definition.
   mkSubnet6 = _poolName: pool: let
-    net = dt.networks.${pool.network};
+    net = fleet.networks.${pool.network};
     prefix6 = "${topo.ipv6UlaPrefix}:${net.vlanHex}";
   in {
     id = net.vlan;
@@ -71,8 +59,8 @@
     reservations = let
       servers = labServersOnNetwork pool.network;
       labReservations = map (s: {
-        "hw-address" = s.macs.${labIfaceForNetwork s pool.network};
-        "ip-addresses" = ["${prefix6}::${dt.utils.intToHex (conventions.hostBaseOffset + s.n)}"];
+        "hw-address" = fleet.hostMacForNetwork s.name pool.network;
+        "ip-addresses" = [( fleet.hostAddress6 s.name pool.network )];
         hostname = s.name;
       }) servers;
     in

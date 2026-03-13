@@ -45,7 +45,10 @@ let
 
   # HA VRRP ID.
   groupVrid = groupName:
-    haGroups.${groupName}.vrid or haGroups.${groupName}.vipOffset;
+    let g = haGroups.${groupName};
+    in if g.vrid != null then g.vrid
+    else if g.vipOffset != null then g.vipOffset
+    else throw "HA group '${groupName}' has neither vrid nor vipOffset set.";
 
   # Network queries — returns enriched network data.
   network = name: enriched.networks.${name};
@@ -88,6 +91,26 @@ in {
 
   # DNS utilities (intToHex, reverse nibbles, etc.)
   utils = enriched.utils;
+
+  # Unseal strategy — derives from hardware capabilities.
+  # Returns "tpm" if host has TPM, "transit" if another host in the same
+  # HA group has TPM (can use transit unseal via that host), else "shamir".
+  unsealMethod = hostname:
+    let
+      host = hosts.${hostname};
+      hasTpm = host.hardware.tpm or false;
+      # Find HA groups this host belongs to.
+      memberGroups = lib.filterAttrs (_: g:
+        builtins.elem hostname (g.members or [])
+      ) haGroups;
+      # Check if any peer in those groups has a TPM.
+      peerHasTpm = builtins.any (g:
+        builtins.any (m: m != hostname && (hosts.${m}.hardware.tpm or false)) g.members
+      ) (builtins.attrValues memberGroups);
+    in
+      if hasTpm then "tpm"
+      else if peerHasTpm then "transit"
+      else "shamir";
 
   # Full enriched lib (backward compat during migration)
   inherit enriched;

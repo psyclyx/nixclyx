@@ -120,28 +120,16 @@
     ...
   }: let
     bcachefsEnabled = config.psyclyx.nixos.filesystems.bcachefs.enable;
-    topo = config.psyclyx.topology;
-    topoLib = topo.enriched;
+    fleet = config.psyclyx.fleet;
     hostname = config.psyclyx.nixos.host;
-    labIdx = topo.hosts.${hostname}.labIndex;
 
-    dataNet = topoLib.networks.${cfg.dataNetwork};
-    metricsNet = topoLib.networks.${cfg.metricsNetwork};
-
-    dataAddr = "${dataNet.prefix}.${toString (topo.conventions.hostBaseOffset + labIdx)}";
-    metricsAddr = "${metricsNet.prefix}.${toString (topo.conventions.hostBaseOffset + labIdx)}";
+    dataAddr = fleet.hostAddress hostname cfg.dataNetwork;
+    metricsAddr = fleet.hostAddress hostname cfg.metricsNetwork;
 
     isMaster = builtins.elem hostname cfg.masterNodes;
+    isFirstMaster = isMaster && hostname == fleet.leader cfg.masterNodes;
 
-    masterLabIndices = map (name: topo.hosts.${name}.labIndex) cfg.masterNodes;
-    sortedMasterIndices = builtins.sort builtins.lessThan masterLabIndices;
-    firstMasterIdx = builtins.head sortedMasterIndices;
-    isFirstMaster = isMaster && labIdx == firstMasterIdx;
-
-    masterAddrs = map (name: let
-      idx = topo.hosts.${name}.labIndex;
-    in "${dataNet.prefix}.${toString (topo.conventions.hostBaseOffset + idx)}")
-    cfg.masterNodes;
+    masterAddrs = map (name: fleet.hostAddress name cfg.dataNetwork) cfg.masterNodes;
 
     masterPeers = lib.concatStringsSep "," (
       map (addr: "${addr}:${toString cfg.master.port}") masterAddrs

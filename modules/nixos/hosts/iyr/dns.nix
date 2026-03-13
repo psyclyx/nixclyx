@@ -4,37 +4,32 @@
   ...
 }: let
   topo = config.psyclyx.topology;
-  dt = topo.enriched;
-  conventions = topo.conventions;
+  fleet = config.psyclyx.fleet;
 
-  labServers = lib.sort (a: b: a.n < b.n) (lib.mapAttrsToList (name: host: {
+  labServers = lib.sort (a: b: a.name < b.name) (lib.mapAttrsToList (name: _host: {
     inherit name;
-    n = host.labIndex;
-    ifaces = host.interfaces;
-  }) (lib.filterAttrs (_: host: host.labIndex != null) topo.hosts));
+  }) (lib.filterAttrs (_: host: host.mac != {}) topo.hosts));
 
   # Lab servers that have an interface on a given network.
   labServersOnNetwork = networkName:
-    builtins.filter (s: s.ifaces ? ${networkName}) labServers;
+    builtins.filter (s: topo.hosts.${s.name}.interfaces ? ${networkName}) labServers;
 
   # Derive VIP A records for haGroups on a given network.
   vipRecordsForNetwork = networkName: let
-    net = dt.networks.${networkName};
     groups = lib.filterAttrs (_: g: g.network == networkName) topo.haGroups;
   in
-    lib.concatStringsSep "\n" (lib.mapAttrsToList (groupName: group:
-      "${groupName}-vip IN A ${net.prefix}.${toString group.vipOffset}"
+    lib.concatStringsSep "\n" (lib.mapAttrsToList (groupName: _group:
+      "${groupName}-vip IN A ${fleet.groupVip groupName}"
     ) groups);
 
   # Build a forward zone file for a VLAN's network.
   mkForwardZoneData = vlanId: let
-    name = dt.vlanNameMap.${toString vlanId};
-    net = dt.networks.${name};
-    prefix6 = "${topo.ipv6UlaPrefix}:${net.vlanHex}";
+    name = fleet.enriched.vlanNameMap.${toString vlanId};
+    net = fleet.networks.${name};
     servers = labServersOnNetwork name;
     serverRecords = lib.concatMapStringsSep "\n" (s:
-      "${s.name} IN A ${net.prefix}.${toString (conventions.hostBaseOffset + s.n)}\n" +
-      "${s.name} IN AAAA ${prefix6}::${dt.utils.intToHex (conventions.hostBaseOffset + s.n)}"
+      "${s.name} IN A ${fleet.hostAddress s.name name}\n" +
+      "${s.name} IN AAAA ${fleet.hostAddress6 s.name name}"
     ) servers;
     vipRecords = vipRecordsForNetwork name;
   in {
@@ -58,14 +53,21 @@
 
   # Build a reverse (PTR) zone file for a VLAN's IPv4 network.
   mkReverseZoneData = vlanId: let
-    name = dt.vlanNameMap.${toString vlanId};
-    net = dt.networks.${name};
+    name = fleet.enriched.vlanNameMap.${toString vlanId};
+    net = fleet.networks.${name};
     octets = lib.splitString "." net.prefix;
     reverseZone = "${lib.concatStringsSep "." (lib.reverseList octets)}.in-addr.arpa";
     servers = labServersOnNetwork name;
-    serverPtrs = lib.concatMapStringsSep "\n" (s:
-      "${toString (conventions.hostBaseOffset + s.n)} IN PTR ${s.name}.${net.zoneName}."
+    serverPtrs = lib.concatMapStringsSep "\n" (s: let
+      addr = fleet.hostAddress s.name name;
+      parts = lib.splitString "." addr;
+      lastOctet = builtins.elemAt parts 3;
+    in
+      "${lastOctet} IN PTR ${s.name}.${net.zoneName}."
     ) servers;
+    gwAddr = net.gateway4;
+    gwParts = lib.splitString "." gwAddr;
+    gwLastOctet = builtins.elemAt gwParts 3;
   in {
     name = reverseZone;
     value = {
@@ -76,7 +78,7 @@
         @    IN SOA  ns1.${net.zoneName}. admin.${net.zoneName}. (
                      1 3600 900 604800 300 )
         @    IN NS   ns1.${net.zoneName}.
-        ${toString conventions.gatewayOffset} IN PTR iyr.${net.zoneName}.
+        ${gwLastOctet} IN PTR iyr.${net.zoneName}.
         ${serverPtrs}
       '';
     };
@@ -84,13 +86,19 @@
 
   # Build a reverse (PTR) zone file for a VLAN's IPv6 ULA network.
   mkIp6ReverseZoneData = vlanId: let
-    name = dt.vlanNameMap.${toString vlanId};
-    net = dt.networks.${name};
-    reverseZone = "${net.ip6Reverse}.${dt.ulaReverseBase}.ip6.arpa";
+    name = fleet.enriched.vlanNameMap.${toString vlanId};
+    net = fleet.networks.${name};
+    reverseZone = "${net.ip6Reverse}.${fleet.enriched.ulaReverseBase}.ip6.arpa";
     servers = labServersOnNetwork name;
+    # Extract the host part (after "::") from a full IPv6 address and reverse-nibble it.
+    hostPartReverseNibbles = addr: let
+      parts = lib.splitString "::" addr;
+      hostHex = builtins.elemAt parts 1;
+    in fleet.utils.hostReverseNibbles hostHex;
     serverPtrs = lib.concatMapStringsSep "\n" (s:
-      "${dt.utils.hostReverseNibbles (dt.utils.intToHex (conventions.hostBaseOffset + s.n))} IN PTR ${s.name}.${net.zoneName}."
+      "${hostPartReverseNibbles (fleet.hostAddress6 s.name name)} IN PTR ${s.name}.${net.zoneName}."
     ) servers;
+    gwReverseNibbles = hostPartReverseNibbles net.gateway6;
   in {
     name = reverseZone;
     value = {
@@ -101,7 +109,7 @@
         @    IN SOA  ns1.${net.zoneName}. admin.${net.zoneName}. (
                      1 3600 900 604800 300 )
         @    IN NS   ns1.${net.zoneName}.
-        ${dt.utils.hostReverseNibbles (dt.utils.intToHex conventions.gatewayOffset)} IN PTR iyr.${net.zoneName}.
+        ${gwReverseNibbles} IN PTR iyr.${net.zoneName}.
         ${serverPtrs}
       '';
     };
@@ -125,9 +133,9 @@
 
   authoritativeZones = builtins.listToAttrs (
     [homeZone]
-    ++ (map mkForwardZoneData dt.dhcpVlans)
-    ++ (map mkReverseZoneData dt.dhcpVlans)
-    ++ (map mkIp6ReverseZoneData dt.dhcpVlans)
+    ++ (map mkForwardZoneData fleet.enriched.dhcpVlans)
+    ++ (map mkReverseZoneData fleet.enriched.dhcpVlans)
+    ++ (map mkIp6ReverseZoneData fleet.enriched.dhcpVlans)
   );
 in {
   config = lib.mkIf (config.psyclyx.nixos.host == "iyr") {

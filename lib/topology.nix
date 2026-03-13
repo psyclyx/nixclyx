@@ -68,21 +68,16 @@ lib: topo: let
   ) topo.networks);
 
   # Resolve a host's IPv4 address on a given network.
-  # Checks host.addresses.${network}.ipv4 first, falls back to convention math.
   hostAddress4 = network: host:
     if host.addresses ? ${network} && host.addresses.${network}.ipv4 != null
     then host.addresses.${network}.ipv4
-    else "${networks.${network}.prefix}.${toString (conventions.hostBaseOffset + host.labIndex)}";
+    else throw "Host has no IPv4 address on network '${network}'. Add it to addresses.${network}.ipv4.";
 
   # Resolve a host's IPv6 address on a given network.
-  # Checks host.addresses.${network}.ipv6 first, falls back to convention math.
-  hostAddress6 = network: host: let
-    net = networks.${network};
-    prefix6 = "${ulaPrefix}:${net.vlanHex}";
-  in
+  hostAddress6 = network: host:
     if host.addresses ? ${network} && host.addresses.${network}.ipv6 != null
     then host.addresses.${network}.ipv6
-    else "${prefix6}::${intToHex (conventions.hostBaseOffset + host.labIndex)}";
+    else throw "Host has no IPv6 address on network '${network}'. Add it to addresses.${network}.ipv6.";
 in {
   inherit networks ulaReverseBase vlanNameMap dhcpVlans hostAddress4 hostAddress6;
   utils = {inherit intToHex hexToReverseNibbles hostReverseNibbles parseCidrPrefix;};

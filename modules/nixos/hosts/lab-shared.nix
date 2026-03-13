@@ -18,9 +18,9 @@
     let
       labHostNames =
         let
-          labHosts = lib.filterAttrs (_: h: h.labIndex != null) config.psyclyx.topology.hosts;
+          labHosts = lib.filterAttrs (_: h: builtins.elem "lab" (h.roles or [])) config.psyclyx.topology.hosts;
         in
-        lib.mapAttrsToList (name: _: name) labHosts;
+        lib.sort builtins.lessThan (lib.mapAttrsToList (name: _: name) labHosts);
       thisHost = config.psyclyx.topology.hosts.${config.psyclyx.nixos.host};
 
       mkBondNetdev = name: macIface: {
@@ -146,11 +146,7 @@
           seaweedfs = {
             enable = true;
             clusterNodes = labHostNames;
-            masterNodes = let
-              labHosts = lib.filterAttrs (_: h: h.labIndex != null) config.psyclyx.topology.hosts;
-              sorted = lib.sort (a: b: labHosts.${a}.labIndex < labHosts.${b}.labIndex)
-                (lib.attrNames labHosts);
-            in lib.take 3 sorted;
+            masterNodes = lib.take 3 labHostNames;
             s3.enable = true;
             buckets = ["backups" "attic"];
           };

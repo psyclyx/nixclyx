@@ -54,29 +54,17 @@
       ...
     }:
     let
-      topo = config.psyclyx.topology;
-      topoLib = topo.enriched;
+      fleet = config.psyclyx.fleet;
       hostname = config.psyclyx.nixos.host;
-      labIdx = topo.hosts.${hostname}.labIndex;
 
-      dataNet = topoLib.networks.${cfg.dataNetwork};
-      bindAddr = "${dataNet.prefix}.${toString (topo.conventions.hostBaseOffset + labIdx)}";
+      bindAddr = fleet.hostAddress hostname cfg.dataNetwork;
 
-      labIndices = map (name: topo.hosts.${name}.labIndex) cfg.clusterNodes;
-      sortedIndices = builtins.sort builtins.lessThan labIndices;
-      masterIdx = builtins.head sortedIndices;
+      leader = fleet.leader cfg.clusterNodes;
+      isMaster = hostname == leader;
 
-      isMaster = labIdx == masterIdx;
+      masterAddr = fleet.hostAddress leader cfg.dataNetwork;
 
-      masterAddr = "${dataNet.prefix}.${toString (topo.conventions.hostBaseOffset + masterIdx)}";
-
-      allAddrs = map (
-        name:
-        let
-          idx = topo.hosts.${name}.labIndex;
-        in
-        "${dataNet.prefix}.${toString (topo.conventions.hostBaseOffset + idx)}"
-      ) cfg.clusterNodes;
+      allAddrs = map (name: fleet.hostAddress name cfg.dataNetwork) cfg.clusterNodes;
 
       sentinelDir = "/var/lib/redis-sentinel";
       sentinelConf = "${sentinelDir}/sentinel.conf";

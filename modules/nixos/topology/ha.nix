@@ -7,11 +7,8 @@
   ...
 }: let
   topo = config.psyclyx.topology;
-  dt = topo.enriched;
-  conventions = topo.conventions;
+  fleet = config.psyclyx.fleet;
   hostname = config.psyclyx.nixos.host;
-  hostDef = topo.hosts.${hostname} or null;
-  labIdx = if hostDef != null then hostDef.labIndex else null;
 
   # Find all haGroups this host is a member of.
   myGroups = lib.filterAttrs
@@ -20,38 +17,18 @@
 
   hasGroups = myGroups != {};
 
-  # Derive VIP address for a group.
-  groupVip = group: let
-    net = dt.networks.${group.network};
-  in "${net.prefix}.${toString group.vipOffset}";
-
-  # Derive this host's address on the group's network.
-  hostAddr = group: let
-    net = dt.networks.${group.network};
-  in "${net.prefix}.${toString (conventions.hostBaseOffset + labIdx)}";
-
-  # Derive the network interface for a group.
-  groupIface = group: let
-    ifaceDef = hostDef.interfaces.${group.network} or null;
-  in
-    if ifaceDef != null && ifaceDef.bond != null
-    then ifaceDef.bond
-    else if ifaceDef != null && ifaceDef.device != null
-    then ifaceDef.device
-    else group.network;
-
   # Collect unique VIPs across all groups (for keepalived).
   # Key by "network-vipOffset" to deduplicate.
-  uniqueVips = lib.unique (lib.mapAttrsToList (_: group: {
-    vip = groupVip group;
-    iface = groupIface group;
-    vrid = group.vipOffset; # must be 1-255
-    priority = 100 - labIdx; # lab-1=99, lab-2=98, etc.
+  uniqueVips = lib.unique (lib.mapAttrsToList (groupName: group: {
+    vip = fleet.groupVip groupName;
+    iface = fleet.hostInterface hostname group.network;
+    vrid = fleet.groupVrid groupName;
+    priority = fleet.memberPriority groupName hostname;
   }) myGroups);
 
   # Build haproxy config from all groups.
   haproxyConfig = let
-    metricsAddr = hostAddr (builtins.head (lib.attrValues myGroups));
+    metricsAddr = fleet.hostAddress hostname (builtins.head (lib.attrValues myGroups)).network;
 
     globalSection = ''
       global
@@ -79,15 +56,12 @@
     '';
 
     mkFrontendBackend = groupName: group: svcName: svc: let
-      vip = groupVip group;
+      vip = fleet.groupVip groupName;
       frontendPort = svc.port;
       backendPort = if svc.backendPort != null then svc.backendPort else svc.port;
       name = "${groupName}-${svcName}";
-      memberAddrs = map (member: let
-        idx = topo.hosts.${member}.labIndex;
-        net = dt.networks.${group.network};
-      in {
-        addr = "${net.prefix}.${toString (conventions.hostBaseOffset + idx)}";
+      memberAddrs = map (member: {
+        addr = fleet.hostAddress member group.network;
         inherit member;
       }) group.members;
       checkUri = if svc.check != null then svc.check else "/";
@@ -134,7 +108,7 @@
     ) myGroups
   ));
 in {
-  config = lib.mkIf (hasGroups && labIdx != null) {
+  config = lib.mkIf hasGroups {
     # Allow haproxy to bind the VIP before keepalived assigns it.
     boot.kernel.sysctl."net.ipv4.ip_nonlocal_bind" = 1;
 

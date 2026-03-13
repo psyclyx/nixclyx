@@ -1,7 +1,7 @@
 {
   path = ["psyclyx" "topology"];
   gate = "always";
-  imports = [./enrichment.nix ./wireguard.nix ./dns.nix ./monitoring.nix ./deployment.nix ./dhcp.nix ./ha.nix];
+  imports = [./enrichment.nix ./validation.nix ./wireguard.nix ./dns.nix ./monitoring.nix ./deployment.nix ./dhcp.nix ./ha.nix];
   config = {};
   options = {lib, ...}: let
     haGroupServiceModule = {
@@ -40,8 +40,31 @@
           description = "Topology network this HA group operates on.";
         };
         vipOffset = lib.mkOption {
-          type = lib.types.int;
-          description = "Host offset for the virtual IP within the network subnet.";
+          type = lib.types.nullOr lib.types.int;
+          default = null;
+          description = "Host offset for the virtual IP (deprecated, use vip).";
+        };
+        vip = lib.mkOption {
+          type = lib.types.nullOr (lib.types.submodule {
+            options = {
+              ipv4 = lib.mkOption {
+                type = lib.types.str;
+                description = "Virtual IP address (IPv4).";
+              };
+              ipv6 = lib.mkOption {
+                type = lib.types.nullOr lib.types.str;
+                default = null;
+                description = "Virtual IP address (IPv6).";
+              };
+            };
+          });
+          default = null;
+          description = "Explicit VIP address (preferred over vipOffset derivation).";
+        };
+        vrid = lib.mkOption {
+          type = lib.types.nullOr lib.types.int;
+          default = null;
+          description = "VRRP ID for keepalived (defaults to vipOffset if null).";
         };
         members = lib.mkOption {
           type = lib.types.listOf lib.types.str;
@@ -117,10 +140,26 @@
           default = {};
           description = "1:1 NAT mappings: network name → NAT prefix (e.g. rack → 10.157.10.0/24)";
         };
-        labIndex = lib.mkOption {
-          type = lib.types.nullOr lib.types.int;
+        kind = lib.mkOption {
+          type = lib.types.enum ["physical" "vm" "container" "cloud"];
+          default = "physical";
+          description = "Device kind — determines which config backend and capabilities apply.";
+        };
+        parent = lib.mkOption {
+          type = lib.types.nullOr lib.types.str;
           default = null;
-          description = "Numeric lab server index (used to derive IP addresses as base + labIndex)";
+          description = "Parent host (for VMs/containers — which host this runs on).";
+        };
+        hardware = lib.mkOption {
+          type = lib.types.submodule {
+            options.tpm = lib.mkOption {
+              type = lib.types.bool;
+              default = false;
+              description = "Whether this host has a TPM 2.0 module installed.";
+            };
+          };
+          default = {};
+          description = "Hardware capabilities.";
         };
         mac = lib.mkOption {
           type = lib.types.attrsOf lib.types.str;
@@ -209,10 +248,6 @@
           gatewayOffset = lib.mkOption {
             type = lib.types.int;
             description = "Host offset for gateway addresses within a subnet";
-          };
-          hostBaseOffset = lib.mkOption {
-            type = lib.types.int;
-            description = "Base offset for host addresses (lab servers get base + index)";
           };
           transitVlan = lib.mkOption {
             type = lib.types.int;
