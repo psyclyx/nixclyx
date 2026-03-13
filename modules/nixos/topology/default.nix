@@ -1,7 +1,7 @@
 {
   path = ["psyclyx" "topology"];
   gate = "always";
-  imports = [./enrichment.nix ./validation.nix ./wireguard.nix ./dns.nix ./monitoring.nix ./deployment.nix ./dhcp.nix ./ha.nix];
+  imports = [./fleet-data.nix ./enrichment.nix ./validation.nix ./wireguard.nix ./dns.nix ./monitoring.nix ./deployment.nix ./dhcp.nix ./ha.nix];
   options = {lib, ...}: let
     haGroupServiceModule = {
       options = {

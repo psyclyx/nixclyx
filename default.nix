@@ -86,6 +86,10 @@ let
     inherit modules hive configurations darwinConfigurations nixOnDroidConfigurations;
     overlays.default = overlay;
     docs = import ./docs {inherit nixclyx;};
+    fleet-viz = pkgs: import ./packages/fleet-viz {
+      inherit pkgs;
+      fleetData = let fleet = import ./data/fleet; in fleet.topology // fleet;
+    };
     nvf = pkgs:
       ((import sources.nvf).lib.neovimConfiguration {
         inherit pkgs;
