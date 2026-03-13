@@ -134,6 +134,19 @@
       "url": "https://github.com/zhaofengli-wip/nix-homebrew/archive/a5409abd0d5013d79775d3419bcac10eacb9d8c5.tar.gz",
       "hash": "sha256-8d7KnCpT2LweRvSzZYEGd9IM3eFX+A78opcnDM0+ndk="
     },
+    "nix-on-droid": {
+      "type": "Git",
+      "repository": {
+        "type": "GitHub",
+        "owner": "nix-community",
+        "repo": "nix-on-droid"
+      },
+      "branch": "release-24.05",
+      "submodules": false,
+      "revision": "f3d3b8294039f2f9a8fb7ea82c320f29c6b0fe25",
+      "url": "https://github.com/nix-community/nix-on-droid/archive/f3d3b8294039f2f9a8fb7ea82c320f29c6b0fe25.tar.gz",
+      "hash": "sha256-UFzk/hZWO1VkciIO5UPaSpJN8s765wsngUSvtJM6d5Q="
+    },
     "nixos-apple-silicon": {
       "type": "Git",
       "repository": {

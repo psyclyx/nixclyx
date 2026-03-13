@@ -21,6 +21,7 @@ let
     nvf = import ./modules/nvf {inherit nixclyx;};
     nixos = import ./modules/nixos {inherit nixclyx;};
     darwin = import ./modules/darwin {inherit nixclyx;};
+    nix-on-droid = import ./modules/nix-on-droid {inherit nixclyx;};
   };
 
   # Phase 3: Consumers — depend on modules.
@@ -60,13 +61,29 @@ let
     halo = {};
   };
 
+  nixOnDroidLib = (loadFlake sources.nix-on-droid).lib;
+
+  mkDroidHost = name:
+    nixOnDroidLib.nixOnDroidConfiguration {
+      pkgs = import sources.nixpkgs {system = "aarch64-linux";};
+      home-manager-path = sources.home-manager.outPath;
+      modules = [
+        modules.nix-on-droid
+        {config.psyclyx.droid.host = name;}
+      ];
+    };
+
+  nixOnDroidConfigurations = builtins.mapAttrs (name: _: mkDroidHost name) {
+    phone = {};
+  };
+
   hive = import ./hive.nix {inherit nixclyx;};
 
   # The full nixclyx attrset. Modules see this via _module.args (lazy).
   # hive/configurations/darwinConfigurations are top-level consumers only —
   # no module spec should reference them.
   nixclyx = core // {
-    inherit modules hive configurations darwinConfigurations;
+    inherit modules hive configurations darwinConfigurations nixOnDroidConfigurations;
     overlays.default = overlay;
     docs = import ./docs {inherit nixclyx;};
     nvf = pkgs:
