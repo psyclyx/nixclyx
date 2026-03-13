@@ -17,9 +17,10 @@
           "*" =
             {
               addKeysToAgent = "yes";
-              compression = true;
+              compression = false;
               extraOptions = {
                 "UpdateHostKeys" = "no";
+                "Ciphers" = "aes128-gcm@openssh.com,aes256-gcm@openssh.com,chacha20-poly1305@openssh.com";
               };
               identityFile = config.sops.secrets."ssh/id_psyclyx".path or null;
             }

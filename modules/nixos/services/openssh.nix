@@ -26,7 +26,13 @@
     nixclyx,
     ...
   }: {
-    psyclyx.nixos.network.ports.ssh = lib.mkDefault [22];
+    psyclyx.nixos.network.ports.ssh = let
+      topo = config.psyclyx.topology;
+      hostName = config.networking.hostName;
+      thisHost = topo.hosts.${hostName} or null;
+    in [
+      (if thisHost != null then thisHost.sshPort else 22)
+    ];
 
     security.pam.sshAgentAuth.enable = lib.mkIf cfg.agentAuth.enable cfg.agentAuth.enable;
 
@@ -51,6 +57,7 @@
         PasswordAuthentication = false;
         KbdInteractiveAuthentication = false;
         AuthorizedPrincipalsFile = "/etc/ssh/auth_principals/%u";
+        Ciphers = ["aes128-gcm@openssh.com" "aes256-gcm@openssh.com" "chacha20-poly1305@openssh.com"];
       };
 
       extraConfig = ''
