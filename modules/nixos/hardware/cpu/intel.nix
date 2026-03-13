@@ -13,5 +13,7 @@
       cpu.intel.updateMicrocode = true;
       enableRedistributableFirmware = true;
     };
+
+    powerManagement.cpuFreqGovernor = "performance";
   };
 }
