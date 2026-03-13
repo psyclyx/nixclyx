@@ -202,31 +202,6 @@
       };
     };
 
-    linkModule = {
-      options = {
-        from = lib.mkOption {
-          type = lib.types.str;
-          description = "Source device";
-        };
-        to = lib.mkOption {
-          type = lib.types.str;
-          description = "Destination device";
-        };
-        port = lib.mkOption {
-          type = lib.types.str;
-          description = "Port on destination device";
-        };
-        networks = lib.mkOption {
-          type = lib.types.listOf lib.types.str;
-          description = "Tagged networks on this link";
-        };
-        untagged = lib.mkOption {
-          type = lib.types.nullOr lib.types.str;
-          default = null;
-          description = "Untagged network on this link";
-        };
-      };
-    };
   in {
     conventions = lib.mkOption {
       type = lib.types.submodule {
@@ -289,26 +264,6 @@
       description = "WireGuard overlay configuration";
     };
 
-    uplink = lib.mkOption {
-      type = lib.types.submodule {
-        options = {
-          switch = lib.mkOption {
-            type = lib.types.str;
-            description = "Switch carrying the upstream link";
-          };
-          port = lib.mkOption {
-            type = lib.types.str;
-            description = "Port on the switch connected to upstream";
-          };
-          vlan = lib.mkOption {
-            type = lib.types.int;
-            description = "VLAN ID for the upstream transit link";
-          };
-        };
-      };
-      description = "Upstream / transit link definition";
-    };
-
     hosts = lib.mkOption {
       type = lib.types.attrsOf (lib.types.submodule hostModule);
       default = {};
@@ -318,141 +273,6 @@
     ipv6UlaPrefix = lib.mkOption {
       type = lib.types.str;
       description = "IPv6 ULA prefix for home network";
-    };
-
-    switches = lib.mkOption {
-      type = lib.types.attrsOf (lib.types.submodule {
-        options = {
-          model = lib.mkOption {
-            type = lib.types.str;
-            description = "Switch model identifier";
-          };
-          mac = lib.mkOption {
-            type = lib.types.str;
-            description = "Switch base MAC address";
-          };
-          identity = lib.mkOption {
-            type = lib.types.str;
-            description = "Switch system identity / hostname";
-          };
-          mgmt = lib.mkOption {
-            type = lib.types.nullOr (lib.types.submodule {
-              options = {
-                network = lib.mkOption {
-                  type = lib.types.str;
-                  description = "Management network name";
-                };
-                ipv4 = lib.mkOption {
-                  type = lib.types.str;
-                  description = "Management IPv4 address";
-                };
-              };
-            });
-            default = null;
-            description = "Management interface (network + address)";
-          };
-          bridge = lib.mkOption {
-            type = lib.types.nullOr lib.types.str;
-            default = null;
-            description = "Bridge interface name";
-          };
-          addresses = lib.mkOption {
-            type = lib.types.attrsOf (lib.types.submodule {
-              options = {
-                address = lib.mkOption {
-                  type = lib.types.str;
-                  description = "IP address in CIDR notation";
-                };
-                vlan = lib.mkOption {
-                  type = lib.types.nullOr lib.types.int;
-                  default = null;
-                  description = "VLAN ID (null for untagged)";
-                };
-              };
-            });
-            default = {};
-            description = "Switch IP addresses keyed by interface/VLAN name";
-          };
-          portRenames = lib.mkOption {
-            type = lib.types.attrsOf lib.types.str;
-            default = {};
-            description = "Port name mappings (original → short name)";
-          };
-          bonds = lib.mkOption {
-            type = lib.types.attrsOf (lib.types.submodule {
-              options = {
-                slaves = lib.mkOption {
-                  type = lib.types.listOf lib.types.str;
-                  description = "Member ports in this bond";
-                };
-                mode = lib.mkOption {
-                  type = lib.types.str;
-                  description = "Bond mode (e.g. 802.3ad)";
-                };
-                lacpPassive = lib.mkOption {
-                  type = lib.types.bool;
-                  default = false;
-                  description = "Whether LACP is passive on this bond";
-                };
-                comment = lib.mkOption {
-                  type = lib.types.nullOr lib.types.str;
-                  default = null;
-                  description = "Human-readable description";
-                };
-              };
-            });
-            default = {};
-            description = "Bond definitions";
-          };
-          ports = lib.mkOption {
-            type = lib.types.attrsOf (lib.types.submodule {
-              options = {
-                pvid = lib.mkOption {
-                  type = lib.types.nullOr lib.types.int;
-                  default = null;
-                  description = "Port VLAN ID (untagged VLAN)";
-                };
-                tagged = lib.mkOption {
-                  type = lib.types.listOf lib.types.int;
-                  default = [];
-                  description = "Tagged VLANs on this port";
-                };
-                comment = lib.mkOption {
-                  type = lib.types.nullOr lib.types.str;
-                  default = null;
-                  description = "Human-readable description";
-                };
-              };
-            });
-            default = {};
-            description = "Per-port VLAN membership";
-          };
-          ssh = lib.mkOption {
-            type = lib.types.nullOr (lib.types.submodule {
-              options = {
-                forwardingEnabled = lib.mkOption {
-                  type = lib.types.str;
-                  description = "SSH forwarding mode (both, local, no)";
-                };
-                hostKeyType = lib.mkOption {
-                  type = lib.types.str;
-                  description = "SSH host key type (e.g. ed25519)";
-                };
-              };
-            });
-            default = null;
-            description = "SSH configuration for switch management";
-          };
-        };
-      });
-      default = {};
-      description = "Physical switch definitions";
-    };
-
-    links = lib.mkOption {
-      type = lib.types.listOf (lib.types.submodule linkModule);
-      default = [];
-      description = "Physical link definitions between devices";
     };
 
     networks = lib.mkOption {

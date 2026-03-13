@@ -46,11 +46,6 @@
     static_configs = [{targets = map (t: t.target) targets;}];
   }) extraServices;
 
-  # SNMP targets: switches with a management address.
-  snmpTargets = lib.concatLists (lib.mapAttrsToList (_: sw:
-    lib.optional (sw.mgmt != null) sw.mgmt.ipv4
-  ) topo.switches);
-
   hubVpnAddress = monitoredHosts.${topo.wireguard.hub}.addresses.vpn.ipv4;
 
   # Hub host's own services (for server self-scrape), excluding "node" (auto-added).
@@ -66,7 +61,7 @@ in {
     (lib.mkIf config.psyclyx.nixos.services.prometheus.collector.enable {
       psyclyx.nixos.services.prometheus.collector = {
         scrapeTargets = nodeTargets;
-        inherit snmpTargets extraScrapeConfigs;
+        inherit extraScrapeConfigs;
         remoteWriteUrl = lib.mkDefault "http://${hubVpnAddress}:9090/api/v1/write";
       };
     })
