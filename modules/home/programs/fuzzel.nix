@@ -1,11 +1,12 @@
 {
   path = ["psyclyx" "home" "programs" "fuzzel"];
   description = "Fuzzel application launcher";
-  config = {config, ...}: {
+  config = {config, lib, ...}: {
     programs.fuzzel = {
       enable = true;
       settings = {
         main = {
+          font = lib.mkForce "${config.stylix.fonts.monospace.name}:size=${toString config.stylix.fonts.sizes.applications}";
           prompt = "\"  \"";
           placeholder = "\"Search...\"";
           icons-enabled = true;
@@ -14,7 +15,8 @@
           launch-prefix = "uwsm app --";
           layer = "overlay";
           lines = 8;
-          width = 35;
+          width = 80;
+          message-mode = "expand";
           horizontal-pad = 16;
           vertical-pad = 12;
           inner-pad = 4;
