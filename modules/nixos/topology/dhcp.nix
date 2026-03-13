@@ -162,9 +162,9 @@ in {
           persist = true;
           name = "/var/lib/kea/dhcp4.leases";
         };
-        valid-lifetime = 3600;
-        renew-timer = 900;
-        rebind-timer = 1800;
+        valid-lifetime = 43200;
+        renew-timer = 10800;
+        rebind-timer = 21600;
         subnet4 = lib.mapAttrsToList mkSubnet4 cfg.pools;
       } // cfg.extraDhcp4;
     };
@@ -178,9 +178,9 @@ in {
           persist = true;
           name = "/var/lib/kea/dhcp6.leases";
         };
-        valid-lifetime = 3600;
-        renew-timer = 900;
-        rebind-timer = 1800;
+        valid-lifetime = 43200;
+        renew-timer = 10800;
+        rebind-timer = 21600;
         subnet6 = lib.mapAttrsToList mkSubnet6 ipv6Pools;
         host-reservation-identifiers = ["hw-address" "duid"];
         mac-sources = ["ipv6-link-local"];
