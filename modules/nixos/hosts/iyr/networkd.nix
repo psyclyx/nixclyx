@@ -8,10 +8,18 @@
   dt = topo.enriched;
   conventions = topo.conventions;
 
-  transitVlan = conventions.transitVlan;
-  vlanIds = dt.dhcpVlans ++ [transitVlan];
+  # Dedicated interfaces: LAN and WAN on separate NICs to avoid
+  # LACP hash contention when forwarding between them.
+  lanIface = "enp1s0";
+  wanIface = "enp3s0";
 
-  vlanIface = id: "bond0.${builtins.toString id}";
+  transitVlan = conventions.transitVlan;
+
+  # LAN VLANs live on lanIface
+  vlanIface = id: "${lanIface}.${builtins.toString id}";
+  # Transit (WAN) VLAN lives on wanIface
+  transitIface = "${wanIface}.${builtins.toString transitVlan}";
+
   vlanNetdev = id: {
     netdevConfig = {
       Name = vlanIface id;
@@ -52,8 +60,6 @@
     ];
     linkConfig.RequiredForOnline = "routable";
   };
-
-  transitIface = vlanIface transitVlan;
 
   # CAKE bandwidth ranges (kbps).  cake-autorate continuously adjusts the
   # shaper between min and max based on measured latency.  "base" is the
@@ -98,33 +104,15 @@ in {
         linkConfig.RequiredForOnline = "routable";
       };
     in {
-      kernelModules = ["bonding" "8021q" "igc"];
+      kernelModules = ["8021q" "igc"];
       netdevs =
-        {
-          "10-bond0" = {
-            netdevConfig = {
-              Name = "bond0";
-              Kind = "bond";
-            };
-            bondConfig = {
-              Mode = "802.3ad";
-              LACPTransmitRate = "fast";
-              TransmitHashPolicy = "layer3+4";
-              MIIMonitorSec = "1s";
-            };
-          };
-        }
-        // builtins.listToAttrs (map (id:
+        builtins.listToAttrs (map (id:
           lib.nameValuePair "11-${vlanIface id}" (vlanNetdev id)
         ) initrdVlans);
       networks =
         {
-          "10-bond0-ports" = {
-            matchConfig.Name = "enp1s0 enp3s0";
-            networkConfig.Bond = "bond0";
-          };
-          "10-bond0" = {
-            matchConfig.Name = "bond0";
+          "10-${lanIface}" = {
+            matchConfig.Name = lanIface;
             networkConfig.DHCP = "no";
             vlan = map vlanIface initrdVlans;
             linkConfig.RequiredForOnline = "carrier";
@@ -198,7 +186,7 @@ in {
       requires = ["cake-qos.service"];
       wantedBy = ["multi-user.target"];
 
-      path = [pkgs.iproute2 pkgs.fping pkgs.gzip pkgs.coreutils];
+      path = [pkgs.iproute2 pkgs.fping pkgs.gzip pkgs.coreutils pkgs.gawk];
 
       environment = {
         CAKE_AUTORATE_SCRIPT_PREFIX = "${cakeAutorate}/lib/cake-autorate";
@@ -231,16 +219,13 @@ in {
       "connection_active_thr_kbps=5000"
     ];
 
-    psyclyx.nixos.network.ports.ssh = [17891];
-
     psyclyx.nixos.network.firewall = let
-      wan = vlanIface transitVlan;
-      internal = ["bond0"] ++ map (id: "bond0.${toString id}") dt.dhcpVlans;
+      internal = [lanIface] ++ map vlanIface dt.dhcpVlans;
     in {
       enable = true;
       zones = {
         lan.interfaces = internal ++ ["wg0"];
-        wan.interfaces = [wan];
+        wan.interfaces = [transitIface];
       };
       input = {
         lan.policy = "accept";
@@ -265,50 +250,60 @@ in {
 
     systemd.network = {
       netdevs =
-        {
-          "30-bond0" = {
+        # LAN VLANs on lanIface
+        builtins.listToAttrs (map vlanNetdevPair dt.dhcpVlans)
+        // {
+          # Transit VLAN on wanIface
+          "31-${transitIface}" = {
             netdevConfig = {
-              Name = "bond0";
-              Kind = "bond";
+              Name = transitIface;
+              Kind = "vlan";
             };
-            bondConfig = {
-              Mode = "802.3ad";
-              LACPTransmitRate = "fast";
-              TransmitHashPolicy = "layer3+4";
-              MIIMonitorSec = "1s";
-            };
+            vlanConfig.Id = transitVlan;
           };
-        }
-        // (builtins.listToAttrs (map vlanNetdevPair vlanIds));
+        };
 
       networks = let
-        vlanUnit = id: "31-bond0.${builtins.toString id}";
+        vlanUnit = id: "31-${vlanIface id}";
       in
         {
-          "30-bond0-ports" = {
-            matchConfig.Name = "enp1s0 enp3s0";
-            networkConfig.Bond = "bond0";
-          };
-
-          "30-bond0" = {
-            matchConfig.Name = "bond0";
-            linkConfig.RequiredForOnline = "carrier";
+          # LAN parent interface
+          "30-${lanIface}" = {
+            matchConfig.Name = lanIface;
+            linkConfig = {
+              RequiredForOnline = "carrier";
+              # Use enp3s0's original MAC so enp3s0 can take the old bond MAC
+              # (c8:ff:bf:06:2c:4d) that the CMTS expects for prefix delegation.
+              MACAddress = "c8:ff:bf:06:2c:4e";
+            };
 
             networkConfig = {
-              Domains = ["~." "~psyclyx.xyz"];
+              Domains = ["~."];
               DHCP = "no";
             };
 
             address = ["10.0.0.11/24"];
             dns = ["127.0.0.1"];
 
-            vlan = map vlanIface vlanIds;
+            vlan = map vlanIface dt.dhcpVlans;
+          };
+
+          # WAN parent interface
+          "30-${wanIface}" = {
+            matchConfig.Name = wanIface;
+            linkConfig = {
+              RequiredForOnline = "carrier";
+              # Old bond MAC — the CMTS requires this for prefix delegation.
+              MACAddress = "c8:ff:bf:06:2c:4d";
+            };
+            networkConfig.DHCP = "no";
+            vlan = [transitIface];
           };
         }
         // builtins.listToAttrs (map (id: lib.nameValuePair (vlanUnit id) (mkVlanNetwork id)) dt.dhcpVlans)
         // {
-          "${vlanUnit transitVlan}" = {
-            matchConfig.Name = vlanIface transitVlan;
+          "31-${transitIface}" = {
+            matchConfig.Name = transitIface;
             networkConfig = {
               DHCP = "yes";
               IPv6AcceptRA = true;
@@ -316,7 +311,7 @@ in {
             };
             dhcpV4Config = {
               UseRoutes = true;
-              ClientIdentifier = "mac";
+              ClientIdentifier = "duid";
             };
             dhcpV6Config = {
               PrefixDelegationHint = "::/60";
