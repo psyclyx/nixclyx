@@ -51,6 +51,7 @@ in {
   config = lib.mkIf (config.psyclyx.nixos.host == "iyr") {
     psyclyx.topology.dhcp = {
       enable = true;
+      interface = "enp1s0";
       pools = {
         main = {
           network = "main";
@@ -79,6 +80,7 @@ in {
         ddns-override-client-update = true;
         ddns-override-no-update = true;
         ddns-replace-client-name = "when-not-present";
+        ddns-conflict-resolution-mode = "no-check-with-dhcid";
       };
       extraDhcp6 = {
         dhcp-ddns = {
@@ -87,6 +89,7 @@ in {
         ddns-override-client-update = true;
         ddns-override-no-update = true;
         ddns-replace-client-name = "when-not-present";
+        ddns-conflict-resolution-mode = "no-check-with-dhcid";
         # Suppress per-packet INFO noise (lab BMC interfaces solicit aggressively).
         loggers = [
           {
