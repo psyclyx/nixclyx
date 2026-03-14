@@ -8,6 +8,7 @@ let
     shoal = ./shoal;
     ilo4-console = ./ilo4-console.nix;
     ssacli = ./ssacli.nix;
+    switch-deploy = ./switch-deploy.nix;
     upscale-image = ./upscale-image;
   };
 in
