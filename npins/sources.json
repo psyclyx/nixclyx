@@ -22,9 +22,9 @@
       },
       "branch": "main",
       "submodules": false,
-      "revision": "eb235f8813bdea2a4a38ac228f2efc4e2a8a90af",
-      "url": "https://github.com/aylur/astal/archive/eb235f8813bdea2a4a38ac228f2efc4e2a8a90af.tar.gz",
-      "hash": "sha256-8Ve6VdUpcYbl8bS5oyDwVnnNobyPxdPmUHGgSDyOazQ="
+      "revision": "8b39f46535314a2172d65f4426b09c832f3ff759",
+      "url": "https://github.com/aylur/astal/archive/8b39f46535314a2172d65f4426b09c832f3ff759.tar.gz",
+      "hash": "sha256-fm8xwpALR71nOtv2TUT7/6z6+e9+hpdGbeVgu8htWSw="
     },
     "base24-gen": {
       "type": "Git",
@@ -91,9 +91,9 @@
       },
       "branch": "master",
       "submodules": false,
-      "revision": "be0c641a6a5564caa33982faa1fe2c60d92131c7",
-      "url": "https://github.com/nix-community/home-manager/archive/be0c641a6a5564caa33982faa1fe2c60d92131c7.tar.gz",
-      "hash": "sha256-FFMc1uAwy2GYasd0rdNDVxKyAgzuoJH2M+GglBQbqf0="
+      "revision": "ef12a9a2b0f77c8fa3dda1e7e494fca668909056",
+      "url": "https://github.com/nix-community/home-manager/archive/ef12a9a2b0f77c8fa3dda1e7e494fca668909056.tar.gz",
+      "hash": "sha256-MPjR48roW7CUMU6lu0+qQGqj92Kuh3paIulMWFZy+NQ="
     },
     "llm-agents.nix": {
       "type": "Git",
@@ -104,9 +104,9 @@
       },
       "branch": "main",
       "submodules": false,
-      "revision": "a638ae24d87ea4bb42f57416c0b3c75d980e810d",
-      "url": "https://github.com/numtide/llm-agents.nix/archive/a638ae24d87ea4bb42f57416c0b3c75d980e810d.tar.gz",
-      "hash": "sha256-d6FY3t40JRc3nNZUu40rhfcMrOlVQeXGjUvzG/l0G8M="
+      "revision": "64d8585ea7ba1a88b1afa82a89bdd10d4c894f45",
+      "url": "https://github.com/numtide/llm-agents.nix/archive/64d8585ea7ba1a88b1afa82a89bdd10d4c894f45.tar.gz",
+      "hash": "sha256-QdrMe4cftS8ALHB2+DTNOZIkw+rqddm5lcsAhm/voqk="
     },
     "nix-darwin": {
       "type": "Git",
@@ -134,19 +134,6 @@
       "url": "https://github.com/zhaofengli-wip/nix-homebrew/archive/a5409abd0d5013d79775d3419bcac10eacb9d8c5.tar.gz",
       "hash": "sha256-8d7KnCpT2LweRvSzZYEGd9IM3eFX+A78opcnDM0+ndk="
     },
-    "nix-on-droid": {
-      "type": "Git",
-      "repository": {
-        "type": "GitHub",
-        "owner": "nix-community",
-        "repo": "nix-on-droid"
-      },
-      "branch": "release-24.05",
-      "submodules": false,
-      "revision": "f3d3b8294039f2f9a8fb7ea82c320f29c6b0fe25",
-      "url": "https://github.com/nix-community/nix-on-droid/archive/f3d3b8294039f2f9a8fb7ea82c320f29c6b0fe25.tar.gz",
-      "hash": "sha256-UFzk/hZWO1VkciIO5UPaSpJN8s765wsngUSvtJM6d5Q="
-    },
     "nixos-apple-silicon": {
       "type": "Git",
       "repository": {
@@ -156,9 +143,9 @@
       },
       "branch": "main",
       "submodules": false,
-      "revision": "55b7c3c03e9b778d96a71f44400bbdda9a4cfda7",
-      "url": "https://github.com/nix-community/nixos-apple-silicon/archive/55b7c3c03e9b778d96a71f44400bbdda9a4cfda7.tar.gz",
-      "hash": "sha256-RDR+7v1vaojweHI3FdPnuYPy4wRGfTKgeD5GXrXbfT0="
+      "revision": "2fbdf62451bcd9fc83ca99c56a6e379df8c47c8d",
+      "url": "https://github.com/nix-community/nixos-apple-silicon/archive/2fbdf62451bcd9fc83ca99c56a6e379df8c47c8d.tar.gz",
+      "hash": "sha256-ELGvz8LW3fEzBTO1FpojRAPqp7+9xs5lspZb9NoZrbY="
     },
     "nixpkgs": {
       "type": "Git",
@@ -221,9 +208,9 @@
       },
       "branch": "master",
       "submodules": true,
-      "revision": "9daad4593761d5433f9df3f0198273fc5d1b37fe",
+      "revision": "9de4ced282824cff771adb4fdcb5be449758d8bc",
       "url": null,
-      "hash": "sha256-ZRkx3gBtUhuNClTxZJLZnd54aTdKENbo23Hf7sNs7e8="
+      "hash": "sha256-GHaej4NDCYF29gvNrimtB891KmUbkijX+Vp94v6fSXo="
     },
     "rustfs-flake": {
       "type": "Git",
@@ -286,9 +273,9 @@
       },
       "branch": "main",
       "submodules": false,
-      "revision": "2f2995f6aa8227ae88ff3a2c5aeb421de3df4f2a",
-      "url": "https://github.com/psyclyx/tidepool/archive/2f2995f6aa8227ae88ff3a2c5aeb421de3df4f2a.tar.gz",
-      "hash": "sha256-29i6m4bt4S643VZJBOTvC4bIA0eMxl74DEXVxv/ptUg="
+      "revision": "80c61cc608ee08049432ae89b58273fc088b1a3b",
+      "url": "https://github.com/psyclyx/tidepool/archive/80c61cc608ee08049432ae89b58273fc088b1a3b.tar.gz",
+      "hash": "sha256-FgUjWar+EGc4Gy/vwOBLqb+tn2SM48f5jpFw5R9+zFI="
     },
     "zsh-pure": {
       "type": "Git",
