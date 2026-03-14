@@ -20,7 +20,13 @@
       publicKey = "9wnevbvkDGcyNnMECEzgfaghqi4tEw4GsgC/TUcSTS4=";
       exportedRoutes = [
         "10.0.10.0/24"
-        "10.157.10.0/24"
+        "10.0.25.0/24"
+        "10.0.30.0/24"
+        "10.0.31.0/24"
+        "10.0.50.0/24"
+        "10.0.100.0/24"
+        "10.0.110.0/24"
+        "10.0.240.0/24"
       ];
     };
     addresses.vpn.ipv4 = "10.157.0.2";
@@ -39,6 +45,7 @@
     };
     addresses.vpn.ipv4 = "10.157.0.3";
     roles = ["workstation"];
+    hardware.tpm = true;
     services = {
       node = { port = 9100; networks = ["vpn"]; };
       smartctl = { port = 9633; networks = ["vpn"]; };

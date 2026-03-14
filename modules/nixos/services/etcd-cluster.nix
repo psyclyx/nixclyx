@@ -47,7 +47,6 @@
       hostname = config.psyclyx.nixos.host;
 
       bindAddr = fleet.hostAddress hostname cfg.dataNetwork;
-      rackAddr = fleet.hostAddress hostname "rack";
 
       memberAddr = name: fleet.hostAddress name cfg.dataNetwork;
 
@@ -61,7 +60,6 @@
         name = hostname;
         listenClientUrls = [
           "http://${bindAddr}:${toString cfg.clientPort}"
-          "http://${rackAddr}:${toString cfg.clientPort}"
           "http://127.0.0.1:${toString cfg.clientPort}"
         ];
         advertiseClientUrls = [

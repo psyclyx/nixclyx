@@ -8,7 +8,7 @@
     };
     listenNetwork = lib.mkOption {
       type = lib.types.str;
-      default = "rack";
+      default = "infra";
       description = "Topology network for the HTTP listen address.";
     };
     port = lib.mkOption {

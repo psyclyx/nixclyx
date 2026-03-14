@@ -107,7 +107,7 @@
     };
     metricsNetwork = lib.mkOption {
       type = lib.types.str;
-      default = "rack";
+      default = "infra";
       description = "Topology network for metrics endpoints.";
     };
   };

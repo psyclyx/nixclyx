@@ -14,13 +14,13 @@
     host = config.psyclyx.nixos.host;
     topo = config.psyclyx.topology;
     dt = topo.enriched;
-    rackZone = dt.networks.rack.zoneName;
+    infraZone = dt.networks.infra.zoneName;
 
     builders = {
-      lab-1 = {sshHost = "lab-1.${rackZone}"; maxJobs = 54; speedFactor = 7;};
-      lab-2 = {sshHost = "lab-2.${rackZone}"; maxJobs = 36; speedFactor = 5;};
-      lab-3 = {sshHost = "lab-3.${rackZone}"; maxJobs = 36; speedFactor = 5;};
-      lab-4 = {sshHost = "lab-4.${rackZone}"; maxJobs = 54; speedFactor = 7;};
+      lab-1 = {sshHost = "lab-1.${infraZone}"; maxJobs = 54; speedFactor = 7;};
+      lab-2 = {sshHost = "lab-2.${infraZone}"; maxJobs = 36; speedFactor = 5;};
+      lab-3 = {sshHost = "lab-3.${infraZone}"; maxJobs = 36; speedFactor = 5;};
+      lab-4 = {sshHost = "lab-4.${infraZone}"; maxJobs = 54; speedFactor = 7;};
     };
 
     acceptsBuilds = builtins.elem host

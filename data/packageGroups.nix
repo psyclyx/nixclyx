@@ -110,6 +110,9 @@
     pkgs.selene
     pkgs.stylua
 
+    # Infra / Ops
+    pkgs.openbao
+
     # Nix
     pkgs.colmena.colmena
     pkgs.nil

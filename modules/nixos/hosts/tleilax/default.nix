@@ -85,15 +85,15 @@
           resolver = {
             enable = true;
             interfaces = ["10.157.0.1"];
-            accessControl = ["10.157.0.0/24 allow" "10.157.10.0/24 allow" "10.0.0.0/24 allow"];
+            accessControl = ["10.157.0.0/24 allow" "10.0.0.0/8 allow"];
             localZones = {
               "psyclyx.net" = {
                 type = "transparent";
                 records = [
                   "metrics.psyclyx.net. IN A 10.157.0.1"
-                  "s3.psyclyx.net. IN A 10.157.10.200"
-                  "webdav.psyclyx.net. IN A 10.157.10.200"
-                  "cache.psyclyx.net. IN A 10.157.10.200"
+                  "s3.psyclyx.net. IN A 10.0.25.200"
+                  "webdav.psyclyx.net. IN A 10.0.25.200"
+                  "cache.psyclyx.net. IN A 10.0.25.200"
                 ];
               };
             };
@@ -102,9 +102,6 @@
                 forward-addr = ["10.157.0.2"];
               };
               "0.10.in-addr.arpa" = {
-                forward-addr = ["10.157.0.2"];
-              };
-              "10.157.10.in-addr.arpa" = {
                 forward-addr = ["10.157.0.2"];
               };
             };

@@ -15,7 +15,7 @@
       };
       dataNetwork = lib.mkOption {
         type = lib.types.str;
-        default = "data";
+        default = "infra";
         description = "Network for Raft and API traffic.";
       };
       apiPort = lib.mkOption {
@@ -34,6 +34,14 @@
         type = lib.types.bool;
         default = true;
       };
+      transitAddress = lib.mkOption {
+        type = lib.types.str;
+        description = "Address of the transit seal provider (e.g. http://10.0.25.1:8200).";
+      };
+      transitTokenFile = lib.mkOption {
+        type = lib.types.str;
+        description = "Path to file containing the transit auto-unseal token.";
+      };
     };
 
   config =
@@ -49,7 +57,6 @@
       hostname = config.psyclyx.nixos.host;
 
       bindAddr = fleet.hostAddress hostname cfg.dataNetwork;
-      unsealMethod = fleet.unsealMethod hostname;
       otherNodes = builtins.filter (n: n != hostname) cfg.clusterNodes;
 
       retryJoinStanzas = lib.concatMapStrings (node: ''
@@ -57,34 +64,6 @@
           leader_api_addr = "http://${fleet.hostAddress node cfg.dataNetwork}:${toString cfg.apiPort}"
         }
       '') otherNodes;
-
-      sealStanza =
-        if unsealMethod == "tpm" then ''
-          seal "pkcs11" {
-            lib = "/run/current-system/sw/lib/libtpm2_pkcs11.so"
-            slot = "0"
-            pin = "env:BAO_TPM_PIN"
-            key_label = "openbao-unseal"
-            mechanism = "0x00001085"
-            generate_key = "true"
-          }
-        ''
-        else if unsealMethod == "transit" then
-          let
-            tpmPeer = lib.findFirst
-              (n: n != hostname && (fleet.hosts.${n}.hardware.tpm or false))
-              (throw "transit unseal requires a TPM-enabled peer")
-              cfg.clusterNodes;
-          in ''
-            seal "transit" {
-              address = "http://${fleet.hostAddress tpmPeer cfg.dataNetwork}:${toString cfg.apiPort}"
-              token = ""
-              disable_renewal = "false"
-              key_name = "autounseal"
-              mount_path = "transit/"
-            }
-          ''
-        else "";
 
       configFile = pkgs.writeText "openbao.hcl" ''
         ui = ${lib.boolToString cfg.uiEnable}
@@ -109,7 +88,13 @@
         api_addr     = "http://${bindAddr}:${toString cfg.apiPort}"
         cluster_addr = "http://${bindAddr}:${toString cfg.clusterPort}"
 
-        ${sealStanza}
+        seal "transit" {
+          address         = "${cfg.transitAddress}"
+          token           = "__TRANSIT_TOKEN__"
+          disable_renewal = "false"
+          key_name        = "autounseal"
+          mount_path      = "transit/"
+        }
       '';
     in
     {
@@ -130,11 +115,12 @@
         serviceConfig = {
           User = "openbao";
           Group = "openbao";
-          ExecStart = "${pkgs.openbao}/bin/bao server -config=${configFile}";
+          ExecStart = "${pkgs.openbao}/bin/bao server -config=/run/openbao/config.hcl";
           ExecReload = "${pkgs.coreutils}/bin/kill -HUP $MAINPID";
           Restart = "on-failure";
           RestartSec = "5s";
           StateDirectory = "openbao";
+          RuntimeDirectory = "openbao";
           LimitNOFILE = 65536;
           LimitMEMLOCK = "infinity";
           AmbientCapabilities = "CAP_IPC_LOCK";
@@ -145,6 +131,13 @@
           PrivateTmp = true;
           PrivateDevices = true;
         };
+
+        # Inject transit token into config at runtime (keeps token out of nix store)
+        preStart = ''
+          TOKEN=$(cat ${cfg.transitTokenFile})
+          ${pkgs.gnused}/bin/sed "s|__TRANSIT_TOKEN__|$TOKEN|" ${configFile} > /run/openbao/config.hcl
+          chmod 600 /run/openbao/config.hcl
+        '';
       };
 
       networking.firewall.allowedTCPPorts = [cfg.apiPort cfg.clusterPort];

@@ -48,6 +48,11 @@
         default = null;
         description = "Path to file containing the replication user password.";
       };
+      clientNetwork = lib.mkOption {
+        type = lib.types.str;
+        default = "infra";
+        description = "Topology network for client/HAProxy connections (pg_hba, listen).";
+      };
     };
 
   config =
@@ -63,14 +68,14 @@
       hostname = config.psyclyx.nixos.host;
 
       dataAddr = fleet.hostAddress hostname cfg.dataNetwork;
-      rackAddr = fleet.hostAddress hostname "rack";
+      clientAddr = fleet.hostAddress hostname cfg.clientNetwork;
 
       memberAddr = name: fleet.hostAddress name cfg.dataNetwork;
 
       dataNetPrefix = fleet.networkPrefix cfg.dataNetwork;
       dataNetPrefixLen = fleet.networkPrefixLen cfg.dataNetwork;
-      rackNetPrefix = fleet.networkPrefix "rack";
-      rackNetPrefixLen = fleet.networkPrefixLen "rack";
+      clientNetPrefix = fleet.networkPrefix cfg.clientNetwork;
+      clientNetPrefixLen = fleet.networkPrefixLen cfg.clientNetwork;
 
       otherNodes = builtins.filter (name: name != hostname) cfg.clusterNodes;
 
@@ -126,7 +131,7 @@
               "local all all trust"
               "host all all 127.0.0.1/32 md5"
               "host all all ${dataNetPrefix}.0/${toString dataNetPrefixLen} md5"
-              "host all all ${rackNetPrefix}.0/${toString rackNetPrefixLen} md5"
+              "host all all ${clientNetPrefix}.0/${toString clientNetPrefixLen} md5"
               "host replication ${cfg.replicationUser} 127.0.0.1/32 md5"
               "host replication ${cfg.replicationUser} ${dataNetPrefix}.0/${toString dataNetPrefixLen} md5"
             ];
@@ -134,7 +139,7 @@
 
           # nixpkgs sets listen from nodeIp; add localhost for local psql
           postgresql = {
-            listen = lib.mkForce "${dataAddr},${rackAddr},127.0.0.1:${toString cfg.port}";
+            listen = lib.mkForce "${dataAddr},${clientAddr},127.0.0.1:${toString cfg.port}";
             authentication = {
               replication = {
                 username = cfg.replicationUser;
@@ -148,7 +153,7 @@
               "local all all trust"
               "host all all 127.0.0.1/32 md5"
               "host all all ${dataNetPrefix}.0/${toString dataNetPrefixLen} md5"
-              "host all all ${rackNetPrefix}.0/${toString rackNetPrefixLen} md5"
+              "host all all ${clientNetPrefix}.0/${toString clientNetPrefixLen} md5"
               "host replication ${cfg.replicationUser} 127.0.0.1/32 md5"
               "host replication ${cfg.replicationUser} ${dataNetPrefix}.0/${toString dataNetPrefixLen} md5"
             ];

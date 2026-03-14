@@ -95,7 +95,7 @@
           "lab"
           "fixed"
         ];
-        targetHost = "lab-1.rack.home.psyclyx.net";
+        targetHost = "lab-1.infra.home.psyclyx.net";
         targetUser = "root";
       };
     };
@@ -112,7 +112,7 @@
           "lab"
           "fixed"
         ];
-        targetHost = "lab-2.rack.home.psyclyx.net";
+        targetHost = "lab-2.infra.home.psyclyx.net";
         targetUser = "root";
       };
     };
@@ -129,7 +129,7 @@
           "lab"
           "fixed"
         ];
-        targetHost = "lab-3.rack.home.psyclyx.net";
+        targetHost = "lab-3.infra.home.psyclyx.net";
         targetUser = "root";
       };
     };
@@ -146,7 +146,7 @@
           "lab"
           "fixed"
         ];
-        targetHost = "lab-4.rack.home.psyclyx.net";
+        targetHost = "lab-4.infra.home.psyclyx.net";
         targetUser = "root";
       };
     };
