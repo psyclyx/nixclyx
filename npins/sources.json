@@ -234,9 +234,9 @@
       },
       "branch": "main",
       "submodules": false,
-      "revision": "02aa24bff6d3721c513cf2beb3a4f7c35f0269ba",
-      "url": "https://github.com/psyclyx/shoal/archive/02aa24bff6d3721c513cf2beb3a4f7c35f0269ba.tar.gz",
-      "hash": "sha256-3g5NhugSIuwQk+1zQXOS257z7UQ9JtJgs2Jg4GtIyIg="
+      "revision": "00c2b5c8b8b522fe844801ea6bd732880999e1d4",
+      "url": "https://github.com/psyclyx/shoal/archive/00c2b5c8b8b522fe844801ea6bd732880999e1d4.tar.gz",
+      "hash": "sha256-crwrKKxyoC/8hwna4jlSPvC7wkGAmzdHmPkdmTVXcpw="
     },
     "sops-nix": {
       "type": "Git",
