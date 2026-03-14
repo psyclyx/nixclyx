@@ -192,6 +192,8 @@ let
       #
     '';
 
+    adminKeys = fleetData.topology.conventions.adminSshKeys or [];
+
     system = ''
       # ── System ──
       /system identity set name="${identity}"
@@ -199,9 +201,21 @@ let
       /ip dns set servers=${mgmtGw}
       /ip ssh set host-key-type=ed25519
       /snmp set enabled=yes
-    '';
+    '' + lib.optionalString (adminKeys != []) (''
+      # ── SSH keys ──
+    '' + lib.concatImapStringsSep "\n" (i: key: ''
+      /file add name=admin-key${toString i}.pub contents="${key}"
+      /user ssh-keys import public-key-file=admin-key${toString i}.pub user=admin
+      /file remove admin-key${toString i}.pub'') adminKeys + "\n");
 
     bridge = ''
+      # ── Reset factory defaults ──
+      /interface bridge port remove [find]
+      /interface bridge remove [find]
+      /ip address remove [find]
+      /ip dhcp-client remove [find]
+      /ip route remove [find where !routing-table]
+
       # ── Bridge ──
       /interface bridge
       add name=bridge1 protocol-mode=none igmp-snooping=yes

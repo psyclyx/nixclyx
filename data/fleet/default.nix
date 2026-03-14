@@ -6,6 +6,9 @@ in {
     conventions = {
       gatewayOffset = 1;
       transitVlan = 250;
+      adminSshKeys = [
+        "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPK+1GlLeOjyDZjcdGFXjDnJfgtO7OOOoeTliAwZRSsf psyc@sigil"
+      ];
     };
     domains = import ./domains.nix;
     wireguard = import ./wireguard.nix;
