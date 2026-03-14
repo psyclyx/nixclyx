@@ -7,8 +7,9 @@
 #     fleet = import ./data/fleet;
 #     gen = import ./lib/switch-config.nix lib fleet;
 #   in
-#     gen.routeros "crs326"   # -> Complete RouterOS .rsc script
-#     gen.swos "css326"       # -> SwOS .swb backup file content
+#     gen.routeros "mdf-agg01"   # -> Complete RouterOS .rsc script
+#     gen.routeros "idf-dist01"  # -> CRS305 RouterOS .rsc script
+#     gen.swos "mdf-acc01"       # -> SwOS .swb backup file content
 #
 lib: fleetData:
 let
@@ -58,16 +59,21 @@ let
 
   # ── Port helpers ────────────────────────────────────────────────
 
-  # All VLAN IDs sorted.
+  # All VLAN IDs sorted (network VLANs + transit).
+  transitVlan = fleetData.topology.conventions.transitVlan or null;
+  networkVlans = lib.mapAttrsToList (_: net: net.vlan) networks;
   allVlans = lib.sort builtins.lessThan
-    (lib.mapAttrsToList (_: net: net.vlan) networks);
+    (lib.unique (networkVlans ++ lib.optional (transitVlan != null) transitVlan));
 
   # Map network name → VLAN ID.
   vlanOf = name: networks.${name}.vlan;
 
-  # Resolve a port's VLAN from the host's interface mapping.
+  # Resolve a port's VLAN.
+  #   { host; interface; }       → VLAN from network name
+  #   { type = "access"; vlan; } → explicit VLAN ID (modem, AP drop, etc.)
   portVlan = port:
     if port ? host then vlanOf port.interface
+    else if port ? vlan then port.vlan
     else null;
 
   # Natural sort for port names: extract trailing digits for numeric comparison.
@@ -87,12 +93,14 @@ let
 
   # Classify a port.
   portType = port:
-    if port ? type then port.type    # "trunk" or "unused"
-    else "access";                   # has host + interface
+    if port ? type then port.type    # "trunk", "access", or "unused"
+    else "access";                   # has host + interface → host access
 
   # Describe a port for comments.
   portLabel = port:
-    if portType port == "access" then "${port.host} ${port.interface}"
+    if port ? host then "${port.host} ${port.interface}"
+    else if port ? description then port.description
+    else if portType port == "access" then "access VLAN ${toString port.vlan}"
     else if portType port == "trunk" then "trunk to ${port.peer}"
     else "unused";
 
@@ -113,6 +121,9 @@ let
         map (s: "qsfpplus${toString q}-${toString s}") (lib.range 1 4)
       ) (lib.range 1 2));
 
+    "CRS305-1G-4S+IN" =
+      map (i: "sfp-sfpplus${toString i}") (lib.range 1 4);
+
     "CSS326-24G-2S+RM" =
       (map (i: "ether${toString i}") (lib.range 1 24))
       ++ ["sfp-sfpplus1" "sfp-sfpplus2"];
@@ -128,9 +139,13 @@ let
     ports = sw.ports;
     identity = sw.identity or switchName;
 
-    # All hardware ports; fleet-assigned + unassigned.
+    # PoE-in port (e.g. CRS305 ether1) — not a switching port.
+    poeIn = sw.poeInPort or null;
+    isPoeIn = name: poeIn != null && name == poeIn;
+
+    # All hardware ports; fleet-assigned + unassigned, excluding PoE-in.
     hwPorts = modelPorts.${sw.model} or (builtins.attrNames ports);
-    allPortNames = sortPorts hwPorts;
+    allPortNames = builtins.filter (n: !isPoeIn n) (sortPorts hwPorts);
 
     # Port config: fleet data or implicit unused.
     portCfg = name: ports.${name} or { type = "unused"; };
@@ -333,9 +348,7 @@ let
     portNameFor = idx: let
       p = cfgAt idx;
       mode = modeAt idx;
-    in if mode == "access" then "${p.host} ${p.interface}"
-       else if mode == "trunk" then "trunk ${p.peer}"
-       else "";
+    in if mode == "unused" then "" else portLabel p;
 
     linkSection = "link.b:{"
       + "en:${h8 enableBits}"
