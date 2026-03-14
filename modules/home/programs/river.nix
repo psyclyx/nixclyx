@@ -59,6 +59,17 @@
 
     jq = lib.getExe pkgs.jq;
 
+    action-menu = pkgs.writeShellScript "tidepool-action-menu" ''
+      ${tidepoolmsg} bindings | ${jq} -r '
+        .[] | select(.action) |
+        (if .args then .action + " " + (.args | join(" ")) else .action end) as $cmd |
+        (if .desc then .desc else .action end) as $label |
+        $label + " \t" + .key + "\t" + $cmd
+      ' | ${fuzzel} --dmenu --prompt "Action: " | while IFS=$'\t' read -r label key cmd; do
+        ${tidepoolmsg} action $cmd
+      done
+    '';
+
     # Waybar tag/layout scripts using tidepoolmsg watch + jq.
     mkTagsScript = { outputX ? null, outputY ? null }: let
       outputFilter = if outputX != null
@@ -233,6 +244,7 @@
       (put config :border-focused 0x${c.base07})
       (put config :border-normal 0x${c.base03})
       (put config :border-urgent 0x${c.base08})
+      (put config :border-sibling 0x${c.base04})
       (put config :border-width 4)
       (put config :outer-padding 4)
       (put config :inner-padding 8)
@@ -288,15 +300,16 @@ ${lib.optionalString (monitors != {}) ''
         [:j {:mod4 true :shift true} (action/swap :down)]
         [:k {:mod4 true :shift true} (action/swap :up)]
         [:l {:mod4 true :shift true} (action/swap :right)]
-        [:bracketleft {:mod4 true} (action/adjust-ratio -0.05)]
-        [:bracketright {:mod4 true} (action/adjust-ratio 0.05)]
-        [:h {:mod4 true :ctrl true} (action/consume-column :left)]
-        [:l {:mod4 true :ctrl true} (action/consume-column :right)]
-        [:j {:mod4 true :ctrl true} (action/expel-column)]
-        [:k {:mod4 true :ctrl true} (action/equalize-column)]
-        [:r {:mod4 true} (action/preset-column-width)]
-        [:u {:mod4 true :ctrl true} (action/resize-window -0.1)]
-        [:i {:mod4 true :ctrl true} (action/resize-window 0.1)]
+        [:bracketleft {:mod4 true} (action/resize -0.05)]
+        [:bracketright {:mod4 true} (action/resize 0.05)]
+        [:h {:mod4 true :ctrl true} (action/consume :left)]
+        [:l {:mod4 true :ctrl true} (action/consume :right)]
+        [:j {:mod4 true :ctrl true} (action/expel)]
+        [:k {:mod4 true :ctrl true} (action/equalize)]
+        [:r {:mod4 true} (action/cycle-width)]
+        [:u {:mod4 true :ctrl true} (action/resize -0.1)]
+        [:i {:mod4 true :ctrl true} (action/resize 0.1)]
+        [:t {:mod4 true} (action/cycle-mode)]
         [:space {:mod4 true} (action/zoom)]
         [:semicolon {:mod4 true} (action/float)]
         [:slash {:mod4 true} (action/fullscreen)]
@@ -317,6 +330,7 @@ ${lib.optionalString (monitors != {}) ''
         [:x {:mod4 true} (action/spawn ["uwsm" "app" "--" "${lib.getExe power-menu}"])]
         [:s {:mod4 true} (action/spawn ["uwsm" "app" "--" "${lib.getExe screenshot-menu}"])]
         [:p {:mod4 true} (action/spawn ["uwsm" "app" "--" "${rofi-rbw}"])]
+        [:d {:mod4 true} (action/spawn ["${action-menu}"])]
 
         # Layout mode cycling
         [:Tab {:mod4 true} (action/cycle-layout :next)]
