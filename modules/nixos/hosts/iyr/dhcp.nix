@@ -85,8 +85,8 @@ in {
           network = "mgmt";
           ipv4Range = { start = "10.0.240.100"; end = "10.0.240.199"; };
           extraReservations = [
-            { "hw-address" = "04:F4:1C:54:1D:8A"; "ip-address" = "10.0.240.2"; hostname = "crs326"; }
-            { "hw-address" = "2C:C8:1B:00:82:89"; "ip-address" = "10.0.240.3"; hostname = "css326"; }
+            { "hw-address" = "04:F4:1C:54:1D:8A"; "ip-address" = "10.0.240.2"; hostname = "mdf-agg01"; }
+            { "hw-address" = "2C:C8:1B:00:82:89"; "ip-address" = "10.0.240.3"; hostname = "mdf-acc01"; }
           ];
         };
       };

@@ -28,8 +28,6 @@
         wants = [
           "/dev/disk/by-id/nvme-eui.0025384c41416f3c"
           "/dev/disk/by-id/nvme-eui.ace42e00457c0fbf2ee4ac0000000001"
-          "/dev/disk/by-id/ata-ST4000NM0035-1V4107_ZC12M6AQ" # hdd
-          "/dev/disk/by-id/ata-WDC_WDS500G2B0A-00SM50_194894802985" # ssd
         ];
       };
 
