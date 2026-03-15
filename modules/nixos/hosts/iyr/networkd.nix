@@ -250,8 +250,7 @@ in {
 
     systemd.network.config.dhcpV6Config.DUIDType = "link-layer";
 
-    systemd.network = {
-      netdevs =
+    systemd.network.netdevs =
         # LAN VLANs on lanIface
         builtins.listToAttrs (map vlanNetdevPair dt.dhcpVlans)
         // {
@@ -263,9 +262,16 @@ in {
             };
             vlanConfig.Id = transitVlan;
           };
+          # Direct WireGuard peer to sigil over LAN (bypasses tleilax hub)
+          "30-wg0".wireguardPeers = lib.mkAfter [
+            {
+              PublicKey = "XKqqjC62uOUhbCn3JPpI0M6WFYqRf8sLpML90JZ1CmE=";
+              AllowedIPs = ["10.157.0.3/32"];
+            }
+          ];
         };
 
-      networks = let
+    systemd.network.networks = let
         vlanUnit = id: "31-${vlanIface id}";
       in
         {
@@ -309,7 +315,6 @@ in {
             networkConfig = {
               DHCP = "yes";
               IPv6AcceptRA = true;
-              DHCPPrefixDelegation = true;
             };
             dhcpV4Config = {
               UseRoutes = true;
@@ -321,10 +326,11 @@ in {
               UseAddress = false;
               RapidCommit = true;
               IAID = 250;
+              DUIDType = "uuid";
+              DUIDRawData = "e7:13:f8:92:37:c5:be:76";
             };
             linkConfig.RequiredForOnline = "carrier";
           };
         };
-    };
   };
 }
