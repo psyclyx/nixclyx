@@ -262,6 +262,8 @@ in {
             };
             vlanConfig.Id = transitVlan;
           };
+          # Fixed listen port so direct LAN peers can reach us
+          "30-wg0".wireguardConfig.ListenPort = 51820;
           # Direct WireGuard peer to sigil over LAN (bypasses tleilax hub)
           "30-wg0".wireguardPeers = lib.mkAfter [
             {
