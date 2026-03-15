@@ -25,7 +25,7 @@
 
         gawfolk = {
           connector = "DP-2";
-          identifier = "QHX GF005 Unknown";
+          identifier = "QHX GF005";
           mode = {
             width = 3840;
             height = 2560;

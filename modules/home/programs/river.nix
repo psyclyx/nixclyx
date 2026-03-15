@@ -9,7 +9,6 @@
   }: let
     monitors = config.psyclyx.home.hardware.monitors;
     c = config.lib.stylix.colors;
-    opacity = builtins.toString config.stylix.opacity.desktop;
 
     fuzzel = lib.getExe config.programs.fuzzel.package;
     rofi-rbw = lib.getExe pkgs.rofi-rbw-wayland;
@@ -60,172 +59,98 @@
     jq = lib.getExe pkgs.jq;
 
     action-menu = pkgs.writeShellScript "tidepool-action-menu" ''
-      ${tidepoolmsg} bindings | ${jq} -r '
-        .[] | select(.action) |
-        (if .args then .action + " " + (.args | join(" ")) else .action end) as $cmd |
-        (if .desc then .desc else .action end) as $label |
-        $label + " \t" + .key + "\t" + $cmd
-      ' | ${fuzzel} --dmenu --prompt "Action: " | while IFS=$'\t' read -r label key cmd; do
-        ${tidepoolmsg} action $cmd
+      set -euo pipefail
+
+      actions_json=$(${tidepoolmsg} eval '(do (import spork/json) (prin (json/encode (ipc/list-actions))))')
+
+      # Step 1: Pick an action
+      # Format: "desc (keybind)|name|spec_json"  — pipe-delimited
+      chosen=$(echo "$actions_json" | ${jq} -r '
+        .[] |
+        (.desc // .name) as $label |
+        (if .key then $label + " (" + .key + ")" else $label end) as $display |
+        (.spec // [] | tojson) as $spec |
+        $display + "|" + .name + "|" + $spec
+      ' | ${fuzzel} --dmenu --prompt "Action: ") || exit 0
+
+      action_name=$(echo "$chosen" | cut -d'|' -f2)
+      spec_json=$(echo "$chosen" | cut -d'|' -f3)
+
+      # Step 2: Collect args interactively based on spec
+      args=""
+      for spec_entry in $(echo "$spec_json" | ${jq} -c '.[]'); do
+        spec_type=$(echo "$spec_entry" | ${jq} -r 'if type == "string" then . else .[0] end')
+
+        case "$spec_type" in
+          resolver)
+            # Show directions + special options
+            pick=$(printf '%s\n' left right up down next prev last "mark..." "wid..." \
+              | ${fuzzel} --dmenu --prompt "Target: ") || exit 0
+            case "$pick" in
+              "mark...")
+                mark=$(echo "" | ${fuzzel} --dmenu --prompt "Mark name: ") || exit 0
+                args="$args mark $mark"
+                ;;
+              "wid...")
+                wid_pick=$(${tidepoolmsg} eval '(do (import spork/json) (def wins (seq [w :in (state/wm :windows) :when (not (or (w :closed) (w :closing)))] @{"wid" (w :wid) "app" (or (w :app-id) "") "title" (or (w :title) "")})) (prin (json/encode wins)))' \
+                  | ${jq} -r '.[] | "\(.wid)|\(.app) — \(.title)"' \
+                  | ${fuzzel} --dmenu --prompt "Window: ") || exit 0
+                wid=$(echo "$wid_pick" | cut -d'|' -f1)
+                args="$args wid $wid"
+                ;;
+              *)
+                args="$args $pick"
+                ;;
+            esac
+            ;;
+          choice)
+            options=$(echo "$spec_entry" | ${jq} -r '.[1:][]')
+            pick=$(echo "$options" | ${fuzzel} --dmenu --prompt "$action_name: ") || exit 0
+            args="$args $pick"
+            ;;
+          number)
+            prompt=$(echo "$spec_entry" | ${jq} -r '.[1]')
+            num=$(echo "" | ${fuzzel} --dmenu --prompt "$prompt: ") || exit 0
+            args="$args $num"
+            ;;
+          string)
+            prompt=$(echo "$spec_entry" | ${jq} -r '.[1]')
+            str=$(echo "" | ${fuzzel} --dmenu --prompt "$prompt: ") || exit 0
+            args="$args $str"
+            ;;
+        esac
       done
+
+      # Step 3: Execute
+      ${tidepoolmsg} action "$action_name" $args
     '';
 
-    # Waybar tag/layout scripts using tidepoolmsg watch + jq.
-    mkTagsScript = { outputX ? null, outputY ? null }: let
-      outputFilter = if outputX != null
-        then ''.outputs[] | select(.x == ${toString outputX} and .y == ${toString outputY})''
-        else ''.outputs[] | select(.focused)'';
-      fc-focused = "#${c.base07}";
-      oc-focused = "#${c.base05}";
-      ec-focused = "#${c.base03}";
-      fc-unfocused = "#${c.base05}";
-      oc-unfocused = "#${c.base04}";
-      ec-unfocused = "#${c.base02}";
-    in pkgs.writeShellScript "waybar-tags" ''
-      ${tidepoolmsg} watch tags | while IFS= read -r line; do
-        echo "$line" | ${jq} -r '
-          (${outputFilter}) as $o |
-          if $o then
-            ($o.focused) as $foc |
-            (if $foc then ["${fc-focused}","${oc-focused}","${ec-focused}"]
-             else ["${fc-unfocused}","${oc-unfocused}","${ec-unfocused}"] end) as [$fc,$oc,$ec] |
-            (.occupied // []) as $occ |
-            [range(1;11)] | map(
-              . as $i |
-              (if $i == 10 then "0" else ($i | tostring) end) as $label |
-              if ($o.tags | index($i)) then
-                "<span color=\"" + $fc + "\" weight=\"bold\">" + $label + "</span>"
-              elif ($occ | index($i)) then
-                "<span color=\"" + $oc + "\">" + $label + "</span>"
-              else
-                "<span color=\"" + $ec + "\">" + $label + "</span>"
-              end
-            ) | join(" ")
-          else empty end
-        '
-      done
+    # Shortcut scripts: skip the first fuzzel step for common operations
+    summon-menu = pkgs.writeShellScript "tidepool-summon-menu" ''
+      set -euo pipefail
+      chosen=$(${tidepoolmsg} eval '(do (import spork/json) (def wins (seq [w :in (state/wm :windows) :when (not (or (w :closed) (w :closing)))] @{"wid" (w :wid) "app" (or (w :app-id) "") "title" (or (w :title) "") "tag" (w :tag) "mark" (w :mark)})) (prin (json/encode wins)))' \
+        | ${jq} -r '.[] | "\(.wid)|\(.app) — \(.title)\(if .mark then " [\(.mark)]" else "" end)"' \
+        | ${fuzzel} --dmenu --prompt "Summon: ") || exit 0
+      wid=$(echo "$chosen" | cut -d'|' -f1)
+      [ -n "$wid" ] && ${tidepoolmsg} action summon wid "$wid"
     '';
 
-    mkLayoutScript = { outputX ? null, outputY ? null }: let
-      outputFilter = if outputX != null
-        then ''.outputs[] | select(.x == ${toString outputX} and .y == ${toString outputY})''
-        else ''.outputs[] | select(.focused)'';
-    in pkgs.writeShellScript "waybar-layout" ''
-      ${tidepoolmsg} watch layout | while IFS= read -r line; do
-        echo "$line" | ${jq} -r '
-          (${outputFilter}) as $o |
-          if $o then $o.layout else empty end
-        '
-      done
+    mark-set-menu = pkgs.writeShellScript "tidepool-mark-set-menu" ''
+      set -euo pipefail
+      mark=$(echo "" | ${fuzzel} --dmenu --prompt "Mark: ") || exit 0
+      [ -n "$mark" ] && ${tidepoolmsg} action mark-set "$mark"
     '';
 
-    waybarModules = {
-      pulseaudio = {
-        format = "VOL: {volume}%";
-        format-muted = "VOL: MUTE";
-      };
-      network = {
-        format-wifi = "WIFI: {ifname} {ipaddr}/{cidr} {signalStrength}%";
-        format-ethernet = "ETH: {ifname} {ipaddr}/{cidr}";
-        format-linked = "NET: {ifname} (No IP)";
-        format-disconnected = "NET: NONE";
-        interval = 10;
-      };
-      backlight = {format = "BLT: {percent}%";};
-      clock = {
-        interval = 5;
-        format = "{:%I:%M %m/%d/%y}";
-      };
-      cpu = {
-        interval = 5;
-        format = "CPU: {usage}% | {load}";
-      };
-      memory = {
-        interval = 5;
-        format = "MEM: {}%";
-      };
-      battery = {
-        interval = 5;
-        format = "BAT: {capacity}%";
-      };
-      tray = {
-        icon-size = 24;
-        spacing = 16;
-      };
-    };
-
-    mkBarConfig = { tagsExec, layoutExec }: extra: {
-      layer = "top";
-      spacing = 16;
-      modules-left = ["custom/tags" "custom/layout"];
-      modules-center = ["clock"];
-      modules-right = ["network" "backlight" "pulseaudio" "memory" "cpu" "battery" "tray"];
-      "custom/tags" = {
-        exec = tagsExec;
-        restart-interval = 2;
-        format = "{}";
-        tooltip = false;
-      };
-      "custom/layout" = {
-        exec = layoutExec;
-        restart-interval = 2;
-        format = "LAYOUT: {}";
-      };
-    } // waybarModules // extra;
-
-    enabledMonitors = lib.filterAttrs (_: m: m.enable) monitors;
-
-    waybarConfig = pkgs.writeText "waybar-river.json" (builtins.toJSON (
-      if enabledMonitors != {} then
-        lib.mapAttrsToList (_: m: mkBarConfig {
-          tagsExec = mkTagsScript {
-            outputX = m.position.x;
-            outputY = m.position.y;
-          };
-          layoutExec = mkLayoutScript {
-            outputX = m.position.x;
-            outputY = m.position.y;
-          };
-        } { output = m.connector; })
-        enabledMonitors
-      else
-        mkBarConfig {
-          tagsExec = mkTagsScript {};
-          layoutExec = mkLayoutScript {};
-        } {}
-    ));
-
-    waybarCss = pkgs.writeText "waybar-river.css" ''
-      * {
-          border: none;
-          border-radius: 0;
-          font-family: "${config.stylix.fonts.monospace.name}", monospace;
-      }
-      window#waybar {
-          background: alpha(#${c.base01}, ${opacity});
-          color: #${c.base04};
-          padding: 0;
-          margin: 0;
-      }
-      tooltip {
-          background-color: alpha(#${c.base01}, ${opacity});
-      }
-      tooltip label {
-          color: #${c.base05};
-      }
-      #custom-tags,
-      #custom-layout,
-      #clock,
-      #network,
-      #backlight,
-      #pulseaudio,
-      #memory,
-      #cpu,
-      #battery,
-      #tray {
-          color: #${c.base05};
-          padding: 0 8px;
-      }
+    # Generic mark picker: lists existing marks, runs "$1 mark <name>"
+    mark-pick = pkgs.writeShellScript "tidepool-mark-pick" ''
+      set -euo pipefail
+      action="''${1:?usage: tidepool-mark-pick <action>}"
+      marks=$(${tidepoolmsg} eval '(do (import spork/json) (prin (json/encode (seq [[name w] :pairs state/marks :when (and w (not (w :closed)))] @{"name" name "app" (or (w :app-id) "") "title" (or (w :title) "")}))))' \
+        | ${jq} -r '.[] | "\(.name)|\(.app) — \(.title)"')
+      [ -z "$marks" ] && exit 0
+      chosen=$(echo "$marks" | ${fuzzel} --dmenu --prompt "Mark: ") || exit 0
+      name=$(echo "$chosen" | cut -d'|' -f1)
+      [ -n "$name" ] && ${tidepoolmsg} action "$action" mark "$name"
     '';
 
     # River 0.4 init script: kept minimal. The only thing that must run
@@ -249,15 +174,18 @@
       (put config :outer-padding 4)
       (put config :inner-padding 8)
       (put config :default-layout :scroll)
+      (put config :focus-follows-mouse false)
       (put config :warp-pointer true)
       (put config :wallpaper "${config.services.tidepool.wallpaper}")
 ${lib.optionalString (monitors != {}) ''
       # Output configuration (applied at startup via zwlr_output_manager_v1)
       (put config :outputs
-        @{${lib.concatStringsSep "\n          " (lib.mapAttrsToList (_: m:
+        @{${lib.concatStringsSep "\n          " (lib.mapAttrsToList (_: m: let
+            key = if m.identifier != null then m.identifier else m.connector;
+          in
             if !m.enable
-            then ''"${m.connector}" @{:enable false}''
-            else ''"${m.connector}" @{${
+            then ''"${key}" @{:enable false}''
+            else ''"${key}" @{${
               lib.optionalString (m.mode != null) ":mode [${toString m.mode.width} ${toString m.mode.height}] "
             }:pos [${toString m.position.x} ${toString m.position.y}] :scale ${toString m.scale}}''
           ) monitors)}})
@@ -292,6 +220,8 @@ ${lib.optionalString (monitors != {}) ''
         (config :xkb-bindings)
 
         # Spatial window focus/swap (vim-style hjkl)
+        # focus: directional (includes floats via geometry fallback)
+        # swap: reorder tiled windows, nudge floating windows
         [:h {:mod4 true} (action/focus :left)]
         [:j {:mod4 true} (action/focus :down)]
         [:k {:mod4 true} (action/focus :up)]
@@ -300,6 +230,8 @@ ${lib.optionalString (monitors != {}) ''
         [:j {:mod4 true :shift true} (action/swap :down)]
         [:k {:mod4 true :shift true} (action/swap :up)]
         [:l {:mod4 true :shift true} (action/swap :right)]
+
+        # Scroll layout column/row operations
         [:bracketleft {:mod4 true} (action/adjust-ratio -0.05)]
         [:bracketright {:mod4 true} (action/adjust-ratio 0.05)]
         [:h {:mod4 true :ctrl true} (action/consume-column :left)]
@@ -309,19 +241,41 @@ ${lib.optionalString (monitors != {}) ''
         [:r {:mod4 true} (action/preset-column-width)]
         [:u {:mod4 true :ctrl true} (action/resize-window -0.1)]
         [:i {:mod4 true :ctrl true} (action/resize-window 0.1)]
-        [:t {:mod4 true} (action/cycle-layout :next)]
+
+        # Float resize (symmetric around center)
+        [:h {:mod4 true :ctrl true :shift true} (action/float-resize :width -40)]
+        [:l {:mod4 true :ctrl true :shift true} (action/float-resize :width 40)]
+        [:j {:mod4 true :ctrl true :shift true} (action/float-resize :height 40)]
+        [:k {:mod4 true :ctrl true :shift true} (action/float-resize :height -40)]
+        [:c {:mod4 true} (action/float-center)]
+
+        # Window state
         [:space {:mod4 true} (action/zoom)]
         [:semicolon {:mod4 true} (action/float)]
         [:slash {:mod4 true} (action/fullscreen)]
 
         # Output management
         [:period {:mod4 true} (action/focus-output)]
-        [:period {:mod4 true :shift true} (action/focus-output :right)]
+        [:period {:mod4 true :shift true} (action/send-to-output)]
         [:comma {:mod4 true} (action/focus-output :left)]
         [:comma {:mod4 true :shift true} (action/send-to-output)]
 
-        # Focus last window
-        [:o {:mod4 true} (action/focus-last)]
+        # Focus and navigation
+        [:o {:mod4 true} (action/focus :last)]
+        [:bracketleft {:mod4 true} (action/nav-back)]
+        [:bracketright {:mod4 true} (action/nav-forward)]
+
+        # Scroll home
+        [:grave {:mod4 true} (action/scroll-home)]
+        [:grave {:mod4 true :shift true} (action/scroll-home-set)]
+
+        # Marks and summon
+        [:m {:mod4 true} (action/spawn ["${mark-set-menu}"])]
+        [:m {:mod4 true :shift true} (action/spawn ["${mark-pick}" "focus"])]
+        [:m {:mod4 true :ctrl true} (action/spawn ["${mark-pick}" "send-to"])]
+        [:w {:mod4 true} (action/summon :last)]
+        [:w {:mod4 true :shift true} (action/spawn ["${summon-menu}"])]
+        [:w {:mod4 true :ctrl true} (action/spawn ["${mark-pick}" "summon"])]
 
         # Application launchers
         [:Return {:mod4 true} (action/spawn ["uwsm" "app" "--" "${fuzzel}"])]
@@ -395,7 +349,7 @@ ${lib.optionalString (monitors != {}) ''
         alacritty.enable = lib.mkDefault true;
         fuzzel.enable = lib.mkDefault true;
         tidepool.enable = lib.mkDefault true;
-        waybar.enable = lib.mkDefault true;
+        shoal.enable = lib.mkDefault true;
       };
       services.mako.enable = lib.mkDefault true;
     };
@@ -413,20 +367,6 @@ ${lib.optionalString (monitors != {}) ''
         effect-pixelate = lib.mkDefault 8;
         grace = lib.mkDefault 3;
       };
-    };
-
-    systemd.user.services.waybar-river = {
-      Unit = {
-        Description = "Waybar for River";
-        PartOf = ["graphical-session.target"];
-        After = ["tidepool.service"];
-      };
-      Service = {
-        ExecStart = "${lib.getExe config.programs.waybar.package} -c ${waybarConfig} -s ${waybarCss}";
-        Restart = "always";
-        RestartSec = 2;
-      };
-      Install.WantedBy = ["graphical-session.target"];
     };
 
     xdg.configFile."river/init" = {
