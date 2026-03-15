@@ -34,17 +34,13 @@
       "sfp-sfpplus7"  = { host = "lab-4"; interface = "data"; };
       "sfp-sfpplus8"  = { host = "lab-4"; interface = "prod"; };
 
-      # Trunk to mdf-acc01 (CSS326 in same rack)
+      # Trunk to mdf-acc01 (CSS326 in same rack, dual SFP+)
       "sfp-sfpplus9"  = { type = "trunk"; peer = "mdf-acc01"; };
+      "sfp-sfpplus10" = { type = "trunk"; peer = "mdf-acc01"; };
 
-      # Trunk to idf-dist01 (CRS305 in network cabinet, via LR east-west patch)
-      "sfp-sfpplus10" = { type = "trunk"; peer = "idf-dist01"; };
-
-      # Sigil workstation (main VLAN, single 10G link)
+      # Sigil workstation (main VLAN, LACP bond — two 10G links)
       "sfp-sfpplus11" = { host = "sigil"; interface = "main"; };
-
-      # Unused
-      "sfp-sfpplus12" = { type = "unused"; };
+      "sfp-sfpplus12" = { host = "sigil"; interface = "main"; };
       "sfp-sfpplus13" = { type = "unused"; };
       "sfp-sfpplus14" = { type = "unused"; };
       "sfp-sfpplus15" = { type = "unused"; };
@@ -52,11 +48,13 @@
       "sfp-sfpplus17" = { type = "unused"; };
       "sfp-sfpplus18" = { type = "unused"; };
       "sfp-sfpplus19" = { type = "unused"; };
-      "sfp-sfpplus20" = { type = "unused"; };
+      # Trunk to idf-dist01 (CRS305 in network cabinet)
+      "sfp-sfpplus20" = { type = "trunk"; peer = "idf-dist01"; };
       "sfp-sfpplus21" = { type = "unused"; };
       "sfp-sfpplus22" = { type = "unused"; };
       "sfp-sfpplus23" = { type = "unused"; };
-      "sfp-sfpplus24" = { type = "unused"; };
+      # Trunk to mdf-brk01 (2.5G switch for iyr breakout)
+      "sfp-sfpplus24" = { type = "trunk"; peer = "mdf-brk01"; };
     };
   };
 
@@ -68,41 +66,70 @@
     addresses.mgmt.ipv4 = "10.0.240.3";
 
     ports = {
-      # Lab host 1G NICs — eno1 (infra) + eno2 (stage) per host
-      ether1  = { host = "lab-1"; interface = "infra"; };
-      ether2  = { host = "lab-1"; interface = "stage"; };
-      ether3  = { host = "lab-2"; interface = "infra"; };
-      ether4  = { host = "lab-2"; interface = "stage"; };
-      ether5  = { host = "lab-3"; interface = "infra"; };
-      ether6  = { host = "lab-3"; interface = "stage"; };
-      ether7  = { host = "lab-4"; interface = "infra"; };
-      ether8  = { host = "lab-4"; interface = "stage"; };
+      # Lab-1: BMC + 4 ethernet (5 ports per host)
+      ether1  = { host = "lab-1"; interface = "mgmt"; };
+      ether2  = { host = "lab-1"; interface = "eno1"; };
+      ether3  = { host = "lab-1"; interface = "eno2"; };
+      ether4  = { host = "lab-1"; interface = "eno3"; };
+      ether5  = { host = "lab-1"; interface = "eno4"; };
 
-      # Lab host iLO BMCs — mgmt VLAN
-      ether9  = { host = "lab-1"; interface = "mgmt"; };
-      ether10 = { host = "lab-2"; interface = "mgmt"; };
+      # Lab-2
+      ether6  = { host = "lab-2"; interface = "mgmt"; };
+      ether7  = { host = "lab-2"; interface = "eno1"; };
+      ether8  = { host = "lab-2"; interface = "eno2"; };
+      ether9  = { host = "lab-2"; interface = "eno3"; };
+      ether10 = { host = "lab-2"; interface = "eno4"; };
+
+      # Lab-3
       ether11 = { host = "lab-3"; interface = "mgmt"; };
-      ether12 = { host = "lab-4"; interface = "mgmt"; };
+      ether12 = { host = "lab-3"; interface = "eno1"; };
+      ether13 = { host = "lab-3"; interface = "eno2"; };
+      ether14 = { host = "lab-3"; interface = "eno3"; };
+      ether15 = { host = "lab-3"; interface = "eno4"; };
 
-      # iyr LAN trunk — all VLANs tagged
-      ether13 = { type = "trunk"; peer = "iyr"; };
+      # Lab-4
+      ether16 = { host = "lab-4"; interface = "mgmt"; };
+      ether17 = { host = "lab-4"; interface = "eno1"; };
+      ether18 = { host = "lab-4"; interface = "eno2"; };
+      ether19 = { host = "lab-4"; interface = "eno3"; };
+      ether20 = { host = "lab-4"; interface = "eno4"; };
 
       # Unused 1G ports
-      ether14 = { type = "unused"; };
-      ether15 = { type = "unused"; };
-      ether16 = { type = "unused"; };
-      ether17 = { type = "unused"; };
-      ether18 = { type = "unused"; };
-      ether19 = { type = "unused"; };
-      ether20 = { type = "unused"; };
       ether21 = { type = "unused"; };
       ether22 = { type = "unused"; };
       ether23 = { type = "unused"; };
-      ether24 = { type = "unused"; };
+      ether24 = { type = "access"; vlan = 240; description = "admin access"; };
 
-      # SFP+ uplinks
+      # SFP+ uplinks — bonded to CRS326
       "sfp-sfpplus1" = { type = "trunk"; peer = "mdf-agg01"; };
-      "sfp-sfpplus2" = { type = "unused"; };
+      "sfp-sfpplus2" = { type = "trunk"; peer = "mdf-agg01"; };
+    };
+  };
+
+  # mdf-brk01: 2.5G managed switch providing iyr breakout.
+  # iyr has two NICs (LAN + WAN) that need separate VLAN sets,
+  # but the CRS326 only has one SFP+ port allocated.  This switch
+  # splits the single trunk into per-NIC trunks.
+  mdf-brk01 = {
+    model = "SL902-SWTGW218AS";
+    platform = "web-managed";
+    identity = "mdf-brk01";
+    description = "2.5G iyr breakout switch";
+    addresses.mgmt.ipv4 = "10.0.240.6";
+
+    # Port numbering matches the switch's web UI (Port 1-9).
+    # Only 3 ports are in use; the rest are unused.
+    ports = {
+      port5 = { type = "trunk"; peer = "iyr"; description = "iyr WAN (enp3s0, transit VLAN)"; vlans = [250]; };
+      port6 = { type = "trunk"; peer = "iyr"; description = "iyr LAN (enp1s0, all internal VLANs)"; };
+      port9 = { type = "trunk"; peer = "mdf-agg01"; description = "uplink to CRS326 sfp-sfpplus24"; };
+
+      port1 = { type = "unused"; };
+      port2 = { type = "unused"; };
+      port3 = { type = "unused"; };
+      port4 = { type = "unused"; };
+      port7 = { type = "unused"; };
+      port8 = { type = "unused"; };
     };
   };
 
@@ -115,13 +142,10 @@
     description = "Distribution switch + PoE-powered via ether1";
     addresses.mgmt.ipv4 = "10.0.240.4";
 
-    # ether1 is NOT on the bridge — it only receives PoE power from
-    # idf-poe01 and sits in the same L2 domain as the AP ports.
-    # Management is via vlan240 on the bridge (same as mdf-agg01).
-    # Listing it here for documentation; the generator skips it.
-    poeInPort = "ether1";
-
     ports = {
+      # ether1 receives PoE power from idf-poe01 AND serves as
+      # management access (VLAN 240) so we can always reach it.
+      "ether1" = { type = "access"; vlan = 240; description = "management + PoE-in"; };
       # Trunk to mdf-agg01 (CRS326 in server rack, via LR east-west patch)
       "sfp-sfpplus1" = { type = "trunk"; peer = "mdf-agg01"; };
 

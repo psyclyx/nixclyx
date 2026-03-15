@@ -251,6 +251,11 @@
             type = lib.types.int;
             description = "VLAN ID for the transit (upstream) network";
           };
+          adminSshKeys = lib.mkOption {
+            type = lib.types.listOf lib.types.str;
+            default = [];
+            description = "SSH public keys for administrative access to managed devices";
+          };
         };
       };
       description = "Network naming and numbering conventions";

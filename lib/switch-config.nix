@@ -122,7 +122,7 @@ let
       ) (lib.range 1 2));
 
     "CRS305-1G-4S+IN" =
-      map (i: "sfp-sfpplus${toString i}") (lib.range 1 4);
+      ["ether1"] ++ map (i: "sfp-sfpplus${toString i}") (lib.range 1 4);
 
     "CSS326-24G-2S+RM" =
       (map (i: "ether${toString i}") (lib.range 1 24))
@@ -206,15 +206,15 @@ let
     '' + lib.concatImapStringsSep "\n" (i: key: ''
       /file add name=admin-key${toString i}.pub contents="${key}"
       /user ssh-keys import public-key-file=admin-key${toString i}.pub user=admin
-      /file remove admin-key${toString i}.pub'') adminKeys + "\n");
+      :do { /file remove admin-key${toString i}.pub } on-error={}'') adminKeys + "\n");
 
     bridge = ''
       # ── Reset factory defaults ──
-      /interface bridge port remove [find]
-      /interface bridge remove [find]
-      /ip address remove [find]
-      /ip dhcp-client remove [find]
-      /ip route remove [find where !routing-table]
+      :do { /interface bridge port remove [find] } on-error={}
+      :do { /interface bridge remove [find] } on-error={}
+      :do { /ip address remove [find] } on-error={}
+      :do { /ip dhcp-client remove [find] } on-error={}
+      :do { /ip route remove [find where !routing-table] } on-error={}
 
       # ── Bridge ──
       /interface bridge
