@@ -232,8 +232,8 @@ ${lib.optionalString (monitors != {}) ''
         [:l {:mod4 true :shift true} (action/swap :right)]
 
         # Scroll layout column/row operations
-        [:bracketleft {:mod4 true} (action/adjust-ratio -0.05)]
-        [:bracketright {:mod4 true} (action/adjust-ratio 0.05)]
+        [:bracketleft {:mod4 true :shift true} (action/adjust-ratio -0.05)]
+        [:bracketright {:mod4 true :shift true} (action/adjust-ratio 0.05)]
         [:h {:mod4 true :ctrl true} (action/consume-column :left)]
         [:l {:mod4 true :ctrl true} (action/consume-column :right)]
         [:j {:mod4 true :ctrl true} (action/expel-column)]
@@ -266,8 +266,8 @@ ${lib.optionalString (monitors != {}) ''
         [:bracketright {:mod4 true} (action/nav-forward)]
 
         # Scroll home
-        [:grave {:mod4 true} (action/scroll-home)]
-        [:grave {:mod4 true :shift true} (action/scroll-home-set)]
+        [:grave {:mod4 true :ctrl true} (action/scroll-home)]
+        [:grave {:mod4 true :ctrl true :shift true} (action/scroll-home-set)]
 
         # Marks and summon
         [:m {:mod4 true} (action/spawn ["${mark-set-menu}"])]
