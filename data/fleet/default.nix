@@ -19,5 +19,4 @@ in {
   };
 
   inherit hosts devices;
-  groups = import ./groups.nix;
 }

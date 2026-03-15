@@ -1,7 +1,9 @@
 {
   path = ["psyclyx" "nixos" "filesystems" "bcachefs-snapshots"];
   description = "periodic bcachefs subvolume snapshots";
-  options = {lib, ...}: {
+  options = {lib, ...}: let
+    retentionOptions = import ../../../lib/retention.nix lib;
+  in {
     targets = lib.mkOption {
       type = lib.types.attrsOf (lib.types.submodule {
         options = {
@@ -21,37 +23,7 @@
             description = "systemd calendar expression for snapshot frequency";
           };
 
-          retention = {
-            keepLast = lib.mkOption {
-              type = lib.types.int;
-              default = 3;
-              description = "Always keep at least this many snapshots regardless of age";
-            };
-
-            hourly = lib.mkOption {
-              type = lib.types.int;
-              default = 6;
-              description = "Number of hourly snapshots to keep";
-            };
-
-            daily = lib.mkOption {
-              type = lib.types.int;
-              default = 7;
-              description = "Number of daily snapshots to keep";
-            };
-
-            weekly = lib.mkOption {
-              type = lib.types.int;
-              default = 4;
-              description = "Number of weekly snapshots to keep";
-            };
-
-            monthly = lib.mkOption {
-              type = lib.types.int;
-              default = 6;
-              description = "Number of monthly snapshots to keep";
-            };
-          };
+          retention = retentionOptions {};
         };
       });
       default = {};
@@ -65,7 +37,7 @@
     pkgs,
     ...
   }: let
-    pruneScript = import ../../../lib/bcachefs-prune.nix {inherit lib;};
+    pruneScript = import ../../../lib/bcachefs-prune.nix;
 
     mkSnapshotUnits = name: target: {
       services."bcachefs-snapshot-${name}" = {
@@ -86,7 +58,6 @@
                 "$mnt/${lib.escapeShellArg target.subvolume}/@live" \
                 "$snap_dir/$timestamp"
 
-              # Prune old snapshots
               ${pruneScript {
                 dir = "$snap_dir";
                 glob = "2*";

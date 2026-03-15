@@ -41,7 +41,7 @@ writeShellApplication {
     nix_eval() {
       local expr="$1"
       nix-instantiate --eval --strict --read-write-mode \
-        -E "let lib = import <nixpkgs/lib>; fleet = import $FLEET_DIR/data/fleet; gen = import $FLEET_DIR/lib/switch-config.nix lib fleet; in $expr" \
+        -E "let lib = import <nixpkgs/lib>; fleet = import $FLEET_DIR/nixclyx/data/fleet; gen = import $FLEET_DIR/nixclyx/lib/switch-config.nix lib fleet; in $expr" \
         2>/dev/null | sed 's/^"//;s/"$//' | sed 's/\\n/\n/g;s/\\"/"/g;s/\\\\/\\/g'
     }
 

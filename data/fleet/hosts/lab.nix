@@ -1,4 +1,33 @@
-{
+let
+  labServices = {
+    node     = { port = 9100; networks = ["vpn"]; };
+    smartctl = { port = 9633; networks = ["vpn"]; };
+    redis              = { port = 9121; networks = ["data"]; };
+    postgres           = { port = 9187; networks = ["data"]; };
+    seaweedfs-volume   = { port = 9328; networks = ["data"]; };
+    seaweedfs-filer    = { port = 9329; networks = ["data"]; };
+    seaweedfs-s3       = { port = 9330; networks = ["data"]; };
+    haproxy  = { port = 9101; networks = ["infra"]; };
+    attic    = { port = 9199; networks = ["infra"]; };
+    etcd     = { port = 2379; networks = ["data"]; };
+    patroni  = { port = 8008; networks = ["infra"]; };
+    openbao  = { port = 8200; networks = ["infra"]; };
+    consul   = { port = 8500; networks = ["infra"]; };
+    nomad    = { port = 4646; networks = ["infra"]; };
+  };
+
+  labMasterServices = labServices // {
+    seaweedfs-master = { port = 9327; networks = ["data"]; };
+  };
+
+  labInterfaces = {
+    infra = { device = "eno1"; };
+    stage = { device = "eno2"; };
+    mgmt  = { device = "mgmt"; };
+  };
+
+  labRoles = ["server" "lab"];
+in {
   "lab-1" = {
     mac = {
       mgmt = "94:18:82:74:f4:e0";
@@ -6,15 +35,8 @@
       eno2 = "94:18:82:79:b9:f1";
       eno3 = "94:18:82:79:b9:f2";
       eno4 = "94:18:82:79:b9:f3";
-      # 10G NIC MACs: add after physical install
     };
-    # Dedicated NIC per VLAN — no trunking on lab hosts.
-    # 10G interfaces (data, prod) added after NIC install.
-    interfaces = {
-      infra = { device = "eno1"; };
-      stage = { device = "eno2"; };
-      mgmt  = { device = "mgmt"; }; # iLO BMC, not host OS
-    };
+    interfaces = labInterfaces;
     wireguard.publicKey = "m3+/5V8kpoSqIqFXPe1LGF0RXwdfXPfljhJctkGeOhg=";
     addresses = {
       vpn   = { ipv4 = "10.157.0.11"; };
@@ -24,22 +46,8 @@
       data  = { ipv4 = "10.0.50.11"; ipv6 = "fd9a:e830:4b1e:32::b"; };
       mgmt  = { ipv4 = "10.0.240.11"; ipv6 = "fd9a:e830:4b1e:f0::b"; };
     };
-    roles = ["server" "lab"];
-    services = {
-      node     = { port = 9100; networks = ["vpn"]; };
-      smartctl = { port = 9633; networks = ["vpn"]; };
-      redis              = { port = 9121; networks = ["data"]; };
-      postgres           = { port = 9187; networks = ["data"]; };
-      seaweedfs-master   = { port = 9327; networks = ["data"]; };
-      seaweedfs-volume   = { port = 9328; networks = ["data"]; };
-      seaweedfs-filer    = { port = 9329; networks = ["data"]; };
-      seaweedfs-s3       = { port = 9330; networks = ["data"]; };
-      haproxy  = { port = 9101; networks = ["infra"]; };
-      attic    = { port = 9199; networks = ["infra"]; };
-      etcd     = { port = 2379; networks = ["data"]; };
-      patroni  = { port = 8008; networks = ["infra"]; };
-      openbao  = { port = 8200; networks = ["infra"]; };
-    };
+    roles = labRoles;
+    services = labMasterServices;
   };
 
   "lab-2" = {
@@ -50,11 +58,7 @@
       eno3 = "94:18:82:89:83:72";
       eno4 = "94:18:82:89:83:73";
     };
-    interfaces = {
-      infra = { device = "eno1"; };
-      stage = { device = "eno2"; };
-      mgmt  = { device = "mgmt"; };
-    };
+    interfaces = labInterfaces;
     wireguard.publicKey = "I+LxIxnWAnmf/tlotUNqnmcVVpRikL/hk9G5tlfDLHI=";
     addresses = {
       vpn   = { ipv4 = "10.157.0.12"; };
@@ -64,22 +68,8 @@
       data  = { ipv4 = "10.0.50.12"; ipv6 = "fd9a:e830:4b1e:32::c"; };
       mgmt  = { ipv4 = "10.0.240.12"; ipv6 = "fd9a:e830:4b1e:f0::c"; };
     };
-    roles = ["server" "lab"];
-    services = {
-      node     = { port = 9100; networks = ["vpn"]; };
-      smartctl = { port = 9633; networks = ["vpn"]; };
-      redis              = { port = 9121; networks = ["data"]; };
-      postgres           = { port = 9187; networks = ["data"]; };
-      seaweedfs-master   = { port = 9327; networks = ["data"]; };
-      seaweedfs-volume   = { port = 9328; networks = ["data"]; };
-      seaweedfs-filer    = { port = 9329; networks = ["data"]; };
-      seaweedfs-s3       = { port = 9330; networks = ["data"]; };
-      haproxy  = { port = 9101; networks = ["infra"]; };
-      attic    = { port = 9199; networks = ["infra"]; };
-      etcd     = { port = 2379; networks = ["data"]; };
-      patroni  = { port = 8008; networks = ["infra"]; };
-      openbao  = { port = 8200; networks = ["infra"]; };
-    };
+    roles = labRoles;
+    services = labMasterServices;
   };
 
   "lab-3" = {
@@ -90,11 +80,7 @@
       eno3 = "14:02:ec:35:02:a6";
       eno4 = "14:02:ec:35:02:a7";
     };
-    interfaces = {
-      infra = { device = "eno1"; };
-      stage = { device = "eno2"; };
-      mgmt  = { device = "mgmt"; };
-    };
+    interfaces = labInterfaces;
     wireguard.publicKey = "j8ezJkeoQZkpxxHwdogdhYoxQs1VqhvzCUar92r8mWY=";
     addresses = {
       vpn   = { ipv4 = "10.157.0.13"; };
@@ -104,22 +90,8 @@
       data  = { ipv4 = "10.0.50.13"; ipv6 = "fd9a:e830:4b1e:32::d"; };
       mgmt  = { ipv4 = "10.0.240.13"; ipv6 = "fd9a:e830:4b1e:f0::d"; };
     };
-    roles = ["server" "lab"];
-    services = {
-      node     = { port = 9100; networks = ["vpn"]; };
-      smartctl = { port = 9633; networks = ["vpn"]; };
-      redis              = { port = 9121; networks = ["data"]; };
-      postgres           = { port = 9187; networks = ["data"]; };
-      seaweedfs-master   = { port = 9327; networks = ["data"]; };
-      seaweedfs-volume   = { port = 9328; networks = ["data"]; };
-      seaweedfs-filer    = { port = 9329; networks = ["data"]; };
-      seaweedfs-s3       = { port = 9330; networks = ["data"]; };
-      haproxy  = { port = 9101; networks = ["infra"]; };
-      attic    = { port = 9199; networks = ["infra"]; };
-      etcd     = { port = 2379; networks = ["data"]; };
-      patroni  = { port = 8008; networks = ["infra"]; };
-      openbao  = { port = 8200; networks = ["infra"]; };
-    };
+    roles = labRoles;
+    services = labMasterServices;
   };
 
   "lab-4" = {
@@ -130,11 +102,7 @@
       eno3 = "14:02:ec:33:97:a2";
       eno4 = "14:02:ec:33:97:a3";
     };
-    interfaces = {
-      infra = { device = "eno1"; };
-      stage = { device = "eno2"; };
-      mgmt  = { device = "mgmt"; };
-    };
+    interfaces = labInterfaces;
     wireguard.publicKey = "vBbdc+1SexiDWfao3x6f4AF2qISNKMBaQwTVFwHOwWg=";
     addresses = {
       vpn   = { ipv4 = "10.157.0.14"; };
@@ -144,20 +112,7 @@
       data  = { ipv4 = "10.0.50.14"; ipv6 = "fd9a:e830:4b1e:32::e"; };
       mgmt  = { ipv4 = "10.0.240.14"; ipv6 = "fd9a:e830:4b1e:f0::e"; };
     };
-    roles = ["server" "lab"];
-    services = {
-      node     = { port = 9100; networks = ["vpn"]; };
-      smartctl = { port = 9633; networks = ["vpn"]; };
-      redis              = { port = 9121; networks = ["data"]; };
-      postgres           = { port = 9187; networks = ["data"]; };
-      seaweedfs-volume   = { port = 9328; networks = ["data"]; };
-      seaweedfs-filer    = { port = 9329; networks = ["data"]; };
-      seaweedfs-s3       = { port = 9330; networks = ["data"]; };
-      haproxy  = { port = 9101; networks = ["infra"]; };
-      attic    = { port = 9199; networks = ["infra"]; };
-      etcd     = { port = 2379; networks = ["data"]; };
-      patroni  = { port = 8008; networks = ["infra"]; };
-      openbao  = { port = 8200; networks = ["infra"]; };
-    };
+    roles = labRoles;
+    services = labServices;
   };
 }

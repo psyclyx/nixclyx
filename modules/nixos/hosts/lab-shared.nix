@@ -89,19 +89,6 @@
         "kernel.sched_autogroup_enabled" = 0;
       };
 
-      services.prometheus.exporters.redis = {
-        enable = true;
-        openFirewall = true;
-        extraFlags = [
-          "--redis.addr=${config.services.redis.servers.jfs.bind}:${toString config.services.redis.servers.jfs.port}"
-        ];
-      };
-
-      services.prometheus.exporters.postgres = {
-        enable = true;
-        openFirewall = true;
-      };
-
       psyclyx.nixos = {
         boot = {
           initrd-ssh.enable = true;
@@ -138,6 +125,15 @@
           openbao = {
             enable = true;
             clusterNodes = labHostNames;
+          };
+          consul = {
+            enable = true;
+            clusterNodes = labHostNames;
+          };
+          nomad = {
+            enable = true;
+            clusterNodes = labHostNames;
+            vault.address = "http://${fleet.groupVip "lab"}:8200";
           };
         };
       };

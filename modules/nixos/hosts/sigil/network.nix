@@ -20,7 +20,7 @@
         };
       };
 
-      # Direct WireGuard peer to iyr over LAN (bypasses tleilax hub)
+      # Direct peer to iyr over LAN (bypasses tleilax VPN hub)
       netdevs."30-wg0".wireguardPeers = lib.mkAfter [
         {
           PublicKey = "9wnevbvkDGcyNnMECEzgfaghqi4tEw4GsgC/TUcSTS4=";
@@ -56,16 +56,6 @@
           dhcpV4Config.UseDomains = true;
           dhcpV6Config.WithoutRA = "solicit";
         };
-        # "20-sfp" = {
-        #   dhcpV4Config = {
-        #     UseDNS = true;
-        #     UseRoutes = true;
-        #     RouteMetric = 100;
-        #   };
-        #   dhcpV6Config = {
-        #     UseDNS = true;
-        #   };
-        # };
       };
     };
   };

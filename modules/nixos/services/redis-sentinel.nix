@@ -9,6 +9,11 @@
   options =
     { lib, ... }:
     {
+      serverName = lib.mkOption {
+        type = lib.types.str;
+        default = "shared";
+        description = "Redis server instance name (used for systemd units, user/group).";
+      };
       clusterNodes = lib.mkOption {
         type = lib.types.listOf lib.types.str;
         description = "Hostnames of all nodes in the Redis Sentinel cluster.";
@@ -30,7 +35,7 @@
       };
       masterName = lib.mkOption {
         type = lib.types.str;
-        default = "jfs-meta";
+        default = "shared-meta";
         description = "Sentinel master name.";
       };
       quorum = lib.mkOption {
@@ -43,6 +48,13 @@
         default = null;
         description = "Path to file containing the Redis password.";
       };
+      exporters.redis = {
+      enable = lib.mkOption {
+        type = lib.types.bool;
+        default = true;
+        description = "Enable the Prometheus redis exporter.";
+      };
+    };
     };
 
   config =
@@ -66,11 +78,12 @@
 
       allAddrs = map (name: fleet.hostAddress name cfg.dataNetwork) cfg.clusterNodes;
 
+      sn = cfg.serverName;
       sentinelDir = "/var/lib/redis-sentinel";
       sentinelConf = "${sentinelDir}/sentinel.conf";
     in
     {
-      services.redis.servers."jfs" = {
+      services.redis.servers.${sn} = {
         enable = true;
         bind = bindAddr;
         port = cfg.redisPort;
@@ -86,10 +99,10 @@
       };
 
       # NixOS redis module doesn't support masterauth; inject after prep-conf
-      systemd.services.redis-jfs.serviceConfig.ExecStartPre = lib.mkIf (cfg.requirePassFile != null) (
+      systemd.services."redis-${sn}".serviceConfig.ExecStartPre = lib.mkIf (cfg.requirePassFile != null) (
         lib.mkAfter [
-          "+${pkgs.writeShellScript "redis-jfs-masterauth" ''
-            printf '\nmasterauth %s\n' "$(cat ${cfg.requirePassFile})" >> /run/redis-jfs/nixos.conf
+          "+${pkgs.writeShellScript "redis-${sn}-masterauth" ''
+            printf '\nmasterauth %s\n' "$(cat ${cfg.requirePassFile})" >> /run/redis-${sn}/nixos.conf
           ''}"
         ]
       );
@@ -98,15 +111,15 @@
         description = "Redis Sentinel for ${cfg.masterName}";
         after = [
           "network.target"
-          "redis-jfs.service"
+          "redis-${sn}.service"
         ];
-        wants = [ "redis-jfs.service" ];
+        wants = [ "redis-${sn}.service" ];
         wantedBy = [ "multi-user.target" ];
 
         serviceConfig = {
           Type = "simple";
-          User = "redis-jfs";
-          Group = "redis-jfs";
+          User = "redis-${sn}";
+          Group = "redis-${sn}";
           StateDirectory = "redis-sentinel";
           ExecStart = "${pkgs.redis}/bin/redis-sentinel ${sentinelConf}";
           Restart = "on-failure";
@@ -140,6 +153,14 @@
           # Remove requirepass if present (SeaweedFS redis2_sentinel can't authenticate to sentinel)
           ${pkgs.gnused}/bin/sed -i '/^requirepass /d' ${sentinelConf}
         '';
+      };
+
+      services.prometheus.exporters.redis = lib.mkIf cfg.exporters.redis.enable {
+        enable = true;
+        openFirewall = true;
+        extraFlags = [
+          "--redis.addr=${bindAddr}:${toString cfg.redisPort}"
+        ];
       };
 
       psyclyx.nixos.network.ports.redis = [cfg.redisPort cfg.sentinelPort];

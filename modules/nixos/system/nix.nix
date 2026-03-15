@@ -19,8 +19,6 @@
   }: {
     psyclyx.common.system.nix.enable = true;
     nix.settings.trusted-users = ["@wheel"];
-    # Attic cache disabled — too many truncated NARs from SeaweedFS backend.
-    # nix.settings.substituters = lib.mkBefore ["http://cache.psyclyx.net:8080/psyclyx"];
 
     # !include reads the file at nix daemon startup, not build time
     # If the file doesn't exist, nix continues without error

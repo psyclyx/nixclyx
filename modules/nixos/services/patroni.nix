@@ -53,6 +53,13 @@
         default = "infra";
         description = "Topology network for client/HAProxy connections (pg_hba, listen).";
       };
+      exporters.postgres = {
+      enable = lib.mkOption {
+        type = lib.types.bool;
+        default = true;
+        description = "Enable the Prometheus postgres exporter.";
+      };
+    };
     };
 
   config =
@@ -76,6 +83,15 @@
       dataNetPrefixLen = fleet.networkPrefixLen cfg.dataNetwork;
       clientNetPrefix = fleet.networkPrefix cfg.clientNetwork;
       clientNetPrefixLen = fleet.networkPrefixLen cfg.clientNetwork;
+
+      pgHba = [
+        "local all all trust"
+        "host all all 127.0.0.1/32 md5"
+        "host all all ${dataNetPrefix}.0/${toString dataNetPrefixLen} md5"
+        "host all all ${clientNetPrefix}.0/${toString clientNetPrefixLen} md5"
+        "host replication ${cfg.replicationUser} 127.0.0.1/32 md5"
+        "host replication ${cfg.replicationUser} ${dataNetPrefix}.0/${toString dataNetPrefixLen} md5"
+      ];
 
       otherNodes = builtins.filter (name: name != hostname) cfg.clusterNodes;
 
@@ -127,14 +143,7 @@
               "encoding=UTF-8"
               "data-checksums"
             ];
-            pg_hba = [
-              "local all all trust"
-              "host all all 127.0.0.1/32 md5"
-              "host all all ${dataNetPrefix}.0/${toString dataNetPrefixLen} md5"
-              "host all all ${clientNetPrefix}.0/${toString clientNetPrefixLen} md5"
-              "host replication ${cfg.replicationUser} 127.0.0.1/32 md5"
-              "host replication ${cfg.replicationUser} ${dataNetPrefix}.0/${toString dataNetPrefixLen} md5"
-            ];
+            pg_hba = pgHba;
           };
 
           # nixpkgs sets listen from nodeIp; add localhost for local psql
@@ -149,14 +158,7 @@
               };
             };
             # Runtime pg_hba (bootstrap.pg_hba only applies on initial creation)
-            pg_hba = [
-              "local all all trust"
-              "host all all 127.0.0.1/32 md5"
-              "host all all ${dataNetPrefix}.0/${toString dataNetPrefixLen} md5"
-              "host all all ${clientNetPrefix}.0/${toString clientNetPrefixLen} md5"
-              "host replication ${cfg.replicationUser} 127.0.0.1/32 md5"
-              "host replication ${cfg.replicationUser} ${dataNetPrefix}.0/${toString dataNetPrefixLen} md5"
-            ];
+            pg_hba = pgHba;
             parameters = {
               max_connections = 200;
             };
@@ -224,6 +226,11 @@
             -d '${dcsConfig}' \
             http://localhost:${toString cfg.restApiPort}/config
         '';
+      };
+
+      services.prometheus.exporters.postgres = lib.mkIf cfg.exporters.postgres.enable {
+        enable = true;
+        openFirewall = true;
       };
 
       psyclyx.nixos.network.ports.patroni = [cfg.port cfg.restApiPort];

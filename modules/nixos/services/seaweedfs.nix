@@ -99,6 +99,16 @@
         default = 300;
         description = "Max volumes per server.";
       };
+      dataCenter = lib.mkOption {
+        type = lib.types.str;
+        default = "lab";
+        description = "Volume server datacenter label.";
+      };
+      rack = lib.mkOption {
+        type = lib.types.str;
+        default = "rack1";
+        description = "Volume server rack label.";
+      };
     };
     metricsPort = lib.mkOption {
       type = lib.types.port;
@@ -206,8 +216,8 @@
           "-mserver=${masterPeers}"
           "-dir=${cfg.volumeBasePath}/data"
           "-max=${toString cfg.volume.maxVolumes}"
-          "-dataCenter=lab"
-          "-rack=rack1"
+          "-dataCenter=${cfg.volume.dataCenter}"
+          "-rack=${cfg.volume.rack}"
           "-metricsPort=${toString (cfg.metricsPort + 1)}"
           "-metricsIp=${metricsAddr}"
         ];

@@ -2,27 +2,8 @@
   path = ["psyclyx" "nixos" "network" "firewall"];
   description = "nftables firewall";
   options = {lib, ...}: let
-    ruleValueType = lib.mkOptionType {
-      name = "nftables-rule-value";
-      description = "string, int, bool, or list of strings/ints";
-      check = v:
-        builtins.isString v || builtins.isInt v || builtins.isBool v
-        || (builtins.isList v
-          && (v == [] || builtins.all builtins.isString v || builtins.all builtins.isInt v));
-      merge = lib.options.mergeEqualOption;
-    };
-
-    ruleType = lib.types.submodule {
-      freeformType = lib.types.attrsOf ruleValueType;
-      options.verdict = lib.mkOption {
-        type = lib.types.str;
-        default = "accept";
-      };
-      options.comment = lib.mkOption {
-        type = lib.types.nullOr lib.types.str;
-        default = null;
-      };
-    };
+    nftTypes = import ./types.nix lib;
+    inherit (nftTypes) ruleType;
 
     zoneInputType = lib.types.submodule {
       options = {

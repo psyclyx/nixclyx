@@ -6,14 +6,6 @@
   topo = config.psyclyx.topology;
   fleet = config.psyclyx.fleet;
 
-  labServers = lib.sort (a: b: a.name < b.name) (lib.mapAttrsToList (name: _host: {
-    inherit name;
-  }) (lib.filterAttrs (_: host: host.mac != {}) topo.hosts));
-
-  # Lab servers that have an interface on a given network.
-  labServersOnNetwork = networkName:
-    builtins.filter (s: topo.hosts.${s.name}.interfaces ? ${networkName}) labServers;
-
   # Derive VIP A records for haGroups on a given network.
   vipRecordsForNetwork = networkName: let
     groups = lib.filterAttrs (_: g: g.network == networkName) topo.haGroups;
@@ -26,10 +18,10 @@
   mkForwardZoneData = vlanId: let
     name = fleet.enriched.vlanNameMap.${toString vlanId};
     net = fleet.networks.${name};
-    servers = labServersOnNetwork name;
-    serverRecords = lib.concatMapStringsSep "\n" (s:
-      "${s.name} IN A ${fleet.hostAddress s.name name}\n" +
-      "${s.name} IN AAAA ${fleet.hostAddress6 s.name name}"
+    servers = fleet.managedHostsOnNetwork name;
+    serverRecords = lib.concatMapStringsSep "\n" (hostname:
+      "${hostname} IN A ${fleet.hostAddress hostname name}\n" +
+      "${hostname} IN AAAA ${fleet.hostAddress6 hostname name}"
     ) servers;
     vipRecords = vipRecordsForNetwork name;
   in {
@@ -57,13 +49,13 @@
     net = fleet.networks.${name};
     octets = lib.splitString "." net.prefix;
     reverseZone = "${lib.concatStringsSep "." (lib.reverseList octets)}.in-addr.arpa";
-    servers = labServersOnNetwork name;
-    serverPtrs = lib.concatMapStringsSep "\n" (s: let
-      addr = fleet.hostAddress s.name name;
+    servers = fleet.managedHostsOnNetwork name;
+    serverPtrs = lib.concatMapStringsSep "\n" (hostname: let
+      addr = fleet.hostAddress hostname name;
       parts = lib.splitString "." addr;
       lastOctet = builtins.elemAt parts 3;
     in
-      "${lastOctet} IN PTR ${s.name}.${net.zoneName}."
+      "${lastOctet} IN PTR ${hostname}.${net.zoneName}."
     ) servers;
     gwAddr = net.gateway4;
     gwParts = lib.splitString "." gwAddr;
@@ -89,13 +81,13 @@
     name = fleet.enriched.vlanNameMap.${toString vlanId};
     net = fleet.networks.${name};
     reverseZone = "${net.ip6Reverse}.${fleet.enriched.ulaReverseBase}.ip6.arpa";
-    servers = labServersOnNetwork name;
+    servers = fleet.managedHostsOnNetwork name;
     hostPartReverseNibbles = addr: let
       parts = lib.splitString "::" addr;
       hostHex = builtins.elemAt parts 1;
     in fleet.utils.hostReverseNibbles hostHex;
-    serverPtrs = lib.concatMapStringsSep "\n" (s:
-      "${hostPartReverseNibbles (fleet.hostAddress6 s.name name)} IN PTR ${s.name}.${net.zoneName}."
+    serverPtrs = lib.concatMapStringsSep "\n" (hostname:
+      "${hostPartReverseNibbles (fleet.hostAddress6 hostname name)} IN PTR ${hostname}.${net.zoneName}."
     ) servers;
     gwReverseNibbles = hostPartReverseNibbles net.gateway6;
   in {

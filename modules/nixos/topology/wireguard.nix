@@ -43,15 +43,12 @@ in {
         wireguardPeers =
           if isHub
           then
-            # Hub: one peer entry per WireGuard host
             lib.mapAttrsToList (_: host: {
               PublicKey = host.wireguard.publicKey;
               AllowedIPs = ["${host.addresses.vpn.ipv4}/32"] ++ host.wireguard.exportedRoutes;
             })
             wgPeers
-          else
-            # Spoke: single peer entry for the hub
-            [
+          else [
               {
                 PublicKey = hubHost.wireguard.publicKey;
                 Endpoint = hubEndpoint;
@@ -64,14 +61,14 @@ in {
       networks."30-wg0" = lib.mkMerge [
         {
           matchConfig.Name = "wg0";
-          address = ["${thisHost.addresses.vpn.ipv4}/24"];
+          address = let
+            wgPrefixLen = builtins.elemAt (lib.splitString "/" topo.wireguard.subnet) 1;
+          in ["${thisHost.addresses.vpn.ipv4}/${wgPrefixLen}"];
         }
-        # Spoke peers: route internal domain queries through VPN DNS
         (lib.mkIf (!isHub) {
           dns = [hubHost.addresses.vpn.ipv4];
           domains = ["~${topo.domains.internal}"];
         })
-        # Hub: add kernel routes for subnets exported by peers
         (lib.mkIf isHub {
           routes = lib.concatMap (host:
             map (route: { Destination = route; })

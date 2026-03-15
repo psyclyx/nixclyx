@@ -74,7 +74,8 @@
         inherit initialCluster;
         initialClusterToken = cfg.clusterToken;
         initialClusterState = "new";
-        openFirewall = true;
       };
+
+      psyclyx.nixos.network.ports.etcd = [cfg.clientPort cfg.peerPort];
     };
 }

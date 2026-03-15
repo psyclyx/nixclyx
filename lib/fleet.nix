@@ -41,6 +41,12 @@ let
     else if g.vipOffset != null then g.vipOffset
     else throw "HA group '${groupName}' has neither vrid nor vipOffset set.";
 
+  managedHosts = lib.sort builtins.lessThan
+    (lib.attrNames (lib.filterAttrs (_: host: host.mac != {}) hosts));
+
+  managedHostsOnNetwork = networkName:
+    builtins.filter (name: hosts.${name}.interfaces ? ${networkName}) managedHosts;
+
   network = name: enriched.networks.${name};
   networkPrefix = name: enriched.networks.${name}.prefix;
   networkPrefixLen = name: enriched.networks.${name}.prefixLen;
@@ -81,6 +87,7 @@ in {
   inherit hostAddress hostAddress6;
   inherit leader;
   inherit groupVip groupVip6 groupVrid memberPriority;
+  inherit managedHosts managedHostsOnNetwork;
   inherit network networkPrefix networkPrefixLen;
   inherit hostInterface hostMacForNetwork;
   inherit unsealMethod;

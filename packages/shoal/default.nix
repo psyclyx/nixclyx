@@ -1,2 +1,2 @@
-{ pkgs }:
-pkgs.callPackage "${(import ../../npins).shoal}/package.nix" {}
+{ callPackage }:
+callPackage "${(import ../../npins).shoal}/package.nix" {}

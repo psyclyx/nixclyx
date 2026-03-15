@@ -13,6 +13,8 @@
       attic      = { port = 8080; check = "/"; };
       postgresql = { port = 5432; mode = "tcp"; check = "/primary"; checkPort = 8008; };
       openbao    = { port = 8200; check = "/v1/sys/health?standbyok=true"; };
+      consul     = { port = 8500; check = "/v1/status/leader"; };
+      nomad      = { port = 4646; check = "/v1/status/leader"; };
     };
   };
 }

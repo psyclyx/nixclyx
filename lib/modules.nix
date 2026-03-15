@@ -66,26 +66,4 @@ rec {
       else lib.mkIf (gate args) body;
   };
 
-  withConfig = fn: spec:
-    spec
-    // {
-      config = configArgs: let
-        base = let
-          c = spec.config or null;
-        in
-          if c == null
-          then {}
-          else if builtins.isFunction c
-          then c configArgs
-          else c;
-        extra =
-          if builtins.isFunction fn
-          then fn configArgs
-          else fn;
-      in
-        configArgs.lib.mkMerge [base extra];
-    };
-
-  withImports = newImports: spec:
-    spec // {imports = (spec.imports or []) ++ newImports;};
 }

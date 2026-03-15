@@ -6,6 +6,11 @@
       type = lib.types.str;
       description = "URL of the Loki push endpoint (e.g. http://10.157.0.1:3100).";
     };
+    port = lib.mkOption {
+      type = lib.types.port;
+      default = 9080;
+      description = "HTTP listen port for Promtail.";
+    };
   };
   config = {cfg, ...}: {
     systemd.services.promtail.serviceConfig.StateDirectory = "promtail";
@@ -13,7 +18,7 @@
       enable = true;
       configuration = {
         server = {
-          http_listen_port = 9080;
+          http_listen_port = cfg.port;
           grpc_listen_port = 0;
         };
         positions.filename = "/var/lib/promtail/positions.yaml";
@@ -43,5 +48,6 @@
         ];
       };
     };
+    psyclyx.nixos.network.ports.promtail = cfg.port;
   };
 }

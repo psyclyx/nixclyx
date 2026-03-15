@@ -1,7 +1,9 @@
 {
   path = ["psyclyx" "nixos" "filesystems" "impermanence"];
   description = "bcachefs root impermanence (wipe-on-boot)";
-  options = {lib, ...}: {
+  options = {lib, ...}: let
+    retentionOptions = import ../../../lib/retention.nix lib;
+  in {
     device = lib.mkOption {
       type = lib.types.str;
       description = "bcachefs device path (e.g. /dev/disk/by-partlabel/nvme0-root)";
@@ -13,37 +15,7 @@
       description = "Path within bcachefs to the root subvolume group (containing @blank and @live)";
     };
 
-    retention = {
-      keepLast = lib.mkOption {
-        type = lib.types.int;
-        default = 3;
-        description = "Always keep at least this many old roots regardless of age";
-      };
-
-      hourly = lib.mkOption {
-        type = lib.types.int;
-        default = 6;
-        description = "Number of hourly snapshots to keep";
-      };
-
-      daily = lib.mkOption {
-        type = lib.types.int;
-        default = 7;
-        description = "Number of daily snapshots to keep";
-      };
-
-      weekly = lib.mkOption {
-        type = lib.types.int;
-        default = 4;
-        description = "Number of weekly snapshots to keep";
-      };
-
-      monthly = lib.mkOption {
-        type = lib.types.int;
-        default = 3;
-        description = "Number of monthly snapshots to keep";
-      };
-    };
+    retention = retentionOptions {monthly = 3;};
   };
 
   config = {
@@ -52,7 +24,7 @@
     pkgs,
     ...
   }: let
-    pruneScript = import ../../../lib/bcachefs-prune.nix {inherit lib;};
+    pruneScript = import ../../../lib/bcachefs-prune.nix;
   in {
     # preservation bind-mounts /etc/machine-id from /persist, making it a
     # mount point. This triggers systemd-machine-id-commit which then fails
@@ -79,19 +51,16 @@
         root="$mnt/${lib.escapeShellArg cfg.subvolume}"
         timestamp=$(date +%Y-%m-%dT%H:%M:%S)
 
-        # Preserve current root as a timestamped snapshot
         if [ -d "$root/@live" ]; then
           mv "$root/@live" "$root/@$timestamp"
         fi
 
-        # Prune old roots
         ${pruneScript {
           dir = "$root";
           glob = "@2*";
           inherit (cfg.retention) keepLast hourly daily weekly monthly;
         }}
 
-        # Restore from blank
         bcachefs subvolume snapshot "$root/@blank" "$root/@live"
 
         umount "$mnt"

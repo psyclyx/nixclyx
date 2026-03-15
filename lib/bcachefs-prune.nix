@@ -15,7 +15,7 @@
 #
 # A snapshot is kept if ANY bucket claims it. The algorithm walks newest→oldest,
 # assigning each snapshot to the finest-grained bucket that still has capacity.
-{lib}: {
+{
   dir,
   glob,
   keepLast ? 3,

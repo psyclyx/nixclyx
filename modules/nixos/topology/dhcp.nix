@@ -8,13 +8,6 @@
 
   cfg = config.psyclyx.topology.dhcp;
 
-  labServers = lib.sort (a: b: a.name < b.name) (lib.mapAttrsToList (name: _host: {
-    inherit name;
-  }) (lib.filterAttrs (_: host: host.mac != {}) topo.hosts));
-
-  labServersOnNetwork = networkName:
-    builtins.filter (s: topo.hosts.${s.name}.interfaces ? ${networkName}) labServers;
-
   mkSubnet4 = _poolName: pool: let
     net = fleet.networks.${pool.network};
   in {
@@ -29,11 +22,11 @@
     ];
     ddns-qualifying-suffix = "${net.zoneName}.";
     reservations = let
-      servers = labServersOnNetwork pool.network;
-      labReservations = map (s: {
-        "hw-address" = fleet.hostMacForNetwork s.name pool.network;
-        "ip-address" = fleet.hostAddress s.name pool.network;
-        hostname = s.name;
+      servers = fleet.managedHostsOnNetwork pool.network;
+      labReservations = map (name: {
+        "hw-address" = fleet.hostMacForNetwork name pool.network;
+        "ip-address" = fleet.hostAddress name pool.network;
+        hostname = name;
       }) servers;
     in
       labReservations ++ pool.extraReservations;
@@ -53,11 +46,11 @@
     ];
     ddns-qualifying-suffix = "${net.zoneName}.";
     reservations = let
-      servers = labServersOnNetwork pool.network;
-      labReservations = map (s: {
-        "hw-address" = fleet.hostMacForNetwork s.name pool.network;
-        "ip-addresses" = [( fleet.hostAddress6 s.name pool.network )];
-        hostname = s.name;
+      servers = fleet.managedHostsOnNetwork pool.network;
+      labReservations = map (name: {
+        "hw-address" = fleet.hostMacForNetwork name pool.network;
+        "ip-addresses" = [( fleet.hostAddress6 name pool.network )];
+        hostname = name;
       }) servers;
     in
       labReservations;

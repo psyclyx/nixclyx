@@ -1,14 +1,26 @@
 {
   path = ["psyclyx" "nixos" "services" "loki"];
   description = "Loki log aggregation server";
-  config = _: {
+  options = {lib, ...}: {
+    port = lib.mkOption {
+      type = lib.types.port;
+      default = 3100;
+      description = "HTTP listen port for the Loki server.";
+    };
+    retentionPeriod = lib.mkOption {
+      type = lib.types.str;
+      default = "744h";
+      description = "Log retention period.";
+    };
+  };
+  config = {cfg, ...}: {
     services.loki = {
       enable = true;
       configuration = {
         auth_enabled = false;
         server = {
           http_listen_address = "0.0.0.0";
-          http_listen_port = 3100;
+          http_listen_port = cfg.port;
         };
         common = {
           path_prefix = "/var/lib/loki";
@@ -34,7 +46,7 @@
             };
           }
         ];
-        limits_config.retention_period = "744h";
+        limits_config.retention_period = cfg.retentionPeriod;
         compactor = {
           working_directory = "/var/lib/loki/compactor";
           retention_enabled = true;
@@ -42,5 +54,6 @@
         };
       };
     };
+    psyclyx.nixos.network.ports.loki = cfg.port;
   };
 }

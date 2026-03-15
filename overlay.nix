@@ -1,10 +1,10 @@
 let
   sources = import ./npins;
+  loadFlake = import ./loadFlake.nix;
 
   colmena = loadFlake sources.colmena;
   astal = loadFlake sources.astal;
   clj-nix = loadFlake sources.clj-nix;
-  loadFlake = import ./loadFlake.nix;
   llm-agents = loadFlake sources."llm-agents.nix";
 in
   final: prev: ((llm-agents.overlays.default final prev)

@@ -18,13 +18,16 @@ lib: topo: let
   in
     lib.concatStringsSep "." (lib.reverseList chars);
 
+  # Only supports /24 subnets — asserts if given anything else.
   parseCidrPrefix = cidr: let
     parts = lib.splitString "/" cidr;
     addr = builtins.head parts;
     len = lib.toInt (builtins.elemAt parts 1);
     octets = lib.splitString "." addr;
     prefix = lib.concatStringsSep "." (lib.take 3 octets);
-  in {inherit prefix len;};
+  in
+    assert len == 24 || throw "parseCidrPrefix: only /24 supported, got /${toString len} for ${cidr}";
+    {inherit prefix len;};
 
   ulaReverseBase = let
     stripped = lib.replaceStrings [":"] [""] ulaPrefix;

@@ -19,6 +19,7 @@
     iface = fleet.hostInterface hostname group.network;
     vrid = fleet.groupVrid groupName;
     priority = fleet.memberPriority groupName hostname;
+    prefixLen = fleet.networkPrefixLen group.network;
   }) myGroups);
 
   haproxyConfig = let
@@ -115,7 +116,7 @@ in {
           virtualRouterId = vip.vrid;
           priority = vip.priority;
           virtualIps = [
-            { addr = "${vip.vip}/24"; }
+            { addr = "${vip.vip}/${toString vip.prefixLen}"; }
           ];
         }
       ) uniqueVips);
