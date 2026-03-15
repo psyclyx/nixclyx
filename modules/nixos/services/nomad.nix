@@ -98,6 +98,10 @@
         data_dir = cfg.dataDir;
         bind_addr = bindAddr;
 
+        addresses = {
+          http = "${bindAddr} 127.0.0.1";
+        };
+
         advertise = {
           http = bindAddr;
           rpc = bindAddr;

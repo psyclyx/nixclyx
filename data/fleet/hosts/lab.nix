@@ -23,6 +23,7 @@ let
   labInterfaces = {
     infra = { device = "eno1"; };
     stage = { device = "eno2"; };
+    prod  = { device = "eno3"; };
     mgmt  = { device = "mgmt"; };
   };
 
