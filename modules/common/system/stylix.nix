@@ -32,10 +32,10 @@
       image = lib.mkDefault "${pkgs.nixos-artwork.wallpapers.catppuccin-macchiato}/share/backgrounds/nixos/nixos-wallpaper-catppuccin-macchiato.png";
 
       opacity = {
-        applications = lib.mkDefault 0.85;
-        desktop = lib.mkDefault 0.75;
-        terminal = lib.mkDefault 0.8;
-        popups = lib.mkDefault 0.9;
+        applications = lib.mkDefault 0.92;
+        desktop = lib.mkDefault 0.88;
+        terminal = lib.mkDefault 0.9;
+        popups = lib.mkDefault 0.95;
       };
 
       fonts = {
