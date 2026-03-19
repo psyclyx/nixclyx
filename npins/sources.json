@@ -276,19 +276,6 @@
       "revision": "58cd0eeb85b7e3e12f402acffa8445fdefadaf46",
       "url": "https://github.com/psyclyx/tidepool/archive/58cd0eeb85b7e3e12f402acffa8445fdefadaf46.tar.gz",
       "hash": "sha256-BJJIfaGcqGMhlr4TfD3fEzz6ArtvhgqBYfTlR30nD/s="
-    },
-    "zsh-pure": {
-      "type": "Git",
-      "repository": {
-        "type": "GitHub",
-        "owner": "sindresorhus",
-        "repo": "pure"
-      },
-      "branch": "main",
-      "submodules": false,
-      "revision": "dbefd0dcafaa3ac7d7222ca50890d9d0c97f7ca2",
-      "url": "https://github.com/sindresorhus/pure/archive/dbefd0dcafaa3ac7d7222ca50890d9d0c97f7ca2.tar.gz",
-      "hash": "sha256-Fhk4nlVPS09oh0coLsBnjrKncQGE6cUEynzDO2Skiq8="
     }
   },
   "version": 7
