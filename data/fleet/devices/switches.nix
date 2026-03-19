@@ -68,31 +68,31 @@
     ports = {
       # Lab-1: BMC + 4 ethernet (5 ports per host)
       ether1  = { host = "lab-1"; interface = "mgmt"; };
-      ether2  = { host = "lab-1"; interface = "eno1"; };
-      ether3  = { host = "lab-1"; interface = "eno2"; };
-      ether4  = { host = "lab-1"; interface = "eno3"; };
-      ether5  = { host = "lab-1"; interface = "eno4"; };
+      ether2  = { host = "lab-1"; interface = "infra"; };
+      ether3  = { host = "lab-1"; interface = "stage"; };
+      ether4  = { host = "lab-1"; interface = "prod"; };
+      ether5  = { host = "lab-1"; interface = "prod"; description = "eno4 (second prod link)"; };
 
       # Lab-2
       ether6  = { host = "lab-2"; interface = "mgmt"; };
-      ether7  = { host = "lab-2"; interface = "eno1"; };
-      ether8  = { host = "lab-2"; interface = "eno2"; };
-      ether9  = { host = "lab-2"; interface = "eno3"; };
-      ether10 = { host = "lab-2"; interface = "eno4"; };
+      ether7  = { host = "lab-2"; interface = "infra"; };
+      ether8  = { host = "lab-2"; interface = "stage"; };
+      ether9  = { host = "lab-2"; interface = "prod"; };
+      ether10 = { host = "lab-2"; interface = "prod"; description = "eno4 (second prod link)"; };
 
       # Lab-3
       ether11 = { host = "lab-3"; interface = "mgmt"; };
-      ether12 = { host = "lab-3"; interface = "eno1"; };
-      ether13 = { host = "lab-3"; interface = "eno2"; };
-      ether14 = { host = "lab-3"; interface = "eno3"; };
-      ether15 = { host = "lab-3"; interface = "eno4"; };
+      ether12 = { host = "lab-3"; interface = "infra"; };
+      ether13 = { host = "lab-3"; interface = "stage"; };
+      ether14 = { host = "lab-3"; interface = "prod"; };
+      ether15 = { host = "lab-3"; interface = "prod"; description = "eno4 (second prod link)"; };
 
       # Lab-4
       ether16 = { host = "lab-4"; interface = "mgmt"; };
-      ether17 = { host = "lab-4"; interface = "eno1"; };
-      ether18 = { host = "lab-4"; interface = "eno2"; };
-      ether19 = { host = "lab-4"; interface = "eno3"; };
-      ether20 = { host = "lab-4"; interface = "eno4"; };
+      ether17 = { host = "lab-4"; interface = "infra"; };
+      ether18 = { host = "lab-4"; interface = "stage"; };
+      ether19 = { host = "lab-4"; interface = "prod"; };
+      ether20 = { host = "lab-4"; interface = "prod"; description = "eno4 (second prod link)"; };
 
       # Unused 1G ports
       ether21 = { type = "unused"; };
