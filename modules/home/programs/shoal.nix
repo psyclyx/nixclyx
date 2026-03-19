@@ -1,6 +1,6 @@
 {
   path = ["psyclyx" "home" "programs" "shoal"];
-  description = "Shoal wayland surface renderer";
+  description = "Shoal wayland desktop shell toolkit";
   config = { pkgs, ... }: {
     programs.shoal = {
       enable = true;

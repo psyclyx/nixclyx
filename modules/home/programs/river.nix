@@ -282,7 +282,7 @@ ${lib.optionalString (monitors != {}) ''
         [:w {:mod4 true :ctrl true} (action/spawn ["${mark-pick}" "summon"])]
 
         # Application launchers
-        [:Return {:mod4 true} (action/spawn ["uwsm" "app" "--" "${fuzzel}"])]
+        [:Return {:mod4 true} (action/signal ["open-launcher"])]
         [:i {:mod4 true} (action/spawn ["uwsm" "app" "--" "xdg-terminal-exec"])]
         [:u {:mod4 true} (action/spawn ["uwsm" "app" "--" "firefox"])]
         [:x {:mod4 true} (action/spawn ["uwsm" "app" "--" "${lib.getExe power-menu}"])]
