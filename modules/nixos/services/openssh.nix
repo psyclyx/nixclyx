@@ -68,16 +68,6 @@
 
     environment.etc."ssh/ca_user.pub".text = nixclyx.keys.ca.user;
 
-    # Ensure private host keys are 0600. Preservation bind-mounts may
-    # restore them with wrong permissions, causing sshd to refuse startup.
-    system.activationScripts.ssh-host-key-perms = lib.stringAfter ["etc"] ''
-      ${lib.concatMapStringsSep "\n" (k: ''
-        if [ -f "${k.path}" ]; then
-          chmod 0600 "${k.path}"
-        fi
-      '') config.services.openssh.hostKeys}
-    '';
-
     # Write auth_principals as real files (not nix store symlinks)
     # because OpenSSH StrictModes rejects paths through /nix/store.
     system.activationScripts.ssh-auth-principals = lib.stringAfter ["etc"] ''
