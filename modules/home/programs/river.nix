@@ -74,7 +74,7 @@
       ')
 
       # Step 1: Pick an action
-      chosen_line=$(echo "$display" | ${shoal-dmenu} -p "Action: " --tabs 4) || exit 0
+      chosen_line=$(echo "$display" | ${shoal-dmenu} -p "Action: ") || exit 0
       line_num=$(echo "$display" | grep -nxF "$chosen_line" | head -1 | cut -d: -f1)
       entry=$(echo "$data" | sed -n "''${line_num}p")
       action_name=$(echo "$entry" | cut -f1)
