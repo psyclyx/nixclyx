@@ -16,4 +16,7 @@ in
     ilo = pkgs.callPackage ./ilo.nix {
       inherit (packages) ilo4-console;
     };
+    regenerate-palettes = pkgs.callPackage ./regenerate-palettes.nix {
+      inherit (packages) base24-gen;
+    };
   }
