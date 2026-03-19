@@ -56,6 +56,7 @@
 
     stylix = {
       image = nixclyx.assets.wallpapers."4x-ppmm-mami.jpg";
+      base16Scheme = nixclyx.assets.palettes."4x-ppmm-mami.yaml";
       polarity = "dark";
     };
   };

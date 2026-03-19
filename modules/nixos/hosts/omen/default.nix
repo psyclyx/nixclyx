@@ -46,6 +46,7 @@
 
     stylix = {
       image = nixclyx.assets.wallpapers."2x-ppmm-madoka-homura.png";
+      base16Scheme = nixclyx.assets.palettes."2x-ppmm-madoka-homura.yaml";
       polarity = "dark";
     };
   };
