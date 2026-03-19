@@ -8,7 +8,6 @@
   }: {
     home.packages = [
       pkgs.element-desktop
-      pkgs.firefox-bin
       pkgs.signal-desktop
     ];
 
@@ -16,6 +15,7 @@
       programs = {
         alacritty.enable = true;
         claude-code.enable = true;
+        firefox.enable = true;
         ghostty = {
           enable = true;
           defaultTerminal = true;

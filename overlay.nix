@@ -22,10 +22,16 @@ in
             python-etcd = pyPrev.python-etcd.overridePythonAttrs {doCheck = false;};
           })
         ];
-      # __multf3 (128-bit float multiply) missing on aarch64 — link libgcc_s
+      # __multf3 (128-bit float multiply) missing on aarch64 — the Makefile
+      # calls ld directly (bypassing the CC wrapper), so buildInputs alone
+      # won't add libgcc_s to the rpath.  Patch the .so after build instead.
       pam_ssh_agent_auth = prev.pam_ssh_agent_auth.overrideAttrs (old:
         prev.lib.optionalAttrs prev.stdenv.hostPlatform.isAarch64 {
-          buildInputs = (old.buildInputs or []) ++ [prev.stdenv.cc.cc.lib];
+          postFixup = (old.postFixup or "") + ''
+            patchelf --add-needed libgcc_s.so.1 \
+                     --add-rpath ${prev.stdenv.cc.cc.lib}/lib \
+                     $out/libexec/pam_ssh_agent_auth.so
+          '';
         });
       rofi-rbw = prev.rofi-rbw.overrideAttrs {
         src = prev.fetchFromGitHub {
