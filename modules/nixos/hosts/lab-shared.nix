@@ -101,6 +101,7 @@
         services = {
           seaweedfs = {
             enable = true;
+            dataNetwork = "infra";
             clusterNodes = labHostNames;
             masterNodes = lib.take 3 labHostNames;
             s3.enable = true;
@@ -108,18 +109,22 @@
           };
           attic = {
             enable = true;
+            dataNetwork = "infra";
             clusterNodes = labHostNames;
           };
           redis-sentinel = {
             enable = true;
+            dataNetwork = "infra";
             clusterNodes = labHostNames;
           };
           etcd-cluster = {
             enable = true;
+            dataNetwork = "infra";
             clusterNodes = labHostNames;
           };
           patroni = {
             enable = true;
+            dataNetwork = "infra";
             clusterNodes = labHostNames;
           };
           openbao = {

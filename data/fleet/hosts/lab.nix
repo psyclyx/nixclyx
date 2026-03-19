@@ -2,14 +2,14 @@ let
   labServices = {
     node     = { port = 9100; networks = ["vpn"]; };
     smartctl = { port = 9633; networks = ["vpn"]; };
-    redis              = { port = 9121; networks = ["data"]; };
-    postgres           = { port = 9187; networks = ["data"]; };
-    seaweedfs-volume   = { port = 9328; networks = ["data"]; };
-    seaweedfs-filer    = { port = 9329; networks = ["data"]; };
-    seaweedfs-s3       = { port = 9330; networks = ["data"]; };
+    redis              = { port = 9121; networks = ["infra"]; };
+    postgres           = { port = 9187; networks = ["infra"]; };
+    seaweedfs-volume   = { port = 9328; networks = ["infra"]; };
+    seaweedfs-filer    = { port = 9329; networks = ["infra"]; };
+    seaweedfs-s3       = { port = 9330; networks = ["infra"]; };
     haproxy  = { port = 9101; networks = ["infra"]; };
     attic    = { port = 9199; networks = ["infra"]; };
-    etcd     = { port = 2379; networks = ["data"]; };
+    etcd     = { port = 2379; networks = ["infra"]; };
     patroni  = { port = 8008; networks = ["infra"]; };
     openbao  = { port = 8200; networks = ["infra"]; };
     consul   = { port = 8500; networks = ["infra"]; };
@@ -17,7 +17,7 @@ let
   };
 
   labMasterServices = labServices // {
-    seaweedfs-master = { port = 9327; networks = ["data"]; };
+    seaweedfs-master = { port = 9327; networks = ["infra"]; };
   };
 
   labInterfaces = {
