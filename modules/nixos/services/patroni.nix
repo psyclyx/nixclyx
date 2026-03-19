@@ -216,12 +216,18 @@
             check_timeline = true;
           };
         in ''
+          ready=0
           for i in $(seq 1 30); do
             if curl -sf http://localhost:${toString cfg.restApiPort}/config > /dev/null 2>&1; then
+              ready=1
               break
             fi
             sleep 2
           done
+          if [ "$ready" -eq 0 ]; then
+            echo "patroni REST API not available after 60s, skipping DCS sync" >&2
+            exit 0
+          fi
           curl -sf -XPATCH -H 'Content-Type: application/json' \
             -d '${dcsConfig}' \
             http://localhost:${toString cfg.restApiPort}/config
