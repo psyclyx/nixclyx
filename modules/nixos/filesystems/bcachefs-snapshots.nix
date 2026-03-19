@@ -60,7 +60,7 @@
 
               ${pruneScript {
                 dir = "$snap_dir";
-                glob = "2*";
+                glob = "[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]T[0-9][0-9]:[0-9][0-9]:[0-9][0-9]";
                 inherit (target.retention) keepLast hourly daily weekly monthly;
               }}
 

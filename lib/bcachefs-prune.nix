@@ -25,8 +25,6 @@
   monthly ? 6,
 }: ''
   # --- snapshot pruning (timeline backoff) ---
-  # NOTE: delete logic is commented out until we're confident the system is stable.
-  # Uncomment the bcachefs subvolume delete line below to enable actual cleanup.
   _prune_dir=${dir}
   _prune_keep_last=${toString keepLast}
   _prune_hourly=${toString hourly}
@@ -99,7 +97,7 @@
 
       if [ "$_keep" != "true" ]; then
         echo "Pruning snapshot: $snap"
-        # bcachefs subvolume delete "$snap"
+        bcachefs subvolume delete "$snap"
       fi
     done
   fi

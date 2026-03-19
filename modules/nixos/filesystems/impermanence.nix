@@ -57,7 +57,7 @@
 
         ${pruneScript {
           dir = "$root";
-          glob = "@2*";
+          glob = "@[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]T[0-9][0-9]:[0-9][0-9]:[0-9][0-9]";
           inherit (cfg.retention) keepLast hourly daily weekly monthly;
         }}
 
