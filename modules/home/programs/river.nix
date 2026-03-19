@@ -10,7 +10,7 @@
     monitors = config.psyclyx.home.hardware.monitors;
     c = config.lib.stylix.colors;
 
-    fuzzel = lib.getExe config.programs.fuzzel.package;
+    shoal-dmenu = "${lib.getExe config.programs.shoal.package} --dmenu";
     rofi-rbw = lib.getExe pkgs.rofi-rbw-wayland;
     swaylock = lib.getExe config.programs.swaylock.package;
     grim = lib.getExe pkgs.grim;
@@ -22,7 +22,7 @@
 
     power-menu = pkgs.writeShellScriptBin "river-power-menu" ''
       options="Lock\nLogout\nSuspend\nReboot\nShutdown"
-      chosen=$(echo -e "$options" | ${fuzzel} --dmenu --prompt "Power: ")
+      chosen=$(echo -e "$options" | ${shoal-dmenu} -p "Power: ")
       case $chosen in
         "Lock") ${swaylock} ;;
         "Logout") ${wayland-logout} ;;
@@ -34,7 +34,7 @@
 
     screenshot-menu = pkgs.writeShellScriptBin "river-screenshot-menu" ''
       options="Full Screen\nSelection\nFull Screen (Clipboard)\nSelection (Clipboard)"
-      chosen=$(echo -e "$options" | ${fuzzel} --dmenu --prompt "Screenshot: ")
+      chosen=$(echo -e "$options" | ${shoal-dmenu} -p "Screenshot: ")
       screenshot_dir="''${XDG_PICTURES_DIR:-$HOME/Pictures}/screenshots"
       mkdir -p "$screenshot_dir"
       filename="$screenshot_dir/screenshot-$(date +%Y%m%d-%H%M%S).png"
@@ -74,7 +74,7 @@
       ')
 
       # Step 1: Pick an action
-      chosen_line=$(echo "$display" | ${fuzzel} --dmenu --prompt "Action: " --tabs 4) || exit 0
+      chosen_line=$(echo "$display" | ${shoal-dmenu} -p "Action: " --tabs 4) || exit 0
       line_num=$(echo "$display" | grep -nxF "$chosen_line" | head -1 | cut -d: -f1)
       entry=$(echo "$data" | sed -n "''${line_num}p")
       action_name=$(echo "$entry" | cut -f1)
@@ -89,16 +89,16 @@
           resolver)
             # Show directions + special options
             pick=$(printf '%s\n' left right up down next prev last "mark..." "wid..." \
-              | ${fuzzel} --dmenu --prompt "Target: ") || exit 0
+              | ${shoal-dmenu} -p "Target: ") || exit 0
             case "$pick" in
               "mark...")
-                mark=$(echo "" | ${fuzzel} --dmenu --prompt "Mark name: ") || exit 0
+                mark=$(echo "" | ${shoal-dmenu} -p "Mark name: ") || exit 0
                 args="$args mark $mark"
                 ;;
               "wid...")
                 wid_pick=$(${tidepoolmsg} eval '(print (ipc/list-windows))' | head -1 \
                   | ${jq} -r '.[] | "\(.wid)|\(.app) — \(.title)"' \
-                  | ${fuzzel} --dmenu --prompt "Window: ") || exit 0
+                  | ${shoal-dmenu} -p "Window: ") || exit 0
                 wid=$(echo "$wid_pick" | cut -d'|' -f1)
                 args="$args wid $wid"
                 ;;
@@ -109,17 +109,17 @@
             ;;
           choice)
             options=$(echo "$spec_entry" | ${jq} -r '.[1:][]')
-            pick=$(echo "$options" | ${fuzzel} --dmenu --prompt "$action_name: ") || exit 0
+            pick=$(echo "$options" | ${shoal-dmenu} -p "$action_name: ") || exit 0
             args="$args $pick"
             ;;
           number)
             prompt=$(echo "$spec_entry" | ${jq} -r '.[1]')
-            num=$(echo "" | ${fuzzel} --dmenu --prompt "$prompt: ") || exit 0
+            num=$(echo "" | ${shoal-dmenu} -p "$prompt: ") || exit 0
             args="$args $num"
             ;;
           string)
             prompt=$(echo "$spec_entry" | ${jq} -r '.[1]')
-            str=$(echo "" | ${fuzzel} --dmenu --prompt "$prompt: ") || exit 0
+            str=$(echo "" | ${shoal-dmenu} -p "$prompt: ") || exit 0
             args="$args $str"
             ;;
         esac
@@ -129,19 +129,19 @@
       ${tidepoolmsg} action "$action_name" $args
     '';
 
-    # Shortcut scripts: skip the first fuzzel step for common operations
+    # Shortcut scripts: skip the first dmenu step for common operations
     summon-menu = pkgs.writeShellScript "tidepool-summon-menu" ''
       set -euo pipefail
       chosen=$(${tidepoolmsg} eval '(print (ipc/list-windows))' | head -1 \
         | ${jq} -r '.[] | "\(.wid)|\(.app) — \(.title)\(if .mark then " [\(.mark)]" else "" end)"' \
-        | ${fuzzel} --dmenu --prompt "Summon: ") || exit 0
+        | ${shoal-dmenu} -p "Summon: ") || exit 0
       wid=$(echo "$chosen" | cut -d'|' -f1)
       [ -n "$wid" ] && ${tidepoolmsg} action summon wid "$wid"
     '';
 
     mark-set-menu = pkgs.writeShellScript "tidepool-mark-set-menu" ''
       set -euo pipefail
-      mark=$(echo "" | ${fuzzel} --dmenu --prompt "Mark: ") || exit 0
+      mark=$(echo "" | ${shoal-dmenu} -p "Mark: ") || exit 0
       [ -n "$mark" ] && ${tidepoolmsg} action mark-set "$mark"
     '';
 
@@ -152,7 +152,7 @@
       marks=$(${tidepoolmsg} eval '(print (ipc/list-marks))' | head -1 \
         | ${jq} -r '.[] | "\(.name)|\(.app) — \(.title)"')
       [ -z "$marks" ] && exit 0
-      chosen=$(echo "$marks" | ${fuzzel} --dmenu --prompt "Mark: ") || exit 0
+      chosen=$(echo "$marks" | ${shoal-dmenu} -p "Mark: ") || exit 0
       name=$(echo "$chosen" | cut -d'|' -f1)
       [ -n "$name" ] && ${tidepoolmsg} action "$action" mark "$name"
     '';
@@ -351,7 +351,6 @@ ${lib.optionalString (monitors != {}) ''
     psyclyx.home = {
       programs = {
         alacritty.enable = lib.mkDefault true;
-        fuzzel.enable = lib.mkDefault true;
         tidepool.enable = lib.mkDefault true;
         shoal.enable = lib.mkDefault true;
       };
