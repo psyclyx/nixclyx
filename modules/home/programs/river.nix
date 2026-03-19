@@ -307,11 +307,11 @@ ${lib.optionalString (monitors != {}) ''
         [:a {:mod4 true} (action/focus-all-tags)]
 
         # Media keys (no modifier)
-        [:XF86AudioRaiseVolume {} (action/spawn ["pactl" "set-sink-volume" "@DEFAULT_SINK@" "+5%"])]
-        [:XF86AudioLowerVolume {} (action/spawn ["pactl" "set-sink-volume" "@DEFAULT_SINK@" "-5%"])]
-        [:XF86AudioMute {} (action/spawn ["pactl" "set-sink-mute" "@DEFAULT_SINK@" "toggle"])]
-        [:XF86MonBrightnessUp {} (action/spawn ["brightnessctl" "set" "+10%"])]
-        [:XF86MonBrightnessDown {} (action/spawn ["brightnessctl" "set" "10%-"])])
+        [:XF86AudioRaiseVolume {} (action/signal ["volume-up"])]
+        [:XF86AudioLowerVolume {} (action/signal ["volume-down"])]
+        [:XF86AudioMute {} (action/signal ["volume-mute"])]
+        [:XF86MonBrightnessUp {} (action/signal ["brightness-up"])]
+        [:XF86MonBrightnessDown {} (action/signal ["brightness-down"])])
 
       # Tag keybindings (1-9 → tags 1-9, 0 → tag 10)
       (for i 1 10
