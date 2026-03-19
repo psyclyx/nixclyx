@@ -331,6 +331,12 @@ in {
               DUIDType = "uuid";
               DUIDRawData = "e7:13:f8:92:37:c5:be:76";
             };
+            # DOCSIS: CMTS handles IPv6 routing at L2 — no RA/gateway,
+            # so install an interface-only default route for IPv6.
+            routes = [{
+              Destination = "::/0";
+              Metric = 1024;
+            }];
             linkConfig.RequiredForOnline = "carrier";
           };
         };
