@@ -58,23 +58,27 @@
 
     jq = lib.getExe pkgs.jq;
 
+    column = lib.getExe' pkgs.util-linux "column";
+
     action-menu = pkgs.writeShellScript "tidepool-action-menu" ''
       set -euo pipefail
 
-      actions_json=$(${tidepoolmsg} eval '(do (import spork/json) (prin (json/encode (ipc/list-actions))))')
+      actions_json=$(${tidepoolmsg} eval '(print (ipc/list-actions))' | head -1)
+
+      # Build parallel arrays: display (aligned columns) and data (name|spec)
+      display=$(echo "$actions_json" | ${jq} -r '
+        .[] | (.desc // .name) + "\t" + (.key // "")
+      ' | ${column} -t -s $'\t')
+      data=$(echo "$actions_json" | ${jq} -r '
+        .[] | .name + "\t" + (.spec // [] | tojson)
+      ')
 
       # Step 1: Pick an action
-      # Format: "desc (keybind)|name|spec_json"  — pipe-delimited
-      chosen=$(echo "$actions_json" | ${jq} -r '
-        .[] |
-        (.desc // .name) as $label |
-        (if .key then $label + " (" + .key + ")" else $label end) as $display |
-        (.spec // [] | tojson) as $spec |
-        $display + "|" + .name + "|" + $spec
-      ' | ${fuzzel} --dmenu --prompt "Action: ") || exit 0
-
-      action_name=$(echo "$chosen" | cut -d'|' -f2)
-      spec_json=$(echo "$chosen" | cut -d'|' -f3)
+      chosen_line=$(echo "$display" | ${fuzzel} --dmenu --prompt "Action: " --tabs 4) || exit 0
+      line_num=$(echo "$display" | grep -nxF "$chosen_line" | head -1 | cut -d: -f1)
+      entry=$(echo "$data" | sed -n "''${line_num}p")
+      action_name=$(echo "$entry" | cut -f1)
+      spec_json=$(echo "$entry" | cut -f2)
 
       # Step 2: Collect args interactively based on spec
       args=""
@@ -92,7 +96,7 @@
                 args="$args mark $mark"
                 ;;
               "wid...")
-                wid_pick=$(${tidepoolmsg} eval '(do (import spork/json) (def wins (seq [w :in (state/wm :windows) :when (not (or (w :closed) (w :closing)))] @{"wid" (w :wid) "app" (or (w :app-id) "") "title" (or (w :title) "")})) (prin (json/encode wins)))' \
+                wid_pick=$(${tidepoolmsg} eval '(print (ipc/list-windows))' | head -1 \
                   | ${jq} -r '.[] | "\(.wid)|\(.app) — \(.title)"' \
                   | ${fuzzel} --dmenu --prompt "Window: ") || exit 0
                 wid=$(echo "$wid_pick" | cut -d'|' -f1)
@@ -128,7 +132,7 @@
     # Shortcut scripts: skip the first fuzzel step for common operations
     summon-menu = pkgs.writeShellScript "tidepool-summon-menu" ''
       set -euo pipefail
-      chosen=$(${tidepoolmsg} eval '(do (import spork/json) (def wins (seq [w :in (state/wm :windows) :when (not (or (w :closed) (w :closing)))] @{"wid" (w :wid) "app" (or (w :app-id) "") "title" (or (w :title) "") "tag" (w :tag) "mark" (w :mark)})) (prin (json/encode wins)))' \
+      chosen=$(${tidepoolmsg} eval '(print (ipc/list-windows))' | head -1 \
         | ${jq} -r '.[] | "\(.wid)|\(.app) — \(.title)\(if .mark then " [\(.mark)]" else "" end)"' \
         | ${fuzzel} --dmenu --prompt "Summon: ") || exit 0
       wid=$(echo "$chosen" | cut -d'|' -f1)
@@ -145,7 +149,7 @@
     mark-pick = pkgs.writeShellScript "tidepool-mark-pick" ''
       set -euo pipefail
       action="''${1:?usage: tidepool-mark-pick <action>}"
-      marks=$(${tidepoolmsg} eval '(do (import spork/json) (prin (json/encode (seq [[name w] :pairs state/marks :when (and w (not (w :closed)))] @{"name" name "app" (or (w :app-id) "") "title" (or (w :title) "")}))))' \
+      marks=$(${tidepoolmsg} eval '(print (ipc/list-marks))' | head -1 \
         | ${jq} -r '.[] | "\(.name)|\(.app) — \(.title)"')
       [ -z "$marks" ] && exit 0
       chosen=$(echo "$marks" | ${fuzzel} --dmenu --prompt "Mark: ") || exit 0
