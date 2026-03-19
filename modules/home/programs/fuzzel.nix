@@ -9,7 +9,7 @@
       enable = true;
       settings = {
         main = {
-          font = lib.mkForce "${config.stylix.fonts.monospace.name}:size=${toString (config.stylix.fonts.sizes.applications - 2)}";
+          font = lib.mkForce "${config.stylix.fonts.monospace.name}:size=${toString config.stylix.fonts.sizes.desktop}";
           prompt = "\"  \"";
           placeholder = "\"...\"";
           icons-enabled = true;
