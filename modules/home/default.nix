@@ -4,7 +4,6 @@ in
   {...}: {
     imports =
       [
-        (loadFlake sources.ags).homeManagerModules.ags
         (import sources.nvf).homeManagerModules.default
         "${sources.sops-nix}/modules/home-manager/sops.nix"
         "${sources.shoal}/nix/hm-module.nix"
