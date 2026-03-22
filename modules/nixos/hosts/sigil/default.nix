@@ -31,7 +31,10 @@
         ];
       };
 
-      programs.steam.enable = true;
+      programs = {
+        glasgow.enable = true;
+        steam.enable = true;
+      };
 
       network = {
         dns.client.enable = true;
