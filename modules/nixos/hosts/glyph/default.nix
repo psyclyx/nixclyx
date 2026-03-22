@@ -34,8 +34,8 @@
     };
 
     stylix = {
-      image = nixclyx.assets.wallpapers."4x-ppmm-city-night.jpg";
-      base16Scheme = nixclyx.assets.palettes."4x-ppmm-city-night.yaml";
+      image = "${nixclyx.assets}/wallpapers/4x-ppmm-city-night.jpg";
+      base16Scheme = "${nixclyx.assets}/palettes/4x-ppmm-city-night.yaml";
       polarity = "dark";
     };
 
@@ -90,12 +90,25 @@
         directories = [
           "/var/lib/nixos"
           "/var/lib/systemd"
-          {directory = "/etc/secrets/wireguard"; mode = "0750"; group = "systemd-network";}
+          {
+            directory = "/etc/secrets/wireguard";
+            mode = "0750";
+            group = "systemd-network";
+          }
         ];
         files = [
-          {file = "/etc/machine-id"; inInitrd = true;}
-          {file = "/etc/ssh/ssh_host_ed25519_key"; inInitrd = true;}
-          {file = "/etc/ssh/ssh_host_ed25519_key.pub"; inInitrd = true;}
+          {
+            file = "/etc/machine-id";
+            inInitrd = true;
+          }
+          {
+            file = "/etc/ssh/ssh_host_ed25519_key";
+            inInitrd = true;
+          }
+          {
+            file = "/etc/ssh/ssh_host_ed25519_key.pub";
+            inInitrd = true;
+          }
         ];
       };
     };

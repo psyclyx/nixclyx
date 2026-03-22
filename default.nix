@@ -3,12 +3,12 @@ let
   sources = import ./npins;
   loadFlake = import ./loadFlake.nix;
   lib = import ./lib;
-  assets = import ./assets;
   overlay = import ./overlay.nix;
   packages = import ./packages;
 
   core = {
-    inherit sources loadFlake lib assets overlay packages;
+    inherit sources loadFlake lib overlay packages;
+    assets = ./assets;
     keys = import ./data/keys.nix;
     packageGroups = import ./data/packageGroups.nix;
   };
@@ -82,22 +82,25 @@ let
   # The full nixclyx attrset. Modules see this via _module.args (lazy).
   # hive/configurations/darwinConfigurations are top-level consumers only —
   # no module spec should reference them.
-  nixclyx = core // {
-    inherit modules hive configurations darwinConfigurations nixOnDroidConfigurations;
-    overlays.default = overlay;
-    docs = import ./docs {inherit nixclyx;};
-    fleet-viz = pkgs: import ./packages/fleet-viz {
-      inherit pkgs;
-      fleetData = let fleet = import ./data/fleet; in fleet.topology // fleet;
+  nixclyx =
+    core
+    // {
+      inherit modules hive configurations darwinConfigurations nixOnDroidConfigurations;
+      overlays.default = overlay;
+      docs = import ./docs {inherit nixclyx;};
+      fleet-viz = pkgs:
+        import ./packages/fleet-viz {
+          inherit pkgs;
+          fleetData = let fleet = import ./data/fleet; in fleet.topology // fleet;
+        };
+      nvf = pkgs:
+        ((import sources.nvf).lib.neovimConfiguration {
+          inherit pkgs;
+          modules = [
+            modules.nvf
+            {psyclyx.nixos.programs.nvf.enable = true;}
+          ];
+        }).neovim;
     };
-    nvf = pkgs:
-      ((import sources.nvf).lib.neovimConfiguration {
-        inherit pkgs;
-        modules = [
-          modules.nvf
-          {psyclyx.nixos.programs.nvf.enable = true;}
-        ];
-      }).neovim;
-  };
 in
   nixclyx

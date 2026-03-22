@@ -3,8 +3,6 @@
   description = "text editing behaviour";
   config = {pkgs, ...}: {
     vim = {
-      enableLuaLoader = true;
-
       options = {
         shiftwidth = 2;
         tabstop = 2;
