@@ -18,18 +18,18 @@
     nixclyx,
     ...
   }: {
-    home.sessionVariables = {
-      EDITOR = "nvim";
-      VISUAL = "nvim";
-    };
-
     programs.nvf = {
       enable = true;
+      defaultEditor = true;
+
       settings = {
         imports = [nixclyx.modules.nvf];
-        psyclyx.nixos.programs.nvf.enable = true;
-        psyclyx.nixos.programs.nvf.anthropicKeyFile = cfg.anthropicKeyFile;
-        psyclyx.nixos.programs.nvf.openrouterKeyFile = cfg.openrouterKeyFile;
+        psyclyx.nvf = {
+          roles.base.enable = true;
+          ai = {
+            inherit (cfg) anthropicKeyFile openrouterKeyFile;
+          };
+        };
       };
     };
   };
