@@ -120,11 +120,6 @@
           s3.enable = true;
           buckets = ["backups" "attic"];
         };
-        attic = {
-          enable = true;
-          dataNetwork = "infra";
-          clusterNodes = labHostNames;
-        };
         redis-sentinel = {
           enable = true;
           dataNetwork = "infra";
