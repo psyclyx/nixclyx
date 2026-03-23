@@ -1,6 +1,7 @@
 {
   config,
   lib,
+  pkgs,
   ...
 }: let
   topo = config.psyclyx.topology;
@@ -24,9 +25,40 @@
     if hubHost.wireguard.endpoint != null
     then hubHost.wireguard.endpoint
     else "vpn.${topo.domains.public}:${toString topo.wireguard.port}";
+
+  privateKeyPath = "/etc/secrets/wireguard/private.key";
 in {
+  options.psyclyx.nixos.wireguard.autoGenerateKeys = lib.mkOption {
+    type = lib.types.listOf lib.types.str;
+    default = [];
+    description = "WireGuard private key paths to auto-generate if missing.";
+  };
+
   config = lib.mkIf hasWg {
+    psyclyx.nixos.wireguard.autoGenerateKeys = lib.mkDefault [privateKeyPath];
     psyclyx.nixos.network.ports.wireguard = {udp = [topo.wireguard.port];};
+
+    systemd.services.wireguard-keygen = {
+      description = "Auto-generate WireGuard private keys";
+      wantedBy = ["multi-user.target"];
+      before = ["systemd-networkd.service"];
+      serviceConfig = {
+        Type = "oneshot";
+        RemainAfterExit = true;
+      };
+      script = let
+        wg = "${pkgs.wireguard-tools}/bin/wg";
+        keys = config.psyclyx.nixos.wireguard.autoGenerateKeys;
+      in lib.concatMapStringsSep "\n" (keyPath: ''
+        if [ ! -f "${keyPath}" ] || [ ! -s "${keyPath}" ]; then
+          echo "Generating WireGuard key: ${keyPath}"
+          umask 027
+          mkdir -p "$(dirname "${keyPath}")"
+          ${wg} genkey > "${keyPath}"
+          chown root:systemd-network "${keyPath}"
+        fi
+      '') keys;
+    };
 
     systemd.network = {
       netdevs."30-wg0" = {
@@ -36,7 +68,7 @@ in {
         };
 
         wireguardConfig = lib.mkMerge [
-          {PrivateKeyFile = "/etc/secrets/wireguard/private.key";}
+          {PrivateKeyFile = privateKeyPath;}
           (lib.mkIf isHub {ListenPort = topo.wireguard.port;})
         ];
 

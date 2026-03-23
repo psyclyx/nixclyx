@@ -11,16 +11,5 @@
         arc.maxBytes = 85899345920; # 80GB
       };
     };
-
-    swapDevices = [
-      { device = "/dev/disk/by-id/ata-LK0800GEYMU_BTHC6403075M800NGN-part2"; }
-      { device = "/dev/disk/by-id/ata-LK0800GEYMU_BTHC6230013F800NGN-part2"; }
-      { device = "/dev/disk/by-id/scsi-35000c5007f20d437-part2"; }
-      { device = "/dev/disk/by-id/scsi-35000c5007f891413-part2"; }
-      { device = "/dev/disk/by-id/scsi-35000c5008f445f47-part2"; }
-      { device = "/dev/disk/by-id/scsi-35000c50096200287-part2"; }
-      { device = "/dev/disk/by-id/scsi-35000c5006bc3a44b-part2"; }
-      { device = "/dev/disk/by-id/scsi-35000c500971c650f-part2"; }
-    ];
   };
 }

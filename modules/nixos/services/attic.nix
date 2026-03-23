@@ -37,6 +37,11 @@
         default = null;
         description = "Path to file containing the database password.";
       };
+      sslMode = lib.mkOption {
+        type = lib.types.str;
+        default = "disable";
+        description = "PostgreSQL SSL mode (disable, prefer, require, verify-ca, verify-full).";
+      };
       superuserPasswordFile = lib.mkOption {
         type = lib.types.nullOr lib.types.str;
         default = null;
@@ -110,7 +115,7 @@
       listen = "${listenAddr}:${toString cfg.port}"
 
       [database]
-      url = "postgresql://${cfg.database.user}:__DB_PASSWORD__@${pgVip}:5432/${cfg.database.name}"
+      url = "postgresql://${cfg.database.user}:__DB_PASSWORD__@${pgVip}:5432/${cfg.database.name}?sslmode=${cfg.database.sslMode}"
 
       [storage]
       type = "s3"

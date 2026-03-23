@@ -94,6 +94,7 @@
                   "s3.psyclyx.net. IN A 10.0.25.200"
                   "webdav.psyclyx.net. IN A 10.0.25.200"
                   "cache.psyclyx.net. IN A 10.0.25.200"
+                  "ha.psyclyx.net. IN A 10.157.0.1"
                 ];
               };
             };
@@ -149,6 +150,20 @@
         "RFC2136_TSIG_SECRET_FILE" = authCfg.tsigSecretFile;
       };
       group = "nginx";
+    };
+
+    # Home Assistant reverse proxy
+    services.nginx.virtualHosts."ha.psyclyx.net" = {
+      useACMEHost = "psyclyx.net";
+      forceSSL = true;
+      listen = [
+        { addr = "10.157.0.1"; port = 443; ssl = true; }
+        { addr = "10.157.0.1"; port = 80; }
+      ];
+      locations."/" = {
+        proxyPass = "http://10.0.110.100:8123";
+        proxyWebsockets = true;
+      };
     };
 
     # Internal metrics vhost (bypasses psyclyx nginx module — needs DNS-01 cert)

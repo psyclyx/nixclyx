@@ -98,6 +98,8 @@
       '';
     in
     {
+      environment.systemPackages = [pkgs.openbao];
+
       users.users.openbao = {
         isSystemUser = true;
         group = "openbao";
@@ -118,7 +120,8 @@
           ExecStart = "${pkgs.openbao}/bin/bao server -config=/run/openbao/config.hcl";
           ExecReload = "${pkgs.coreutils}/bin/kill -HUP $MAINPID";
           Restart = "on-failure";
-          RestartSec = "5s";
+          RestartSec = "10s";
+          StartLimitIntervalSec = 0;
           StateDirectory = "openbao";
           RuntimeDirectory = "openbao";
           LimitNOFILE = 65536;

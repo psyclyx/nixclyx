@@ -53,6 +53,25 @@
         default = "infra";
         description = "Topology network for client/HAProxy connections (pg_hba, listen).";
       };
+      ssl = {
+        enable = lib.mkOption {
+          type = lib.types.bool;
+          default = false;
+          description = "Enable SSL/TLS for PostgreSQL connections.";
+        };
+        certFile = lib.mkOption {
+          type = lib.types.str;
+          default = "/run/openbao-pki/postgres/cert.pem";
+        };
+        keyFile = lib.mkOption {
+          type = lib.types.str;
+          default = "/run/openbao-pki/postgres/key.pem";
+        };
+        caFile = lib.mkOption {
+          type = lib.types.str;
+          default = "/run/openbao-pki/postgres/ca.pem";
+        };
+      };
       exporters.postgres = {
       enable = lib.mkOption {
         type = lib.types.bool;
@@ -136,6 +155,11 @@
                   max_wal_senders = 10;
                   max_replication_slots = 10;
                   wal_log_hints = "on";
+                } // lib.optionalAttrs cfg.ssl.enable {
+                  ssl = "on";
+                  ssl_cert_file = cfg.ssl.certFile;
+                  ssl_key_file = cfg.ssl.keyFile;
+                  ssl_ca_file = cfg.ssl.caFile;
                 };
               };
             };
@@ -161,6 +185,11 @@
             pg_hba = pgHba;
             parameters = {
               max_connections = 200;
+            } // lib.optionalAttrs cfg.ssl.enable {
+              ssl = "on";
+              ssl_cert_file = cfg.ssl.certFile;
+              ssl_key_file = cfg.ssl.keyFile;
+              ssl_ca_file = cfg.ssl.caFile;
             };
             remove_data_directory_on_diverged_timelines = true;
             remove_data_directory_on_rewind_failure = true;

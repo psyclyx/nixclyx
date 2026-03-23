@@ -11,12 +11,5 @@
         arc.maxBytes = 34359738368; # 32GB
       };
     };
-
-    swapDevices = [
-      { device = "/dev/disk/by-id/scsi-35000c50085e8525b-part2"; }
-      { device = "/dev/disk/by-id/scsi-35000c50085e87d1b-part2"; }
-      { device = "/dev/disk/by-id/scsi-350000394780aef44-part2"; }
-      { device = "/dev/disk/by-id/scsi-35000c5009792f3b7-part2"; }
-    ];
   };
 }
