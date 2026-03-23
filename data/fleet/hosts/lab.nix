@@ -81,7 +81,7 @@ in {
       eno4 = "94:18:82:79:b9:f3";
     };
     interfaces = labInterfaces;
-    wireguard.publicKey = "m3+/5V8kpoSqIqFXPe1LGF0RXwdfXPfljhJctkGeOhg=";
+    wireguard.publicKey = "gLXnmGgfyhDIvlFeHaoY3ZzbOArm3zW0HUqI8JtF3R8=";
     addresses = {
       vpn = {ipv4 = "10.157.0.11";};
       infra = {
@@ -118,7 +118,7 @@ in {
       eno4 = "94:18:82:89:83:73";
     };
     interfaces = labInterfaces;
-    wireguard.publicKey = "I+LxIxnWAnmf/tlotUNqnmcVVpRikL/hk9G5tlfDLHI=";
+    wireguard.publicKey = "0EjNTYFGhcUgKr/xQ5iW3vN95mm4GwOv9iO5jGxX+xg=";
     addresses = {
       vpn = {ipv4 = "10.157.0.12";};
       infra = {
@@ -155,7 +155,7 @@ in {
       eno4 = "14:02:ec:35:02:a7";
     };
     interfaces = labInterfaces;
-    wireguard.publicKey = "j8ezJkeoQZkpxxHwdogdhYoxQs1VqhvzCUar92r8mWY=";
+    wireguard.publicKey = "vel9qfECtCSjJxzsMhdzVDgEyNzT7sIEqQ3T1pIiNT0=";
     addresses = {
       vpn = {ipv4 = "10.157.0.13";};
       infra = {
@@ -192,7 +192,7 @@ in {
       eno4 = "14:02:ec:33:97:a3";
     };
     interfaces = labInterfaces;
-    wireguard.publicKey = "vBbdc+1SexiDWfao3x6f4AF2qISNKMBaQwTVFwHOwWg=";
+    wireguard.publicKey = "DpCTkovVZTGzRzjPFJg6ZTnFVN05mugTb94v+UgfclA=";
     addresses = {
       vpn = {ipv4 = "10.157.0.14";};
       infra = {
