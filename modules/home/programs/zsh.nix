@@ -140,9 +140,8 @@
           zle -N zle-keymap-select
 
           # ── prompt ─────────────────────────────────────────────────
-          PROMPT='%F{#${c.base0C}}%1v%f''${vcs_info_msg_0_}%(4V. %F{#${c.base03}}%4v%f.) %F{#${c.base04}}>%f '
+          PROMPT='%F{#${c.base0E}}%m%f %F{#${c.base0C}}%1v%f''${vcs_info_msg_0_}%(4V. %F{#${c.base03}}%4v%f.) %F{#${c.base04}}%#%f '
           RPROMPT='%(5V.%F{#${c.base0E}}%5v%f .)%(3V.%F{#${c.base03}}%3v%f .)%(2V.%F{#${c.base08}}✗%2v%f.)'
-
           # ── keybindings ────────────────────────────────────────────
           stty -ixon
           bindkey -v '^?' backward-delete-char
