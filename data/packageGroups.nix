@@ -112,6 +112,12 @@
 
     # Infra / Ops
     pkgs.openbao
+    pkgs.kubectl
+    pkgs.kubernetes-helm
+    pkgs.k9s
+    pkgs.kustomize
+    pkgs.stern
+    pkgs.skopeo
 
     # Nix
     pkgs.colmena.colmena
