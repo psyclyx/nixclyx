@@ -138,6 +138,11 @@
         openbao = {
           enable = true;
           clusterNodes = labHostNames;
+          settings.transitAddress = "http://${fleet.networks.infra.gateway4}:8200";
+        };
+        openbao-pki = {
+          enable = true;
+          vaultAddr = "http://${fleet.networks.infra.gateway4}:8200";
         };
         consul = {
           enable = true;

@@ -74,6 +74,48 @@
           enable = true;
           url = "https://metrics.psyclyx.net";
         };
+        openbao-seal-oracle = {
+          enable = true;
+          bindAddress = dt.networks.infra.gateway4;
+          tpm.enable = true;
+          seal = {
+            type = "pkcs11";
+            secretField = "pin";
+            lib = "/run/current-system/sw/lib/libtpm2_pkcs11.so";
+            slot = "1";
+            key_label = "openbao-unseal";
+            mechanism = "0x00000009";
+            generate_key = "false";
+          };
+          serviceEnvironment = {
+            TPM2_PKCS11_STORE = "/var/lib/openbao-seal/tpm2-pkcs11";
+            TPM2_PKCS11_BACKEND = "esysdb";
+          };
+          configure = ''
+            if ! OUTPUT=$(bao secrets enable pki 2>&1); then
+              if echo "$OUTPUT" | grep -q "path is already in use"; then
+                echo "PKI engine already enabled"
+              else
+                echo "Failed to enable PKI engine: $OUTPUT" >&2
+                exit 1
+              fi
+            fi
+
+            bao secrets tune -max-lease-ttl=87600h pki
+
+            if ! bao read pki/cert/ca >/dev/null 2>&1; then
+              bao write pki/root/generate/internal \
+                common_name="psyclyx Internal CA" \
+                ttl=87600h
+            fi
+
+            bao write pki/roles/postgres-server \
+              allowed_domains="psyclyx.net" \
+              allow_subdomains=true \
+              allow_ip_sans=true \
+              max_ttl=720h
+          '';
+        };
       };
     };
   };
