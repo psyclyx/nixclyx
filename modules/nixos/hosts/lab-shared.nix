@@ -118,7 +118,7 @@
           clusterNodes = labHostNames;
           masterNodes = lib.take 3 labHostNames;
           s3.enable = true;
-          buckets = ["backups" "attic"];
+          buckets = ["backups" "angelbeats"];
         };
         redis-sentinel = {
           enable = true;
@@ -144,14 +144,9 @@
           enable = true;
           vaultAddr = "http://${fleet.networks.infra.gateway4}:8200";
         };
-        consul = {
+        k3s = {
           enable = true;
           clusterNodes = labHostNames;
-        };
-        nomad = {
-          enable = true;
-          clusterNodes = labHostNames;
-          vault.address = "http://${fleet.groupVip "lab"}:8200";
         };
       };
     };

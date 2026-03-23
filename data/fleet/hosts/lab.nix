@@ -44,12 +44,8 @@ let
       port = 8200;
       networks = ["infra"];
     };
-    consul = {
-      port = 8500;
-      networks = ["infra"];
-    };
-    nomad = {
-      port = 4646;
+    k3s = {
+      port = 6443;
       networks = ["infra"];
     };
   };

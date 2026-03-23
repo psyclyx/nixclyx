@@ -23,13 +23,9 @@
         port = 8200;
         check = "/v1/sys/health?standbyok=true";
       };
-      consul = {
-        port = 8500;
-        check = "/v1/status/leader";
-      };
-      nomad = {
-        port = 4646;
-        check = "/v1/status/leader";
+      k3s-api = {
+        port = 6443;
+        check = "/readyz";
       };
     };
   };
