@@ -1,30 +1,73 @@
 let
   labServices = {
-    node     = { port = 9100; networks = ["vpn"]; };
-    smartctl = { port = 9633; networks = ["vpn"]; };
-    redis              = { port = 9121; networks = ["infra"]; };
-    postgres           = { port = 9187; networks = ["infra"]; };
-    seaweedfs-volume   = { port = 9328; networks = ["infra"]; };
-    seaweedfs-filer    = { port = 9329; networks = ["infra"]; };
-    seaweedfs-s3       = { port = 9330; networks = ["infra"]; };
-    haproxy  = { port = 9101; networks = ["infra"]; };
-    attic    = { port = 9199; networks = ["infra"]; };
-    etcd     = { port = 2379; networks = ["infra"]; };
-    patroni  = { port = 8008; networks = ["infra"]; };
-    openbao  = { port = 8200; networks = ["infra"]; };
-    consul   = { port = 8500; networks = ["infra"]; };
-    nomad    = { port = 4646; networks = ["infra"]; };
+    node = {
+      port = 9100;
+      networks = ["vpn"];
+    };
+    smartctl = {
+      port = 9633;
+      networks = ["vpn"];
+    };
+    redis = {
+      port = 9121;
+      networks = ["infra"];
+    };
+    postgres = {
+      port = 9187;
+      networks = ["infra"];
+    };
+    seaweedfs-volume = {
+      port = 9328;
+      networks = ["infra"];
+    };
+    seaweedfs-filer = {
+      port = 9329;
+      networks = ["infra"];
+    };
+    seaweedfs-s3 = {
+      port = 9330;
+      networks = ["infra"];
+    };
+    haproxy = {
+      port = 9101;
+      networks = ["infra"];
+    };
+    etcd = {
+      port = 2379;
+      networks = ["infra"];
+    };
+    patroni = {
+      port = 8008;
+      networks = ["infra"];
+    };
+    openbao = {
+      port = 8200;
+      networks = ["infra"];
+    };
+    consul = {
+      port = 8500;
+      networks = ["infra"];
+    };
+    nomad = {
+      port = 4646;
+      networks = ["infra"];
+    };
   };
 
-  labMasterServices = labServices // {
-    seaweedfs-master = { port = 9327; networks = ["infra"]; };
-  };
+  labMasterServices =
+    labServices
+    // {
+      seaweedfs-master = {
+        port = 9327;
+        networks = ["infra"];
+      };
+    };
 
   labInterfaces = {
-    infra = { device = "eno1"; };
-    stage = { device = "eno2"; };
-    prod  = { device = "eno3"; };
-    mgmt  = { device = "mgmt"; };
+    infra = {device = "eno1";};
+    stage = {device = "eno2";};
+    prod = {device = "eno3";};
+    mgmt = {device = "mgmt";};
   };
 
   labRoles = ["server" "lab"];
@@ -40,12 +83,27 @@ in {
     interfaces = labInterfaces;
     wireguard.publicKey = "m3+/5V8kpoSqIqFXPe1LGF0RXwdfXPfljhJctkGeOhg=";
     addresses = {
-      vpn   = { ipv4 = "10.157.0.11"; };
-      infra = { ipv4 = "10.0.25.11"; ipv6 = "fd9a:e830:4b1e:19::b"; };
-      prod  = { ipv4 = "10.0.30.11"; ipv6 = "fd9a:e830:4b1e:1e::b"; };
-      stage = { ipv4 = "10.0.31.11"; ipv6 = "fd9a:e830:4b1e:1f::b"; };
-      data  = { ipv4 = "10.0.50.11"; ipv6 = "fd9a:e830:4b1e:32::b"; };
-      mgmt  = { ipv4 = "10.0.240.11"; ipv6 = "fd9a:e830:4b1e:f0::b"; };
+      vpn = {ipv4 = "10.157.0.11";};
+      infra = {
+        ipv4 = "10.0.25.11";
+        ipv6 = "fd9a:e830:4b1e:19::b";
+      };
+      prod = {
+        ipv4 = "10.0.30.11";
+        ipv6 = "fd9a:e830:4b1e:1e::b";
+      };
+      stage = {
+        ipv4 = "10.0.31.11";
+        ipv6 = "fd9a:e830:4b1e:1f::b";
+      };
+      data = {
+        ipv4 = "10.0.50.11";
+        ipv6 = "fd9a:e830:4b1e:32::b";
+      };
+      mgmt = {
+        ipv4 = "10.0.240.11";
+        ipv6 = "fd9a:e830:4b1e:f0::b";
+      };
     };
     roles = labRoles;
     services = labMasterServices;
@@ -62,12 +120,27 @@ in {
     interfaces = labInterfaces;
     wireguard.publicKey = "I+LxIxnWAnmf/tlotUNqnmcVVpRikL/hk9G5tlfDLHI=";
     addresses = {
-      vpn   = { ipv4 = "10.157.0.12"; };
-      infra = { ipv4 = "10.0.25.12"; ipv6 = "fd9a:e830:4b1e:19::c"; };
-      prod  = { ipv4 = "10.0.30.12"; ipv6 = "fd9a:e830:4b1e:1e::c"; };
-      stage = { ipv4 = "10.0.31.12"; ipv6 = "fd9a:e830:4b1e:1f::c"; };
-      data  = { ipv4 = "10.0.50.12"; ipv6 = "fd9a:e830:4b1e:32::c"; };
-      mgmt  = { ipv4 = "10.0.240.12"; ipv6 = "fd9a:e830:4b1e:f0::c"; };
+      vpn = {ipv4 = "10.157.0.12";};
+      infra = {
+        ipv4 = "10.0.25.12";
+        ipv6 = "fd9a:e830:4b1e:19::c";
+      };
+      prod = {
+        ipv4 = "10.0.30.12";
+        ipv6 = "fd9a:e830:4b1e:1e::c";
+      };
+      stage = {
+        ipv4 = "10.0.31.12";
+        ipv6 = "fd9a:e830:4b1e:1f::c";
+      };
+      data = {
+        ipv4 = "10.0.50.12";
+        ipv6 = "fd9a:e830:4b1e:32::c";
+      };
+      mgmt = {
+        ipv4 = "10.0.240.12";
+        ipv6 = "fd9a:e830:4b1e:f0::c";
+      };
     };
     roles = labRoles;
     services = labMasterServices;
@@ -84,12 +157,27 @@ in {
     interfaces = labInterfaces;
     wireguard.publicKey = "j8ezJkeoQZkpxxHwdogdhYoxQs1VqhvzCUar92r8mWY=";
     addresses = {
-      vpn   = { ipv4 = "10.157.0.13"; };
-      infra = { ipv4 = "10.0.25.13"; ipv6 = "fd9a:e830:4b1e:19::d"; };
-      prod  = { ipv4 = "10.0.30.13"; ipv6 = "fd9a:e830:4b1e:1e::d"; };
-      stage = { ipv4 = "10.0.31.13"; ipv6 = "fd9a:e830:4b1e:1f::d"; };
-      data  = { ipv4 = "10.0.50.13"; ipv6 = "fd9a:e830:4b1e:32::d"; };
-      mgmt  = { ipv4 = "10.0.240.13"; ipv6 = "fd9a:e830:4b1e:f0::d"; };
+      vpn = {ipv4 = "10.157.0.13";};
+      infra = {
+        ipv4 = "10.0.25.13";
+        ipv6 = "fd9a:e830:4b1e:19::d";
+      };
+      prod = {
+        ipv4 = "10.0.30.13";
+        ipv6 = "fd9a:e830:4b1e:1e::d";
+      };
+      stage = {
+        ipv4 = "10.0.31.13";
+        ipv6 = "fd9a:e830:4b1e:1f::d";
+      };
+      data = {
+        ipv4 = "10.0.50.13";
+        ipv6 = "fd9a:e830:4b1e:32::d";
+      };
+      mgmt = {
+        ipv4 = "10.0.240.13";
+        ipv6 = "fd9a:e830:4b1e:f0::d";
+      };
     };
     roles = labRoles;
     services = labMasterServices;
@@ -106,12 +194,27 @@ in {
     interfaces = labInterfaces;
     wireguard.publicKey = "vBbdc+1SexiDWfao3x6f4AF2qISNKMBaQwTVFwHOwWg=";
     addresses = {
-      vpn   = { ipv4 = "10.157.0.14"; };
-      infra = { ipv4 = "10.0.25.14"; ipv6 = "fd9a:e830:4b1e:19::e"; };
-      prod  = { ipv4 = "10.0.30.14"; ipv6 = "fd9a:e830:4b1e:1e::e"; };
-      stage = { ipv4 = "10.0.31.14"; ipv6 = "fd9a:e830:4b1e:1f::e"; };
-      data  = { ipv4 = "10.0.50.14"; ipv6 = "fd9a:e830:4b1e:32::e"; };
-      mgmt  = { ipv4 = "10.0.240.14"; ipv6 = "fd9a:e830:4b1e:f0::e"; };
+      vpn = {ipv4 = "10.157.0.14";};
+      infra = {
+        ipv4 = "10.0.25.14";
+        ipv6 = "fd9a:e830:4b1e:19::e";
+      };
+      prod = {
+        ipv4 = "10.0.30.14";
+        ipv6 = "fd9a:e830:4b1e:1e::e";
+      };
+      stage = {
+        ipv4 = "10.0.31.14";
+        ipv6 = "fd9a:e830:4b1e:1f::e";
+      };
+      data = {
+        ipv4 = "10.0.50.14";
+        ipv6 = "fd9a:e830:4b1e:32::e";
+      };
+      mgmt = {
+        ipv4 = "10.0.240.14";
+        ipv6 = "fd9a:e830:4b1e:f0::e";
+      };
     };
     roles = labRoles;
     services = labServices;
