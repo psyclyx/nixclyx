@@ -78,8 +78,18 @@
     };
 
     mkListeners = addr: port: [
-      {tcp = {address = "${addr}:${toString port}"; tls_disable = true;};}
-      {tcp = {address = "127.0.0.1:${toString port}"; tls_disable = true;};}
+      {
+        tcp = {
+          address = "${addr}:${toString port}";
+          tls_disable = true;
+        };
+      }
+      {
+        tcp = {
+          address = "127.0.0.1:${toString port}";
+          tls_disable = true;
+        };
+      }
     ];
 
     fleet = config.psyclyx.fleet;
@@ -88,9 +98,11 @@
     bindAddr = fleet.hostAddress hostname cfg.dataNetwork;
     otherNodes = builtins.filter (n: n != hostname) cfg.clusterNodes;
 
-    retryJoin = map (node: {
-      leader_api_addr = "http://${fleet.hostAddress node cfg.dataNetwork}:${toString cfg.apiPort}";
-    }) otherNodes;
+    retryJoin =
+      map (node: {
+        leader_api_addr = "http://${fleet.hostAddress node cfg.dataNetwork}:${toString cfg.apiPort}";
+      })
+      otherNodes;
 
     configData = {
       ui = cfg.settings.ui;
@@ -124,7 +136,7 @@
 
     systemd.services.openbao = {
       description = "OpenBao Secrets Management";
-      after = ["network-online.target"];
+      after = ["network-online.target" "sops-install-secrets.service"];
       wants = ["network-online.target"];
       wantedBy = ["multi-user.target"];
 
