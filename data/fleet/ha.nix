@@ -23,7 +23,7 @@
         port = 8200;
         check = "/v1/sys/health?standbyok=true";
       };
-      k3s-api = {
+      k8s-api = {
         port = 6443;
         check = "/readyz";
       };

@@ -44,7 +44,7 @@ let
       port = 8200;
       networks = ["infra"];
     };
-    k3s = {
+    k8s = {
       port = 6443;
       networks = ["infra"];
     };

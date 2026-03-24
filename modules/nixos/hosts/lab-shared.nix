@@ -144,7 +144,7 @@
           enable = true;
           vaultAddr = "http://${fleet.networks.infra.gateway4}:8200";
         };
-        k3s = {
+        kubernetes = {
           enable = true;
           clusterNodes = labHostNames;
         };
