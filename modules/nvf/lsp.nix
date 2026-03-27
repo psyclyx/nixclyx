@@ -1,7 +1,7 @@
 {
   path = ["psyclyx" "nvf" "lsp"];
   description = "LSP, diagnostics, formatting, and completion";
-  config = _: {
+  config = {pkgs, ...}: {
     vim = {
       lsp = {
         enable = true;
@@ -16,7 +16,18 @@
         enable = true;
       };
 
-      formatter.conform-nvim.enable = true;
+      extraPackages = [pkgs.cljstyle];
+
+      formatter.conform-nvim = {
+        enable = true;
+        setupOpts = {
+          formatters.cljstyle = {
+            command = "cljstyle";
+            args = ["pipe"];
+          };
+          formatters_by_ft.clojure = ["cljstyle"];
+        };
+      };
 
       autocomplete.blink-cmp = {
         enable = true;

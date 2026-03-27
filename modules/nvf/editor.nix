@@ -33,10 +33,25 @@
       comments.comment-nvim.enable = true;
       repl.conjure.enable = true;
 
-      extraPlugins.nvim-paredit = {
-        package = pkgs.vimPlugins.nvim-paredit;
-        setup = ''require("nvim-paredit").setup({})'';
+      extraPlugins.vim-sexp = {
+        package = pkgs.vimPlugins.vim-sexp;
       };
+      extraPlugins.vim-sexp-mappings = {
+        package = pkgs.vimPlugins.vim-sexp-mappings-for-regular-people;
+      };
+
+      augroups = [
+        {name = "lisp-indent"; clear = true;}
+      ];
+      autocmds = [
+        {
+          event = ["FileType"];
+          pattern = ["clojure" "fennel" "janet" "scheme" "lisp"];
+          group = "lisp-indent";
+          desc = "Enable lisp indentation";
+          command = "setlocal lisp shiftwidth=2";
+        }
+      ];
     };
   };
 }

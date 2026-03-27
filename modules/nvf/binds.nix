@@ -4,7 +4,7 @@
   config = _: {
     vim = {
       globals = {
-        maplocalleader = " m";
+        maplocalleader = ",";
       };
 
       binds = {

@@ -7,6 +7,7 @@ let
     "base24-gen" = ./base24-gen;
     shoal = ./shoal;
     ilo4-console = ./ilo4-console.nix;
+    nvf = ./nvf.nix;
     ssacli = ./ssacli.nix;
     switch-deploy = ./switch-deploy.nix;
     upscale-image = ./upscale-image;
