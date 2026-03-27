@@ -55,6 +55,19 @@
       "url": "https://github.com/zhaofengli/colmena/archive/349b035a5027f23d88eeb3bc41085d7ee29f18ed.tar.gz",
       "hash": "sha256-QVey3iP3UEoiFVXgypyjTvCrsIlA4ecx6Acaz5C8/PQ="
     },
+    "emacs": {
+      "type": "Git",
+      "repository": {
+        "type": "GitHub",
+        "owner": "psyclyx",
+        "repo": "emacs"
+      },
+      "branch": "main",
+      "submodules": false,
+      "revision": "1502716eda71a8739e8b0cf0835df30a17922ad3",
+      "url": "https://github.com/psyclyx/emacs/archive/1502716eda71a8739e8b0cf0835df30a17922ad3.tar.gz",
+      "hash": "sha256-8gjUEZfoGYOFogkjqxYURRzFjUHaUYYTWdS/yhcTxrU="
+    },
     "flake-compat": {
       "type": "Git",
       "repository": {

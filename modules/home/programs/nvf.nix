@@ -1,36 +1,44 @@
 {
-  path = ["psyclyx" "home" "programs" "nvf"];
+  path = [
+    "psyclyx"
+    "home"
+    "programs"
+    "nvf"
+  ];
   description = "nvf (neovim)";
-  options = {lib, ...}: {
-    anthropicKeyFile = lib.mkOption {
-      type = lib.types.nullOr lib.types.path;
-      default = null;
-      description = "Path to file containing Anthropic API key (read at neovim startup)";
+  options =
+    { lib, ... }:
+    {
+      anthropicKeyFile = lib.mkOption {
+        type = lib.types.nullOr lib.types.path;
+        default = null;
+        description = "Path to file containing Anthropic API key (read at neovim startup)";
+      };
+      openrouterKeyFile = lib.mkOption {
+        type = lib.types.nullOr lib.types.path;
+        default = null;
+        description = "Path to file containing OpenRouter API key (read at neovim startup)";
+      };
     };
-    openrouterKeyFile = lib.mkOption {
-      type = lib.types.nullOr lib.types.path;
-      default = null;
-      description = "Path to file containing OpenRouter API key (read at neovim startup)";
-    };
-  };
-  config = {
-    cfg,
-    nixclyx,
-    ...
-  }: {
-    programs.nvf = {
-      enable = true;
-      defaultEditor = true;
+  config =
+    {
+      cfg,
+      nixclyx,
+      ...
+    }:
+    {
+      programs.nvf = {
+        enable = true;
 
-      settings = {
-        imports = [nixclyx.modules.nvf];
-        psyclyx.nvf = {
-          roles.base.enable = true;
-          ai = {
-            inherit (cfg) anthropicKeyFile openrouterKeyFile;
+        settings = {
+          imports = [ nixclyx.modules.nvf ];
+          psyclyx.nvf = {
+            roles.base.enable = true;
+            ai = {
+              inherit (cfg) anthropicKeyFile openrouterKeyFile;
+            };
           };
         };
       };
     };
-  };
 }
