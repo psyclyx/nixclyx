@@ -8,6 +8,9 @@
   }: {
     home.packages = [
       pkgs.element-desktop
+      pkgs.janet
+      pkgs.psyclyx.janet-lsp
+      pkgs.psyclyx.spork
       pkgs.signal-desktop
     ];
 
