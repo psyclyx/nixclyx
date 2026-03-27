@@ -27,19 +27,19 @@ let
   # Phase 3: Consumers — depend on modules.
   evalConfig = import (sources.nixpkgs + "/nixos/lib/eval-config.nix");
 
-  mkHost = name:
-    evalConfig {
-      modules = [
-        modules.nixos
-        {config.psyclyx.nixos.host = name;}
-      ];
-    };
-
-  hostEntries = builtins.readDir ./modules/nixos/hosts;
+  hostEntries = builtins.readDir ./hosts/nixos;
   hostNames =
     builtins.filter
     (n: hostEntries.${n} == "directory")
     (builtins.attrNames hostEntries);
+
+  mkHost = name:
+    evalConfig {
+      modules = [
+        modules.nixos
+        (./hosts/nixos + "/${name}")
+      ];
+    };
 
   configurations = builtins.listToAttrs (map (name: {
       inherit name;
@@ -86,6 +86,10 @@ let
     core
     // {
       inherit modules hive configurations darwinConfigurations nixOnDroidConfigurations;
+      hosts.nixos = builtins.listToAttrs (map (name: {
+        inherit name;
+        value = ./hosts/nixos + "/${name}";
+      }) hostNames);
       overlays.default = overlay;
       docs = import ./docs {inherit nixclyx;};
       fleet-viz = pkgs:
@@ -98,7 +102,7 @@ let
           inherit pkgs;
           modules = [
             modules.nvf
-            {psyclyx.nixos.programs.nvf.enable = true;}
+            {psyclyx.nvf.roles.base.enable = true;}
           ];
         }).neovim;
     };
