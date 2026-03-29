@@ -95,7 +95,7 @@ let
       fleet-viz = pkgs:
         import ./packages/fleet-viz {
           inherit pkgs;
-          fleetData = let fleet = import ./data/fleet; in fleet.topology // fleet;
+          fleetData = let fleet = import ./data/fleet; in fleet.topology // { inherit (fleet) devices; };
         };
       nvf = pkgs:
         ((import sources.nvf).lib.neovimConfiguration {

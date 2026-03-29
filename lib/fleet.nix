@@ -15,11 +15,10 @@ let
     builtins.head (builtins.sort builtins.lessThan nodeList);
 
   groupVip = groupName:
-    if haGroups.${groupName} ? vip
-    then haGroups.${groupName}.vip.ipv4
-    else let
-      net = enriched.networks.${haGroups.${groupName}.network};
-    in "${net.prefix}.${toString haGroups.${groupName}.vipOffset}";
+    let g = haGroups.${groupName};
+    in if g.vip != null
+    then g.vip.ipv4
+    else throw "HA group '${groupName}' has no vip set.";
 
   groupVip6 = groupName:
     if haGroups.${groupName} ? vip && haGroups.${groupName}.vip ? ipv6
@@ -36,10 +35,7 @@ let
     in 100 - (idx + 1);
 
   groupVrid = groupName:
-    let g = haGroups.${groupName};
-    in if g.vrid != null then g.vrid
-    else if g.vipOffset != null then g.vipOffset
-    else throw "HA group '${groupName}' has neither vrid nor vipOffset set.";
+    haGroups.${groupName}.vrid;
 
   managedHosts = lib.sort builtins.lessThan
     (lib.attrNames (lib.filterAttrs (_: host: host.mac != {}) hosts));

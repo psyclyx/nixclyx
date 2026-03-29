@@ -38,11 +38,6 @@
           type = lib.types.str;
           description = "Topology network this HA group operates on.";
         };
-        vipOffset = lib.mkOption {
-          type = lib.types.nullOr lib.types.int;
-          default = null;
-          description = "Host offset for the virtual IP (deprecated, use vip).";
-        };
         vip = lib.mkOption {
           type = lib.types.nullOr (lib.types.submodule {
             options = {
@@ -58,12 +53,11 @@
             };
           });
           default = null;
-          description = "Explicit VIP address (preferred over vipOffset derivation).";
+          description = "VIP address for this HA group.";
         };
         vrid = lib.mkOption {
-          type = lib.types.nullOr lib.types.int;
-          default = null;
-          description = "VRRP ID for keepalived (defaults to vipOffset if null).";
+          type = lib.types.int;
+          description = "VRRP ID for keepalived.";
         };
         members = lib.mkOption {
           type = lib.types.listOf lib.types.str;
@@ -92,6 +86,11 @@
           type = lib.types.listOf lib.types.str;
           default = [];
           description = "Subnets routable behind this peer";
+        };
+        allowedNetworks = lib.mkOption {
+          type = lib.types.nullOr (lib.types.listOf lib.types.str);
+          default = null;
+          description = "Networks this peer should receive routes for. null = all exported routes.";
         };
       };
     };
@@ -197,22 +196,22 @@
           default = [];
           description = "Host roles.";
         };
-        services = lib.mkOption {
+        exporters = lib.mkOption {
           type = lib.types.attrsOf (lib.types.submodule {
             options = {
               port = lib.mkOption {
                 type = lib.types.port;
-                description = "Port number this service listens on.";
+                description = "Port number this exporter listens on.";
               };
               networks = lib.mkOption {
                 type = lib.types.listOf lib.types.str;
                 default = [];
-                description = "Networks this service is reachable on (empty = all).";
+                description = "Networks this exporter is reachable on (empty = all).";
               };
             };
           });
           default = {};
-          description = "Exported services.";
+          description = "Prometheus scrape targets exported by this host.";
         };
       };
     };
@@ -227,7 +226,7 @@
           type = lib.types.str;
           description = "IPv4 subnet in CIDR notation";
         };
-        ipv6Suffix = lib.mkOption {
+        ulaSubnetHex = lib.mkOption {
           type = lib.types.str;
           description = "IPv6 subnet ID suffix (hex, appended to ULA prefix)";
         };

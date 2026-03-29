@@ -3,7 +3,7 @@
 Produces:
 - index.html: interactive fleet dashboard
 - topology.dot + topology.svg: network topology graph
-- services.dot + services.svg: host × service matrix
+- exporters.dot + exporters.svg: host × exporter matrix
 """
 
 import json
@@ -93,27 +93,27 @@ def generate_topology_dot(fleet):
 
 
 def generate_service_matrix(fleet):
-    """Generate an HTML table of hosts × services."""
+    """Generate an HTML table of hosts × exporters."""
     hosts = fleet.get('hosts', {})
-    all_services = set()
+    all_exporters = set()
     for host in hosts.values():
-        all_services.update(host.get('services', {}).keys())
-    all_services = sorted(all_services)
+        all_exporters.update(host.get('exporters', {}).keys())
+    all_exporters = sorted(all_exporters)
 
     rows = []
     for host_name in sorted(hosts.keys()):
         host = hosts[host_name]
-        host_services = host.get('services', {})
+        host_exporters = host.get('exporters', {})
         cells = []
-        for svc in all_services:
-            if svc in host_services:
-                port = host_services[svc].get('port', '')
-                cells.append(f'<td class="active" title="{svc}:{port}">{port}</td>')
+        for exp in all_exporters:
+            if exp in host_exporters:
+                port = host_exporters[exp].get('port', '')
+                cells.append(f'<td class="active" title="{exp}:{port}">{port}</td>')
             else:
                 cells.append('<td class="inactive"></td>')
         rows.append(f'<tr><th>{host_name}</th>{"".join(cells)}</tr>')
 
-    header = ''.join(f'<th class="rotate"><div>{s}</div></th>' for s in all_services)
+    header = ''.join(f'<th class="rotate"><div>{s}</div></th>' for s in all_exporters)
     return f'''<table class="service-matrix">
 <thead><tr><th></th>{header}</tr></thead>
 <tbody>{"".join(rows)}</tbody>
@@ -129,7 +129,7 @@ def generate_html(fleet, service_matrix):
 
     host_count = len(hosts)
     net_count = len(networks)
-    svc_count = sum(len(h.get('services', {})) for h in hosts.values())
+    svc_count = sum(len(h.get('exporters', {})) for h in hosts.values())
 
     return f'''<!DOCTYPE html>
 <html lang="en">
@@ -188,7 +188,7 @@ def generate_html(fleet, service_matrix):
 <div class="stats">
   <div class="stat"><div class="stat-value">{host_count}</div><div class="stat-label">Hosts</div></div>
   <div class="stat"><div class="stat-value">{net_count}</div><div class="stat-label">Networks</div></div>
-  <div class="stat"><div class="stat-value">{svc_count}</div><div class="stat-label">Service Instances</div></div>
+  <div class="stat"><div class="stat-value">{svc_count}</div><div class="stat-label">Exporter Instances</div></div>
   <div class="stat"><div class="stat-value">{len(ha_groups)}</div><div class="stat-label">HA Groups</div></div>
 </div>
 
@@ -213,7 +213,7 @@ def generate_html(fleet, service_matrix):
 </div>""" for name, group in sorted(ha_groups.items()))}
 </div>
 
-<h2>Service Matrix</h2>
+<h2>Exporter Matrix</h2>
 {service_matrix}
 
 <h2>WireGuard Overlay</h2>

@@ -1,5 +1,5 @@
 let
-  labServices = {
+  labExporters = {
     node = {
       port = 9100;
       networks = ["vpn"];
@@ -50,8 +50,8 @@ let
     };
   };
 
-  labMasterServices =
-    labServices
+  labMasterExporters =
+    labExporters
     // {
       seaweedfs-master = {
         port = 9327;
@@ -63,7 +63,6 @@ let
     infra = {device = "eno1";};
     stage = {device = "eno2";};
     prod = {device = "eno3";};
-    mgmt = {device = "mgmt";};
   };
 
   labRoles = ["server" "lab"];
@@ -78,6 +77,7 @@ in {
     };
     interfaces = labInterfaces;
     wireguard.publicKey = "gLXnmGgfyhDIvlFeHaoY3ZzbOArm3zW0HUqI8JtF3R8=";
+    wireguard.allowedNetworks = [];
     addresses = {
       vpn = {ipv4 = "10.157.0.11";};
       infra = {
@@ -96,13 +96,10 @@ in {
         ipv4 = "10.0.50.11";
         ipv6 = "fd9a:e830:4b1e:32::b";
       };
-      mgmt = {
-        ipv4 = "10.0.240.11";
-        ipv6 = "fd9a:e830:4b1e:f0::b";
-      };
+
     };
     roles = labRoles;
-    services = labMasterServices;
+    exporters = labMasterExporters;
   };
 
   "lab-2" = {
@@ -115,6 +112,7 @@ in {
     };
     interfaces = labInterfaces;
     wireguard.publicKey = "0EjNTYFGhcUgKr/xQ5iW3vN95mm4GwOv9iO5jGxX+xg=";
+    wireguard.allowedNetworks = [];
     addresses = {
       vpn = {ipv4 = "10.157.0.12";};
       infra = {
@@ -133,13 +131,10 @@ in {
         ipv4 = "10.0.50.12";
         ipv6 = "fd9a:e830:4b1e:32::c";
       };
-      mgmt = {
-        ipv4 = "10.0.240.12";
-        ipv6 = "fd9a:e830:4b1e:f0::c";
-      };
+
     };
     roles = labRoles;
-    services = labMasterServices;
+    exporters = labMasterExporters;
   };
 
   "lab-3" = {
@@ -152,6 +147,7 @@ in {
     };
     interfaces = labInterfaces;
     wireguard.publicKey = "vel9qfECtCSjJxzsMhdzVDgEyNzT7sIEqQ3T1pIiNT0=";
+    wireguard.allowedNetworks = [];
     addresses = {
       vpn = {ipv4 = "10.157.0.13";};
       infra = {
@@ -170,13 +166,10 @@ in {
         ipv4 = "10.0.50.13";
         ipv6 = "fd9a:e830:4b1e:32::d";
       };
-      mgmt = {
-        ipv4 = "10.0.240.13";
-        ipv6 = "fd9a:e830:4b1e:f0::d";
-      };
+
     };
     roles = labRoles;
-    services = labMasterServices;
+    exporters = labMasterExporters;
   };
 
   "lab-4" = {
@@ -189,6 +182,7 @@ in {
     };
     interfaces = labInterfaces;
     wireguard.publicKey = "DpCTkovVZTGzRzjPFJg6ZTnFVN05mugTb94v+UgfclA=";
+    wireguard.allowedNetworks = [];
     addresses = {
       vpn = {ipv4 = "10.157.0.14";};
       infra = {
@@ -207,12 +201,9 @@ in {
         ipv4 = "10.0.50.14";
         ipv6 = "fd9a:e830:4b1e:32::e";
       };
-      mgmt = {
-        ipv4 = "10.0.240.14";
-        ipv6 = "fd9a:e830:4b1e:f0::e";
-      };
+
     };
     roles = labRoles;
-    services = labServices;
+    exporters = labExporters;
   };
 }

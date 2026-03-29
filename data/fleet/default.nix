@@ -18,5 +18,5 @@ in {
     networks = import ./networks.nix;
   };
 
-  inherit hosts devices;
+  inherit devices;
 }

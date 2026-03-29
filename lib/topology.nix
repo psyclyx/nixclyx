@@ -37,7 +37,7 @@ lib: topo: let
 
   enrichNetwork = name: net: let
     parsed = parseCidrPrefix net.ipv4;
-    hex = net.ipv6Suffix;
+    hex = net.ulaSubnetHex;
     prefix6 = "${ulaPrefix}:${hex}";
   in
     net

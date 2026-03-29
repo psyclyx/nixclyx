@@ -3,13 +3,14 @@
     wireguard = {
       publicKey = "Hsytr+mjAfsBPoC99XHKLh9+jEbyz1REF0okmlviUVc=";
       endpoint = "vpn.psyclyx.xyz:51820";
+      allowedNetworks = ["main"];
     };
     addresses.vpn.ipv4 = "10.157.0.1";
     publicIPv4 = "198.51.100.1";
     publicIPv6 = "2001:db8::1";
     sshPort = 17891;
     roles = ["server" "vpn-hub"];
-    services = {
+    exporters = {
       node = { port = 9100; networks = ["vpn"]; };
       smartctl = { port = 9633; networks = ["vpn"]; };
     };
@@ -33,7 +34,7 @@
     sshPort = 17891;
     roles = ["server" "router"];
     hardware.tpm = true;
-    services = {
+    exporters = {
       node = { port = 9100; networks = ["vpn"]; };
       smartctl = { port = 9633; networks = ["vpn"]; };
     };
@@ -42,11 +43,12 @@
   sigil = {
     wireguard = {
       publicKey = "XKqqjC62uOUhbCn3JPpI0M6WFYqRf8sLpML90JZ1CmE=";
+      allowedNetworks = ["main" "infra" "prod" "stage" "data" "mgmt"];
     };
     addresses.vpn.ipv4 = "10.157.0.3";
     roles = ["workstation"];
     hardware.tpm = true;
-    services = {
+    exporters = {
       node = { port = 9100; networks = ["vpn"]; };
       smartctl = { port = 9633; networks = ["vpn"]; };
     };
@@ -55,6 +57,7 @@
   phone = {
     wireguard = {
       publicKey = "SaYcJM6Fl1UhX1qzby9rjUJv+icRyh29jX+iIqFKdDw=";
+      allowedNetworks = ["main" "infra"];
     };
     addresses.vpn.ipv4 = "10.157.0.4";
     roles = ["mobile"];
@@ -63,6 +66,7 @@
   omen = {
     wireguard = {
       publicKey = "yTRNWKLNu6Xb+h7DcPPiWohWe0O6QSwJBlh5AjzChmU=";
+      allowedNetworks = ["main" "infra"];
     };
     addresses.vpn.ipv4 = "10.157.0.5";
     roles = ["workstation"];
@@ -71,6 +75,7 @@
   glyph = {
     wireguard = {
       publicKey = "7ufcd0IzKRR85YMIh0mfoxaG14uwW09c/h4AJaAC1xY=";
+      allowedNetworks = ["main" "infra"];
     };
     addresses.vpn.ipv4 = "10.157.0.6";
     roles = ["workstation"];
