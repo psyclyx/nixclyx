@@ -151,7 +151,7 @@
       # Non-init nodes connect to the leader's CFSSL to bootstrap
       # their certificates (pkiTrustOnBootstrap handles TOFU).
       services.cfssl = lib.mkIf (!isInit) {
-        address = initAddr;
+        address = lib.mkForce initAddr;
       };
 
       # ── CLI tools on the hosts ───────────────────────────────
