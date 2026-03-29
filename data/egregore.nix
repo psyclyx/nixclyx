@@ -182,8 +182,8 @@ in {
           allowedNetworks = ["main"];
         };
         addresses.vpn.ipv4 = "10.157.0.1";
-        publicIPv4 = "198.51.100.1";
-        publicIPv6 = "2001:db8::1";
+        publicIPv4 = "199.255.18.171";
+        publicIPv6 = "2606:7940:32:26::10";
         sshPort = 17891;
         roles = ["server" "vpn-hub"];
         exporters = {
