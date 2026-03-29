@@ -126,6 +126,9 @@ in {
         enable = true;
         vaultAddr = "http://${fleet.networks.infra.gateway4}:8200";
       };
+      openbao-kv = {
+        enable = true;
+      };
       kubernetes = {
         enable = true;
         clusterNodes = labHostNames;

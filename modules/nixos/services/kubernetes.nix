@@ -87,6 +87,7 @@
 
         apiserver = {
           advertiseAddress = bindAddr;
+          bindAddress = bindAddr;
           securePort = 6443;
           serviceClusterIpRange = cfg.serviceCIDR;
           allowPrivileged = true; # required by Cilium

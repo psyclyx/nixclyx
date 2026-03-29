@@ -88,7 +88,7 @@
     in {
       service = {
         description = "OpenBao PKI certificate: ${name}";
-        after = ["network-online.target" "openbao.service"];
+        after = ["network-online.target" "openbao.service" "openbao-login.service"];
         wants = ["network-online.target"];
         wantedBy = ["multi-user.target"];
         serviceConfig.Type = "oneshot";
