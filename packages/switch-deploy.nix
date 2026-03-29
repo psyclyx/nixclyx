@@ -512,14 +512,16 @@ print(f"qos-queue= {",".join(str(q) for q in queues)}")
           http_code=$(curl -s -o /dev/null -w '%{http_code}' \
             --max-time 30 --digest \
             -u "$SWOS_USER:$SWOS_PASS" \
-            -X POST \
-            -H "Content-Type: application/octet-stream" \
-            --data-binary "@$OUT_DIR/$name.swb" \
+            -F "file=@$OUT_DIR/$name.swb" \
             "http://localhost:$swos_tunnel_port/backup.swb")
 
           if [[ "$http_code" == "200" ]]; then
-            echo "Backup uploaded successfully. Switch will reboot."
-            echo "Wait ~30 seconds, then verify connectivity."
+            echo "Backup uploaded. Rebooting switch..."
+            curl -s -o /dev/null --max-time 10 --digest \
+              -u "$SWOS_USER:$SWOS_PASS" \
+              -d '*' \
+              "http://localhost:$swos_tunnel_port/reboot" || true
+            echo "Reboot initiated. Wait ~30 seconds, then verify connectivity."
           else
             echo "Upload failed with HTTP $http_code"
             exit 1
