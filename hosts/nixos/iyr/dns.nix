@@ -1,31 +1,55 @@
-{
-  config,
-  lib,
-  ...
-}: let
-  topo = config.psyclyx.topology;
-  fleet = config.psyclyx.fleet;
+{config, lib, ...}: let
+  eg = config.psyclyx.egregore;
 
-  # Derive VIP A records for haGroups on a given network.
+  networks = lib.filterAttrs (_: e: e.type == "network") eg.entities;
+  hosts = lib.filterAttrs (_: e: e.type == "host") eg.entities;
+
+  # Sorted VLAN IDs for all networks.
+  dhcpVlans = lib.sort builtins.lessThan
+    (lib.mapAttrsToList (_: e: e.network.vlan) networks);
+
+  # VLAN ID → network entity name.
+  vlanNameMap = builtins.listToAttrs (lib.mapAttrsToList (name: e:
+    lib.nameValuePair (toString e.network.vlan) name
+  ) networks);
+
+  # Hosts with MAC + interface on a network.
+  managedHostsOnNetwork = network:
+    lib.sort builtins.lessThan
+      (builtins.attrNames (lib.filterAttrs (_: e:
+        e.type == "host" && e.host.mac != {} && e.host.interfaces ? ${network}
+      ) eg.entities));
+
+  # Nibble-reverse for IPv6 PTR.
+  reverseNibbles = width: hex: let
+    padded = lib.fixedWidthString width "0" hex;
+  in lib.concatStringsSep "." (lib.reverseList (lib.stringToCharacters padded));
+
+  ulaReverseBase = let
+    stripped = lib.replaceStrings [":"] [""] eg.ipv6UlaPrefix;
+  in lib.concatStringsSep "." (lib.reverseList (lib.stringToCharacters stripped));
+
+  # HA groups on a given network → VIP A records.
   vipRecordsForNetwork = networkName: let
-    groups = lib.filterAttrs (_: g: g.network == networkName) topo.haGroups;
+    groups = lib.filterAttrs (_: e:
+      e.type == "ha-group" && e.ha-group.network == networkName
+    ) eg.entities;
   in
-    lib.concatStringsSep "\n" (lib.mapAttrsToList (groupName: _group:
-      "${groupName}-vip IN A ${fleet.groupVip groupName}"
+    lib.concatStringsSep "\n" (lib.mapAttrsToList (groupName: g:
+      "${groupName}-vip IN A ${g.ha-group.vip.ipv4}"
     ) groups);
 
-  # Build a forward zone file for a VLAN's network.
   mkForwardZoneData = vlanId: let
-    name = fleet.enriched.vlanNameMap.${toString vlanId};
-    net = fleet.networks.${name};
-    servers = fleet.managedHostsOnNetwork name;
+    name = vlanNameMap.${toString vlanId};
+    net = eg.entities.${name}.attrs;
+    servers = managedHostsOnNetwork name;
     serverRecords = lib.concatMapStringsSep "\n" (hostname:
-      "${hostname} IN A ${fleet.hostAddress hostname name}\n" +
-      "${hostname} IN AAAA ${fleet.hostAddress6 hostname name}"
+      "${hostname} IN A ${eg.entities.${hostname}.host.addresses.${name}.ipv4}\n" +
+      "${hostname} IN AAAA ${eg.entities.${hostname}.host.addresses.${name}.ipv6}"
     ) servers;
     vipRecords = vipRecordsForNetwork name;
   in {
-    name = net.zoneName;
+    inherit name;
     value = {
       ddns = true;
       data = ''
@@ -43,22 +67,19 @@
     };
   };
 
-  # Build a reverse (PTR) zone file for a VLAN's IPv4 network.
   mkReverseZoneData = vlanId: let
-    name = fleet.enriched.vlanNameMap.${toString vlanId};
-    net = fleet.networks.${name};
+    name = vlanNameMap.${toString vlanId};
+    net = eg.entities.${name}.attrs;
     octets = lib.splitString "." net.prefix;
     reverseZone = "${lib.concatStringsSep "." (lib.reverseList octets)}.in-addr.arpa";
-    servers = fleet.managedHostsOnNetwork name;
+    servers = managedHostsOnNetwork name;
     serverPtrs = lib.concatMapStringsSep "\n" (hostname: let
-      addr = fleet.hostAddress hostname name;
+      addr = eg.entities.${hostname}.host.addresses.${name}.ipv4;
       parts = lib.splitString "." addr;
       lastOctet = builtins.elemAt parts 3;
-    in
-      "${lastOctet} IN PTR ${hostname}.${net.zoneName}."
+    in "${lastOctet} IN PTR ${hostname}.${net.zoneName}."
     ) servers;
-    gwAddr = net.gateway4;
-    gwParts = lib.splitString "." gwAddr;
+    gwParts = lib.splitString "." net.gateway4;
     gwLastOctet = builtins.elemAt gwParts 3;
   in {
     name = reverseZone;
@@ -76,20 +97,20 @@
     };
   };
 
-  # Build a reverse (PTR) zone file for a VLAN's IPv6 ULA network.
   mkIp6ReverseZoneData = vlanId: let
-    name = fleet.enriched.vlanNameMap.${toString vlanId};
-    net = fleet.networks.${name};
-    reverseZone = "${net.ip6Reverse}.${fleet.enriched.ulaReverseBase}.ip6.arpa";
-    servers = fleet.managedHostsOnNetwork name;
+    name = vlanNameMap.${toString vlanId};
+    net = eg.entities.${name};
+    na = net.attrs;
+    reverseZone = "${na.ip6Reverse}.${ulaReverseBase}.ip6.arpa";
+    servers = managedHostsOnNetwork name;
     hostPartReverseNibbles = addr: let
       parts = lib.splitString "::" addr;
       hostHex = builtins.elemAt parts 1;
-    in fleet.utils.hostReverseNibbles hostHex;
+    in reverseNibbles 16 hostHex;
     serverPtrs = lib.concatMapStringsSep "\n" (hostname:
-      "${hostPartReverseNibbles (fleet.hostAddress6 hostname name)} IN PTR ${hostname}.${net.zoneName}."
+      "${hostPartReverseNibbles eg.entities.${hostname}.host.addresses.${name}.ipv6} IN PTR ${hostname}.${na.zoneName}."
     ) servers;
-    gwReverseNibbles = hostPartReverseNibbles net.gateway6;
+    gwReverseNibbles = hostPartReverseNibbles na.gateway6;
   in {
     name = reverseZone;
     value = {
@@ -97,26 +118,25 @@
       data = ''
         $ORIGIN ${reverseZone}.
         $TTL 300
-        @    IN SOA  ns1.${net.zoneName}. admin.${net.zoneName}. (
+        @    IN SOA  ns1.${na.zoneName}. admin.${na.zoneName}. (
                      1 3600 900 604800 300 )
-        @    IN NS   ns1.${net.zoneName}.
-        ${gwReverseNibbles} IN PTR iyr.${net.zoneName}.
+        @    IN NS   ns1.${na.zoneName}.
+        ${gwReverseNibbles} IN PTR iyr.${na.zoneName}.
         ${serverPtrs}
       '';
     };
   };
 
-  # Parent zone for home.psyclyx.net (transparent in unbound so DHCP names resolve)
   homeZone = {
-    name = topo.domains.home;
+    name = eg.domains.home;
     value = {
       ddns = false;
       data = ''
-        $ORIGIN ${topo.domains.home}.
+        $ORIGIN ${eg.domains.home}.
         $TTL 300
-        @    IN SOA  ns1.${topo.domains.home}. admin.${topo.domains.home}. (
+        @    IN SOA  ns1.${eg.domains.home}. admin.${eg.domains.home}. (
                      1 3600 900 604800 300 )
-        @    IN NS   ns1.${topo.domains.home}.
+        @    IN NS   ns1.${eg.domains.home}.
         ns1  IN A    10.0.10.1
       '';
     };
@@ -124,9 +144,9 @@
 
   authoritativeZones = builtins.listToAttrs (
     [homeZone]
-    ++ (map mkForwardZoneData fleet.enriched.dhcpVlans)
-    ++ (map mkReverseZoneData fleet.enriched.dhcpVlans)
-    ++ (map mkIp6ReverseZoneData fleet.enriched.dhcpVlans)
+    ++ (map mkForwardZoneData dhcpVlans)
+    ++ (map mkReverseZoneData dhcpVlans)
+    ++ (map mkIp6ReverseZoneData dhcpVlans)
   );
 in {
   psyclyx.nixos.network.dns.authoritative.zones = authoritativeZones;

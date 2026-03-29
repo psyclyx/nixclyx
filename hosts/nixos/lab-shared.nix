@@ -1,38 +1,38 @@
 { config, lib, ... }: let
   hostname = config.networking.hostName;
-  topo = config.psyclyx.topology;
-  fleet = config.psyclyx.fleet;
-  thisHost = topo.hosts.${hostname};
+  eg = config.psyclyx.egregore;
+  me = eg.entities.${hostname}.host;
 
   labHostNames = let
-    labHosts = lib.filterAttrs (_: h: builtins.elem "lab" (h.roles or [])) topo.hosts;
+    labHosts = lib.filterAttrs (_: e:
+      e.type == "host" && builtins.elem "lab" (e.host.roles or [])
+    ) eg.entities;
   in
-    lib.sort builtins.lessThan (lib.mapAttrsToList (name: _: name) labHosts);
+    lib.sort builtins.lessThan (lib.attrNames labHosts);
 
   # Networks with both an interface mapping and an address on this host.
   # Excludes mgmt (iLO BMC, not host OS) and vpn (WireGuard, configured separately).
   hostNetworks =
     lib.filterAttrs (
       name: _:
-        name
-        != "mgmt"
+        name != "mgmt"
         && name != "vpn"
-        && thisHost.interfaces ? ${name}
-        && thisHost.addresses ? ${name}
+        && me.interfaces ? ${name}
+        && me.addresses ? ${name}
     )
-    thisHost.addresses;
+    me.addresses;
 
   mkNetworkUnit = netName: _addr: let
-    device = thisHost.interfaces.${netName}.device;
-    addr = thisHost.addresses.${netName};
-    net = fleet.networks.${netName};
+    device = me.interfaces.${netName}.device;
+    addr = me.addresses.${netName};
+    net = eg.entities.${netName}.attrs;
     prefixLen = toString net.prefixLen;
     isDefault = netName == "infra";
   in {
     matchConfig.Name = device;
     address =
       ["${addr.ipv4}/${prefixLen}"]
-      ++ lib.optional (addr ? ipv6) "${addr.ipv6}/64";
+      ++ lib.optional (addr.ipv6 != null) "${addr.ipv6}/64";
     routes = lib.optional isDefault {
       Gateway = net.gateway4;
     };
@@ -47,21 +47,17 @@
   networkUnits =
     lib.mapAttrs' (
       netName: addr:
-        lib.nameValuePair "20-${thisHost.interfaces.${netName}.device}" (mkNetworkUnit netName addr)
+        lib.nameValuePair "20-${me.interfaces.${netName}.device}" (mkNetworkUnit netName addr)
     )
     hostNetworks;
 
   allDevices =
-    lib.mapAttrsToList (
-      netName: _:
-        thisHost.interfaces.${netName}.device
-    )
+    lib.mapAttrsToList (netName: _: me.interfaces.${netName}.device)
     hostNetworks;
 
-  # Infra interface for initrd SSH (simplest, always available)
-  infraDevice = thisHost.interfaces.infra.device;
-  infraAddr = thisHost.addresses.infra;
-  infraNet = fleet.networks.infra;
+  infraDevice = me.interfaces.infra.device;
+  infraAddr = me.addresses.infra;
+  infraNet = eg.entities.infra.attrs;
 in {
   boot.initrd = {
     kernelModules = ["igb" "tg3"];
@@ -120,14 +116,10 @@ in {
       openbao = {
         enable = true;
         clusterNodes = labHostNames;
-        settings.transitAddress = "http://${fleet.networks.infra.gateway4}:8200";
+        settings.transitAddress = "http://${eg.entities.infra.attrs.gateway4}:8200";
       };
-      openbao-pki = {
-        enable = true;
-      };
-      openbao-kv = {
-        enable = true;
-      };
+      openbao-pki.enable = true;
+      openbao-kv.enable = true;
       kubernetes = {
         enable = true;
         clusterNodes = labHostNames;

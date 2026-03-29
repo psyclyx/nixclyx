@@ -1,27 +1,22 @@
 { lib, config, ... }: let
-  topo = config.psyclyx.topology;
-  dt = topo.enriched;
-  sortedNets = map (vlan:
-    dt.networks.${dt.vlanNameMap.${toString vlan}})
-  dt.dhcpVlans;
+  eg = config.psyclyx.egregore;
+
+  # All network entities, sorted by VLAN ID.
+  networkEntities = lib.filterAttrs (_: e: e.type == "network") eg.entities;
+  sortedNets = lib.sort (a: b: a.network.vlan < b.network.vlan)
+    (lib.attrValues networkEntities);
 in {
   imports = [./networkd.nix ./dhcp.nix ./dns.nix];
 
   networking.hostName = "iyr";
 
-  # Restrict metrics to VPN interface only.  Binding to the WireGuard
-  # address is the actual enforcement point.
-  services.prometheus.exporters.node.listenAddress = topo.hosts.iyr.addresses.vpn.ipv4;
-  services.prometheus.exporters.smartctl.listenAddress = topo.hosts.iyr.addresses.vpn.ipv4;
-  # SNMP exporter is only queried by the local prometheus instance.
+  services.prometheus.exporters.node.listenAddress = eg.entities.iyr.host.addresses.vpn.ipv4;
+  services.prometheus.exporters.smartctl.listenAddress = eg.entities.iyr.host.addresses.vpn.ipv4;
   services.prometheus.exporters.snmp.listenAddress = "127.0.0.1";
-  # Collector's own prometheus port — nothing external needs to reach it.
   services.prometheus.listenAddress = "127.0.0.1";
 
   psyclyx.nixos = {
-    boot = {
-      initrd-ssh.enable = true;
-    };
+    boot.initrd-ssh.enable = true;
 
     filesystems.layouts.bcachefs-pool = {
       enable = true;
@@ -42,13 +37,13 @@ in {
         enable = true;
         interfaces =
           ["10.0.0.11"]
-          ++ map (net: net.gateway4) sortedNets
+          ++ map (e: e.attrs.gateway4) sortedNets
           ++ ["10.157.0.2"]
-          ++ map (net: net.gateway6) sortedNets
+          ++ map (e: e.attrs.gateway6) sortedNets
           ++ ["::"];
         accessControl = [
           "10.0.0.0/8 allow"
-          "${topo.ipv6UlaPrefix}::/48 allow"
+          "${eg.ipv6UlaPrefix}::/48 allow"
           "fe80::/10 allow"
           "::1/128 allow"
         ];
@@ -70,7 +65,7 @@ in {
       };
       openbao-seal-oracle = {
         enable = true;
-        bindAddress = dt.networks.infra.gateway4;
+        bindAddress = eg.entities.infra.attrs.gateway4;
         tpm.enable = true;
         seal = {
           type = "pkcs11";

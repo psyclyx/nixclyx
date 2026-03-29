@@ -11,6 +11,12 @@ let
   prefixOf = cidr: let
     octets = lib.splitString "." (parseCidr cidr).addr;
   in "${builtins.elemAt octets 0}.${builtins.elemAt octets 1}.${builtins.elemAt octets 2}";
+
+  # Nibble-reverse a hex string for DNS PTR records.
+  reverseNibbles = width: hex: let
+    padded = lib.fixedWidthString width "0" hex;
+    chars = lib.stringToCharacters padded;
+  in lib.concatStringsSep "." (lib.reverseList chars);
 in
 egregorLib.mkType {
   name = "network";
@@ -37,18 +43,19 @@ egregorLib.mkType {
     gw = top.conventions.gatewayOffset or 1;
     ulaPrefix = top.ipv6UlaPrefix or "";
     homeDomain = top.domains.home or "";
+    hasV6 = ulaPrefix != "" && net.ulaSubnetHex != "";
   in {
     vlan = net.vlan;
     prefix = prefix;
     prefixLen = (parseCidr net.ipv4).prefixLen;
     gateway4 = "${prefix}.${toString gw}";
     network4 = "${prefix}.0";
-    subnet6 = lib.optionalString (ulaPrefix != "" && net.ulaSubnetHex != "")
-      "${ulaPrefix}:${net.ulaSubnetHex}::/64";
-    gateway6 = lib.optionalString (ulaPrefix != "" && net.ulaSubnetHex != "")
-      "${ulaPrefix}:${net.ulaSubnetHex}::${lib.toHexString gw}";
-    zoneName = lib.optionalString (homeDomain != "")
-      "${name}.${homeDomain}";
+    subnet6 = lib.optionalString hasV6 "${ulaPrefix}:${net.ulaSubnetHex}::/64";
+    gateway6 = lib.optionalString hasV6 "${ulaPrefix}:${net.ulaSubnetHex}::${lib.toHexString gw}";
+    zoneName = lib.optionalString (homeDomain != "") "${name}.${homeDomain}";
     label = "VLAN ${toString net.vlan} (${net.ipv4})";
+    # DNS PTR reverse zone components.
+    ip6Reverse = lib.optionalString (net.ulaSubnetHex != "")
+      (reverseNibbles 4 net.ulaSubnetHex);
   };
 }
