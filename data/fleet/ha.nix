@@ -25,7 +25,9 @@
       };
       k8s-api = {
         port = 6443;
+        mode = "tcp";
         check = "/readyz";
+        checkSsl = true;
       };
     };
   };

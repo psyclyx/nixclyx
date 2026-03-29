@@ -71,6 +71,10 @@
         if svc.checkPort != null
         then " port ${toString svc.checkPort}"
         else "";
+      sslSuffix =
+        if svc.checkSsl
+        then " ssl verify none check-ssl"
+        else "";
     in ''
 
       frontend ft_${name}
@@ -83,7 +87,7 @@
         balance roundrobin
         ${checkDirective}
     '' + lib.concatMapStringsSep "\n" (m:
-      "    server ${m.member} ${m.addr}:${toString backendPort} check${checkPortSuffix} inter 5s fall 3 rise 2"
+      "    server ${m.member} ${m.addr}:${toString backendPort} check${checkPortSuffix}${sslSuffix} inter 5s fall 3 rise 2"
     ) memberAddrs + "\n";
 
     serviceSections = lib.concatStringsSep "" (lib.flatten (

@@ -29,6 +29,11 @@
           default = null;
           description = "Port for health checks if different from backend port.";
         };
+        checkSsl = lib.mkOption {
+          type = lib.types.bool;
+          default = false;
+          description = "Use SSL for health checks and backend connections (for TLS backends in TCP mode).";
+        };
       };
     };
 
