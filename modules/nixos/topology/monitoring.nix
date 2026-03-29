@@ -1,43 +1,31 @@
-{
-  config,
-  lib,
-  ...
-}: let
-  topo = config.psyclyx.topology;
+{config, lib, ...}: let
+  eg = config.psyclyx.egregore;
 
-  # Resolve a host's scrape address based on its exporter's network.
-  # "vpn" → internal domain FQDN; any physical network → network.home FQDN.
   resolveAddress = hostName: network:
     if network == "vpn"
-    then "${hostName}.${topo.domains.internal}"
-    else "${hostName}.${network}.${topo.domains.home}";
+    then "${hostName}.${eg.domains.internal}"
+    else "${hostName}.${network}.${eg.domains.home}";
 
-  # Build a target string from a host's exporter entry.
-  # Uses the first declared network for address resolution.
   mkTarget = hostName: svc:
     "${resolveAddress hostName (builtins.head svc.networks)}:${toString svc.port}";
 
-  # Hosts participating in monitoring (have at least one exporter declared).
-  monitoredHosts = lib.filterAttrs (_: host: host.exporters != {}) topo.hosts;
+  monitoredHosts = lib.filterAttrs (_: e:
+    e.type == "host" && e.host.exporters != {}
+  ) eg.entities;
 
-  # All monitored hosts except the WireGuard hub (hub is scraped by the server, not collector).
-  spokeHosts = lib.filterAttrs (name: _: name != topo.wireguard.hub) monitoredHosts;
+  spokeHosts = lib.filterAttrs (name: _: name != eg.overlay.hub) monitoredHosts;
 
-  # Collect all (serviceName, target) pairs from a set of hosts.
   collectTargets = hosts:
-    lib.concatLists (lib.mapAttrsToList (hostName: host:
+    lib.concatLists (lib.mapAttrsToList (hostName: e:
       lib.mapAttrsToList (svcName: svc: {
         inherit svcName;
         target = mkTarget hostName svc;
-      }) host.exporters
+      }) e.host.exporters
     ) hosts);
 
   spokeTargetPairs = collectTargets spokeHosts;
-
-  # Group targets by service name.
   targetsByService = builtins.groupBy (t: t.svcName) spokeTargetPairs;
 
-  # Extract the "node" targets for scrapeTargets, everything else for extraScrapeConfigs.
   nodeTargets = map (t: t.target) (targetsByService.node or []);
   extraServices = lib.filterAttrs (name: _: name != "node") targetsByService;
 
@@ -46,11 +34,10 @@
     static_configs = [{targets = map (t: t.target) targets;}];
   }) extraServices;
 
-  hubVpnAddress = monitoredHosts.${topo.wireguard.hub}.addresses.vpn.ipv4;
+  hubVpnAddress = monitoredHosts.${eg.overlay.hub}.host.addresses.vpn.ipv4;
 
-  # Hub host's own exporters (for server self-scrape), excluding "node" (auto-added).
   hubExporters = lib.filterAttrs (name: _: name != "node")
-    (monitoredHosts.${topo.wireguard.hub}.exporters or {});
+    (monitoredHosts.${eg.overlay.hub}.host.exporters or {});
 
   hubExtraScrapeConfigs = lib.mapAttrsToList (svcName: svc: {
     job_name = svcName;

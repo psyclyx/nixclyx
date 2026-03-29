@@ -1,29 +1,32 @@
-{
-  config,
-  lib,
-  pkgs,
-  ...
-}: let
-  topo = config.psyclyx.topology;
-  fleet = config.psyclyx.fleet;
+{config, lib, pkgs, ...}: let
+  eg = config.psyclyx.egregore;
   hostname = config.psyclyx.nixos.host;
 
-  myGroups = lib.filterAttrs
-    (_: group: builtins.elem hostname group.members)
-    topo.haGroups;
+  haGroups = lib.filterAttrs (_: e:
+    e.type == "ha-group" && builtins.elem hostname e.ha-group.members
+  ) eg.entities;
 
-  hasGroups = myGroups != {};
+  hasGroups = haGroups != {};
 
-  uniqueVips = lib.unique (lib.mapAttrsToList (groupName: group: {
-    vip = fleet.groupVip groupName;
-    iface = fleet.hostInterface hostname group.network;
-    vrid = fleet.groupVrid groupName;
-    priority = fleet.memberPriority groupName hostname;
-    prefixLen = fleet.networkPrefixLen group.network;
-  }) myGroups);
+  me = eg.entities.${hostname};
+
+  uniqueVips = lib.unique (lib.mapAttrsToList (groupName: g: let
+    ha = g.ha-group;
+    net = eg.entities.${ha.network};
+    idx = lib.lists.findFirstIndex (m: m == hostname)
+      (throw "${hostname} is not a member of group ${groupName}")
+      ha.members;
+  in {
+    vip = ha.vip.ipv4;
+    iface = me.host.interfaces.${ha.network}.device;
+    vrid = ha.vrid;
+    priority = 100 - (idx + 1);
+    prefixLen = net.attrs.prefixLen;
+  }) haGroups);
 
   haproxyConfig = let
-    metricsAddr = fleet.hostAddress hostname (builtins.head (lib.attrValues myGroups)).network;
+    firstGroup = builtins.head (lib.attrValues haGroups);
+    metricsAddr = me.host.addresses.${firstGroup.ha-group.network}.ipv4;
 
     globalSection = ''
       global
@@ -50,15 +53,16 @@
         stats refresh 10s
     '';
 
-    mkFrontendBackend = groupName: group: svcName: svc: let
-      vip = fleet.groupVip groupName;
+    mkFrontendBackend = groupName: g: svcName: svc: let
+      ha = g.ha-group;
+      vip = ha.vip.ipv4;
       frontendPort = svc.port;
       backendPort = if svc.backendPort != null then svc.backendPort else svc.port;
       name = "${groupName}-${svcName}";
       memberAddrs = map (member: {
-        addr = fleet.hostAddress member group.network;
+        addr = eg.entities.${member}.host.addresses.${ha.network}.ipv4;
         inherit member;
-      }) group.members;
+      }) ha.members;
       checkUri = if svc.check != null then svc.check else "/";
       checkDirective =
         if svc.check != null || svc.mode == "http"
@@ -91,23 +95,22 @@
     ) memberAddrs + "\n";
 
     serviceSections = lib.concatStringsSep "" (lib.flatten (
-      lib.mapAttrsToList (groupName: group:
+      lib.mapAttrsToList (groupName: g:
         lib.mapAttrsToList (svcName: svc:
-          mkFrontendBackend groupName group svcName svc
-        ) group.services
-      ) myGroups
+          mkFrontendBackend groupName g svcName svc
+        ) g.ha-group.services
+      ) haGroups
     ));
   in
     globalSection + statsSection + serviceSections;
 
   allServicePorts = lib.unique (lib.flatten (
-    lib.mapAttrsToList (_: group:
-      lib.mapAttrsToList (_: svc: svc.port) group.services
-    ) myGroups
+    lib.mapAttrsToList (_: g:
+      lib.mapAttrsToList (_: svc: svc.port) g.ha-group.services
+    ) haGroups
   ));
 in {
   config = lib.mkIf hasGroups {
-    # haproxy needs to bind the VIP before keepalived assigns it
     boot.kernel.sysctl."net.ipv4.ip_nonlocal_bind" = 1;
 
     services.keepalived = {

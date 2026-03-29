@@ -50,8 +50,8 @@
     pkgs,
     ...
   }: let
-    topo = config.psyclyx.topology;
-    selfTarget = "${config.psyclyx.nixos.host}.${topo.domains.internal}:9100";
+    eg = config.psyclyx.egregore;
+    selfTarget = "${config.psyclyx.nixos.host}.${eg.domains.internal}:9100";
     mkSnmpExporter = {
       enable = true;
       configurationPath = "${pkgs.prometheus-snmp-exporter.src}/snmp.yml";

@@ -160,15 +160,15 @@
       }
     ];
 
-    fleet = config.psyclyx.fleet;
+    eg = config.psyclyx.egregore;
     hostname = config.psyclyx.nixos.host;
 
-    bindAddr = fleet.hostAddress hostname cfg.dataNetwork;
+    bindAddr = eg.entities.${hostname}.host.addresses.${cfg.dataNetwork}.ipv4;
     otherNodes = builtins.filter (n: n != hostname) cfg.clusterNodes;
 
     retryJoin =
       map (node: {
-        leader_api_addr = "http://${fleet.hostAddress node cfg.dataNetwork}:${toString cfg.apiPort}";
+        leader_api_addr = "http://${eg.entities.${node}.host.addresses.${cfg.dataNetwork}.ipv4}:${toString cfg.apiPort}";
       })
       otherNodes;
 

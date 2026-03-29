@@ -90,18 +90,18 @@
       ...
     }:
     let
-      fleet = config.psyclyx.fleet;
+      eg = config.psyclyx.egregore;
       hostname = config.psyclyx.nixos.host;
 
-      dataAddr = fleet.hostAddress hostname cfg.dataNetwork;
-      clientAddr = fleet.hostAddress hostname cfg.clientNetwork;
+      dataAddr = eg.entities.${hostname}.host.addresses.${cfg.dataNetwork}.ipv4;
+      clientAddr = eg.entities.${hostname}.host.addresses.${cfg.clientNetwork}.ipv4;
 
-      memberAddr = name: fleet.hostAddress name cfg.dataNetwork;
+      memberAddr = name: eg.entities.${name}.host.addresses.${cfg.dataNetwork}.ipv4;
 
-      dataNetPrefix = fleet.networkPrefix cfg.dataNetwork;
-      dataNetPrefixLen = fleet.networkPrefixLen cfg.dataNetwork;
-      clientNetPrefix = fleet.networkPrefix cfg.clientNetwork;
-      clientNetPrefixLen = fleet.networkPrefixLen cfg.clientNetwork;
+      dataNetPrefix = eg.entities.${cfg.dataNetwork}.attrs.prefix;
+      dataNetPrefixLen = eg.entities.${cfg.dataNetwork}.attrs.prefixLen;
+      clientNetPrefix = eg.entities.${cfg.clientNetwork}.attrs.prefix;
+      clientNetPrefixLen = eg.entities.${cfg.clientNetwork}.attrs.prefixLen;
 
       pgHba = [
         "local all all trust"

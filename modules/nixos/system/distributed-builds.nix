@@ -12,9 +12,9 @@
     ...
   }: let
     host = config.psyclyx.nixos.host;
-    topo = config.psyclyx.topology;
-    dt = topo.enriched;
-    infraZone = dt.networks.infra.zoneName;
+    eg = config.psyclyx.egregore;
+    
+    infraZone = eg.entities.infra.attrs.zoneName;
 
     builders = {
       lab-1 = {sshHost = "lab-1.${infraZone}"; maxJobs = 54; speedFactor = 7;};

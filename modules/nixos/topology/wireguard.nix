@@ -1,39 +1,32 @@
-{
-  config,
-  lib,
-  pkgs,
-  ...
-}: let
-  topo = config.psyclyx.topology;
+{config, lib, pkgs, ...}: let
+  eg = config.psyclyx.egregore;
   hostName = config.networking.hostName;
-  thisHost = topo.hosts.${hostName} or null;
-  hasWg = thisHost != null && thisHost.wireguard != null;
+  me = eg.entities.${hostName} or null;
+  hasWg = me != null && me.type == "host" && me.host.wireguard != null;
 
-  hubHost = topo.hosts.${topo.wireguard.hub};
-  isHub = hasWg && hostName == topo.wireguard.hub;
+  hub = eg.entities.${eg.overlay.hub};
+  isHub = hasWg && hostName == eg.overlay.hub;
 
-  wgPeers = lib.filterAttrs (name: host:
-    name != hostName && host.wireguard != null
-  ) topo.hosts;
+  wgPeers = lib.filterAttrs (name: e:
+    name != hostName && e.type == "host" && e.host.wireguard != null
+  ) eg.entities;
 
   allPeerExportedRoutes = lib.concatMap
-    (host: host.wireguard.exportedRoutes)
+    (e: e.host.wireguard.exportedRoutes)
     (lib.attrValues wgPeers);
 
-  # Resolve allowedNetworks to CIDRs, or fall back to all exported routes
   resolvedAllowedIPs =
-    if thisHost != null && thisHost.wireguard != null && thisHost.wireguard.allowedNetworks != null
+    if me.host.wireguard.allowedNetworks != null
     then
-      [topo.wireguard.subnet]
-      ++ map (name: topo.networks.${name}.ipv4) thisHost.wireguard.allowedNetworks
+      [eg.overlay.subnet]
+      ++ map (name: eg.entities.${name}.network.ipv4) me.host.wireguard.allowedNetworks
     else
-      [topo.wireguard.subnet] ++ allPeerExportedRoutes;
+      [eg.overlay.subnet] ++ allPeerExportedRoutes;
 
-  # Hub endpoint: prefer explicit endpoint from host data, fall back to constructed
   hubEndpoint =
-    if hubHost.wireguard.endpoint != null
-    then hubHost.wireguard.endpoint
-    else "vpn.${topo.domains.public}:${toString topo.wireguard.port}";
+    if hub.host.wireguard.endpoint != null
+    then hub.host.wireguard.endpoint
+    else "vpn.${eg.domains.public}:${toString eg.overlay.port}";
 
   privateKeyPath = "/etc/secrets/wireguard/private.key";
 in {
@@ -45,7 +38,7 @@ in {
 
   config = lib.mkIf hasWg {
     psyclyx.nixos.wireguard.autoGenerateKeys = lib.mkDefault [privateKeyPath];
-    psyclyx.nixos.network.ports.wireguard = {udp = [topo.wireguard.port];};
+    psyclyx.nixos.network.ports.wireguard = {udp = [eg.overlay.port];};
 
     systemd.services.wireguard-keygen = {
       description = "Auto-generate WireGuard private keys";
@@ -78,42 +71,41 @@ in {
 
         wireguardConfig = lib.mkMerge [
           {PrivateKeyFile = privateKeyPath;}
-          (lib.mkIf isHub {ListenPort = topo.wireguard.port;})
+          (lib.mkIf isHub {ListenPort = eg.overlay.port;})
         ];
 
         wireguardPeers =
           if isHub
           then
-            lib.mapAttrsToList (_: host: {
-              PublicKey = host.wireguard.publicKey;
-              AllowedIPs = ["${host.addresses.vpn.ipv4}/32"] ++ host.wireguard.exportedRoutes;
-            })
-            wgPeers
+            lib.mapAttrsToList (_: e: {
+              PublicKey = e.host.wireguard.publicKey;
+              AllowedIPs = ["${e.host.addresses.vpn.ipv4}/32"] ++ e.host.wireguard.exportedRoutes;
+            }) wgPeers
           else [
-              {
-                PublicKey = hubHost.wireguard.publicKey;
-                Endpoint = hubEndpoint;
-                AllowedIPs = resolvedAllowedIPs;
-                PersistentKeepalive = 25;
-              }
-            ];
+            {
+              PublicKey = hub.host.wireguard.publicKey;
+              Endpoint = hubEndpoint;
+              AllowedIPs = resolvedAllowedIPs;
+              PersistentKeepalive = 25;
+            }
+          ];
       };
 
       networks."30-wg0" = lib.mkMerge [
         {
           matchConfig.Name = "wg0";
           address = let
-            wgPrefixLen = builtins.elemAt (lib.splitString "/" topo.wireguard.subnet) 1;
-          in ["${thisHost.addresses.vpn.ipv4}/${wgPrefixLen}"];
+            wgPrefixLen = builtins.elemAt (lib.splitString "/" eg.overlay.subnet) 1;
+          in ["${me.host.addresses.vpn.ipv4}/${wgPrefixLen}"];
         }
         (lib.mkIf (!isHub) {
-          dns = [hubHost.addresses.vpn.ipv4];
-          domains = ["~${topo.domains.internal}"];
+          dns = [hub.host.addresses.vpn.ipv4];
+          domains = ["~${eg.domains.internal}"];
         })
         (lib.mkIf isHub {
-          routes = lib.concatMap (host:
+          routes = lib.concatMap (e:
             map (route: { Destination = route; })
-                (host.wireguard.exportedRoutes or [])
+                (e.host.wireguard.exportedRoutes or [])
           ) (lib.attrValues wgPeers);
         })
       ];

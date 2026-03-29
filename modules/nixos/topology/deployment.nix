@@ -1,8 +1,10 @@
 {config, lib, options, ...}: let
-  topo = config.psyclyx.topology;
+  eg = config.psyclyx.egregore;
   hostName = config.networking.hostName;
-  thisHost = topo.hosts.${hostName} or null;
-  targetPort = if thisHost != null then thisHost.sshPort else 22;
+  thisHost = eg.entities.${hostName} or null;
+  targetPort = if thisHost != null && thisHost.type == "host"
+    then thisHost.host.sshPort
+    else 22;
 in {
   config =
     if options ? deployment

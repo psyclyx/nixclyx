@@ -43,12 +43,12 @@
       ...
     }:
     let
-      fleet = config.psyclyx.fleet;
+      eg = config.psyclyx.egregore;
       hostname = config.psyclyx.nixos.host;
 
-      bindAddr = fleet.hostAddress hostname cfg.dataNetwork;
+      bindAddr = eg.entities.${hostname}.host.addresses.${cfg.dataNetwork}.ipv4;
 
-      memberAddr = name: fleet.hostAddress name cfg.dataNetwork;
+      memberAddr = name: eg.entities.${name}.host.addresses.${cfg.dataNetwork}.ipv4;
 
       initialCluster = map (name:
         "${name}=http://${memberAddr name}:${toString cfg.peerPort}"

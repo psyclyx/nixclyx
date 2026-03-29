@@ -27,11 +27,11 @@
     ...
   }: {
     psyclyx.nixos.network.ports.ssh = let
-      topo = config.psyclyx.topology;
+      eg = config.psyclyx.egregore;
       hostName = config.networking.hostName;
-      thisHost = topo.hosts.${hostName} or null;
+      thisHost = eg.entities.${hostName} or null;
     in [
-      (if thisHost != null then thisHost.sshPort else 22)
+      (if thisHost != null then thisHost.host.sshPort else 22)
     ];
 
     security.pam.sshAgentAuth.enable = lib.mkIf cfg.agentAuth.enable cfg.agentAuth.enable;

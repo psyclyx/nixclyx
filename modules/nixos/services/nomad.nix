@@ -82,12 +82,12 @@
       ...
     }:
     let
-      fleet = config.psyclyx.fleet;
+      eg = config.psyclyx.egregore;
       hostname = config.psyclyx.nixos.host;
 
-      bindAddr = fleet.hostAddress hostname cfg.dataNetwork;
+      bindAddr = eg.entities.${hostname}.host.addresses.${cfg.dataNetwork}.ipv4;
       otherNodes = builtins.filter (n: n != hostname) cfg.clusterNodes;
-      retryJoinAddrs = map (n: fleet.hostAddress n cfg.dataNetwork) otherNodes;
+      retryJoinAddrs = map (n: eg.entities.${n}.host.addresses.${cfg.dataNetwork}.ipv4) otherNodes;
 
       hasEncrypt = cfg.encryptionKeyFile != null;
       hasConsulToken = cfg.consul.tokenFile != null;
@@ -125,7 +125,7 @@
         client = {
           enabled = true;
           node_pool = cfg.nodePool;
-          network_interface = fleet.hostInterface hostname cfg.dataNetwork;
+          network_interface = eg.entities.${hostname}.host.interfaces.${cfg.dataNetwork}.device;
         };
 
         consul = {

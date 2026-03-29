@@ -1,31 +1,43 @@
-{
-  config,
-  lib,
-  ...
-}: let
-  topo = config.psyclyx.topology;
-  fleet = config.psyclyx.fleet;
+{config, lib, ...}: let
+  eg = config.psyclyx.egregore;
 
-  cfg = config.psyclyx.topology.dhcp;
+  cfg = config.psyclyx.nixos.services.dhcp;
+
+  hosts = lib.filterAttrs (_: e: e.type == "host") eg.entities;
+
+  # Hosts with MAC addresses that have an interface on a given network.
+  managedHostsOnNetwork = network:
+    lib.sort builtins.lessThan
+      (builtins.attrNames (lib.filterAttrs (_: e:
+        e.host.mac != {} && e.host.interfaces ? ${network}
+      ) hosts));
+
+  # MAC address for a host's physical interface on a network.
+  hostMacForNetwork = hostname: network: let
+    h = eg.entities.${hostname}.host;
+    iface = h.interfaces.${network};
+    physDev = iface.device;
+  in h.mac.${physDev};
 
   mkSubnet4 = _poolName: pool: let
-    net = fleet.networks.${pool.network};
+    net = eg.entities.${pool.network};
+    na = net.attrs;
   in {
-    id = net.vlan;
-    subnet = "${net.prefix}.0/${toString net.prefixLen}";
+    id = na.vlan;
+    subnet = "${na.prefix}.0/${toString na.prefixLen}";
     pools = [{pool = "${pool.ipv4Range.start} - ${pool.ipv4Range.end}";}];
     "option-data" = [
-      { name = "routers"; data = net.gateway4; }
-      { name = "domain-name-servers"; data = net.gateway4; }
-      { name = "domain-name"; data = net.zoneName; }
-      { name = "domain-search"; data = "${net.zoneName}, ${topo.domains.home}, ${topo.domains.internal}"; }
+      { name = "routers"; data = na.gateway4; }
+      { name = "domain-name-servers"; data = na.gateway4; }
+      { name = "domain-name"; data = na.zoneName; }
+      { name = "domain-search"; data = "${na.zoneName}, ${eg.domains.home}, ${eg.domains.internal}"; }
     ];
-    ddns-qualifying-suffix = "${net.zoneName}.";
+    ddns-qualifying-suffix = "${na.zoneName}.";
     reservations = let
-      servers = fleet.managedHostsOnNetwork pool.network;
+      servers = managedHostsOnNetwork pool.network;
       labReservations = map (name: {
-        "hw-address" = fleet.hostMacForNetwork name pool.network;
-        "ip-address" = fleet.hostAddress name pool.network;
+        "hw-address" = hostMacForNetwork name pool.network;
+        "ip-address" = eg.entities.${name}.host.addresses.${pool.network}.ipv4;
         hostname = name;
       }) servers;
     in
@@ -33,98 +45,76 @@
   };
 
   mkSubnet6 = _poolName: pool: let
-    net = fleet.networks.${pool.network};
-    prefix6 = "${topo.ipv6UlaPrefix}:${net.vlanHex}";
+    net = eg.entities.${pool.network};
+    na = net.attrs;
+    prefix6 = "${eg.ipv6UlaPrefix}:${net.network.ulaSubnetHex}";
   in {
-    id = net.vlan;
-    subnet = net.subnet6;
-    interface = "${cfg.interface}.${toString net.vlan}";
+    id = na.vlan;
+    subnet = na.subnet6;
+    interface = "${cfg.interface}.${toString na.vlan}";
     pools = [{pool = "${prefix6}::${pool.ipv6Suffix.start} - ${prefix6}::${pool.ipv6Suffix.end}";}];
     "option-data" = [
-      { name = "dns-servers"; data = net.gateway6; }
-      { name = "domain-search"; data = "${net.zoneName}, ${topo.domains.home}, ${topo.domains.internal}"; }
+      { name = "dns-servers"; data = na.gateway6; }
+      { name = "domain-search"; data = "${na.zoneName}, ${eg.domains.home}, ${eg.domains.internal}"; }
     ];
-    ddns-qualifying-suffix = "${net.zoneName}.";
+    ddns-qualifying-suffix = "${na.zoneName}.";
     reservations = let
-      servers = fleet.managedHostsOnNetwork pool.network;
-      labReservations = map (name: {
-        "hw-address" = fleet.hostMacForNetwork name pool.network;
-        "ip-addresses" = [( fleet.hostAddress6 name pool.network )];
-        hostname = name;
-      }) servers;
-    in
-      labReservations;
+      servers = managedHostsOnNetwork pool.network;
+    in map (name: {
+      "hw-address" = hostMacForNetwork name pool.network;
+      "ip-addresses" = [eg.entities.${name}.host.addresses.${pool.network}.ipv6];
+      hostname = name;
+    }) servers;
   };
 
   ipv6Pools = lib.filterAttrs (_: pool: pool.ipv6) cfg.pools;
 
   poolVlans = lib.sort builtins.lessThan
-    (lib.mapAttrsToList (_: pool: topo.networks.${pool.network}.vlan) cfg.pools);
+    (lib.mapAttrsToList (_: pool: eg.entities.${pool.network}.network.vlan) cfg.pools);
 
   interfaces = map (id: "${cfg.interface}.${toString id}") poolVlans;
 in {
-  options.psyclyx.topology.dhcp = {
-    enable = lib.mkEnableOption "DHCP server derived from topology";
+  options.psyclyx.nixos.services.dhcp = {
+    enable = lib.mkEnableOption "DHCP server derived from egregore entities";
 
     pools = lib.mkOption {
       type = lib.types.attrsOf (lib.types.submodule {
         options = {
-          network = lib.mkOption {
-            type = lib.types.str;
-            description = "Topology network name for this pool.";
-          };
+          network = lib.mkOption { type = lib.types.str; };
           ipv4Range = lib.mkOption {
             type = lib.types.submodule {
               options = {
-                start = lib.mkOption { type = lib.types.str; description = "First IPv4 address in pool."; };
-                end = lib.mkOption { type = lib.types.str; description = "Last IPv4 address in pool."; };
+                start = lib.mkOption { type = lib.types.str; };
+                end = lib.mkOption { type = lib.types.str; };
               };
             };
-            description = "IPv4 DHCP pool range.";
           };
-          ipv6 = lib.mkOption {
-            type = lib.types.bool;
-            default = true;
-            description = "Whether to generate a DHCPv6 pool for this network.";
-          };
+          ipv6 = lib.mkOption { type = lib.types.bool; default = true; };
           ipv6Suffix = lib.mkOption {
             type = lib.types.submodule {
               options = {
-                start = lib.mkOption { type = lib.types.str; default = "100"; description = "Start host suffix for the IPv6 pool (appended to network prefix6)."; };
-                end = lib.mkOption { type = lib.types.str; default = "1ff"; description = "End host suffix for the IPv6 pool (appended to network prefix6)."; };
+                start = lib.mkOption { type = lib.types.str; default = "100"; };
+                end = lib.mkOption { type = lib.types.str; default = "1ff"; };
               };
             };
             default = {};
-            description = "IPv6 pool host-part suffix range (default ::100 - ::1ff).";
           };
           extraReservations = lib.mkOption {
             type = lib.types.listOf lib.types.attrs;
             default = [];
-            description = "Additional DHCPv4 reservations (Kea format: hw-address, ip-address, hostname).";
           };
         };
       });
       default = {};
-      description = "DHCP pool definitions per network.";
     };
 
     interface = lib.mkOption {
       type = lib.types.str;
       default = "bond0";
-      description = "Base interface name (VLAN sub-interfaces are derived as interface.vlanId).";
     };
 
-    extraDhcp4 = lib.mkOption {
-      type = lib.types.attrs;
-      default = {};
-      description = "Extra attributes merged into the DHCPv4 settings (e.g. hooks-libraries).";
-    };
-
-    extraDhcp6 = lib.mkOption {
-      type = lib.types.attrs;
-      default = {};
-      description = "Extra attributes merged into the DHCPv6 settings (e.g. hooks-libraries).";
-    };
+    extraDhcp4 = lib.mkOption { type = lib.types.attrs; default = {}; };
+    extraDhcp6 = lib.mkOption { type = lib.types.attrs; default = {}; };
   };
 
   config = lib.mkIf (cfg.enable && cfg.pools != {}) {
@@ -132,11 +122,7 @@ in {
       enable = true;
       settings = {
         interfaces-config.interfaces = interfaces;
-        lease-database = {
-          type = "memfile";
-          persist = true;
-          name = "/var/lib/kea/dhcp4.leases";
-        };
+        lease-database = { type = "memfile"; persist = true; name = "/var/lib/kea/dhcp4.leases"; };
         valid-lifetime = 43200;
         renew-timer = 10800;
         rebind-timer = 21600;
@@ -148,11 +134,7 @@ in {
       enable = true;
       settings = {
         interfaces-config.interfaces = interfaces;
-        lease-database = {
-          type = "memfile";
-          persist = true;
-          name = "/var/lib/kea/dhcp6.leases";
-        };
+        lease-database = { type = "memfile"; persist = true; name = "/var/lib/kea/dhcp6.leases"; };
         valid-lifetime = 43200;
         renew-timer = 10800;
         rebind-timer = 21600;

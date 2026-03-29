@@ -66,17 +66,17 @@
       ...
     }:
     let
-      fleet = config.psyclyx.fleet;
+      eg = config.psyclyx.egregore;
       hostname = config.psyclyx.nixos.host;
 
-      bindAddr = fleet.hostAddress hostname cfg.dataNetwork;
+      bindAddr = eg.entities.${hostname}.host.addresses.${cfg.dataNetwork}.ipv4;
 
-      leader = fleet.leader cfg.clusterNodes;
+      leader = builtins.head (builtins.sort builtins.lessThan cfg.clusterNodes);
       isMaster = hostname == leader;
 
-      masterAddr = fleet.hostAddress leader cfg.dataNetwork;
+      masterAddr = eg.entities.${leader}.host.addresses.${cfg.dataNetwork}.ipv4;
 
-      allAddrs = map (name: fleet.hostAddress name cfg.dataNetwork) cfg.clusterNodes;
+      allAddrs = map (name: eg.entities.${name}.host.addresses.${cfg.dataNetwork}.ipv4) cfg.clusterNodes;
 
       sn = cfg.serverName;
       sentinelDir = "/var/lib/redis-sentinel";

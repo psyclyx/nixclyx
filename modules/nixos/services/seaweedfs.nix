@@ -130,16 +130,16 @@
     ...
   }: let
     bcachefsEnabled = config.psyclyx.nixos.filesystems.bcachefs.enable;
-    fleet = config.psyclyx.fleet;
+    eg = config.psyclyx.egregore;
     hostname = config.psyclyx.nixos.host;
 
-    dataAddr = fleet.hostAddress hostname cfg.dataNetwork;
-    metricsAddr = fleet.hostAddress hostname cfg.metricsNetwork;
+    dataAddr = eg.entities.${hostname}.host.addresses.${cfg.dataNetwork}.ipv4;
+    metricsAddr = eg.entities.${hostname}.host.addresses.${cfg.metricsNetwork}.ipv4;
 
     isMaster = builtins.elem hostname cfg.masterNodes;
-    isFirstMaster = isMaster && hostname == fleet.leader cfg.masterNodes;
+    isFirstMaster = isMaster && hostname == builtins.head (builtins.sort builtins.lessThan cfg.masterNodes);
 
-    masterAddrs = map (name: fleet.hostAddress name cfg.dataNetwork) cfg.masterNodes;
+    masterAddrs = map (name: eg.entities.${name}.host.addresses.${cfg.dataNetwork}.ipv4) cfg.masterNodes;
 
     masterPeers = lib.concatStringsSep "," (
       map (addr: "${addr}:${toString cfg.master.port}") masterAddrs

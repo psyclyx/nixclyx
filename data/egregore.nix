@@ -443,7 +443,7 @@ in {
 
     # ── HA Groups ─────────────────────────────────────────────────
 
-    lab-ha = {
+    lab = {
       type = "ha-group";
       ha-group = {
         network = "infra";

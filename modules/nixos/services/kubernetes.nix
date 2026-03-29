@@ -49,20 +49,20 @@
       ...
     }:
     let
-      fleet = config.psyclyx.fleet;
+      eg = config.psyclyx.egregore;
       hostname = config.psyclyx.nixos.host;
 
-      bindAddr = fleet.hostAddress hostname cfg.dataNetwork;
-      groupVip = fleet.groupVip "lab";
+      bindAddr = eg.entities.${hostname}.host.addresses.${cfg.dataNetwork}.ipv4;
+      groupVip = eg.entities.lab.ha-group.vip.ipv4;
 
       # First node alphabetically is the init / CA authority
-      initNode = fleet.leader cfg.clusterNodes;
+      initNode = builtins.head (builtins.sort builtins.lessThan cfg.clusterNodes);
       isInit = hostname == initNode;
-      initAddr = fleet.hostAddress initNode cfg.dataNetwork;
+      initAddr = eg.entities.${initNode}.host.addresses.${cfg.dataNetwork}.ipv4;
 
       # etcd endpoints from all cluster nodes
       etcdEndpoints = map (
-        node: "https://${fleet.hostAddress node cfg.etcdDataNetwork}:2379"
+        node: "https://${eg.entities.${node}.host.addresses.${cfg.etcdDataNetwork}.ipv4}:2379"
       ) cfg.clusterNodes;
 
       # Namespace addon manifests
