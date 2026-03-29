@@ -109,6 +109,147 @@ writeShellApplication {
       fi
     }
 
+    # ── SwOS backup → human-readable decoder ─────────────────────────
+
+    swos_describe() {
+      python3 -c '
+import re, sys
+
+raw = sys.stdin.read().strip()
+Q = "\x27"  # single quote for regex matching
+
+def hex_decode(h):
+    try:
+        return bytes.fromhex(h).decode("ascii", errors="replace")
+    except ValueError:
+        return h
+
+def parse_hex(s):
+    return int(s, 16) if s.startswith("0x") else int(s)
+
+def port_name(i):
+    return f"ether{i+1}" if i < 24 else f"sfp-sfpplus{i-23}"
+
+def find_quoted(text):
+    return re.findall(Q + r"([^" + Q + r"]*)" + Q, text)
+
+# Extract sections
+sections = {}
+parts = re.split(r",(?=\w+\.b:)", raw)
+for part in parts:
+    m = re.match(r"(\w+\.b):(.+)", part, re.DOTALL)
+    if m:
+        sections[m.group(1)] = m.group(2)
+
+# ── sys.b ──
+if "sys.b" in sections:
+    s = sections["sys.b"]
+    print("[system]")
+    m = re.search(r"id:" + Q + r"([^" + Q + r"]*)" + Q, s)
+    if m:
+        print(f"identity = {hex_decode(m.group(1))}")
+    m = re.search(r"ip:(0x[0-9a-f]+)", s)
+    if m:
+        v = parse_hex(m.group(1))
+        print(f"ip       = {v&0xff}.{(v>>8)&0xff}.{(v>>16)&0xff}.{(v>>24)&0xff}")
+    for key, label in [("avln", "mgmt-vlan"), ("prio", "stp-prio")]:
+        m = re.search(key + r":(0x[0-9a-f]+)", s)
+        if m:
+            print(f"{label:9s}= {parse_hex(m.group(1))}")
+    m = re.search(r"igmp:(0x[0-9a-f]+)", s)
+    if m:
+        v = parse_hex(m.group(1))
+        print("igmp     = " + ("on" if v else "off"))
+
+# ── link.b ──
+if "link.b" in sections:
+    s = sections["link.b"]
+    print(f"\n[ports]")
+    m = re.search(r"en:(0x[0-9a-f]+)", s)
+    en_bits = parse_hex(m.group(1)) if m else 0
+    nm_match = re.search(r"nm:\[([^\]]*)\]", s)
+    names = []
+    if nm_match:
+        names = [hex_decode(x) for x in find_quoted(nm_match.group(1))]
+    for i in range(26):
+        enabled = bool(en_bits & (1 << i))
+        name = names[i] if i < len(names) else ""
+        if enabled or name:
+            n_str = f" ({name})" if name else ""
+            en_s = "on" if enabled else "off"
+            print(f"  {port_name(i):16s} enable:{en_s}{n_str}")
+
+# ── fwd.b ──
+if "fwd.b" in sections:
+    s = sections["fwd.b"]
+    print(f"\n[forwarding]")
+    vm = re.search(r"vlan:\[([^\]]*)\]", s)
+    dv = re.search(r"dvid:\[([^\]]*)\]", s)
+    vlan_modes = [parse_hex(x) for x in re.findall(r"0x[0-9a-f]+", vm.group(1))] if vm else []
+    dvids = [parse_hex(x) for x in re.findall(r"0x[0-9a-f]+", dv.group(1))] if dv else []
+    mode_names = {0: "disabled", 1: "optional", 2: "enabled", 3: "strict"}
+    for i in range(26):
+        mode = vlan_modes[i] if i < len(vlan_modes) else 0
+        dvid = dvids[i] if i < len(dvids) else 1
+        if mode or dvid != 1:
+            print(f"  {port_name(i):16s} vlan-mode:{mode_names.get(mode, str(mode))} default-vid:{dvid}")
+
+    m_imr = re.search(r"imr:(0x[0-9a-f]+)", s)
+    m_omr = re.search(r"omr:(0x[0-9a-f]+)", s)
+    imr = parse_hex(m_imr.group(1)) if m_imr else 0
+    omr = parse_hex(m_omr.group(1)) if m_omr else 0
+    if imr or omr:
+        print(f"\n[mirror]")
+        if imr:
+            ps = ",".join(port_name(i) for i in range(26) if imr & (1<<i))
+            print(f"  ingress = {ps}")
+        if omr:
+            ps = ",".join(port_name(i) for i in range(26) if omr & (1<<i))
+            print(f"  egress  = {ps}")
+
+# ── vlan.b ──
+if "vlan.b" in sections:
+    s = sections["vlan.b"]
+    print(f"\n[vlans]")
+    entries = re.findall(r"\{([^}]+)\}", s)
+    for entry in entries:
+        vid_m = re.search(r"vid:(0x[0-9a-f]+)", entry)
+        mbr_m = re.search(r"mbr:(0x[0-9a-f]+)", entry)
+        nm_m = re.search(r"nm:" + Q + r"([^" + Q + r"]*)" + Q, entry)
+        vid = parse_hex(vid_m.group(1)) if vid_m else 0
+        mbr = parse_hex(mbr_m.group(1)) if mbr_m else 0
+        nm = hex_decode(nm_m.group(1)) if nm_m and nm_m.group(1) else ""
+        members = [port_name(i) for i in range(26) if mbr & (1 << i)]
+        m_str = ",".join(members) if members else "none"
+        n_str = (" \"" + nm + "\"") if nm else ""
+        print(f"  vlan {vid:<5d} members:{m_str}{n_str}")
+
+# ── lacp.b ──
+if "lacp.b" in sections:
+    s = sections["lacp.b"]
+    sgrp_m = re.search(r"sgrp:\[([^\]]*)\]", s)
+    if sgrp_m:
+        groups = [parse_hex(x) for x in re.findall(r"0x[0-9a-f]+", sgrp_m.group(1))]
+        active = [(i, g) for i, g in enumerate(groups) if g != 0]
+        if active:
+            print(f"\n[lacp]")
+            for i, g in active:
+                print(f"  {port_name(i):16s} group:{g}")
+
+# ── rstp.b ──
+if "rstp.b" in sections:
+    s = sections["rstp.b"]
+    m = re.search(r"ena:(0x[0-9a-f]+)", s)
+    if m:
+        bits = parse_hex(m.group(1))
+        disabled = [i for i in range(26) if not (bits & (1 << i))]
+        if disabled:
+            print(f"\n[rstp]")
+            d = ",".join(port_name(i) for i in disabled)
+            print(f"  disabled on: {d}")
+'
+    }
+
     # ── Sodola binary → human-readable decoder ──────────────────────
 
     sodola_describe() {
@@ -281,8 +422,8 @@ print(f"qos-queue= {",".join(str(q) for q in queues)}")
           desired=$(nix_eval "(gen.swos \"$name\").backup")
           echo ""
           diff --color=auto -u \
-            <(echo "$live" | tr ',' '\n') \
-            <(echo "$desired" | tr ',' '\n') \
+            <(echo "$live" | swos_describe) \
+            <(echo "$desired" | swos_describe) \
             --label "live ($name)" \
             --label "desired (fleet data)" || true
           ;;
