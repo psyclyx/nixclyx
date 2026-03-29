@@ -1,19 +1,20 @@
 # Switch port assignments — the physical cabling reality.
 #
-# Each port maps to either:
-#   { host; interface; }  — an access port for a host NIC
-#   { type = "trunk"; peer; }  — a tagged trunk to another switch or router
-#   { type = "access"; vlan; } — an access port for a non-host device (modem, AP)
-#   { type = "unused"; }  — explicitly unassigned
-#
-# The network (VLAN) for host access ports is derived from the host's
-# interface mapping in hosts/*.nix — the switch data says WHICH port,
-# the host data says WHICH VLAN.  The generator joins them.
+# Each port is an attrset with:
+#   vlan  = N;           — native/untagged VLAN (access port)
+#   vlans = [N ...];     — tagged VLANs (trunk port)
+#   meta  = { ... };     — optional: host, peer, description (documentation only)
+#   {}                   — unused (disabled)
 #
 # Naming convention: <closet>-<role><seq>
 #   MDF = server rack (living room west)
 #   IDF = network cabinet (living room east)
-{
+
+let
+  # Standard VLAN sets for trunk ports.
+  internal = [10 25 30 31 50 100 110 240];
+  all      = internal ++ [250];
+in {
   # ── MDF (server rack) ────────────────────────────────────────────
 
   mdf-agg01 = {
@@ -23,38 +24,53 @@
     description = "10G SFP+ aggregation switch";
     addresses.mgmt.ipv4 = "10.0.240.2";
 
+    bonds = {
+      bond-css326 = {
+        mode = "802.3ad";
+        slaves = ["sfp-sfpplus9" "sfp-sfpplus10"];
+        comment = "CSS326 trunk";
+      };
+      bond-sigil = {
+        mode = "802.3ad";
+        lacpMode = "passive";
+        slaves = ["sfp-sfpplus11" "sfp-sfpplus12"];
+        comment = "Sigil";
+      };
+    };
+
     ports = {
       # Lab host 10G NICs — 2 per host (data + prod)
-      "sfp-sfpplus1"  = { host = "lab-1"; interface = "data"; };
-      "sfp-sfpplus2"  = { host = "lab-1"; interface = "prod"; };
-      "sfp-sfpplus3"  = { host = "lab-2"; interface = "data"; };
-      "sfp-sfpplus4"  = { host = "lab-2"; interface = "prod"; };
-      "sfp-sfpplus5"  = { host = "lab-3"; interface = "data"; };
-      "sfp-sfpplus6"  = { host = "lab-3"; interface = "prod"; };
-      "sfp-sfpplus7"  = { host = "lab-4"; interface = "data"; };
-      "sfp-sfpplus8"  = { host = "lab-4"; interface = "prod"; };
+      "sfp-sfpplus1"  = { vlan = 50; meta = { host = "lab-1"; description = "data"; }; };
+      "sfp-sfpplus2"  = { vlan = 30; meta = { host = "lab-1"; description = "prod"; }; };
+      "sfp-sfpplus3"  = { vlan = 50; meta = { host = "lab-2"; description = "data"; }; };
+      "sfp-sfpplus4"  = { vlan = 30; meta = { host = "lab-2"; description = "prod"; }; };
+      "sfp-sfpplus5"  = { vlan = 50; meta = { host = "lab-3"; description = "data"; }; };
+      "sfp-sfpplus6"  = { vlan = 30; meta = { host = "lab-3"; description = "prod"; }; };
+      "sfp-sfpplus7"  = { vlan = 50; meta = { host = "lab-4"; description = "data"; }; };
+      "sfp-sfpplus8"  = { vlan = 30; meta = { host = "lab-4"; description = "prod"; }; };
 
-      # Trunk to mdf-acc01 (CSS326 in same rack, dual SFP+)
-      "sfp-sfpplus9"  = { type = "trunk"; peer = "mdf-acc01"; };
-      "sfp-sfpplus10" = { type = "trunk"; peer = "mdf-acc01"; };
+      # Trunk to mdf-acc01 (CSS326 in same rack, dual SFP+ LACP)
+      # No transit VLAN 250 — CSS326 is internal-only.
+      "sfp-sfpplus9"  = { vlans = internal; meta.peer = "mdf-acc01"; };
+      "sfp-sfpplus10" = { vlans = internal; meta.peer = "mdf-acc01"; };
 
       # Sigil workstation (main VLAN, LACP bond — two 10G links)
-      "sfp-sfpplus11" = { host = "sigil"; interface = "main"; };
-      "sfp-sfpplus12" = { host = "sigil"; interface = "main"; };
-      "sfp-sfpplus13" = { type = "unused"; };
-      "sfp-sfpplus14" = { type = "unused"; };
-      "sfp-sfpplus15" = { type = "unused"; };
-      "sfp-sfpplus16" = { type = "unused"; };
-      "sfp-sfpplus17" = { type = "unused"; };
-      "sfp-sfpplus18" = { type = "unused"; };
-      "sfp-sfpplus19" = { type = "unused"; };
+      "sfp-sfpplus11" = { vlan = 10; meta.host = "sigil"; };
+      "sfp-sfpplus12" = { vlan = 10; meta.host = "sigil"; };
+      "sfp-sfpplus13" = {};
+      "sfp-sfpplus14" = {};
+      "sfp-sfpplus15" = {};
+      "sfp-sfpplus16" = {};
+      "sfp-sfpplus17" = {};
+      "sfp-sfpplus18" = {};
+      "sfp-sfpplus19" = {};
       # Trunk to idf-dist01 (CRS305 in network cabinet)
-      "sfp-sfpplus20" = { type = "trunk"; peer = "idf-dist01"; };
-      "sfp-sfpplus21" = { type = "unused"; };
-      "sfp-sfpplus22" = { type = "unused"; };
-      "sfp-sfpplus23" = { type = "unused"; };
+      "sfp-sfpplus20" = { vlans = all; meta.peer = "idf-dist01"; };
+      "sfp-sfpplus21" = {};
+      "sfp-sfpplus22" = {};
+      "sfp-sfpplus23" = {};
       # Trunk to mdf-brk01 (2.5G switch for iyr breakout)
-      "sfp-sfpplus24" = { type = "trunk"; peer = "mdf-brk01"; };
+      "sfp-sfpplus24" = { vlans = all; meta.peer = "mdf-brk01"; };
     };
   };
 
@@ -67,42 +83,41 @@
 
     ports = {
       # Lab-1: BMC + 4 ethernet (5 ports per host)
-      ether1  = { host = "lab-1"; interface = "mgmt"; };
-      ether2  = { host = "lab-1"; interface = "infra"; };
-      ether3  = { host = "lab-1"; interface = "stage"; };
-      ether4  = { host = "lab-1"; interface = "prod"; };
-      ether5  = { host = "lab-1"; interface = "prod"; description = "eno4 (second prod link)"; };
+      ether1  = { vlan = 240; meta.host = "lab-1"; meta.description = "BMC/iLO"; };
+      ether2  = { vlan = 25;  meta.host = "lab-1"; meta.description = "infra"; };
+      ether3  = { vlan = 31;  meta.host = "lab-1"; meta.description = "stage"; };
+      ether4  = { vlan = 30;  meta.host = "lab-1"; meta.description = "prod"; };
+      ether5  = { vlan = 30;  meta.host = "lab-1"; meta.description = "eno4 (second prod link)"; };
 
       # Lab-2
-      ether6  = { host = "lab-2"; interface = "mgmt"; };
-      ether7  = { host = "lab-2"; interface = "infra"; };
-      ether8  = { host = "lab-2"; interface = "stage"; };
-      ether9  = { host = "lab-2"; interface = "prod"; };
-      ether10 = { host = "lab-2"; interface = "prod"; description = "eno4 (second prod link)"; };
+      ether6  = { vlan = 240; meta.host = "lab-2"; meta.description = "BMC/iLO"; };
+      ether7  = { vlan = 25;  meta.host = "lab-2"; meta.description = "infra"; };
+      ether8  = { vlan = 31;  meta.host = "lab-2"; meta.description = "stage"; };
+      ether9  = { vlan = 30;  meta.host = "lab-2"; meta.description = "prod"; };
+      ether10 = { vlan = 30;  meta.host = "lab-2"; meta.description = "eno4 (second prod link)"; };
 
       # Lab-3
-      ether11 = { host = "lab-3"; interface = "mgmt"; };
-      ether12 = { host = "lab-3"; interface = "infra"; };
-      ether13 = { host = "lab-3"; interface = "stage"; };
-      ether14 = { host = "lab-3"; interface = "prod"; };
-      ether15 = { host = "lab-3"; interface = "prod"; description = "eno4 (second prod link)"; };
+      ether11 = { vlan = 240; meta.host = "lab-3"; meta.description = "BMC/iLO"; };
+      ether12 = { vlan = 25;  meta.host = "lab-3"; meta.description = "infra"; };
+      ether13 = { vlan = 31;  meta.host = "lab-3"; meta.description = "stage"; };
+      ether14 = { vlan = 30;  meta.host = "lab-3"; meta.description = "prod"; };
+      ether15 = { vlan = 30;  meta.host = "lab-3"; meta.description = "eno4 (second prod link)"; };
 
       # Lab-4
-      ether16 = { host = "lab-4"; interface = "mgmt"; };
-      ether17 = { host = "lab-4"; interface = "infra"; };
-      ether18 = { host = "lab-4"; interface = "stage"; };
-      ether19 = { host = "lab-4"; interface = "prod"; };
-      ether20 = { host = "lab-4"; interface = "prod"; description = "eno4 (second prod link)"; };
+      ether16 = { vlan = 240; meta.host = "lab-4"; meta.description = "BMC/iLO"; };
+      ether17 = { vlan = 25;  meta.host = "lab-4"; meta.description = "infra"; };
+      ether18 = { vlan = 31;  meta.host = "lab-4"; meta.description = "stage"; };
+      ether19 = { vlan = 30;  meta.host = "lab-4"; meta.description = "prod"; };
+      ether20 = { vlan = 30;  meta.host = "lab-4"; meta.description = "eno4 (second prod link)"; };
 
-      # Unused 1G ports
-      ether21 = { type = "unused"; };
-      ether22 = { type = "unused"; };
-      ether23 = { type = "unused"; };
-      ether24 = { type = "access"; vlan = 240; description = "admin access"; };
+      ether21 = {};
+      ether22 = {};
+      ether23 = {};
+      ether24 = { vlan = 240; meta.description = "admin access"; };
 
       # SFP+ uplinks — bonded to CRS326
-      "sfp-sfpplus1" = { type = "trunk"; peer = "mdf-agg01"; };
-      "sfp-sfpplus2" = { type = "trunk"; peer = "mdf-agg01"; };
+      "sfp-sfpplus1" = { vlans = internal; meta.peer = "mdf-agg01"; };
+      "sfp-sfpplus2" = { vlans = internal; meta.peer = "mdf-agg01"; };
     };
   };
 
@@ -117,19 +132,16 @@
     description = "2.5G iyr breakout switch";
     addresses.mgmt.ipv4 = "10.0.240.6";
 
-    # Port numbering matches the switch's web UI (Port 1-9).
-    # Only 3 ports are in use; the rest are unused.
     ports = {
-      port5 = { type = "trunk"; peer = "iyr"; description = "iyr WAN (enp3s0, transit VLAN)"; vlans = [250]; };
-      port6 = { type = "trunk"; peer = "iyr"; description = "iyr LAN (enp1s0, all internal VLANs)"; };
-      port9 = { type = "trunk"; peer = "mdf-agg01"; description = "uplink to CRS326 sfp-sfpplus24"; };
-
-      port1 = { type = "unused"; };
-      port2 = { type = "unused"; };
-      port3 = { type = "unused"; };
-      port4 = { type = "unused"; };
-      port7 = { type = "unused"; };
-      port8 = { type = "unused"; };
+      port1 = {};
+      port2 = {};
+      port3 = {};
+      port4 = {};
+      port5 = { vlans = [250]; meta = { peer = "iyr"; description = "iyr WAN (enp3s0, transit VLAN)"; }; };
+      port6 = { vlans = internal; meta = { peer = "iyr"; description = "iyr LAN (enp1s0, all internal VLANs)"; }; };
+      port7 = {};
+      port8 = {};
+      port9 = { vlans = all; meta = { peer = "mdf-agg01"; description = "uplink to CRS326 sfp-sfpplus24"; }; };
     };
   };
 
@@ -143,20 +155,17 @@
     addresses.mgmt.ipv4 = "10.0.240.4";
 
     ports = {
-      # ether1 receives PoE power from idf-poe01 AND serves as
-      # management access (VLAN 240) so we can always reach it.
-      "ether1" = { type = "access"; vlan = 240; description = "management + PoE-in"; };
+      # PoE-in only — disabled as a data port because idf-poe01 is a dumb
+      # switch also connected via sfp-sfpplus3; enabling both = loop.
+      "ether1" = {};
       # Trunk to mdf-agg01 (CRS326 in server rack, via LR east-west patch)
-      "sfp-sfpplus1" = { type = "trunk"; peer = "mdf-agg01"; };
-
+      "sfp-sfpplus1" = { vlans = all; meta.peer = "mdf-agg01"; };
       # WAN uplink — modem (untagged transit VLAN 250)
-      "sfp-sfpplus2" = { type = "access"; vlan = 250; description = "modem (WAN)"; };
-
-      # Trunk to idf-poe01 (DAC, carries AP VLANs)
-      "sfp-sfpplus3" = { type = "trunk"; peer = "idf-poe01"; };
-
-      # Fireplace drop — 10G access port (main VLAN, currently unused)
-      "sfp-sfpplus4" = { type = "access"; vlan = 10; description = "fireplace drop"; };
+      "sfp-sfpplus2" = { vlan = 250; meta.description = "modem (WAN)"; };
+      # Trunk to idf-poe01 (DAC, carries AP VLANs through dumb PoE switch)
+      "sfp-sfpplus3" = { vlans = all; meta.peer = "idf-poe01"; };
+      # Fireplace drop
+      "sfp-sfpplus4" = { vlan = 10; meta.description = "fireplace drop"; };
     };
   };
 

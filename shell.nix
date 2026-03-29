@@ -15,6 +15,7 @@ in
       nixd
       nix-tree
       pkgs.psyclyx.regenerate-palettes
+      pkgs.psyclyx.switch-deploy
       sops
       ssh-to-age
       yq
