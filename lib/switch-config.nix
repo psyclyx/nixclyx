@@ -416,7 +416,8 @@ let
     portNameFor = idx: let
       p = cfgAt idx;
       mode = modeAt idx;
-    in if mode == "unused" then "" else portLabel p;
+      name = if mode == "unused" then "" else portLabel p;
+    in builtins.substring 0 16 name;
 
     linkSection = "link.b:{"
       + "en:${h8 enableBits}"
