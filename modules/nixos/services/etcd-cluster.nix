@@ -59,17 +59,17 @@
         enable = true;
         name = hostname;
         listenClientUrls = [
-          "http://${bindAddr}:${toString cfg.clientPort}"
-          "http://127.0.0.1:${toString cfg.clientPort}"
+          "https://${bindAddr}:${toString cfg.clientPort}"
+          "https://127.0.0.1:${toString cfg.clientPort}"
         ];
         advertiseClientUrls = [
-          "http://${bindAddr}:${toString cfg.clientPort}"
+          "https://${bindAddr}:${toString cfg.clientPort}"
         ];
         listenPeerUrls = [
-          "http://${bindAddr}:${toString cfg.peerPort}"
+          "https://${bindAddr}:${toString cfg.peerPort}"
         ];
         initialAdvertisePeerUrls = [
-          "http://${bindAddr}:${toString cfg.peerPort}"
+          "https://${bindAddr}:${toString cfg.peerPort}"
         ];
         inherit initialCluster;
         initialClusterToken = cfg.clusterToken;

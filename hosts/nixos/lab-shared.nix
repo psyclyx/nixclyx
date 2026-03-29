@@ -124,7 +124,6 @@ in {
       };
       openbao-pki = {
         enable = true;
-        vaultAddr = "http://${fleet.networks.infra.gateway4}:8200";
       };
       openbao-kv = {
         enable = true;

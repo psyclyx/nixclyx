@@ -53,7 +53,7 @@
       default = ''
         path "kv/*"         { capabilities = ["create","read","update","patch","list"] }
         path "pki/*"        { capabilities = ["create","read","update","list"] }
-        path "sys/mounts/*" { capabilities = ["create","read","update"] }
+        path "sys/mounts/*" { capabilities = ["create","read","update","sudo"] }
         path "sys/mounts"   { capabilities = ["read","list"] }
         path "sys/auth/*"   { capabilities = ["create","read","update","sudo"] }
         path "sys/auth"     { capabilities = ["read","list"] }

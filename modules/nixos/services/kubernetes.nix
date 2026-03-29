@@ -148,13 +148,6 @@
         };
       };
 
-      # ── CFSSL CA server (leader only) ────────────────────────
-      # Non-init nodes connect to the leader's CFSSL to bootstrap
-      # their certificates (pkiTrustOnBootstrap handles TOFU).
-      services.cfssl = lib.mkIf (!isInit) {
-        address = lib.mkForce initAddr;
-      };
-
       # ── CLI tools on the hosts ───────────────────────────────
       environment.systemPackages = [
         pkgs.kubernetes

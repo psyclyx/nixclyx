@@ -43,6 +43,19 @@
           directory = lib.mkOption {
             type = lib.types.str;
           };
+          certFile = lib.mkOption {
+            type = lib.types.str;
+            default = "cert.pem";
+            description = "Filename for the certificate within directory.";
+          };
+          keyFile = lib.mkOption {
+            type = lib.types.str;
+            default = "key.pem";
+          };
+          caFile = lib.mkOption {
+            type = lib.types.str;
+            default = "ca.pem";
+          };
           owner = lib.mkOption {
             type = lib.types.str;
             default = "root";
@@ -50,6 +63,11 @@
           group = lib.mkOption {
             type = lib.types.str;
             default = "root";
+          };
+          keyMode = lib.mkOption {
+            type = lib.types.str;
+            default = "600";
+            description = "File mode for the private key. Use 640 for group-readable.";
           };
           reloadUnits = lib.mkOption {
             type = lib.types.listOf lib.types.str;
@@ -101,33 +119,36 @@
           if [ -f ${lib.escapeShellArg cfg.tokenFile} ]; then
             export BAO_ADDR="${cfg.vaultAddr}"
             export BAO_TOKEN="$(cat ${lib.escapeShellArg cfg.tokenFile})"
-            if RESPONSE=$(${bao} write -format=json ${writeArgs} 2>/dev/null); then
-              echo "$RESPONSE" | ${jq} -r '.data.certificate' > "$DIR/cert.pem.new"
-              echo "$RESPONSE" | ${jq} -r '.data.private_key' > "$DIR/key.pem.new"
-              echo "$RESPONSE" | ${jq} -r '.data.issuing_ca' > "$DIR/ca.pem.new"
+            export HOME="/tmp"
+            RESP=$(mktemp)
+            if ${bao} write -format=json ${writeArgs} > "$RESP" 2>/dev/null; then
+              ${jq} -r '.data.certificate' "$RESP" > "$DIR/${cert.certFile}.new"
+              ${jq} -r '.data.private_key' "$RESP" > "$DIR/${cert.keyFile}.new"
+              ${jq} -r '.data.issuing_ca' "$RESP" > "$DIR/${cert.caFile}.new"
 
-              mv "$DIR/cert.pem.new" "$DIR/cert.pem"
-              mv "$DIR/key.pem.new" "$DIR/key.pem"
-              mv "$DIR/ca.pem.new" "$DIR/ca.pem"
+              mv "$DIR/${cert.certFile}.new" "$DIR/${cert.certFile}"
+              mv "$DIR/${cert.keyFile}.new" "$DIR/${cert.keyFile}"
+              mv "$DIR/${cert.caFile}.new" "$DIR/${cert.caFile}"
               FETCHED=1
               echo "Fetched certificate for ${cert.commonName} from OpenBao"
             fi
+            rm -f "$RESP"
           fi
 
-          if [ "$FETCHED" -eq 0 ] && [ ! -f "$DIR/cert.pem" ]; then
+          if [ "$FETCHED" -eq 0 ] && [ ! -f "$DIR/${cert.certFile}" ]; then
             echo "OpenBao unavailable, generating self-signed certificate for ${cert.commonName}"
             ${openssl} req -x509 \
               -newkey ec -pkeyopt ec_paramgen_curve:prime256v1 \
-              -keyout "$DIR/key.pem" -out "$DIR/cert.pem" \
+              -keyout "$DIR/${cert.keyFile}" -out "$DIR/${cert.certFile}" \
               -days 1 -nodes -subj "/CN=${cert.commonName}" 2>/dev/null
-            cp "$DIR/cert.pem" "$DIR/ca.pem"
+            cp "$DIR/${cert.certFile}" "$DIR/${cert.caFile}"
           elif [ "$FETCHED" -eq 0 ]; then
             echo "OpenBao unavailable, keeping existing certificate"
           fi
 
-          chown ${cert.owner}:${cert.group} "$DIR/cert.pem" "$DIR/key.pem" "$DIR/ca.pem"
-          chmod 644 "$DIR/cert.pem" "$DIR/ca.pem"
-          chmod 600 "$DIR/key.pem"
+          chown ${cert.owner}:${cert.group} "$DIR/${cert.certFile}" "$DIR/${cert.keyFile}" "$DIR/${cert.caFile}"
+          chmod 644 "$DIR/${cert.certFile}" "$DIR/${cert.caFile}"
+          chmod ${cert.keyMode} "$DIR/${cert.keyFile}"
 
           ${lib.optionalString (cert.reloadUnits != []) ''
             if [ "$FETCHED" -eq 1 ]; then
