@@ -20,6 +20,15 @@
     (host: host.wireguard.exportedRoutes)
     (lib.attrValues wgPeers);
 
+  # Resolve allowedNetworks to CIDRs, or fall back to all exported routes
+  resolvedAllowedIPs =
+    if thisHost != null && thisHost.wireguard != null && thisHost.wireguard.allowedNetworks != null
+    then
+      [topo.wireguard.subnet]
+      ++ map (name: topo.networks.${name}.ipv4) thisHost.wireguard.allowedNetworks
+    else
+      [topo.wireguard.subnet] ++ allPeerExportedRoutes;
+
   # Hub endpoint: prefer explicit endpoint from host data, fall back to constructed
   hubEndpoint =
     if hubHost.wireguard.endpoint != null
@@ -84,7 +93,7 @@ in {
               {
                 PublicKey = hubHost.wireguard.publicKey;
                 Endpoint = hubEndpoint;
-                AllowedIPs = [topo.wireguard.subnet] ++ allPeerExportedRoutes;
+                AllowedIPs = resolvedAllowedIPs;
                 PersistentKeepalive = 25;
               }
             ];

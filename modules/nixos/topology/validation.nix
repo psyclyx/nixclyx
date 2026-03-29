@@ -58,6 +58,16 @@
     }
   ) hosts);
 
+  validAddressNetworks = lib.attrNames networks ++ [ "vpn" ];
+  addressKeyChecks = lib.concatLists (lib.mapAttrsToList (hostname: host:
+    lib.concatLists (lib.mapAttrsToList (netName: _:
+      lib.optional (!(builtins.elem netName validAddressNetworks)) {
+        assertion = false;
+        message = "Host '${hostname}' has address key '${netName}' which is neither a network in networks.nix nor the 'vpn' pseudo-network.";
+      }
+    ) host.addresses)
+  ) hosts);
+
   parentChecks = lib.concatLists (lib.mapAttrsToList (hostname: host:
     lib.optional (host.parent != null && !(hosts ? ${host.parent})) {
       assertion = false;
@@ -92,6 +102,7 @@ in {
     ++ haVipCollisionChecks
     ++ haNetworkChecks
     ++ wgPeerChecks
+    ++ addressKeyChecks
     ++ parentChecks
     ++ inputZoneChecks
     ++ forwardZoneChecks;
