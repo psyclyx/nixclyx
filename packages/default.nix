@@ -11,7 +11,6 @@ let
     nvf = ./nvf.nix;
     ssacli = ./ssacli.nix;
     egregore = ./egregore.nix;
-    switch-deploy = ./switch-deploy.nix;
     upscale-image = ./upscale-image;
   };
 in
