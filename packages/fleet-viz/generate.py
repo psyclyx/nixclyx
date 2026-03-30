@@ -1,4 +1,4 @@
-"""Generate fleet visualization from topology JSON.
+"""Generate fleet visualization from egregore entity JSON.
 
 Produces:
 - index.html: interactive fleet dashboard
@@ -17,7 +17,12 @@ def load_fleet(path):
         return json.load(f)
 
 
-def generate_topology_dot(fleet):
+def entities_of_type(data, type_name):
+    return {k: v for k, v in data.get('entities', {}).items()
+            if v.get('type') == type_name}
+
+
+def generate_topology_dot(data):
     """Generate a Graphviz DOT graph of the network topology."""
     lines = ['digraph fleet {']
     lines.append('  rankdir=LR;')
@@ -25,14 +30,15 @@ def generate_topology_dot(fleet):
     lines.append('  edge [fontname="monospace", fontsize=10];')
     lines.append('')
 
-    networks = fleet.get('networks', {})
-    hosts = fleet.get('hosts', {})
-    ha_groups = fleet.get('haGroups', {})
+    networks = entities_of_type(data, 'network')
+    hosts = entities_of_type(data, 'host')
+    ha_groups = entities_of_type(data, 'ha-group')
 
     # Network nodes
     for net_name, net in networks.items():
-        ipv4 = net.get('ipv4', '')
-        vlan = net.get('vlan', '')
+        nd = net.get('network', {})
+        ipv4 = nd.get('ipv4', '')
+        vlan = nd.get('vlan', '')
         label = f"{net_name}\\nVLAN {vlan}\\n{ipv4}" if vlan else f"{net_name}\\n{ipv4}"
         lines.append(f'  net_{net_name} [label="{label}", shape=ellipse, '
                       f'style=filled, fillcolor="#e8f4f8"];')
@@ -41,9 +47,10 @@ def generate_topology_dot(fleet):
 
     # Host nodes
     for host_name, host in hosts.items():
-        roles = ', '.join(host.get('roles', []))
+        hd = host.get('host', {})
+        roles = ', '.join(hd.get('roles', []))
         addrs = []
-        for net_name, addr in host.get('addresses', {}).items():
+        for net_name, addr in hd.get('addresses', {}).items():
             ipv4 = addr.get('ipv4', '')
             if ipv4:
                 addrs.append(f"{net_name}: {ipv4}")
@@ -52,12 +59,12 @@ def generate_topology_dot(fleet):
         if addr_str:
             label += f"\\n{addr_str}"
 
-        color = '#d4edda' if 'server' in host.get('roles', []) else '#fff3cd'
-        if 'router' in host.get('roles', []):
+        color = '#d4edda' if 'server' in hd.get('roles', []) else '#fff3cd'
+        if 'router' in hd.get('roles', []):
             color = '#f8d7da'
-        elif 'workstation' in host.get('roles', []):
+        elif 'workstation' in hd.get('roles', []):
             color = '#fff3cd'
-        elif 'mobile' in host.get('roles', []):
+        elif 'mobile' in hd.get('roles', []):
             color = '#e2e3e5'
 
         lines.append(f'  host_{host_name.replace("-", "_")} '
@@ -67,7 +74,8 @@ def generate_topology_dot(fleet):
 
     # Host → Network edges
     for host_name, host in hosts.items():
-        for net_name in host.get('addresses', {}):
+        hd = host.get('host', {})
+        for net_name in hd.get('addresses', {}):
             if net_name in networks or net_name == 'vpn':
                 h = host_name.replace('-', '_')
                 lines.append(f'  host_{h} -> net_{net_name} '
@@ -77,13 +85,14 @@ def generate_topology_dot(fleet):
 
     # HA VIP nodes
     for group_name, group in ha_groups.items():
-        vip = group.get('vip', {})
+        gd = group.get('ha-group', {})
+        vip = gd.get('vip', {})
         ipv4 = vip.get('ipv4', '') if vip else ''
-        services = ', '.join(group.get('services', {}).keys())
+        services = ', '.join(gd.get('services', {}).keys())
         label = f"VIP: {group_name}\\n{ipv4}\\n{services}"
         lines.append(f'  vip_{group_name} [label="{label}", shape=diamond, '
                       f'style=filled, fillcolor="#d1ecf1"];')
-        net = group.get('network', '')
+        net = gd.get('network', '')
         if net:
             lines.append(f'  vip_{group_name} -> net_{net} '
                           f'[dir=none, style=dashed, color="#17a2b8"];')
@@ -92,18 +101,17 @@ def generate_topology_dot(fleet):
     return '\n'.join(lines)
 
 
-def generate_service_matrix(fleet):
+def generate_service_matrix(data):
     """Generate an HTML table of hosts × exporters."""
-    hosts = fleet.get('hosts', {})
+    hosts = entities_of_type(data, 'host')
     all_exporters = set()
     for host in hosts.values():
-        all_exporters.update(host.get('exporters', {}).keys())
+        all_exporters.update(host.get('host', {}).get('exporters', {}).keys())
     all_exporters = sorted(all_exporters)
 
     rows = []
     for host_name in sorted(hosts.keys()):
-        host = hosts[host_name]
-        host_exporters = host.get('exporters', {})
+        host_exporters = hosts[host_name].get('host', {}).get('exporters', {})
         cells = []
         for exp in all_exporters:
             if exp in host_exporters:
@@ -120,16 +128,19 @@ def generate_service_matrix(fleet):
 </table>'''
 
 
-def generate_html(fleet, service_matrix):
+def generate_html(data, service_matrix):
     """Generate the main dashboard HTML."""
-    hosts = fleet.get('hosts', {})
-    networks = fleet.get('networks', {})
-    ha_groups = fleet.get('haGroups', {})
-    wireguard = fleet.get('wireguard', {})
+    hosts = entities_of_type(data, 'host')
+    networks = entities_of_type(data, 'network')
+    ha_groups = entities_of_type(data, 'ha-group')
+    overlay = {
+        'subnet': data.get('overlay', {}).get('subnet', 'n/a'),
+        'hub': data.get('overlay', {}).get('hub', 'n/a'),
+    }
 
     host_count = len(hosts)
     net_count = len(networks)
-    svc_count = sum(len(h.get('exporters', {})) for h in hosts.values())
+    svc_count = sum(len(h.get('host', {}).get('exporters', {})) for h in hosts.values())
 
     return f'''<!DOCTYPE html>
 <html lang="en">
@@ -199,7 +210,7 @@ def generate_html(fleet, service_matrix):
 <div class="network-list">
 {''.join(f"""<div class="card">
   <h3>{name}</h3>
-  <div class="detail">VLAN {net.get('vlan', 'n/a')} &mdash; {net.get('ipv4', '')}</div>
+  <div class="detail">VLAN {net.get('network', {}).get('vlan', 'n/a')} &mdash; {net.get('network', {}).get('ipv4', '')}</div>
 </div>""" for name, net in sorted(networks.items()))}
 </div>
 
@@ -207,9 +218,9 @@ def generate_html(fleet, service_matrix):
 <div class="ha-list">
 {''.join(f"""<div class="card">
   <h3>{name}</h3>
-  <div class="detail">VIP: {group.get('vip', {}).get('ipv4', 'n/a') if group.get('vip') else 'n/a'}</div>
-  <div class="detail">Members: {', '.join(group.get('members', []))}</div>
-  <div class="detail">Services: {', '.join(group.get('services', {}).keys())}</div>
+  <div class="detail">VIP: {group.get('ha-group', {}).get('vip', {}).get('ipv4', 'n/a')}</div>
+  <div class="detail">Members: {', '.join(group.get('ha-group', {}).get('members', []))}</div>
+  <div class="detail">Services: {', '.join(group.get('ha-group', {}).get('services', {}).keys())}</div>
 </div>""" for name, group in sorted(ha_groups.items()))}
 </div>
 
@@ -218,8 +229,8 @@ def generate_html(fleet, service_matrix):
 
 <h2>WireGuard Overlay</h2>
 <div class="card">
-  <div class="detail">Subnet: {wireguard.get('subnet', 'n/a')}</div>
-  <div class="detail">Hub: {wireguard.get('hub', 'n/a')}</div>
+  <div class="detail">Subnet: {overlay['subnet']}</div>
+  <div class="detail">Hub: {overlay['hub']}</div>
 </div>
 </body>
 </html>'''
@@ -233,17 +244,17 @@ def main():
     fleet_path = sys.argv[1]
     out_dir = Path(sys.argv[2])
 
-    fleet = load_fleet(fleet_path)
+    data = load_fleet(fleet_path)
 
     # Generate topology DOT and render SVG
-    dot = generate_topology_dot(fleet)
+    dot = generate_topology_dot(data)
     dot_path = out_dir / 'topology.dot'
     dot_path.write_text(dot)
     os.system(f'dot -Tsvg {dot_path} -o {out_dir}/topology.svg')
 
     # Generate HTML
-    service_matrix = generate_service_matrix(fleet)
-    html = generate_html(fleet, service_matrix)
+    service_matrix = generate_service_matrix(data)
+    html = generate_html(data, service_matrix)
     (out_dir / 'index.html').write_text(html)
 
 

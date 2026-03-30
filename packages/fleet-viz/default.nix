@@ -1,6 +1,6 @@
-{ pkgs, fleetData }:
+{ pkgs, egregorData }:
 let
-  fleetJson = pkgs.writeText "fleet.json" (builtins.toJSON fleetData);
+  fleetJson = pkgs.writeText "fleet.json" (builtins.toJSON egregorData);
 in
 pkgs.runCommand "fleet-viz" {
   nativeBuildInputs = [ pkgs.python3 pkgs.graphviz ];

@@ -92,10 +92,12 @@ let
       }) hostNames);
       overlays.default = overlay;
       docs = import ./docs {inherit nixclyx;};
-      fleet-viz = pkgs:
-        import ./packages/fleet-viz {
-          inherit pkgs;
-          fleetData = let fleet = import ./data/fleet; in fleet.topology // { inherit (fleet) devices; };
+      fleet-viz = pkgs: let
+        spec = import ./egregore.nix;
+        egregorePkg = import spec.lib { inherit (pkgs) lib; };
+        egregorData = egregorePkg.eval { inherit (spec) modules; };
+      in import ./packages/fleet-viz {
+          inherit pkgs egregorData;
         };
       nvf = pkgs:
         ((import sources.nvf).lib.neovimConfiguration {
