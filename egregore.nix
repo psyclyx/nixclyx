@@ -6,19 +6,13 @@
 #   lib     — path to the egregore framework
 #   modules — list of modules to pass to egregore.eval
 #
-{
+let
+  mods = import ./modules/egregore;
+in {
   lib = ./egregore;
 
-  modules = [
-    ./egregore/extensions/globals.nix
-    ./egregore/types/network.nix
-    ./egregore/types/host.nix
-    ./egregore/types/routeros.nix
-    ./egregore/types/swos.nix
-    ./egregore/types/sodola.nix
-    ./egregore/types/ilo.nix
-    ./egregore/types/unmanaged.nix
-    ./egregore/types/ha-group.nix
-    ./data/egregore.nix
-  ];
+  modules =
+    mods.types
+    ++ mods.extensions
+    ++ [ ./data/egregore.nix ];
 }
