@@ -11,9 +11,9 @@ _egregore() {
 
   local cmd="${words[1]}"
 
-  # Entity name completion for commands that take one
   case "$cmd" in
-    show|attrs|verbs|verb|run)
+    # Entity name completion for entity-first commands
+    show|attrs|verbs)
       if [[ $cword -eq 2 ]]; then
         local entities
         entities=$(egregore list --no-color 2>/dev/null | awk '{print $1}')
@@ -21,23 +21,34 @@ _egregore() {
         return
       fi
       ;;
-  esac
 
-  # Verb name completion
-  case "$cmd" in
+    # verb <verb> <entity> — verb name first, then entity
     verb|run)
-      if [[ $cword -eq 3 ]]; then
-        local entity="${words[2]}"
+      if [[ $cword -eq 2 ]]; then
+        # Complete verb names (union across all entity types)
         local verbs
-        verbs=$(egregore verbs "$entity" --no-color 2>/dev/null | awk '{print $1}')
+        verbs=$(egregore list --flat --no-color 2>/dev/null | awk '{print $1}' \
+          | while read -r e; do
+              egregore verbs "$e" --no-color 2>/dev/null | awk '{print $1}'
+            done | sort -u)
         COMPREPLY=($(compgen -W "$verbs" -- "$cur"))
         return
       fi
+      if [[ $cword -eq 3 ]]; then
+        # Complete entity names that have the given verb
+        local verb_name="${words[2]}"
+        local entities
+        entities=$(egregore list --flat --no-color 2>/dev/null | awk '{print $1}' \
+          | while read -r e; do
+              egregore verbs "$e" --no-color 2>/dev/null \
+                | awk -v v="$verb_name" '$1 == v {print e; exit}' e="$e"
+            done)
+        COMPREPLY=($(compgen -W "$entities" -- "$cur"))
+        return
+      fi
       ;;
-  esac
 
-  # Flags for list
-  case "$cmd" in
+    # Flags for list
     list|ls)
       if [[ "$cur" == --type=* ]]; then
         local prefix="--type="

@@ -13,6 +13,21 @@ _egregore_verbs() {
   _describe 'verb' verbs
 }
 
+_egregore_all_verbs() {
+  # Collect all verbs across all entity types for position 2 (before entity is known).
+  local -a verbs
+  verbs=(${(f)"$(egregore list --flat --no-color 2>/dev/null | awk '{print $1}' | while read -r e; do egregore verbs "$e" --no-color 2>/dev/null | awk '{print $1}'; done | sort -u)"})
+  _describe 'verb' verbs
+}
+
+_egregore_entities_for_verb() {
+  # Complete entities that have the given verb.
+  local verb="$words[2]"
+  local -a entities
+  entities=(${(f)"$(egregore list --flat --no-color 2>/dev/null | awk '{print $1}' | while read -r e; do egregore verbs "$e" --no-color 2>/dev/null | awk -v v="$verb" '$1 == v {print e; exit}' e="$e"; done)"})
+  _describe 'entity' entities
+}
+
 _egregore_types() {
   local -a types
   types=(${(f)"$(egregore list --no-color 2>/dev/null | awk '{print $2}' | sort -u)"})
@@ -59,8 +74,8 @@ _egregore() {
           ;;
         verb|run)
           _arguments \
-            '1:entity:_egregore_entities' \
-            '2:verb:_egregore_verbs' \
+            '1:verb:_egregore_all_verbs' \
+            '2:entity:_egregore_entities_for_verb' \
             '*:args:_files'
           ;;
       esac

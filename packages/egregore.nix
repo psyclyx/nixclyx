@@ -4,8 +4,8 @@
 #   egregore list [--type=X] [--tag=X]
 #   egregore show <entity>
 #   egregore attrs <entity> [attr]
-#   egregore verb <entity> <verb> [args]
 #   egregore verbs <entity>
+#   egregore verb <verb> <entity> [args]
 #   egregore graph
 #
 { writeShellApplication, symlinkJoin, installShellFiles, runCommand,
@@ -46,9 +46,10 @@ let
         GREEN=$'\e[32m'
         YELLOW=$'\e[33m'
         MAGENTA=$'\e[35m'
+        RED=$'\e[31m'
         RESET=$'\e[0m'
       else
-        DIM="" BOLD="" CYAN="" GREEN="" YELLOW="" MAGENTA="" RESET=""
+        DIM="" BOLD="" CYAN="" GREEN="" YELLOW="" MAGENTA="" RED="" RESET=""
       fi
 
       EGREGORE_DIR="''${EGREGORE_DIR:-$(git rev-parse --show-toplevel 2>/dev/null || echo .)}"
@@ -81,6 +82,15 @@ let
         nix-instantiate --eval --strict --read-write-mode \
           -E "$PREAMBLE $expr" \
           2>/dev/null | sed 's/^"//;s/"$//' | sed 's/\\n/\n/g;s/\\"/"/g;s/\\\\/\\/g'
+      }
+
+      die() {
+        echo "''${RED}error:''${RESET} $1" >&2
+        shift
+        for line in "$@"; do
+          echo "$line" >&2
+        done
+        exit 1
       }
 
       # ── Commands ───────────────────────────────────────────────────
@@ -150,9 +160,15 @@ let
       }
 
       cmd_show() {
-        local name="''${1:?Usage: egregore show <entity>}"
+        [[ $# -ge 1 ]] || die "missing entity name" \
+          "usage: egregore show ''${CYAN}<entity>''${RESET}" \
+          "run ''${DIM}egregore list''${RESET} to see available entities."
+        local name="$1"
         local json
         json=$(nix_eval_json "let e = fleet.entities.\"$name\"; in { inherit (e) type tags refs; attrs = lib.mapAttrs (_: v: if builtins.isList v then v else if builtins.isAttrs v then v else builtins.toString v) e.attrs; verbs = lib.mapAttrs (_: v: { inherit (v) pure description; }) e.verbs; }")
+
+        [[ -n "$json" ]] || die "entity ''${BOLD}$name''${RESET} not found" \
+          "run ''${DIM}egregore list''${RESET} to see available entities."
 
         echo "$json" | jq -r --arg B "$BOLD" --arg R "$RESET" --arg C "$CYAN" --arg G "$GREEN" --arg Y "$YELLOW" --arg M "$MAGENTA" --arg D "$DIM" '
           .type as $type | .tags as $tags | .refs as $refs | .attrs as $attrs | .verbs as $verbs |
@@ -176,7 +192,10 @@ let
       }
 
       cmd_attrs() {
-        local name="''${1:?Usage: egregore attrs <entity> [attr]}"
+        [[ $# -ge 1 ]] || die "missing entity name" \
+          "usage: egregore attrs ''${CYAN}<entity>''${RESET} [attr]" \
+          "run ''${DIM}egregore list''${RESET} to see available entities."
+        local name="$1"
         local attr="''${2:-}"
 
         if [[ -n "$attr" ]]; then
@@ -186,10 +205,47 @@ let
         fi
       }
 
+      # Show all verbs across all entities, grouped by verb then by type.
+      show_all_verbs() {
+        local json
+        json=$(nix_eval_json "lib.mapAttrs (name: e: { inherit (e) type; verbs = lib.mapAttrs (_: v: { inherit (v) description; }) e.verbs; }) fleet.entities")
+
+        [[ -n "$json" ]] || return
+
+        echo "$json" | jq -r '
+          [ to_entries[] | .key as $ent | .value.type as $type |
+            .value.verbs | to_entries[] |
+            {verb: .key, desc: .value.description, entity: $ent, type: $type} ]
+          | group_by(.verb) | sort_by(.[0].verb)[]
+          | .[0].verb as $v | .[0].desc as $d |
+            group_by(.type) | sort_by(.[0].type)[] |
+            .[0].type as $t | [.[].entity] | sort as $ents |
+            "\($v)\t\($d)\t\($t)\t\($ents | join(", "))"
+        ' | {
+          local last_verb=""
+          while IFS=$'\t' read -r verb desc typ ents; do
+            if [[ "$verb" != "$last_verb" ]]; then
+              [[ -n "$last_verb" ]] && echo ""
+              printf "  ''${BOLD}%s''${RESET}  ''${DIM}%s''${RESET}\n" "$verb" "$desc"
+              last_verb="$verb"
+            fi
+            printf "    ''${CYAN}%-12s''${RESET} %s\n" "$typ" "$ents"
+          done
+        }
+      }
+
       cmd_verbs() {
-        local name="''${1:?Usage: egregore verbs <entity>}"
+        if [[ $# -eq 0 ]]; then
+          show_all_verbs
+          return
+        fi
+        local name="$1"
         local json
         json=$(nix_eval_json "lib.mapAttrs (_: v: { inherit (v) pure description defaults; }) fleet.entities.\"$name\".verbs")
+
+        [[ -n "$json" ]] || die "entity ''${BOLD}$name''${RESET} not found" \
+          "run ''${DIM}egregore list''${RESET} to see available entities."
+
         echo "$json" | jq -r 'to_entries | sort_by(.key)[] | "\(.key)\t\(if .value.pure then "pure" else "impure" end)\t\(.value.description)\t\(.value.defaults | join(" "))"' | while IFS=$'\t' read -r verb kind desc defs; do
           local def_str=""
           if [[ -n "$defs" ]]; then
@@ -200,17 +256,27 @@ let
       }
 
       cmd_verb() {
-        local name="''${1:?Usage: egregore verb <entity> <verb> [args...]}"
-        local verb="''${2:?Usage: egregore verb <entity> <verb> [args...]}"
+        if [[ $# -eq 0 ]]; then
+          echo "''${RED}error:''${RESET} missing verb name" >&2
+          echo "usage: egregore verb ''${CYAN}<verb>''${RESET} <entity> [args...]" >&2
+          echo "" >&2
+          show_all_verbs >&2
+          exit 1
+        fi
+        local verb="$1"
+
+        [[ $# -ge 2 ]] || die "missing entity name for verb ''${CYAN}$verb''${RESET}" \
+          "usage: egregore verb $verb ''${CYAN}<entity>''${RESET} [args...]" \
+          "run ''${DIM}egregore list''${RESET} to see available entities."
+        local name="$2"
         shift 2
 
         local meta
         meta=$(nix_eval_json "let v = fleet.entities.\"$name\".verbs.\"$verb\"; in { inherit (v) pure impl defaults; }") || true
 
         if [[ -z "$meta" ]]; then
-          echo "''${BOLD}error:''${RESET} verb ''${CYAN}$verb''${RESET} not found on entity ''${BOLD}$name''${RESET}" >&2
-          echo "Run ''${DIM}egregore verbs $name''${RESET} to see available verbs." >&2
-          exit 1
+          die "verb ''${CYAN}$verb''${RESET} not found on entity ''${BOLD}$name''${RESET}" \
+            "run ''${DIM}egregore verbs $name''${RESET} to see available verbs."
         fi
 
         local is_pure impl
@@ -230,8 +296,6 @@ let
           echo "$impl"
         else
           echo "''${BOLD}=== $verb → $name ===''${RESET}" >&2
-          # $@ is available to impl via positional params (set above
-          # from CLI args or verb defaults).
           eval "$impl"
         fi
       }
@@ -265,16 +329,16 @@ let
         verbs)    cmd_verbs "$@" ;;
         verb|run) cmd_verb "$@" ;;
         graph)    cmd_graph "$@" ;;
-        *)
+        "")
           echo "''${BOLD}egregore''${RESET} — entity registry CLI"
           echo ""
           echo "''${BOLD}Usage:''${RESET}"
-          echo "  egregore ''${CYAN}list''${RESET}  [--type=X] [--tag=X]   List entities"
-          echo "  egregore ''${CYAN}show''${RESET}  <entity>                Entity details"
-          echo "  egregore ''${CYAN}attrs''${RESET} <entity> [attr]        Query attributes"
-          echo "  egregore ''${CYAN}verbs''${RESET} <entity>               List verbs"
-          echo "  egregore ''${CYAN}verb''${RESET}  <entity> <verb> [args] Execute a verb"
-          echo "  egregore ''${CYAN}graph''${RESET}                        Graphviz DOT"
+          echo "  egregore ''${CYAN}list''${RESET}  [--type=X] [--tag=X]    List entities"
+          echo "  egregore ''${CYAN}show''${RESET}  <entity>                 Entity details"
+          echo "  egregore ''${CYAN}attrs''${RESET} <entity> [attr]         Query attributes"
+          echo "  egregore ''${CYAN}verbs''${RESET} [entity]                List verbs"
+          echo "  egregore ''${CYAN}verb''${RESET}  <verb> <entity> [args]  Execute a verb"
+          echo "  egregore ''${CYAN}graph''${RESET}                         Graphviz DOT"
           echo ""
           echo "''${BOLD}Flags:''${RESET}"
           echo "  --color / --no-color    Force color on/off (auto-detects tty)"
@@ -282,7 +346,10 @@ let
           echo "''${BOLD}Environment:''${RESET}"
           echo "  EGREGORE_DIR    Repo root ''${DIM}(default: git root)''${RESET}"
           echo "  EGREGORE_FILE   Entry point ''${DIM}(default: \$EGREGORE_DIR/egregore.nix)''${RESET}"
-          [[ -z "$cmd" ]] && exit 0 || exit 1
+          ;;
+        *)
+          die "unknown command ''${CYAN}$cmd''${RESET}" \
+            "run ''${DIM}egregore''${RESET} for usage."
           ;;
       esac
     '';
