@@ -12,6 +12,7 @@ let
     ssacli = ./ssacli.nix;
     egregore = ./egregore.nix;
     upscale-image = ./upscale-image;
+    sodola-config = ./sodola-config;
   };
 in
   packages // {
