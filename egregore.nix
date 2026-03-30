@@ -1,18 +1,9 @@
-# Egregore entry point — declares which types, extensions, and data to load.
+# Egregore entry point — delegates to configs/egregore/.
 #
-# The CLI evaluates this file. Your repo provides one of these at its root.
-#
-# Returns: { lib, modules }
-#   lib     — path to the egregore framework
-#   modules — list of modules to pass to egregore.eval
-#
+# The CLI evaluates this file. Returns: { lib, modules }
 let
-  mods = import ./modules/egregore;
+  cfg = import ./configs/egregore;
 in {
-  lib = ./egregore;
-
-  modules =
-    mods.types
-    ++ mods.extensions
-    ++ [ ./data/egregore.nix ];
+  lib = cfg.egregoreLib;
+  modules = cfg.modules;
 }
