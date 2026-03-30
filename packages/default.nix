@@ -14,6 +14,7 @@ let
     upscale-image = ./upscale-image;
     sodola-config = ./sodola-config;
     swos-config = ./swos-config;
+    routeros-config = ./routeros-config;
   };
 in
   packages // {
