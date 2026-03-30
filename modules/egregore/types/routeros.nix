@@ -48,4 +48,14 @@ egregorLib.mkType {
     portCount = builtins.length (builtins.attrNames r.ports);
     activePortCount = builtins.length (builtins.attrNames active);
   };
+
+  verbs = name: entity: top: let
+    gen = import ../generators/switch-config.nix lib top;
+  in {
+    generate-config = {
+      description = "Generate complete RouterOS .rsc configuration.";
+      pure = true;
+      impl = gen.routeros name;
+    };
+  };
 }

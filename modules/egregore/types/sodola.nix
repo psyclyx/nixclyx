@@ -37,4 +37,20 @@ egregorLib.mkType {
     portCount = builtins.length (builtins.attrNames s.ports);
     activePortCount = builtins.length (builtins.attrNames active);
   };
+
+  verbs = name: entity: top: let
+    gen = import ../generators/switch-config.nix lib top;
+    result = gen.sodola name;
+  in {
+    generate-config = {
+      description = "Generate Sodola binary backup (hex-encoded).";
+      pure = true;
+      impl = result.backup;
+    };
+    port-map = {
+      description = "Show human-readable port map.";
+      pure = true;
+      impl = result.portMap;
+    };
+  };
 }
