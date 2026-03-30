@@ -20,4 +20,21 @@ in
       ssh-to-age
       yq
     ];
+
+    shellHook = ''
+      # Enable completions from nix shell packages.
+      for p in $nativeBuildInputs; do
+        if [[ -n "''${ZSH_VERSION:-}" && -d "$p/share/zsh/site-functions" ]]; then
+          fpath+=("$p/share/zsh/site-functions")
+        fi
+        if [[ -n "''${BASH_VERSION:-}" && -d "$p/share/bash-completion/completions" ]]; then
+          for f in "$p/share/bash-completion/completions/"*; do
+            source "$f" 2>/dev/null
+          done
+        fi
+      done
+      if [[ -n "''${ZSH_VERSION:-}" ]]; then
+        autoload -Uz compinit && compinit -C
+      fi
+    '';
   }
