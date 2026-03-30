@@ -85,11 +85,12 @@ let
       # ── Commands ───────────────────────────────────────────────────
 
       cmd_list() {
-        local type_filter="" tag_filter=""
+        local type_filter="" tag_filter="" flat=""
         while [[ $# -gt 0 ]]; do
           case "$1" in
             --type=*) type_filter="''${1#--type=}"; shift ;;
             --tag=*)  tag_filter="''${1#--tag=}"; shift ;;
+            --flat)   flat=1; shift ;;
             *) echo "Unknown option: $1" >&2; exit 1 ;;
           esac
         done
@@ -101,13 +102,50 @@ let
         [[ -n "$type_filter" ]] && filters+="| select(.value.type == \"$type_filter\")"
         [[ -n "$tag_filter" ]] && filters+="| select(.value.tags | index(\"$tag_filter\"))"
 
-        echo "$json" | jq -r "to_entries[] $filters | \"\(.key)\t\(.value.type)\t\(.value.tags | join(\",\"))\t\(.value.label)\"" | while IFS=$'\t' read -r name typ tags label; do
-          local tag_str=""
-          if [[ -n "$tags" ]]; then
-            tag_str="''${DIM}[''${tags}]''${RESET}"
+        # Group by type, sorted
+        local grouped
+        # shellcheck disable=SC2016
+        local jq_group='[to_entries[] '"$filters"'] | group_by(.value.type) | .[] | .[0].value.type as $t | "\($t)" , (.[] | "\(.key)\t\(.value.tags | join(","))\t\(.value.label)"), ""'
+        grouped=$(echo "$json" | jq -r "$jq_group")
+
+        local current_type=""
+        local first_group=1
+        while IFS=$'\t' read -r line rest_tags rest_label; do
+          # Lines without tabs are type headers (or blank separators)
+          if [[ -z "$rest_tags" && -z "$rest_label" ]]; then
+            if [[ -z "$line" ]]; then
+              continue  # blank separator
+            fi
+            # Type header
+            if [[ -z "$flat" ]]; then
+              [[ "$first_group" == "1" ]] || echo ""
+              first_group=0
+              printf "''${CYAN}%s''${RESET}\n" "$line"
+            fi
+            current_type="$line"
+          else
+            local name="$line"
+            local tags="$rest_tags"
+            local label="$rest_label"
+            local tag_str=""
+            if [[ -n "$tags" ]]; then
+              tag_str="''${DIM}[''${tags}]''${RESET}"
+            fi
+            if [[ -n "$flat" ]]; then
+              printf "  ''${BOLD}%-16s''${RESET} ''${CYAN}%-12s''${RESET} %-24s %s\n" "$name" "$current_type" "$tag_str" "$label"
+            else
+              if [[ -n "$tags" && -n "$label" ]]; then
+                printf "  ''${BOLD}%-16s''${RESET} %s  ''${DIM}%s''${RESET}\n" "$name" "$label" "$tag_str"
+              elif [[ -n "$label" ]]; then
+                printf "  ''${BOLD}%-16s''${RESET} %s\n" "$name" "$label"
+              elif [[ -n "$tags" ]]; then
+                printf "  ''${BOLD}%-16s''${RESET} %s\n" "$name" "$tag_str"
+              else
+                printf "  ''${BOLD}%s''${RESET}\n" "$name"
+              fi
+            fi
           fi
-          printf "  ''${BOLD}%-16s''${RESET} ''${CYAN}%-12s''${RESET} %-20s %s\n" "$name" "$typ" "$tag_str" "$label"
-        done
+        done <<< "$grouped"
       }
 
       cmd_show() {
