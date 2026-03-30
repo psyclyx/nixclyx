@@ -188,6 +188,7 @@ egregorLib.mkType {
     };
 
     json = builtins.toJSON projection;
+    rscName = "${identity}.rsc";
   in {
     config-json = {
       description = "Output the switch configuration as JSON.";
@@ -199,6 +200,27 @@ egregorLib.mkType {
       impl = ''routeros-config generate <<'EGREGORE_EOF'
 ${json}
 EGREGORE_EOF'';
+    };
+    deploy = {
+      description = "Deploy config to switch (upload + reset-configuration).";
+      impl = ''
+        echo "Generating ${rscName}..." >&2
+        tmpfile=$(mktemp --suffix=.rsc)
+        trap "rm -f $tmpfile" EXIT
+        routeros-config generate <<'EGREGORE_EOF' > "$tmpfile"
+${json}
+EGREGORE_EOF
+
+        echo "Uploading to ${mgmtIp} via SCP..." >&2
+        scp -o StrictHostKeyChecking=no -o ConnectTimeout=5 \
+          "$tmpfile" "admin@${mgmtIp}:/${rscName}"
+
+        echo "Resetting configuration (switch will reboot)..." >&2
+        ssh -o StrictHostKeyChecking=no -o ConnectTimeout=5 \
+          "admin@${mgmtIp}" \
+          "/system/reset-configuration no-defaults=yes run-after-reset=${rscName}"
+
+        echo "Deploy complete. Switch will reboot and apply ${rscName}." >&2'';
     };
   };
 }
