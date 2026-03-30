@@ -13,6 +13,7 @@ let
     egregore = ./egregore.nix;
     upscale-image = ./upscale-image;
     sodola-config = ./sodola-config;
+    swos-config = ./swos-config;
   };
 in
   packages // {
