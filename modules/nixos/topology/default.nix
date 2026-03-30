@@ -12,21 +12,9 @@
   };
 
   config = { lib, ... }: let
-    egregorePkg = import ../../../egregore { inherit lib; };
-    result = egregorePkg.eval {
-      modules = [
-        ../../../egregore/extensions/globals.nix
-        ../../../egregore/types/network.nix
-        ../../../egregore/types/host.nix
-        ../../../egregore/types/routeros.nix
-        ../../../egregore/types/swos.nix
-        ../../../egregore/types/sodola.nix
-        ../../../egregore/types/ilo.nix
-        ../../../egregore/types/unmanaged.nix
-        ../../../egregore/types/ha-group.nix
-        ../../../data/egregore.nix
-      ];
-    };
+    spec = import ../../../egregore.nix;
+    egregorePkg = import spec.lib { inherit lib; };
+    result = egregorePkg.eval { inherit (spec) modules; };
   in {
     psyclyx.egregore = result;
   };

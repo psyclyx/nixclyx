@@ -19,18 +19,36 @@ writeShellApplication {
     EGREGORE_DIR="''${EGREGORE_DIR:-$(git rev-parse --show-toplevel 2>/dev/null || echo .)}"
 
     # ── Nix evaluation ─────────────────────────────────────────────
+    #
+    # Reads egregore.nix from the repo root (or EGREGORE_FILE).
+    # That file declares { lib = ./path/to/egregore; modules = [ ... ]; }.
+
+    EGREGORE_FILE="''${EGREGORE_FILE:-$EGREGORE_DIR/egregore.nix}"
+
+    if [[ ! -f "$EGREGORE_FILE" ]]; then
+      # Fall back to nixclyx submodule layout
+      if [[ -f "$EGREGORE_DIR/nixclyx/egregore.nix" ]]; then
+        EGREGORE_FILE="$EGREGORE_DIR/nixclyx/egregore.nix"
+      else
+        echo "error: no egregore.nix found at $EGREGORE_FILE" >&2
+        echo "Set EGREGORE_FILE or create egregore.nix at your repo root." >&2
+        exit 1
+      fi
+    fi
+
+    PREAMBLE="let lib = import <nixpkgs/lib>; spec = import $EGREGORE_FILE; egregore = import spec.lib { inherit lib; }; fleet = egregore.eval { inherit (spec) modules; }; in"
 
     nix_eval_json() {
       local expr="$1"
       nix-instantiate --eval --strict --read-write-mode \
-        -E "let lib = import <nixpkgs/lib>; egregore = import $EGREGORE_DIR/nixclyx/egregore { inherit lib; }; fleet = egregore.eval { modules = [ $EGREGORE_DIR/nixclyx/egregore/extensions/globals.nix $EGREGORE_DIR/nixclyx/egregore/types/network.nix $EGREGORE_DIR/nixclyx/egregore/types/host.nix $EGREGORE_DIR/nixclyx/egregore/types/routeros.nix $EGREGORE_DIR/nixclyx/egregore/types/swos.nix $EGREGORE_DIR/nixclyx/egregore/types/sodola.nix $EGREGORE_DIR/nixclyx/egregore/types/ilo.nix $EGREGORE_DIR/nixclyx/egregore/types/unmanaged.nix $EGREGORE_DIR/nixclyx/egregore/types/ha-group.nix $EGREGORE_DIR/nixclyx/data/egregore.nix ]; }; in builtins.toJSON ($expr)" \
+        -E "$PREAMBLE builtins.toJSON ($expr)" \
         2>/dev/null | sed 's/^"//;s/"$//' | sed 's/\\"/"/g;s/\\\\/\\/g'
     }
 
     nix_eval_raw() {
       local expr="$1"
       nix-instantiate --eval --strict --read-write-mode \
-        -E "let lib = import <nixpkgs/lib>; egregore = import $EGREGORE_DIR/nixclyx/egregore { inherit lib; }; fleet = egregore.eval { modules = [ $EGREGORE_DIR/nixclyx/egregore/extensions/globals.nix $EGREGORE_DIR/nixclyx/egregore/types/network.nix $EGREGORE_DIR/nixclyx/egregore/types/host.nix $EGREGORE_DIR/nixclyx/egregore/types/routeros.nix $EGREGORE_DIR/nixclyx/egregore/types/swos.nix $EGREGORE_DIR/nixclyx/egregore/types/sodola.nix $EGREGORE_DIR/nixclyx/egregore/types/ilo.nix $EGREGORE_DIR/nixclyx/egregore/types/unmanaged.nix $EGREGORE_DIR/nixclyx/egregore/types/ha-group.nix $EGREGORE_DIR/nixclyx/data/egregore.nix ]; }; in $expr" \
+        -E "$PREAMBLE $expr" \
         2>/dev/null | sed 's/^"//;s/"$//' | sed 's/\\n/\n/g;s/\\"/"/g;s/\\\\/\\/g'
     }
 
