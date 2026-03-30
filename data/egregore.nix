@@ -78,6 +78,7 @@ let
         allowedNetworks = [];
       };
       roles = ["server" "lab"];
+      deployAddress = "10.0.25.${toString (10 + n)}";
       inherit exporters;
     };
   };
@@ -185,6 +186,7 @@ in {
         publicIPv4 = "199.255.18.171";
         publicIPv6 = "2606:7940:32:26::10";
         sshPort = 17891;
+        deployAddress = "tleilax.psyclyx.net";
         roles = ["server" "vpn-hub"];
         exporters = {
           node     = { port = 9100; networks = ["vpn"]; };
@@ -206,6 +208,7 @@ in {
         };
         addresses.vpn.ipv4 = "10.157.0.2";
         sshPort = 17891;
+        deployAddress = "iyr.psyclyx.net";
         roles = ["server" "router"];
         hardware.tpm = true;
         exporters = {
@@ -225,6 +228,7 @@ in {
         };
         addresses.vpn.ipv4 = "10.157.0.3";
         roles = ["workstation"];
+        deployAddress = "sigil.psyclyx.net";
         hardware.tpm = true;
         exporters = {
           node     = { port = 9100; networks = ["vpn"]; };
