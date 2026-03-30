@@ -84,6 +84,11 @@ in {
                   type = types.anything;
                   description = "The verb's implementation — a value (pure) or shell script string (impure).";
                 };
+                defaults = mkOption {
+                  type = types.listOf types.str;
+                  default = [];
+                  description = "Default arguments used when none are given on the command line.";
+                };
               };
             });
             default = {};

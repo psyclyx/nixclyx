@@ -188,9 +188,13 @@ let
       cmd_verbs() {
         local name="''${1:?Usage: egregore verbs <entity>}"
         local json
-        json=$(nix_eval_json "lib.mapAttrs (_: v: { inherit (v) pure description; }) fleet.entities.\"$name\".verbs")
-        echo "$json" | jq -r 'to_entries | sort_by(.key)[] | "\(.key)\t\(if .value.pure then "pure" else "impure" end)\t\(.value.description)"' | while IFS=$'\t' read -r verb kind desc; do
-          printf "  ''${BOLD}%-16s''${RESET} ''${DIM}%-8s''${RESET} %s\n" "$verb" "$kind" "$desc"
+        json=$(nix_eval_json "lib.mapAttrs (_: v: { inherit (v) pure description defaults; }) fleet.entities.\"$name\".verbs")
+        echo "$json" | jq -r 'to_entries | sort_by(.key)[] | "\(.key)\t\(if .value.pure then "pure" else "impure" end)\t\(.value.description)\t\(.value.defaults | join(" "))"' | while IFS=$'\t' read -r verb kind desc defs; do
+          local def_str=""
+          if [[ -n "$defs" ]]; then
+            def_str=" ''${DIM}[${defs}]''${RESET}"
+          fi
+          printf "  ''${BOLD}%-16s''${RESET} ''${DIM}%-8s''${RESET} %s%s\n" "$verb" "$kind" "$desc" "$def_str"
         done
       }
 
@@ -200,11 +204,20 @@ let
         shift 2
 
         local meta
-        meta=$(nix_eval_json "let v = fleet.entities.\"$name\".verbs.\"$verb\"; in { inherit (v) pure impl; }")
+        meta=$(nix_eval_json "let v = fleet.entities.\"$name\".verbs.\"$verb\"; in { inherit (v) pure impl defaults; }")
 
         local is_pure impl
         is_pure=$(echo "$meta" | jq -r '.pure')
         impl=$(echo "$meta" | jq -r '.impl')
+
+        # Use verb defaults when no CLI args given.
+        if [[ $# -eq 0 ]]; then
+          local -a defs
+          readarray -t defs < <(echo "$meta" | jq -r '.defaults[]')
+          if [[ ''${#defs[@]} -gt 0 ]]; then
+            set -- "''${defs[@]}"
+          fi
+        fi
 
         if [[ "$is_pure" == "true" ]]; then
           echo "$impl"
