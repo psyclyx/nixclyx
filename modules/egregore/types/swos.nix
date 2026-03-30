@@ -156,9 +156,9 @@ egregorLib.mkType {
 
     json = builtins.toJSON projection;
 
-    # SwOS backup endpoint uses HTTP basic auth (default admin / no password).
-    pullCmd = ''curl -sf --connect-timeout 5 \
-  -u "admin:" \
+    # SwOS uses HTTP basic auth (default admin / no password).
+    curlAuth = ''-u "admin:"'';
+    pullCmd = ''curl -sf --connect-timeout 5 ${curlAuth} \
   "http://${mgmtIp}/backup.swb"'';
   in {
     config-json = {
@@ -190,6 +190,21 @@ ${json}
 EGREGORE_EOF
 )
         diff --color=auto -u <(echo "$live") <(echo "$desired") || true'';
+    };
+    deploy = {
+      description = "Deploy config to switch (restore backup).";
+      impl = ''
+        echo "Generating config..." >&2
+        config=$(swos-config generate <<'EGREGORE_EOF'
+${json}
+EGREGORE_EOF
+)
+        echo "Uploading to ${mgmtIp}..." >&2
+        printf '%s' "$config" | curl -sf --connect-timeout 5 ${curlAuth} \
+          --data-binary @- \
+          "http://${mgmtIp}/backup.swb" >/dev/null
+
+        echo "Deploy complete. Switch may take a moment to apply." >&2'';
     };
     port-map = {
       description = "Show human-readable port map.";

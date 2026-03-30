@@ -114,9 +114,9 @@ egregorLib.mkType {
     mgmtIp = sw.addresses.mgmt.ipv4;
 
     # Sodola auth: cookie = md5("admin" + "admin").
-    pullCmd = ''curl -sf --connect-timeout 5 \
-  -b "admin=f6fdffe48c908deb0f4c3bd36c032e72" \
-  -e "http://${mgmtIp}/" \
+    cookie = "admin=f6fdffe48c908deb0f4c3bd36c032e72";
+    curlAuth = ''-b "${cookie}" -e "http://${mgmtIp}/"'';
+    pullCmd = ''curl -sf --connect-timeout 5 ${curlAuth} \
   "http://${mgmtIp}/config_back.cgi?cmd=conf_backup"'';
   in {
     config-json = {
@@ -148,6 +148,28 @@ ${json}
 EGREGORE_EOF
 )
         diff --color=auto -u <(echo "$live") <(echo "$desired") || true'';
+    };
+    deploy = {
+      description = "Deploy config to switch (restore + reboot).";
+      impl = ''
+        echo "Generating config..." >&2
+        tmpfile=$(mktemp)
+        trap "rm -f $tmpfile" EXIT
+        sodola-config generate <<'EGREGORE_EOF' > "$tmpfile"
+${json}
+EGREGORE_EOF
+
+        echo "Uploading to ${mgmtIp}..." >&2
+        curl -sf --connect-timeout 5 ${curlAuth} \
+          -F "submitFile=@$tmpfile" \
+          "http://${mgmtIp}/config_back.cgi?cmd=conf_restore" >/dev/null
+
+        echo "Rebooting switch..." >&2
+        curl -sf --connect-timeout 5 ${curlAuth} \
+          -d "cmd=reboot" \
+          "http://${mgmtIp}/reboot.cgi" >/dev/null || true
+
+        echo "Deploy complete. Switch will be unreachable for ~30s." >&2'';
     };
     port-map = {
       description = "Show human-readable port map.";
