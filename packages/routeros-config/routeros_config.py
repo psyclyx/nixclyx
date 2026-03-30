@@ -70,7 +70,9 @@ def generate(config):
     bridge_vlans = bridge.get("vlans", [])
     vlan_ifaces = config.get("vlan_interfaces", [])
     addresses = config.get("addresses", [])
+    addresses6 = config.get("ipv6_addresses", [])
     routes = config.get("routes", [])
+    routes6 = config.get("ipv6_routes", [])
 
     # Determine model and all hardware ports
     model = config.get("model", "")
@@ -295,6 +297,21 @@ def generate(config):
             lines.append(" ".join(parts))
         lines.append("")
 
+    # ── L3HW settings ─────────────────────────────────────────
+    l3hw = config.get("l3hw_settings", {})
+    if l3hw:
+        lines.append("# ── L3 hardware offloading ──")
+        parts = ["/interface ethernet switch l3hw-settings set"]
+        if l3hw.get("ipv6_hw") is not None:
+            val = "yes" if l3hw["ipv6_hw"] else "no"
+            parts.append(f"ipv6-hw={val}")
+        if l3hw.get("icmp_reply_on_error") is not None:
+            val = "yes" if l3hw["icmp_reply_on_error"] else "no"
+            parts.append(f"icmp-reply-on-error={val}")
+        if len(parts) > 1:
+            lines.append(" ".join(parts))
+        lines.append("")
+
     # ── IP settings (L3 forwarding) ────────────────────────────
     ip_settings = config.get("ip_settings", {})
     if ip_settings:
@@ -321,6 +338,24 @@ def generate(config):
             lines.append(" ".join(parts))
         lines.append("")
 
+    # ── IPv6 settings ──────────────────────────────────────────
+    ipv6_settings = config.get("ipv6_settings", {})
+    if ipv6_settings:
+        lines.append("# ── IPv6 settings ──")
+        parts = ["/ipv6 settings set"]
+        if ipv6_settings.get("forwarding") is not None:
+            val = "yes" if ipv6_settings["forwarding"] else "no"
+            parts.append(f"forward={val}")
+        if ipv6_settings.get("accept_redirects") is not None:
+            val = "yes" if ipv6_settings["accept_redirects"] else "no"
+            parts.append(f"accept-redirects={val}")
+        if ipv6_settings.get("accept_router_advertisements") is not None:
+            val = ipv6_settings["accept_router_advertisements"]
+            parts.append(f"accept-router-advertisements={val}")
+        if len(parts) > 1:
+            lines.append(" ".join(parts))
+        lines.append("")
+
     # ── IP addresses ────────────────────────────────────────────
     if addresses:
         lines.append("# ── IP addresses ──")
@@ -340,6 +375,54 @@ def generate(config):
         lines.append("# ── Routes ──")
         lines.append("/ip route")
         for r in routes:
+            parts = []
+            if r.get("disabled"):
+                parts.append("add disabled=yes")
+            else:
+                parts.append("add")
+            parts.append(f"dst-address={r['dst']}")
+            parts.append(f"gateway={r['gateway']}")
+            if r.get("distance") is not None:
+                parts.append(f"distance={r['distance']}")
+            if r.get("routing_table"):
+                parts.append(f"routing-table={r['routing_table']}")
+            if r.get("scope") is not None:
+                parts.append(f"scope={r['scope']}")
+            if r.get("target_scope") is not None:
+                parts.append(f"target-scope={r['target_scope']}")
+            if r.get("pref_src"):
+                parts.append(f"pref-src={r['pref_src']}")
+            if r.get("comment"):
+                parts.append(f'comment="{r["comment"]}"')
+            lines.append(" ".join(parts))
+        lines.append("")
+
+    # ── IPv6 addresses ─────────────────────────────────────────
+    if addresses6:
+        lines.append("# ── IPv6 addresses ──")
+        lines.append("/ipv6 address")
+        for a in addresses6:
+            parts = [f"add address={a['address']}"]
+            parts.append(f"interface={a['interface']}")
+            if a.get("advertise") is not None:
+                val = "yes" if a["advertise"] else "no"
+                parts.append(f"advertise={val}")
+            if a.get("eui64") is not None:
+                val = "yes" if a["eui64"] else "no"
+                parts.append(f"eui-64={val}")
+            if a.get("no_dad") is not None:
+                val = "yes" if a["no_dad"] else "no"
+                parts.append(f"no-dad={val}")
+            if a.get("comment"):
+                parts.append(f'comment="{a["comment"]}"')
+            lines.append(" ".join(parts))
+        lines.append("")
+
+    # ── IPv6 routes ────────────────────────────────────────────
+    if routes6:
+        lines.append("# ── IPv6 routes ──")
+        lines.append("/ipv6 route")
+        for r in routes6:
             parts = []
             if r.get("disabled"):
                 parts.append("add disabled=yes")
