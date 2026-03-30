@@ -2,6 +2,9 @@
 { lib, egregorLib, config, ... }:
 let
   portDef = import ../lib/switch-port.nix { inherit lib; };
+  portType = portDef.portType;
+
+  pow2 = n: if n == 0 then 1 else 2 * pow2 (n - 1);
 in
 egregorLib.mkType {
   name = "sodola";
@@ -28,7 +31,7 @@ egregorLib.mkType {
 
   attrs = name: entity: _top: let
     s = entity.sodola;
-    active = lib.filterAttrs (_: p: portDef.portType p != "unused") s.ports;
+    active = lib.filterAttrs (_: p: portType p != "unused") s.ports;
   in {
     address = s.addresses.mgmt.ipv4;
     label = "${if s.identity != null then s.identity else name} (${s.model})";
@@ -39,18 +42,103 @@ egregorLib.mkType {
   };
 
   verbs = name: entity: top: let
-    gen = import ../generators/switch-config.nix lib top;
-    result = gen.sodola name;
+    sw = entity.sodola;
+
+    mgmt     = top.entities.mgmt;
+    mgmtVlan = mgmt.network.vlan;
+    mgmtGw   = mgmt.attrs.gateway4;
+    mgmtPLen = mgmt.attrs.prefixLen;
+
+    # Subnet mask from prefix length.
+    maskOctet = bits:
+      if bits >= 8 then 255
+      else if bits <= 0 then 0
+      else 256 - pow2 (8 - bits);
+    mgmtMask = let p = mgmtPLen; in
+      "${toString (maskOctet (lib.min p 8))}.${toString (maskOctet (lib.min (lib.max (p - 8) 0) 8))}.${toString (maskOctet (lib.min (lib.max (p - 16) 0) 8))}.${toString (maskOctet (lib.min (lib.max (p - 24) 0) 8))}";
+
+    totalPorts = 9;
+    allPortNums = lib.range 1 totalPorts;
+
+    portCfgN = n: sw.ports.${"port${toString n}"} or {
+      vlan = null; vlans = []; meta = { host = null; peer = null; description = null; };
+    };
+
+    # Collect all VLANs used by any port + management.
+    switchVlans = let
+      accessVlans = builtins.filter (v: v != null) (map (n: (portCfgN n).vlan) allPortNums);
+      trunkVlans  = builtins.concatLists (map (n: (portCfgN n).vlans) allPortNums);
+    in lib.sort builtins.lessThan (lib.unique ([1] ++ accessVlans ++ trunkVlans ++ [mgmtVlan]));
+
+    # Which ports are members of a given VLAN.
+    # Ports 1-8: member if access port on this VLAN or trunk carrying it.
+    # Port 9: also member if its native VLAN matches (the binary has a
+    # separate native bit for port 9 that the tool sets via _encode_port9).
+    vlanMembers = vlan: builtins.filter (n: let
+      p = portCfgN n;
+      mode = portType p;
+      native = if p.vlan != null then p.vlan else 1;
+    in (mode == "access" && p.vlan == vlan)
+       || (mode == "trunk" && builtins.elem vlan p.vlans)
+       || (n == totalPorts && mode != "unused" && native == vlan)
+    ) allPortNums;
+
+    mkPort = n: let
+      p = portCfgN n;
+      mode = portType p;
+    in {
+      mode = if mode == "access" then "access" else "trunk";
+      native_vlan = if mode == "access" then p.vlan else 1;
+      speed = "auto";
+    };
+
+    projection = {
+      network = {
+        ip      = sw.addresses.mgmt.ipv4;
+        netmask = mgmtMask;
+        gateway = mgmtGw;
+      };
+      auth = { username = "admin"; };
+      ports = map mkPort allPortNums;
+      vlans = map (vlan: {
+        id      = vlan;
+        members = vlanMembers vlan;
+        name    = "";
+      }) switchVlans;
+      model          = sw.model;
+      mgmt_vlan_hint = 1;
+      igmp_enabled   = false;
+    };
+
+    json = builtins.toJSON projection;
   in {
+    config-json = {
+      description = "Output the switch configuration as JSON.";
+      pure = true;
+      impl = json;
+    };
     generate-config = {
       description = "Generate Sodola binary backup (hex-encoded).";
-      pure = true;
-      impl = result.backup;
+      impl = ''sodola-config generate --hex <<'EGREGORE_EOF'
+${json}
+EGREGORE_EOF'';
     };
     port-map = {
       description = "Show human-readable port map.";
       pure = true;
-      impl = result.portMap;
+      impl = let
+        allNames = lib.sort builtins.lessThan (builtins.attrNames sw.ports);
+      in ''
+        # Sodola Port Configuration for ${sw.model} (${if sw.identity != null then sw.identity else name})
+        # Management: ${sw.addresses.mgmt.ipv4} on VLAN ${toString mgmtVlan}
+      '' + lib.concatStringsSep "\n" (map (pname: let
+        p = sw.ports.${pname};
+        mode = portType p;
+        vlan = if mode == "access" then toString p.vlan
+               else if mode == "trunk" then
+                 (if p.vlans != [] then lib.concatStringsSep "," (map toString p.vlans) else "all")
+               else "-";
+      in "#   ${pname}: ${mode} ${vlan} — ${portDef.portLabel p}") allNames);
     };
   };
 }

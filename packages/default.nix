@@ -10,7 +10,6 @@ let
     ilo4-console = ./ilo4-console.nix;
     nvf = ./nvf.nix;
     ssacli = ./ssacli.nix;
-    egregore = ./egregore.nix;
     upscale-image = ./upscale-image;
     sodola-config = ./sodola-config;
     swos-config = ./swos-config;
@@ -26,5 +25,8 @@ in
     };
     regenerate-palettes = pkgs.callPackage ./regenerate-palettes.nix {
       inherit (packages) base24-gen;
+    };
+    egregore = pkgs.callPackage ./egregore.nix {
+      inherit (packages) sodola-config swos-config routeros-config;
     };
   }

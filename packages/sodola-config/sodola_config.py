@@ -272,10 +272,10 @@ def generate(config):
     for i in range(NUM_PORTS):
         buf[0x9CF + i] = ports[i].get("qos_queue", 1)
 
-    # QoS weights (0x9dc, 4 × 4B)
+    # QoS weights (0x9dc, 4 × 4B) — stored as weight << 8 in the binary.
     weights = config.get("qos_weights", [3, 2, 4, 1])
     for i in range(4):
-        struct.pack_into(">I", buf, 0x9DC + i * 4, weights[i])
+        struct.pack_into(">I", buf, 0x9DC + i * 4, weights[i] << 8)
 
     # Port numbering sequence + model
     buf[0xA34 : 0xA34 + 26] = PORT_SEQ
@@ -365,7 +365,7 @@ def parse(data):
         ports.append(port)
     config["ports"] = ports
 
-    config["qos_weights"] = [_u32(data, 0x9DC + i * 4) for i in range(4)]
+    config["qos_weights"] = [_u32(data, 0x9DC + i * 4) >> 8 for i in range(4)]
 
     config["stp"] = {
         "bridge_priority": _u16(data, 0x94B),
