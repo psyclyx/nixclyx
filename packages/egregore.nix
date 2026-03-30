@@ -99,8 +99,9 @@ writeShellApplication {
     }
 
     cmd_verb() {
-      local name="''${1:?Usage: egregore verb <entity> <verb>}"
-      local verb="''${2:?Usage: egregore verb <entity> <verb>}"
+      local name="''${1:?Usage: egregore verb <entity> <verb> [args...]}"
+      local verb="''${2:?Usage: egregore verb <entity> <verb> [args...]}"
+      shift 2
 
       local meta
       meta=$(nix_eval_json "let v = fleet.entities.\"$name\".verbs.\"$verb\"; in { inherit (v) pure impl; }")
@@ -155,7 +156,7 @@ writeShellApplication {
       egregore show <entity>                Show entity details
       egregore attrs <entity> [attr]        Query entity attributes
       egregore verbs <entity>               List available verbs
-      egregore verb <entity> <verb>         Execute a verb
+      egregore verb <entity> <verb> [args]   Execute a verb
       egregore graph                        Output Graphviz DOT
 
     Environment:

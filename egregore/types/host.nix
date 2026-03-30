@@ -41,7 +41,7 @@ egregorLib.mkType {
     deployAddress = lib.mkOption {
       type = lib.types.nullOr lib.types.str;
       default = null;
-      description = "SSH target for deployment. Null = not remotely deployable (e.g. laptops).";
+      description = "SSH target for deployment. Null = not remotely deployable.";
     };
     publicIPv4 = lib.mkOption { type = lib.types.nullOr lib.types.str; default = null; };
     publicIPv6 = lib.mkOption { type = lib.types.nullOr lib.types.str; default = null; };
@@ -77,31 +77,19 @@ egregorLib.mkType {
   verbs = name: entity: _top: let
     h = entity.host;
     target = h.deployAddress;
-    portArg = lib.optionalString (h.sshPort != 22) "-p ${toString h.sshPort}";
-    sshTarget = "root@${target}";
+    portFlag = lib.optionalString (h.sshPort != 22) "-p ${toString h.sshPort} ";
+    sshDest = "root@${target}";
   in lib.optionalAttrs (target != null) {
     deploy = {
-      description = "Build and deploy NixOS configuration.";
+      description = "Copy a NixOS closure to this host and switch to it.";
+      # impl expects $1 = store path to system closure
       impl = ''
-        DEPLOY_DIR="''${EGREGORE_DIR:-$(git rev-parse --show-toplevel 2>/dev/null || echo .)}"
-        echo "Building ${name}..."
-        result=$(nix-build "$DEPLOY_DIR/hive-build.nix" --argstr hostname "${name}" --no-out-link 2>&1 | tail -1)
+        closure="''${1:?Usage: egregore verb ${name} deploy <closure-path>}"
         echo "Copying closure to ${target}..."
-        NIX_SSHOPTS="${portArg}" nix-copy-closure --to ${sshTarget} "$result"
+        NIX_SSHOPTS="${portFlag}" nix-copy-closure --to ${sshDest} "$closure"
         echo "Switching..."
-        ssh ${portArg} ${sshTarget} "$result/bin/switch-to-configuration switch"
+        ssh ${portFlag}${sshDest} "$closure/bin/switch-to-configuration switch"
         echo "Deployed ${name}."
-      '';
-    };
-    deploy-dry = {
-      description = "Build NixOS configuration without deploying.";
-      pure = true;
-      impl = let
-        result = "$(nix-build \"$DEPLOY_DIR/hive-build.nix\" --argstr hostname \"${name}\" --no-out-link 2>&1 | tail -1)";
-      in ''
-        DEPLOY_DIR="''${EGREGORE_DIR:-$(git rev-parse --show-toplevel 2>/dev/null || echo .)}"
-        echo "Building ${name}..."
-        ${result}
       '';
     };
   };
