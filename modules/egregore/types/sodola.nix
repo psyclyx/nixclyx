@@ -111,6 +111,13 @@ egregorLib.mkType {
     };
 
     json = builtins.toJSON projection;
+    mgmtIp = sw.addresses.mgmt.ipv4;
+
+    # Sodola auth: cookie = md5("admin" + "admin").
+    pullCmd = ''curl -sf --connect-timeout 5 \
+  -b "admin=f6fdffe48c908deb0f4c3bd36c032e72" \
+  -e "http://${mgmtIp}/" \
+  "http://${mgmtIp}/config_back.cgi?cmd=conf_backup"'';
   in {
     config-json = {
       description = "Output the switch configuration as JSON.";
@@ -122,6 +129,24 @@ egregorLib.mkType {
       impl = ''sodola-config generate --hex <<'EGREGORE_EOF'
 ${json}
 EGREGORE_EOF'';
+    };
+    pull-config = {
+      description = "Download live config from switch, output as JSON.";
+      impl = ''${pullCmd} | sodola-config parse'';
+    };
+    pull-raw = {
+      description = "Download raw binary backup from switch.";
+      impl = pullCmd;
+    };
+    diff-config = {
+      description = "Diff live switch config against desired config.";
+      impl = ''
+        live=$(${pullCmd} | sodola-config parse)
+        desired=$(sodola-config generate <<'EGREGORE_EOF' | sodola-config parse
+${json}
+EGREGORE_EOF
+)
+        diff --color=auto -u <(echo "$live") <(echo "$desired") || true'';
     };
     port-map = {
       description = "Show human-readable port map.";

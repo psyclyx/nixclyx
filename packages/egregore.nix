@@ -9,13 +9,13 @@
 #   egregore graph
 #
 { writeShellApplication, symlinkJoin, installShellFiles, runCommand,
-  nix, jq, coreutils, redfishtool,
+  nix, jq, coreutils, curl, redfishtool,
   sodola-config, swos-config, routeros-config }:
 
 let
   cli = writeShellApplication {
     name = "egregore";
-    runtimeInputs = [ nix jq coreutils redfishtool sodola-config swos-config routeros-config ];
+    runtimeInputs = [ nix jq coreutils curl redfishtool sodola-config swos-config routeros-config ];
     text = ''
       set -euo pipefail
 

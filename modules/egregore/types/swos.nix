@@ -155,6 +155,11 @@ egregorLib.mkType {
     };
 
     json = builtins.toJSON projection;
+
+    # SwOS backup endpoint uses HTTP basic auth (default admin / no password).
+    pullCmd = ''curl -sf --connect-timeout 5 \
+  -u "admin:" \
+  "http://${mgmtIp}/backup.swb"'';
   in {
     config-json = {
       description = "Output the switch configuration as JSON.";
@@ -166,6 +171,24 @@ egregorLib.mkType {
       impl = ''swos-config generate <<'EGREGORE_EOF'
 ${json}
 EGREGORE_EOF'';
+    };
+    pull-config = {
+      description = "Download live config from switch, output as JSON.";
+      impl = ''${pullCmd} | swos-config parse'';
+    };
+    pull-raw = {
+      description = "Download raw .swb backup from switch.";
+      impl = pullCmd;
+    };
+    diff-config = {
+      description = "Diff live switch config against desired config.";
+      impl = ''
+        live=$(${pullCmd} | swos-config parse)
+        desired=$(swos-config generate <<'EGREGORE_EOF' | swos-config parse
+${json}
+EGREGORE_EOF
+)
+        diff --color=auto -u <(echo "$live") <(echo "$desired") || true'';
     };
     port-map = {
       description = "Show human-readable port map.";
