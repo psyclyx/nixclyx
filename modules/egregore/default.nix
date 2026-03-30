@@ -4,19 +4,11 @@
 # Extensions add cross-cutting options (globals, etc.).
 #
 # These are egregore modules (for egregore.eval), not NixOS modules.
-{
-  types = [
-    ./types/network.nix
-    ./types/host.nix
-    ./types/routeros.nix
-    ./types/swos.nix
-    ./types/sodola.nix
-    ./types/ilo.nix
-    ./types/unmanaged.nix
-    ./types/ha-group.nix
-  ];
-
-  extensions = [
-    ./extensions/globals.nix
-  ];
+# Type modules use mkType which manages its own options/config structure,
+# so they stay as plain modules rather than specs.
+let
+  fs = import ../../lib/fs.nix;
+in {
+  types = fs.collectModules ./types;
+  extensions = fs.collectModules ./extensions;
 }

@@ -1,7 +1,7 @@
 # Entity type: MikroTik RouterOS switch.
 { lib, egregorLib, config, ... }:
 let
-  portDef = import ./switch-port.nix { inherit lib; };
+  portDef = import ../lib/switch-port.nix { inherit lib; };
 in
 egregorLib.mkType {
   name = "routeros";
