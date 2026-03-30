@@ -78,17 +78,34 @@ egregorLib.mkType {
     h = entity.host;
     target = h.deployAddress;
     portFlag = lib.optionalString (h.sshPort != 22) "-p ${toString h.sshPort} ";
+    sshOpts = lib.optionalString (h.sshPort != 22) "-o Port=${toString h.sshPort} ";
     sshDest = "root@${target}";
   in lib.optionalAttrs (target != null) {
     deploy = {
-      description = "Copy a NixOS closure to this host and switch to it.";
-      # impl expects $1 = store path to system closure
+      description = "Build, copy, and switch. Pass nix-build args (e.g. ./default.nix -A hosts.${name}).";
       impl = ''
-        closure="''${1:?Usage: egregore verb ${name} deploy <closure-path>}"
+        if [[ $# -eq 0 ]]; then
+          echo "Usage: egregore verb ${name} deploy <nix-build args...>" >&2
+          echo "" >&2
+          echo "Examples:" >&2
+          echo "  egregore verb ${name} deploy ./default.nix -A hosts.${name}" >&2
+          echo "  egregore verb ${name} deploy /nix/store/...-nixos-system" >&2
+          exit 1
+        fi
+
+        # If the argument is already a store path, use it directly.
+        if [[ "$1" == /nix/store/* && -e "$1" ]]; then
+          result="$1"
+          echo "Using pre-built closure: $result"
+        else
+          echo "Building ${name}..."
+          result=$(nix-build "$@" --no-out-link)
+        fi
+
         echo "Copying closure to ${target}..."
-        NIX_SSHOPTS="${portFlag}" nix-copy-closure --to ${sshDest} "$closure"
+        NIX_SSHOPTS="${sshOpts}" nix-copy-closure --to ${sshDest} "$result"
         echo "Switching..."
-        ssh ${portFlag}${sshDest} "$closure/bin/switch-to-configuration switch"
+        ssh ${portFlag}${sshDest} "$result/bin/switch-to-configuration switch"
         echo "Deployed ${name}."
       '';
     };
