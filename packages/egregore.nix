@@ -193,7 +193,7 @@ let
         echo "$json" | jq -r 'to_entries | sort_by(.key)[] | "\(.key)\t\(if .value.pure then "pure" else "impure" end)\t\(.value.description)\t\(.value.defaults | join(" "))"' | while IFS=$'\t' read -r verb kind desc defs; do
           local def_str=""
           if [[ -n "$defs" ]]; then
-            def_str=" ''${DIM}[${defs}]''${RESET}"
+            def_str=" ''${DIM}[''${defs}]''${RESET}"
           fi
           printf "  ''${BOLD}%-16s''${RESET} ''${DIM}%-8s''${RESET} %s%s\n" "$verb" "$kind" "$desc" "$def_str"
         done
