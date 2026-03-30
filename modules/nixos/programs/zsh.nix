@@ -95,7 +95,14 @@
         # ── keybindings ────────────────────────────────────────────
         stty -ixon
 
-        # ── completion styles ──────────────────────────────────────
+        # ── completions ───────────────────────────────────────────
+        # Include completions from nix-direnv / nix-shell packages
+        # (they appear in XDG_DATA_DIRS but not NIX_PROFILES).
+        for _d in ''${(s.:.)XDG_DATA_DIRS}; do
+          [[ -d "$_d/zsh/site-functions" ]] && fpath+=("$_d/zsh/site-functions")
+        done
+        autoload -Uz compinit && compinit -C
+
         zstyle ':completion:*' completer _extensions _complete _approximate _files
         zstyle ':completion:*' matcher-list 'm:{a-zA-Z}={A-Za-z}' 'r:|[._-]=* r:|=*' 'l:|=* r:|=*'
         zstyle ':completion:*' group-name '''
