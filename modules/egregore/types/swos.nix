@@ -172,15 +172,16 @@ egregorLib.mkType {
 ${json}
 EGREGORE_EOF'';
     };
-    pull-config = {
-      description = "Download live config from switch, output as JSON.";
-      impl = ''${pullCmd} | swos-config parse'';
+    pull = {
+      description = "Download live config from switch (--raw for .swb).";
+      impl = ''
+        if [[ "''${1:-}" == "--raw" ]]; then
+          ${pullCmd}
+        else
+          ${pullCmd} | swos-config parse
+        fi'';
     };
-    pull-raw = {
-      description = "Download raw .swb backup from switch.";
-      impl = pullCmd;
-    };
-    diff-config = {
+    diff = {
       description = "Diff live switch config against desired config.";
       impl = ''
         live=$(${pullCmd} | swos-config parse)

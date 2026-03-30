@@ -130,15 +130,16 @@ egregorLib.mkType {
 ${json}
 EGREGORE_EOF'';
     };
-    pull-config = {
-      description = "Download live config from switch, output as JSON.";
-      impl = ''${pullCmd} | sodola-config parse'';
+    pull = {
+      description = "Download live config from switch (--raw for binary).";
+      impl = ''
+        if [[ "''${1:-}" == "--raw" ]]; then
+          ${pullCmd}
+        else
+          ${pullCmd} | sodola-config parse
+        fi'';
     };
-    pull-raw = {
-      description = "Download raw binary backup from switch.";
-      impl = pullCmd;
-    };
-    diff-config = {
+    diff = {
       description = "Diff live switch config against desired config.";
       impl = ''
         live=$(${pullCmd} | sodola-config parse)

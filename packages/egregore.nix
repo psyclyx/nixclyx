@@ -224,6 +224,8 @@ let
           echo "$impl"
         else
           echo "''${BOLD}=== $verb → $name ===''${RESET}" >&2
+          # $@ is available to impl via positional params (set above
+          # from CLI args or verb defaults).
           eval "$impl"
         fi
       }
