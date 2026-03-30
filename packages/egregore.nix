@@ -4,184 +4,239 @@
 #   egregore list [--type=X] [--tag=X]
 #   egregore show <entity>
 #   egregore attrs <entity> [attr]
-#   egregore verb <entity> <verb>
+#   egregore verb <entity> <verb> [args]
 #   egregore verbs <entity>
 #   egregore graph
 #
-{ writeShellApplication, nix, jq, coreutils, redfishtool }:
+{ writeShellApplication, symlinkJoin, installShellFiles, runCommand,
+  nix, jq, coreutils, redfishtool }:
 
-writeShellApplication {
-  name = "egregore";
-  runtimeInputs = [ nix jq coreutils redfishtool ];
-  text = ''
-    set -euo pipefail
+let
+  cli = writeShellApplication {
+    name = "egregore";
+    runtimeInputs = [ nix jq coreutils redfishtool ];
+    text = ''
+      set -euo pipefail
 
-    EGREGORE_DIR="''${EGREGORE_DIR:-$(git rev-parse --show-toplevel 2>/dev/null || echo .)}"
+      # ── Color ──────────────────────────────────────────────────────
 
-    # ── Nix evaluation ─────────────────────────────────────────────
-    #
-    # Reads egregore.nix from the repo root (or EGREGORE_FILE).
-    # That file declares { lib = ./path/to/egregore; modules = [ ... ]; }.
+      USE_COLOR=""
+      if [[ -t 1 ]]; then USE_COLOR=1; fi
 
-    EGREGORE_FILE="''${EGREGORE_FILE:-$EGREGORE_DIR/egregore.nix}"
-
-    if [[ ! -f "$EGREGORE_FILE" ]]; then
-      # Fall back to nixclyx submodule layout
-      if [[ -f "$EGREGORE_DIR/nixclyx/egregore.nix" ]]; then
-        EGREGORE_FILE="$EGREGORE_DIR/nixclyx/egregore.nix"
-      else
-        echo "error: no egregore.nix found at $EGREGORE_FILE" >&2
-        echo "Set EGREGORE_FILE or create egregore.nix at your repo root." >&2
-        exit 1
-      fi
-    fi
-
-    PREAMBLE="let lib = import <nixpkgs/lib>; spec = import $EGREGORE_FILE; egregore = import spec.lib { inherit lib; }; fleet = egregore.eval { inherit (spec) modules; }; in"
-
-    nix_eval_json() {
-      local expr="$1"
-      nix-instantiate --eval --strict --read-write-mode \
-        -E "$PREAMBLE builtins.toJSON ($expr)" \
-        2>/dev/null | sed 's/^"//;s/"$//' | sed 's/\\"/"/g;s/\\\\/\\/g'
-    }
-
-    nix_eval_raw() {
-      local expr="$1"
-      nix-instantiate --eval --strict --read-write-mode \
-        -E "$PREAMBLE $expr" \
-        2>/dev/null | sed 's/^"//;s/"$//' | sed 's/\\n/\n/g;s/\\"/"/g;s/\\\\/\\/g'
-    }
-
-    # ── Commands ───────────────────────────────────────────────────
-
-    cmd_list() {
-      local type_filter="" tag_filter=""
-      while [[ $# -gt 0 ]]; do
-        case "$1" in
-          --type=*) type_filter="''${1#--type=}"; shift ;;
-          --tag=*)  tag_filter="''${1#--tag=}"; shift ;;
-          *) echo "Unknown option: $1" >&2; exit 1 ;;
+      for arg in "$@"; do
+        case "$arg" in
+          --color)    USE_COLOR=1 ;;
+          --no-color) USE_COLOR="" ;;
         esac
       done
+      filtered_args=()
+      for arg in "$@"; do
+        case "$arg" in
+          --color|--no-color) ;;
+          *) filtered_args+=("$arg") ;;
+        esac
+      done
+      set -- "''${filtered_args[@]+"''${filtered_args[@]}"}"
 
-      local json
-      json=$(nix_eval_json "lib.mapAttrs (_: e: { inherit (e) type tags; }) fleet.entities")
-
-      local jq_filter=".[]"
-      if [[ -n "$type_filter" ]]; then
-        jq_filter="$jq_filter | select(.value.type == \"$type_filter\")"
-      fi
-      if [[ -n "$tag_filter" ]]; then
-        jq_filter="$jq_filter | select(.value.tags | index(\"$tag_filter\"))"
-      fi
-
-      echo "$json" | jq -r "to_entries[] | select(true) $(
-        [[ -n "$type_filter" ]] && echo "| select(.value.type == \"$type_filter\")" || true
-        [[ -n "$tag_filter" ]] && echo "| select(.value.tags | index(\"$tag_filter\"))" || true
-      ) | \"\(.key)\t\(.value.type)\t\(.value.tags | join(\",\"))\"" | column -t -s $'\t'
-    }
-
-    cmd_show() {
-      local name="''${1:?Usage: egregore show <entity>}"
-      local json
-      json=$(nix_eval_json "let e = fleet.entities.\"$name\"; in { inherit (e) type tags refs; attrs = lib.mapAttrs (_: v: if builtins.isList v then v else if builtins.isAttrs v then v else builtins.toString v) e.attrs; verbs = lib.mapAttrs (_: v: v.description) e.verbs; }")
-
-      echo "$json" | jq -r '
-        "type:  \(.type)",
-        "tags:  \(.tags | join(", "))",
-        (if (.refs | length) > 0 then "refs:" else empty end),
-        (.refs | to_entries[] | "  \(.key) → \(.value)"),
-        "attrs:",
-        (.attrs | to_entries[] | "  \(.key) = \(.value)"),
-        (if (.verbs | length) > 0 then "verbs:" else empty end),
-        (.verbs | to_entries[] | "  \(.key) — \(.value)")
-      '
-    }
-
-    cmd_attrs() {
-      local name="''${1:?Usage: egregore attrs <entity> [attr]}"
-      local attr="''${2:-}"
-
-      if [[ -n "$attr" ]]; then
-        nix_eval_json "fleet.entities.\"$name\".attrs.\"$attr\"" | jq .
+      if [[ -n "$USE_COLOR" ]]; then
+        DIM=$'\e[2m'
+        BOLD=$'\e[1m'
+        CYAN=$'\e[36m'
+        GREEN=$'\e[32m'
+        YELLOW=$'\e[33m'
+        MAGENTA=$'\e[35m'
+        RESET=$'\e[0m'
       else
-        nix_eval_json "fleet.entities.\"$name\".attrs" | jq .
+        DIM="" BOLD="" CYAN="" GREEN="" YELLOW="" MAGENTA="" RESET=""
       fi
-    }
 
-    cmd_verbs() {
-      local name="''${1:?Usage: egregore verbs <entity>}"
-      local json
-      json=$(nix_eval_json "lib.mapAttrs (_: v: { inherit (v) pure description; }) fleet.entities.\"$name\".verbs")
-      echo "$json" | jq -r 'to_entries[] | "\(.key)\t\(if .value.pure then "pure" else "impure" end)\t\(.value.description)"' | column -t -s $'\t'
-    }
+      EGREGORE_DIR="''${EGREGORE_DIR:-$(git rev-parse --show-toplevel 2>/dev/null || echo .)}"
 
-    cmd_verb() {
-      local name="''${1:?Usage: egregore verb <entity> <verb> [args...]}"
-      local verb="''${2:?Usage: egregore verb <entity> <verb> [args...]}"
-      shift 2
+      # ── Nix evaluation ─────────────────────────────────────────────
 
-      local meta
-      meta=$(nix_eval_json "let v = fleet.entities.\"$name\".verbs.\"$verb\"; in { inherit (v) pure impl; }")
+      EGREGORE_FILE="''${EGREGORE_FILE:-$EGREGORE_DIR/egregore.nix}"
 
-      local is_pure impl
-      is_pure=$(echo "$meta" | jq -r '.pure')
-      impl=$(echo "$meta" | jq -r '.impl')
-
-      if [[ "$is_pure" == "true" ]]; then
-        echo "$impl"
-      else
-        echo "=== Running $verb on $name ===" >&2
-        eval "$impl"
+      if [[ ! -f "$EGREGORE_FILE" ]]; then
+        if [[ -f "$EGREGORE_DIR/nixclyx/egregore.nix" ]]; then
+          EGREGORE_FILE="$EGREGORE_DIR/nixclyx/egregore.nix"
+        else
+          echo "''${BOLD}error:''${RESET} no egregore.nix found at $EGREGORE_FILE" >&2
+          echo "Set EGREGORE_FILE or create egregore.nix at your repo root." >&2
+          exit 1
+        fi
       fi
-    }
 
-    cmd_graph() {
-      nix_eval_raw 'let
-        nodes = lib.mapAttrsToList (name: e: let
-          shape = if e.type == "network" then "diamond"
-            else if e.type == "host" then "box"
-            else if e.type == "ha-group" then "octagon"
-            else "ellipse";
-          label = e.attrs.label or name;
-        in "  \"" + name + "\" [label=\"" + label + "\" shape=" + shape + "];")
-        fleet.entities;
-        edges = lib.concatLists (lib.mapAttrsToList (name: e:
-          lib.mapAttrsToList (ref: target:
-            "  \"" + name + "\" -> \"" + target + "\" [label=\"" + ref + "\"];")
-          e.refs) fleet.entities);
-      in "digraph egregore {\n  rankdir=LR;\n" + lib.concatStringsSep "\n" (nodes ++ edges) + "\n}"'
-    }
+      PREAMBLE="let lib = import <nixpkgs/lib>; spec = import $EGREGORE_FILE; egregore = import spec.lib { inherit lib; }; fleet = egregore.eval { inherit (spec) modules; }; in"
 
-    # ── Main ───────────────────────────────────────────────────────
+      nix_eval_json() {
+        local expr="$1"
+        nix-instantiate --eval --strict --read-write-mode \
+          -E "$PREAMBLE builtins.toJSON ($expr)" \
+          2>/dev/null | sed 's/^"//;s/"$//' | sed 's/\\"/"/g;s/\\\\/\\/g'
+      }
 
-    cmd="''${1:-}"
-    shift || true
+      nix_eval_raw() {
+        local expr="$1"
+        nix-instantiate --eval --strict --read-write-mode \
+          -E "$PREAMBLE $expr" \
+          2>/dev/null | sed 's/^"//;s/"$//' | sed 's/\\n/\n/g;s/\\"/"/g;s/\\\\/\\/g'
+      }
 
-    case "$cmd" in
-      list|ls)  cmd_list "$@" ;;
-      show)     cmd_show "$@" ;;
-      attrs)    cmd_attrs "$@" ;;
-      verbs)    cmd_verbs "$@" ;;
-      verb|run) cmd_verb "$@" ;;
-      graph)    cmd_graph "$@" ;;
-      *)
-        cat <<EOF
-    egregore — entity registry CLI
+      # ── Commands ───────────────────────────────────────────────────
 
-    Usage:
-      egregore list [--type=X] [--tag=X]   List entities (filterable)
-      egregore show <entity>                Show entity details
-      egregore attrs <entity> [attr]        Query entity attributes
-      egregore verbs <entity>               List available verbs
-      egregore verb <entity> <verb> [args]   Execute a verb
-      egregore graph                        Output Graphviz DOT
+      cmd_list() {
+        local type_filter="" tag_filter=""
+        while [[ $# -gt 0 ]]; do
+          case "$1" in
+            --type=*) type_filter="''${1#--type=}"; shift ;;
+            --tag=*)  tag_filter="''${1#--tag=}"; shift ;;
+            *) echo "Unknown option: $1" >&2; exit 1 ;;
+          esac
+        done
 
-    Environment:
-      EGREGORE_DIR   Path to repo root (default: git root)
-    EOF
-        [[ -z "$cmd" ]] && exit 0 || exit 1
-        ;;
-    esac
+        local json
+        json=$(nix_eval_json "lib.mapAttrs (_: e: { inherit (e) type tags; label = e.attrs.label or \"\"; }) fleet.entities")
+
+        local filters=""
+        [[ -n "$type_filter" ]] && filters+="| select(.value.type == \"$type_filter\")"
+        [[ -n "$tag_filter" ]] && filters+="| select(.value.tags | index(\"$tag_filter\"))"
+
+        echo "$json" | jq -r "to_entries[] $filters | \"\(.key)\t\(.value.type)\t\(.value.tags | join(\",\"))\t\(.value.label)\"" | while IFS=$'\t' read -r name typ tags label; do
+          local tag_str=""
+          if [[ -n "$tags" ]]; then
+            tag_str="''${DIM}[''${tags}]''${RESET}"
+          fi
+          printf "  ''${BOLD}%-16s''${RESET} ''${CYAN}%-12s''${RESET} %-20s %s\n" "$name" "$typ" "$tag_str" "$label"
+        done
+      }
+
+      cmd_show() {
+        local name="''${1:?Usage: egregore show <entity>}"
+        local json
+        json=$(nix_eval_json "let e = fleet.entities.\"$name\"; in { inherit (e) type tags refs; attrs = lib.mapAttrs (_: v: if builtins.isList v then v else if builtins.isAttrs v then v else builtins.toString v) e.attrs; verbs = lib.mapAttrs (_: v: { inherit (v) pure description; }) e.verbs; }")
+
+        echo "$json" | jq -r --arg B "$BOLD" --arg R "$RESET" --arg C "$CYAN" --arg G "$GREEN" --arg Y "$YELLOW" --arg M "$MAGENTA" --arg D "$DIM" '
+          .type as $type | .tags as $tags | .refs as $refs | .attrs as $attrs | .verbs as $verbs |
+
+          "\($B)'"$name"'\($R)  \($C)\($type)\($R)  \($D)\($tags | join(", "))\($R)",
+          "",
+          (if ($refs | length) > 0 then
+            "\($Y)refs\($R)",
+            ($refs | to_entries[] | "  \($D)\(.key)\($R) \($D)→\($R) \($B)\(.value)\($R)"),
+            ""
+          else empty end),
+          "\($G)attrs\($R)",
+          ($attrs | to_entries | sort_by(.key)[] | "  \($D)\(.key)\($R) = \(.value)"),
+          (if ($verbs | length) > 0 then
+            "",
+            "\($M)verbs\($R)",
+            ($verbs | to_entries | sort_by(.key)[] |
+              "  \($B)\(.key)\($R) \($D)\(if .value.pure then "(pure)" else "" end)\($R) \(.value.description)")
+          else empty end)
+        '
+      }
+
+      cmd_attrs() {
+        local name="''${1:?Usage: egregore attrs <entity> [attr]}"
+        local attr="''${2:-}"
+
+        if [[ -n "$attr" ]]; then
+          nix_eval_json "fleet.entities.\"$name\".attrs.\"$attr\"" | jq -C .
+        else
+          nix_eval_json "fleet.entities.\"$name\".attrs" | jq -C .
+        fi
+      }
+
+      cmd_verbs() {
+        local name="''${1:?Usage: egregore verbs <entity>}"
+        local json
+        json=$(nix_eval_json "lib.mapAttrs (_: v: { inherit (v) pure description; }) fleet.entities.\"$name\".verbs")
+        echo "$json" | jq -r 'to_entries | sort_by(.key)[] | "\(.key)\t\(if .value.pure then "pure" else "impure" end)\t\(.value.description)"' | while IFS=$'\t' read -r verb kind desc; do
+          printf "  ''${BOLD}%-16s''${RESET} ''${DIM}%-8s''${RESET} %s\n" "$verb" "$kind" "$desc"
+        done
+      }
+
+      cmd_verb() {
+        local name="''${1:?Usage: egregore verb <entity> <verb> [args...]}"
+        local verb="''${2:?Usage: egregore verb <entity> <verb> [args...]}"
+        shift 2
+
+        local meta
+        meta=$(nix_eval_json "let v = fleet.entities.\"$name\".verbs.\"$verb\"; in { inherit (v) pure impl; }")
+
+        local is_pure impl
+        is_pure=$(echo "$meta" | jq -r '.pure')
+        impl=$(echo "$meta" | jq -r '.impl')
+
+        if [[ "$is_pure" == "true" ]]; then
+          echo "$impl"
+        else
+          echo "''${BOLD}=== $verb → $name ===''${RESET}" >&2
+          eval "$impl"
+        fi
+      }
+
+      cmd_graph() {
+        nix_eval_raw 'let
+          nodes = lib.mapAttrsToList (name: e: let
+            shape = if e.type == "network" then "diamond"
+              else if e.type == "host" then "box"
+              else if e.type == "ha-group" then "octagon"
+              else "ellipse";
+            label = e.attrs.label or name;
+          in "  \"" + name + "\" [label=\"" + label + "\" shape=" + shape + "];")
+          fleet.entities;
+          edges = lib.concatLists (lib.mapAttrsToList (name: e:
+            lib.mapAttrsToList (ref: target:
+              "  \"" + name + "\" -> \"" + target + "\" [label=\"" + ref + "\"];")
+            e.refs) fleet.entities);
+        in "digraph egregore {\n  rankdir=LR;\n" + lib.concatStringsSep "\n" (nodes ++ edges) + "\n}"'
+      }
+
+      # ── Main ───────────────────────────────────────────────────────
+
+      cmd="''${1:-}"
+      shift || true
+
+      case "$cmd" in
+        list|ls)  cmd_list "$@" ;;
+        show)     cmd_show "$@" ;;
+        attrs)    cmd_attrs "$@" ;;
+        verbs)    cmd_verbs "$@" ;;
+        verb|run) cmd_verb "$@" ;;
+        graph)    cmd_graph "$@" ;;
+        *)
+          echo "''${BOLD}egregore''${RESET} — entity registry CLI"
+          echo ""
+          echo "''${BOLD}Usage:''${RESET}"
+          echo "  egregore ''${CYAN}list''${RESET}  [--type=X] [--tag=X]   List entities"
+          echo "  egregore ''${CYAN}show''${RESET}  <entity>                Entity details"
+          echo "  egregore ''${CYAN}attrs''${RESET} <entity> [attr]        Query attributes"
+          echo "  egregore ''${CYAN}verbs''${RESET} <entity>               List verbs"
+          echo "  egregore ''${CYAN}verb''${RESET}  <entity> <verb> [args] Execute a verb"
+          echo "  egregore ''${CYAN}graph''${RESET}                        Graphviz DOT"
+          echo ""
+          echo "''${BOLD}Flags:''${RESET}"
+          echo "  --color / --no-color    Force color on/off (auto-detects tty)"
+          echo ""
+          echo "''${BOLD}Environment:''${RESET}"
+          echo "  EGREGORE_DIR    Repo root ''${DIM}(default: git root)''${RESET}"
+          echo "  EGREGORE_FILE   Entry point ''${DIM}(default: \$EGREGORE_DIR/egregore.nix)''${RESET}"
+          [[ -z "$cmd" ]] && exit 0 || exit 1
+          ;;
+      esac
+    '';
+  };
+
+  completions = runCommand "egregore-completions" {
+    nativeBuildInputs = [ installShellFiles ];
+  } ''
+    mkdir -p $out
+    installShellCompletion --bash --name egregore.bash ${./egregore-completion.bash}
+    installShellCompletion --zsh --name _egregore ${./egregore-completion.zsh}
   '';
-}
+in
+  symlinkJoin {
+    name = "egregore";
+    paths = [ cli completions ];
+  }
