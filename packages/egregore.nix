@@ -205,7 +205,13 @@ let
         shift 2
 
         local meta
-        meta=$(nix_eval_json "let v = fleet.entities.\"$name\".verbs.\"$verb\"; in { inherit (v) pure impl defaults; }")
+        meta=$(nix_eval_json "let v = fleet.entities.\"$name\".verbs.\"$verb\"; in { inherit (v) pure impl defaults; }") || true
+
+        if [[ -z "$meta" ]]; then
+          echo "''${BOLD}error:''${RESET} verb ''${CYAN}$verb''${RESET} not found on entity ''${BOLD}$name''${RESET}" >&2
+          echo "Run ''${DIM}egregore verbs $name''${RESET} to see available verbs." >&2
+          exit 1
+        fi
 
         local is_pure impl
         is_pure=$(echo "$meta" | jq -r '.pure')
