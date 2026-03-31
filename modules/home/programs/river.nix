@@ -173,180 +173,30 @@
     # Tidepool config: keybindings, colors, layout, and rules.
     # This Janet file is loaded by tidepool at startup.
     tidepoolConfig = pkgs.writeText "tidepool-init.janet" ''
-      # Colors from stylix
-      (put config :background 0x${c.base00})
-      (put config :border-focused 0x${c.base07})
-      (put config :border-normal 0x${c.base03})
-      (put config :border-urgent 0x${c.base08})
-      (put config :border-sibling 0x${c.base04})
-      (put config :border-width 4)
-      (put config :outer-padding 4)
-      (put config :inner-padding 8)
-      (put config :default-layout :scroll)
-      (put config :focus-follows-mouse false)
-      (put config :warp-pointer true)
-      ${lib.optionalString (monitors != {}) ''
-        # Output configuration (applied at startup via zwlr_output_manager_v1)
-        (put config :outputs
-          @{${
-          lib.concatStringsSep "\n          " (
-            lib.mapAttrsToList (
-              _: m: let
-                key =
-                  if m.identifier != null
-                  then m.identifier
-                  else m.connector;
-              in
-                if !m.enable
-                then ''"${key}" @{:enable false}''
-                else ''"${key}" @{${
-                    lib.optionalString (m.mode != null) ":mode [${toString m.mode.width} ${toString m.mode.height}] "
-                  }:pos [${toString m.position.x} ${toString m.position.y}] :scale ${toString m.scale}}''
-            )
-            monitors
-          )
-        }})
-      ''}
-      # Window rules
-      (array/push (config :rules)
-        {:app-id "xdg-desktop-portal-gtk" :float true}
-        {:app-id "firefox" :title "Library" :float true})
+      # ctx and actions are provided by tidepool when loading this file.
 
-      # Config reload: destroys all bindings, re-reads init.janet, recreates bindings
-      (def- reload-env (curenv))
-      (defn reload-config []
-        (each seat (wm :seats)
-          (each b (seat :xkb-bindings) (:destroy (b :obj)))
-          (each b (seat :pointer-bindings) (:destroy (b :obj)))
-          (put seat :xkb-bindings @[])
-          (put seat :pointer-bindings @[]))
-        (put config :xkb-bindings @[])
-        (put config :pointer-bindings @[])
-        (put config :rules @[])
-        (def config-dir (or (os/getenv "XDG_CONFIG_HOME")
-                            (string (os/getenv "HOME") "/.config")))
-        (dofile (string config-dir "/tidepool/init.janet") :env reload-env)
-        (each seat (wm :seats)
-          (each binding (config :xkb-bindings)
-            (xkb-binding/create seat ;binding))
-          (each binding (config :pointer-bindings)
-            (pointer-binding/create seat ;binding))))
+      (def config (ctx :config))
 
-      # Keybindings
-      (array/push
-        (config :xkb-bindings)
+      (def super {:mod4 true})
+      (def super-shift {:mod4 true :shift true})
 
-        # Spatial window focus/swap (vim-style hjkl)
-        # focus: directional (includes floats via geometry fallback)
-        # swap: reorder tiled windows, nudge floating windows
-        [:h {:mod4 true} (action/focus :left)]
-        [:j {:mod4 true} (action/focus :down)]
-        [:k {:mod4 true} (action/focus :up)]
-        [:l {:mod4 true} (action/focus :right)]
-        [:h {:mod4 true :shift true} (action/swap :left)]
-        [:j {:mod4 true :shift true} (action/swap :down)]
-        [:k {:mod4 true :shift true} (action/swap :up)]
-        [:l {:mod4 true :shift true} (action/swap :right)]
-
-        # Scroll layout column/row operations
-        [:bracketleft {:mod4 true :shift true} (action/adjust-ratio -0.05)]
-        [:bracketright {:mod4 true :shift true} (action/adjust-ratio 0.05)]
-        [:h {:mod4 true :ctrl true} (action/consume-column :left)]
-        [:l {:mod4 true :ctrl true} (action/consume-column :right)]
-        [:j {:mod4 true :ctrl true} (action/expel-column)]
-        [:k {:mod4 true :ctrl true} (action/equalize-column)]
-        [:r {:mod4 true} (action/preset-column-width)]
-        [:u {:mod4 true :ctrl true} (action/resize-window -0.1)]
-        [:i {:mod4 true :ctrl true} (action/resize-window 0.1)]
-
-        # Float resize (symmetric around center)
-        [:h {:mod4 true :ctrl true :shift true} (action/float-resize :width -40)]
-        [:l {:mod4 true :ctrl true :shift true} (action/float-resize :width 40)]
-        [:j {:mod4 true :ctrl true :shift true} (action/float-resize :height 40)]
-        [:k {:mod4 true :ctrl true :shift true} (action/float-resize :height -40)]
-        [:c {:mod4 true} (action/float-center)]
-
-        # Window state
-        [:space {:mod4 true} (action/zoom)]
-        [:semicolon {:mod4 true} (action/float)]
-        [:slash {:mod4 true} (action/fullscreen)]
-
-        # Output management
-        [:period {:mod4 true} (action/focus-output)]
-        [:period {:mod4 true :shift true} (action/send-to-output)]
-        [:comma {:mod4 true} (action/focus-output :left)]
-        [:comma {:mod4 true :shift true} (action/send-to-output)]
-
-        # Focus and navigation
-        [:o {:mod4 true} (action/focus :last)]
-
-        # Scroll home
-        [:grave {:mod4 true :ctrl true} (action/scroll-home)]
-        [:grave {:mod4 true :ctrl true :shift true} (action/scroll-home-set)]
-
-        # Marks and summon
-        [:m {:mod4 true} (action/spawn ["${mark-set-menu}"])]
-        [:m {:mod4 true :shift true} (action/spawn ["${mark-pick}" "focus"])]
-        [:m {:mod4 true :ctrl true} (action/spawn ["${mark-pick}" "send-to"])]
-        [:w {:mod4 true} (action/summon :last)]
-        [:w {:mod4 true :shift true} (action/spawn ["${summon-menu}"])]
-        [:w {:mod4 true :ctrl true} (action/spawn ["${mark-pick}" "summon"])]
-
-        # Application launchers
-        [:Return {:mod4 true} (action/signal ["open-launcher"])]
-        [:i {:mod4 true} (action/spawn ["uwsm" "app" "--" "xdg-terminal-exec"])]
-        [:u {:mod4 true} (action/spawn ["uwsm" "app" "--" "firefox"])]
-        [:x {:mod4 true} (action/spawn ["uwsm" "app" "--" "${lib.getExe power-menu}"])]
-        [:s {:mod4 true} (action/spawn ["uwsm" "app" "--" "${lib.getExe screenshot-menu}"])]
-        [:p {:mod4 true} (action/spawn ["uwsm" "app" "--" "${rofi-rbw}"])]
-        [:d {:mod4 true} (action/spawn ["${action-menu}"])]
-        [:y {:mod4 true} (action/spawn ["uwsm" "app" "--" "emacsclient" "-c"])]
-        [:y {:mod4 true :shift true} (action/spawn ["uwsm" "app" "--" "emacs"])]
-
-        # Layout mode cycling
-        [:Tab {:mod4 true} (action/cycle-layout :next)]
-        [:Tab {:mod4 true :shift true} (action/cycle-layout :prev)]
-
-        # Session
-        [:q {:mod4 true :shift true} (action/close)]
-        [:e {:mod4 true :shift true} (action/exit)]
-        [:r {:mod4 true :shift true} (fn [seat binding] (reload-config))]
-
-        # Scratchpad
-        [:grave {:mod4 true} (action/toggle-scratchpad)]
-        [:grave {:mod4 true :shift true} (action/send-to-scratchpad)]
-
-        # All tags
-        [:a {:mod4 true} (action/focus-all-tags)]
-
-        # Media keys (no modifier)
-        [:XF86AudioRaiseVolume {} (action/signal ["volume-up"])]
-        [:XF86AudioLowerVolume {} (action/signal ["volume-down"])]
-        [:XF86AudioMute {} (action/signal ["volume-mute"])]
-        [:XF86MonBrightnessUp {} (action/signal ["brightness-up"])]
-        [:XF86MonBrightnessDown {} (action/signal ["brightness-down"])])
-
-      # Tag keybindings (1-9 → tags 1-9, 0 → tag 10)
-      (for i 1 10
-        (def keysym (keyword (string i)))
-        (array/push
-          (config :xkb-bindings)
-          [keysym {:mod4 true} (action/focus-tag i)]
-          [keysym {:mod4 true :shift true} (action/set-tag i)]
-          [keysym {:mod4 true :ctrl true} (action/toggle-tag i)]))
-
-      # Tag 10 on key 0
-      (array/push
-        (config :xkb-bindings)
-        [:0 {:mod4 true} (action/focus-tag 10)]
-        [:0 {:mod4 true :shift true} (action/set-tag 10)]
-        [:0 {:mod4 true :ctrl true} (action/toggle-tag 10)])
-
-      # Pointer bindings
-      (array/push
-        (config :pointer-bindings)
-        [:left {:mod4 true} (action/pointer-move)]
-        [:right {:mod4 true} (action/pointer-resize)])
+      (put config :xkb-bindings
+        @[[:Return super ((actions :spawn) "foot")]
+          [:q super-shift (actions :close-focused)]
+          [:j super (actions :focus-next)]
+          [:k super (actions :focus-prev)]
+          [:J super-shift (actions :swap-next)]
+          [:K super-shift (actions :swap-prev)]
+          [:1 super ((actions :focus-tag) 1)]
+          [:2 super ((actions :focus-tag) 2)]
+          [:3 super ((actions :focus-tag) 3)]
+          [:4 super ((actions :focus-tag) 4)]
+          [:5 super ((actions :focus-tag) 5)]
+          [:1 super-shift ((actions :send-to-tag) 1)]
+          [:2 super-shift ((actions :send-to-tag) 2)]
+          [:3 super-shift ((actions :send-to-tag) 3)]
+          [:4 super-shift ((actions :send-to-tag) 4)]
+          [:5 super-shift ((actions :send-to-tag) 5)]])
     '';
   in {
     home.packages = [
