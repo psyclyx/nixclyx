@@ -44,7 +44,8 @@ _egregore() {
   local -a commands=(
     'list:List entities'
     'ls:List entities'
-    'show:Show entity details'
+    'show:Entity overview'
+    'inspect:Full fleet overview'
     'attrs:Query entity attributes'
     'verbs:List entity verbs'
     'verb:Execute a verb'

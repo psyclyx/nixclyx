@@ -2,7 +2,7 @@ _egregore() {
   local cur prev words cword
   _init_completion || return
 
-  local cmds="list ls show attrs verbs verb run graph"
+  local cmds="list ls show inspect attrs verbs verb run graph"
 
   if [[ $cword -eq 1 ]]; then
     COMPREPLY=($(compgen -W "$cmds" -- "$cur"))

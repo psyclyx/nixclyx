@@ -3,6 +3,7 @@
 # Usage:
 #   egregore list [--type=X] [--tag=X]
 #   egregore show <entity>
+#   egregore inspect
 #   egregore attrs <entity> [attr]
 #   egregore verbs <entity>
 #   egregore verb <verb> <entity> [args]
@@ -46,10 +47,11 @@ let
         GREEN=$'\e[32m'
         YELLOW=$'\e[33m'
         MAGENTA=$'\e[35m'
+        BLUE=$'\e[34m'
         RED=$'\e[31m'
         RESET=$'\e[0m'
       else
-        DIM="" BOLD="" CYAN="" GREEN="" YELLOW="" MAGENTA="" RED="" RESET=""
+        DIM="" BOLD="" CYAN="" GREEN="" YELLOW="" MAGENTA="" BLUE="" RED="" RESET=""
       fi
 
       EGREGORE_DIR="''${EGREGORE_DIR:-$(git rev-parse --show-toplevel 2>/dev/null || echo .)}"
@@ -140,7 +142,7 @@ let
             local label="$rest_label"
             local tag_str=""
             if [[ -n "$tags" ]]; then
-              tag_str="''${DIM}[''${tags}]''${RESET}"
+              tag_str="''${YELLOW}[''${tags}]''${RESET}"
             fi
             if [[ -n "$flat" ]]; then
               printf "  ''${BOLD}%-16s''${RESET} ''${CYAN}%-12s''${RESET} %-24s %s\n" "$name" "$current_type" "$tag_str" "$label"
@@ -170,23 +172,23 @@ let
         [[ -n "$json" ]] || die "entity ''${BOLD}$name''${RESET} not found" \
           "run ''${DIM}egregore list''${RESET} to see available entities."
 
-        echo "$json" | jq -r --arg B "$BOLD" --arg R "$RESET" --arg C "$CYAN" --arg G "$GREEN" --arg Y "$YELLOW" --arg M "$MAGENTA" --arg D "$DIM" '
+        echo "$json" | jq -r --arg B "$BOLD" --arg R "$RESET" --arg C "$CYAN" --arg G "$GREEN" --arg Y "$YELLOW" --arg M "$MAGENTA" --arg BL "$BLUE" --arg D "$DIM" '
           .type as $type | .tags as $tags | .refs as $refs | .attrs as $attrs | .verbs as $verbs |
 
-          "\($B)'"$name"'\($R)  \($C)\($type)\($R)  \($D)\($tags | join(", "))\($R)",
+          "\($B)'"$name"'\($R)  \($C)\($type)\($R)\(if ($tags | length) > 0 then "  \($Y)\($tags | join(", "))\($R)" else "" end)",
           "",
           (if ($refs | length) > 0 then
-            "\($Y)refs\($R)",
-            ($refs | to_entries[] | "  \($D)\(.key)\($R) \($D)→\($R) \($B)\(.value)\($R)"),
+            "\($BL)refs\($R)",
+            ($refs | to_entries[] | "  \($BL)\(.key)\($R) \($D)→\($R) \($B)\(.value)\($R)"),
             ""
           else empty end),
           "\($G)attrs\($R)",
-          ($attrs | to_entries | sort_by(.key)[] | "  \($D)\(.key)\($R) = \(.value)"),
+          ($attrs | to_entries | sort_by(.key)[] | "  \($G)\(.key)\($R) = \(.value)"),
           (if ($verbs | length) > 0 then
             "",
             "\($M)verbs\($R)",
             ($verbs | to_entries | sort_by(.key)[] |
-              "  \($B)\(.key)\($R) \($D)\(if .value.pure then "(pure)" else "" end)\($R) \(.value.description)")
+              "  \($M)\(.key)\($R) \($D)\(if .value.pure then "(pure)" else "" end) \(.value.description)\($R)")
           else empty end)
         '
       }
@@ -226,7 +228,7 @@ let
           while IFS=$'\t' read -r verb desc typ ents; do
             if [[ "$verb" != "$last_verb" ]]; then
               [[ -n "$last_verb" ]] && echo ""
-              printf "  ''${BOLD}%s''${RESET}  ''${DIM}%s''${RESET}\n" "$verb" "$desc"
+              printf "  ''${MAGENTA}%s''${RESET}  ''${DIM}%s''${RESET}\n" "$verb" "$desc"
               last_verb="$verb"
             fi
             printf "    ''${CYAN}%-12s''${RESET} %s\n" "$typ" "$ents"
@@ -251,22 +253,22 @@ let
           if [[ -n "$defs" ]]; then
             def_str=" ''${DIM}[''${defs}]''${RESET}"
           fi
-          printf "  ''${BOLD}%-16s''${RESET} ''${DIM}%-8s''${RESET} %s%s\n" "$verb" "$kind" "$desc" "$def_str"
+          printf "  ''${MAGENTA}%-16s''${RESET} ''${DIM}%-8s''${RESET} %s%s\n" "$verb" "$kind" "$desc" "$def_str"
         done
       }
 
       cmd_verb() {
         if [[ $# -eq 0 ]]; then
           echo "''${RED}error:''${RESET} missing verb name" >&2
-          echo "usage: egregore verb ''${CYAN}<verb>''${RESET} <entity> [args...]" >&2
+          echo "usage: egregore verb ''${MAGENTA}<verb>''${RESET} <entity> [args...]" >&2
           echo "" >&2
           show_all_verbs >&2
           exit 1
         fi
         local verb="$1"
 
-        [[ $# -ge 2 ]] || die "missing entity name for verb ''${CYAN}$verb''${RESET}" \
-          "usage: egregore verb $verb ''${CYAN}<entity>''${RESET} [args...]" \
+        [[ $# -ge 2 ]] || die "missing entity name for verb ''${MAGENTA}$verb''${RESET}" \
+          "usage: egregore verb $verb ''${BOLD}<entity>''${RESET} [args...]" \
           "run ''${DIM}egregore list''${RESET} to see available entities."
         local name="$2"
         shift 2
@@ -275,7 +277,7 @@ let
         meta=$(nix_eval_json "let v = fleet.entities.\"$name\".verbs.\"$verb\"; in { inherit (v) pure impl defaults; }") || true
 
         if [[ -z "$meta" ]]; then
-          die "verb ''${CYAN}$verb''${RESET} not found on entity ''${BOLD}$name''${RESET}" \
+          die "verb ''${MAGENTA}$verb''${RESET} not found on entity ''${BOLD}$name''${RESET}" \
             "run ''${DIM}egregore verbs $name''${RESET} to see available verbs."
         fi
 
@@ -317,6 +319,39 @@ let
         in "digraph egregore {\n  rankdir=LR;\n" + lib.concatStringsSep "\n" (nodes ++ edges) + "\n}"'
       }
 
+      cmd_inspect() {
+        local json
+        json=$(nix_eval_json "lib.mapAttrs (name: e: { inherit (e) type tags refs; config = lib.filterAttrs (_: v: ! builtins.isAttrs v && ! builtins.isList v && ! builtins.isFunction v) (builtins.getAttr e.type e); }) fleet.entities")
+
+        [[ -n "$json" ]] || die "no entities found"
+
+        echo "$json" | jq -r --arg B "$BOLD" --arg R "$RESET" --arg C "$CYAN" --arg Y "$YELLOW" --arg BL "$BLUE" --arg D "$DIM" '
+          [to_entries[] | {name: .key} + .value]
+          | group_by(.type) | sort_by(.[0].type)[]
+          | .[0].type as $type
+          | ([.[].name | length] | max) as $nw
+          | "\($C)\($type)\($R)",
+            (sort_by(.name)[] |
+              "  \($B)\(.name)\($R)\(" " * ($nw - (.name | length) + 2))\(
+                [.config | to_entries | sort_by(.key)[] |
+                  "\($D)\(.key)\($R) \(
+                    if .value | type == "array" then .value | map(tostring) | join(",")
+                    elif .value | type == "object" then .value | tostring
+                    elif .value == "" then "-"
+                    else .value end)"
+                ] | join("  "))\(
+                if (.refs | length) > 0 then
+                  "  \([.refs | to_entries | sort_by(.key)[] |
+                    "\($BL)\(.key)\($R) \($D)→\($R) \($B)\(.value)\($R)"] | join("  "))"
+                else "" end)\(
+                if (.tags | length) > 0 then
+                  "  \($Y)\(.tags | join(", "))\($R)"
+                else "" end)"
+            ),
+            ""
+        '
+      }
+
       # ── Main ───────────────────────────────────────────────────────
 
       cmd="''${1:-}"
@@ -325,6 +360,7 @@ let
       case "$cmd" in
         list|ls)  cmd_list "$@" ;;
         show)     cmd_show "$@" ;;
+        inspect)  cmd_inspect "$@" ;;
         attrs)    cmd_attrs "$@" ;;
         verbs)    cmd_verbs "$@" ;;
         verb|run) cmd_verb "$@" ;;
@@ -333,11 +369,12 @@ let
           echo "''${BOLD}egregore''${RESET} — entity registry CLI"
           echo ""
           echo "''${BOLD}Usage:''${RESET}"
-          echo "  egregore ''${CYAN}list''${RESET}  [--type=X] [--tag=X]    List entities"
-          echo "  egregore ''${CYAN}show''${RESET}  <entity>                 Entity details"
-          echo "  egregore ''${CYAN}attrs''${RESET} <entity> [attr]         Query attributes"
-          echo "  egregore ''${CYAN}verbs''${RESET} [entity]                List verbs"
-          echo "  egregore ''${CYAN}verb''${RESET}  <verb> <entity> [args]  Execute a verb"
+          echo "  egregore ''${CYAN}list''${RESET}    [--type=X] [--tag=X]  List entities"
+          echo "  egregore ''${CYAN}show''${RESET}    <entity>              Entity overview"
+          echo "  egregore ''${CYAN}inspect''${RESET}                       Full fleet overview"
+          echo "  egregore ''${CYAN}attrs''${RESET}   <entity> [attr]       Query attributes"
+          echo "  egregore ''${CYAN}verbs''${RESET}   [entity]              List verbs"
+          echo "  egregore ''${CYAN}verb''${RESET}    <verb> <entity> [..]  Execute a verb"
           echo "  egregore ''${CYAN}graph''${RESET}                         Graphviz DOT"
           echo ""
           echo "''${BOLD}Flags:''${RESET}"
