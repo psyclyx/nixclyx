@@ -32,21 +32,18 @@ egregorLib.mkType {
   verbs = _name: entity: _top: let
     host = entity.ilo.hostname;
   in {
-    power-status = {
-      description = "Check server power state.";
-      impl = rf host "Systems -F get";
-    };
-    power-on = {
-      description = "Power on server.";
-      impl = rf host "Systems -F reset On";
-    };
-    power-off = {
-      description = "Force power off.";
-      impl = rf host "Systems -F reset ForceOff";
-    };
-    power-reset = {
-      description = "Force restart.";
-      impl = rf host "Systems -F reset ForceRestart";
+    power = {
+      description = "Server power control (on|off|reset, or show state).";
+      impl = ''
+        action="''${1:-}"
+        case "$action" in
+          on)    ${rf host "Systems -F reset On"} ;;
+          off)   ${rf host "Systems -F reset ForceOff"} ;;
+          reset) ${rf host "Systems -F reset ForceRestart"} ;;
+          "")    ${rf host "Systems -F get"} ;;
+          *)     echo "Unknown power action: $action" >&2; exit 1 ;;
+        esac
+      '';
     };
     info = {
       description = "Show system information.";
