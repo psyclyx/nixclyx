@@ -170,34 +170,6 @@
       uwsm finalize
     '';
 
-    # Tidepool config: keybindings, colors, layout, and rules.
-    # This Janet file is loaded by tidepool at startup.
-    tidepoolConfig = pkgs.writeText "tidepool-init.janet" ''
-      # ctx and actions are provided by tidepool when loading this file.
-
-      (def config (ctx :config))
-
-      (def super {:mod4 true})
-      (def super-shift {:mod4 true :shift true})
-
-      (put config :xkb-bindings
-        @[[:Return super ((actions :spawn) "foot")]
-          [:q super-shift (actions :close-focused)]
-          [:j super (actions :focus-next)]
-          [:k super (actions :focus-prev)]
-          [:J super-shift (actions :swap-next)]
-          [:K super-shift (actions :swap-prev)]
-          [:1 super ((actions :focus-tag) 1)]
-          [:2 super ((actions :focus-tag) 2)]
-          [:3 super ((actions :focus-tag) 3)]
-          [:4 super ((actions :focus-tag) 4)]
-          [:5 super ((actions :focus-tag) 5)]
-          [:1 super-shift ((actions :send-to-tag) 1)]
-          [:2 super-shift ((actions :send-to-tag) 2)]
-          [:3 super-shift ((actions :send-to-tag) 3)]
-          [:4 super-shift ((actions :send-to-tag) 4)]
-          [:5 super-shift ((actions :send-to-tag) 5)]])
-    '';
   in {
     home.packages = [
       pkgs.brightnessctl
@@ -220,6 +192,26 @@
       services.mako.enable = lib.mkDefault true;
     };
 
+    services.tidepool.keybindings = {
+      "super+Return" = ''(actions/spawn "uwsm" "app" "--" "xdg-terminal-exec")'';
+      "super+d" = ''(actions/spawn "fuzzel")'';
+      "super+shift+q" = "actions/close-focused";
+      "super+j" = "actions/focus-next";
+      "super+k" = "actions/focus-prev";
+      "super+shift+j" = "actions/swap-next";
+      "super+shift+k" = "actions/swap-prev";
+      "super+1" = "(actions/focus-tag 1)";
+      "super+2" = "(actions/focus-tag 2)";
+      "super+3" = "(actions/focus-tag 3)";
+      "super+4" = "(actions/focus-tag 4)";
+      "super+5" = "(actions/focus-tag 5)";
+      "super+shift+1" = "(actions/send-to-tag 1)";
+      "super+shift+2" = "(actions/send-to-tag 2)";
+      "super+shift+3" = "(actions/send-to-tag 3)";
+      "super+shift+4" = "(actions/send-to-tag 4)";
+      "super+shift+5" = "(actions/send-to-tag 5)";
+    };
+
     programs.swaylock = {
       enable = true;
       package = lib.mkDefault pkgs.swaylock-effects;
@@ -238,10 +230,6 @@
     xdg.configFile."river/init" = {
       source = initScript;
       executable = true;
-    };
-
-    xdg.configFile."tidepool/init.janet" = {
-      source = tidepoolConfig;
     };
 
     systemd.user.services.swaybg = {
