@@ -202,10 +202,33 @@
       "super+Return" = ''(actions/spawn "uwsm" "app" "--" "xdg-terminal-exec")'';
       "super+d" = ''(actions/spawn "fuzzel")'';
       "super+shift+q" = "actions/close-focused";
-      "super+j" = "actions/focus-next";
-      "super+k" = "actions/focus-prev";
-      "super+shift+j" = "actions/swap-next";
-      "super+shift+k" = "actions/swap-prev";
+      # Directional focus
+      "super+h" = "actions/focus-left";
+      "super+l" = "actions/focus-right";
+      "super+j" = "actions/focus-down";
+      "super+k" = "actions/focus-up";
+      # Directional swap
+      "super+shift+h" = "actions/swap-left";
+      "super+shift+l" = "actions/swap-right";
+      "super+shift+j" = "actions/swap-down";
+      "super+shift+k" = "actions/swap-up";
+      # Join / Leave
+      "super+ctrl+h" = "actions/join-left";
+      "super+ctrl+l" = "actions/join-right";
+      "super+ctrl+j" = "actions/join-down";
+      "super+ctrl+k" = "actions/join-up";
+      "super+ctrl+space" = "actions/leave";
+      # Width
+      "super+equal" = "actions/cycle-width-forward";
+      "super+minus" = "actions/cycle-width-backward";
+      # Insert mode
+      "super+i" = "actions/toggle-insert-mode";
+      # Tabs
+      "super+t" = "actions/make-tabbed";
+      "super+shift+t" = "actions/make-split";
+      "super+Tab" = "actions/focus-tab-next";
+      "super+shift+Tab" = "actions/focus-tab-prev";
+      # Tags
       "super+1" = "(actions/focus-tag 1)";
       "super+2" = "(actions/focus-tag 2)";
       "super+3" = "(actions/focus-tag 3)";
