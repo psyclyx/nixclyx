@@ -192,6 +192,12 @@
       services.mako.enable = lib.mkDefault true;
     };
 
+    services.tidepool.outputOrder = [
+      { name = monitors.gawfolk.connector; tag = 1; }
+      { name = monitors.benq.connector; tag = 2; }
+      { name = monitors.dell.connector; tag = 3; }
+    ];
+
     services.tidepool.keybindings = {
       "super+Return" = ''(actions/spawn "uwsm" "app" "--" "xdg-terminal-exec")'';
       "super+d" = ''(actions/spawn "fuzzel")'';

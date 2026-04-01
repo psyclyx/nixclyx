@@ -12,8 +12,17 @@
       gpu.nvidia.enable = true;
 
       monitors = {
+        gawfolk = {
+          connector = "DP-1";
+          identifier = "QHX GF005";
+          mode = {
+            width = 3840;
+            height = 2560;
+          };
+        };
+
         benq = {
-          connector = "DP-4";
+          connector = "DP-6";
           identifier = "BNQ BenQ RD280U V5R0042101Q";
           mode = {
             width = 3840;
@@ -22,17 +31,8 @@
           position.x = 3840;
         };
 
-        gawfolk = {
-          connector = "DP-2";
-          identifier = "QHX GF005";
-          mode = {
-            width = 3840;
-            height = 2560;
-          };
-        };
-
         dell = {
-          connector = "DP-1";
+          connector = "DP-3";
           identifier = "Dell Inc. DELL S2721QS 9PPZM43";
           mode = {
             width = 3840;
