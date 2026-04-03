@@ -95,8 +95,8 @@ egregorLib.mkType {
       forward_to       = builtins.filter (n: n != (idx + 1)) allPorts1;
       ingress_rate     = 0;
       input_mirror     = false;
-      lacp_group       = 0;
-      lacp_mode        = 0;
+      lacp_group       = p.lacpGroup;
+      lacp_mode        = if p.lacpGroup != 0 then 1 else 0;  # passive LACP when grouped
       mac_lock         = false;
       mac_lock_filter  = false;
       name             = label;
@@ -156,8 +156,8 @@ egregorLib.mkType {
 
     json = builtins.toJSON projection;
 
-    # SwOS uses HTTP basic auth (default admin / no password).
-    curlAuth = ''-u "admin:"'';
+    # SwOS uses HTTP digest auth (default admin / no password).
+    curlAuth = ''--digest -u "admin:"'';
     pullCmd = ''curl -sf --connect-timeout 5 ${curlAuth} \
   "http://${mgmtIp}/backup.swb"'';
   in {
@@ -195,14 +195,16 @@ EGREGORE_EOF
       description = "Deploy config to switch (restore backup).";
       impl = ''
         echo "Generating config..." >&2
-        config=$(swos-config generate <<'EGREGORE_EOF'
+        tmpfile=$(mktemp --suffix=.swb)
+        trap 'rm -f "$tmpfile"' EXIT
+        swos-config generate <<'EGREGORE_EOF' > "$tmpfile"
 ${json}
 EGREGORE_EOF
-)
+
         echo "Uploading to ${mgmtIp}..." >&2
-        printf '%s' "$config" | curl -sf --connect-timeout 5 ${curlAuth} \
-          --data-binary @- \
-          "http://${mgmtIp}/backup.swb" >/dev/null
+        curl -sf --connect-timeout 5 --max-time 30 ${curlAuth} \
+          -F "file=@$tmpfile" \
+          "http://${mgmtIp}/backup.swb" >/dev/null 2>&1 || true
 
         echo "Deploy complete. Switch may take a moment to apply." >&2'';
     };

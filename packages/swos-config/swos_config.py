@@ -36,7 +36,10 @@ class _Parser:
     def file(self):
         sections = {}
         while self.i < len(self.t):
-            name = self._read_until(":")
+            try:
+                name = self._read_until(":")
+            except IndexError:
+                break  # truncated trailing data (e.g. bare "acl" without ".b:[]")
             self._expect(":")
             val = self._value()
             sections[name] = val
