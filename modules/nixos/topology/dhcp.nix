@@ -13,11 +13,13 @@
       ) hosts));
 
   # MAC address for a host's physical interface on a network.
+  # For bond VLAN devices (e.g. bond0.25), use the bond's MAC (eno1).
   hostMacForNetwork = hostname: network: let
     h = eg.entities.${hostname}.host;
-    iface = h.interfaces.${network};
-    physDev = iface.device;
-  in h.mac.${physDev};
+    physDev = h.interfaces.${network}.device;
+  in
+    if h.mac ? ${physDev} then h.mac.${physDev}
+    else h.mac.eno1;  # bond VLANs inherit the bond MAC
 
   mkSubnet4 = _poolName: pool: let
     net = eg.entities.${pool.network};
