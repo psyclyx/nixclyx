@@ -32,6 +32,11 @@
             type = lib.types.listOf lib.types.str;
             default = [];
           };
+          organization = lib.mkOption {
+            type = lib.types.nullOr lib.types.str;
+            default = null;
+            description = "Organization (O=) field in the cert subject. Used by k8s for group membership.";
+          };
           ttl = lib.mkOption {
             type = lib.types.str;
             default = "24h";
@@ -98,10 +103,16 @@
         + lib.optionalString (cert.altNames != [])
           " alt_names=${lib.concatStringsSep "," cert.altNames}"
         + lib.optionalString (cert.ipSans != [])
-          " ip_sans=${lib.concatStringsSep "," cert.ipSans}";
+          " ip_sans=${lib.concatStringsSep "," cert.ipSans}"
+        + lib.optionalString (cert.organization != null)
+          " organization=${cert.organization}";
 
-      reloadCmds = lib.concatMapStringsSep "\n" (unit:
-        "systemctl reload-or-restart --no-block ${lib.escapeShellArg unit} 2>/dev/null || true"
+      reloadCmds = lib.concatMapStringsSep "\n" (unit: ''
+        # Only reload units already running — if the unit is starting fresh
+        # (e.g. pulled in via Wants=), it reads the new certs on its own.
+        if systemctl is-active --quiet ${lib.escapeShellArg unit} 2>/dev/null; then
+          systemctl reload-or-restart --no-block ${lib.escapeShellArg unit} 2>/dev/null || true
+        fi''
       ) cert.reloadUnits;
     in {
       service = {
@@ -110,6 +121,7 @@
         wants = ["network-online.target"];
         wantedBy = ["multi-user.target"];
         serviceConfig.Type = "oneshot";
+        startLimitIntervalSec = 0;
         script = ''
           set -euo pipefail
           DIR="${cert.directory}"
@@ -122,13 +134,23 @@
             export HOME="/tmp"
             RESP=$(mktemp)
             if ${bao} write -format=json ${writeArgs} > "$RESP" 2>/dev/null; then
-              ${jq} -r '.data.certificate' "$RESP" > "$DIR/${cert.certFile}.new"
-              ${jq} -r '.data.private_key' "$RESP" > "$DIR/${cert.keyFile}.new"
-              ${jq} -r '.data.issuing_ca' "$RESP" > "$DIR/${cert.caFile}.new"
+              ${jq} -r '.data.certificate' "$RESP" > "$DIR/${cert.certFile}.${name}.tmp"
+              ${jq} -r '.data.private_key' "$RESP" > "$DIR/${cert.keyFile}.${name}.tmp"
+              ${jq} -r '.data.issuing_ca' "$RESP" > "$DIR/${cert.caFile}.${name}.tmp"
 
-              mv "$DIR/${cert.certFile}.new" "$DIR/${cert.certFile}"
-              mv "$DIR/${cert.keyFile}.new" "$DIR/${cert.keyFile}"
-              mv "$DIR/${cert.caFile}.new" "$DIR/${cert.caFile}"
+              CHANGED=0
+              if ! cmp -s "$DIR/${cert.certFile}.${name}.tmp" "$DIR/${cert.certFile}" 2>/dev/null; then
+                CHANGED=1
+              fi
+              mv "$DIR/${cert.certFile}.${name}.tmp" "$DIR/${cert.certFile}"
+              mv "$DIR/${cert.keyFile}.${name}.tmp" "$DIR/${cert.keyFile}"
+              # Only overwrite CA if content differs (avoids cascading restarts
+              # when multiple certs share the same CA file)
+              if ! cmp -s "$DIR/${cert.caFile}.${name}.tmp" "$DIR/${cert.caFile}" 2>/dev/null; then
+                mv "$DIR/${cert.caFile}.${name}.tmp" "$DIR/${cert.caFile}"
+              else
+                rm -f "$DIR/${cert.caFile}.${name}.tmp"
+              fi
               FETCHED=1
               echo "Fetched certificate for ${cert.commonName} from OpenBao"
             fi
@@ -151,7 +173,7 @@
           chmod ${cert.keyMode} "$DIR/${cert.keyFile}"
 
           ${lib.optionalString (cert.reloadUnits != []) ''
-            if [ "$FETCHED" -eq 1 ]; then
+            if [ "''${CHANGED:-0}" -eq 1 ]; then
               ${reloadCmds}
             fi
           ''}

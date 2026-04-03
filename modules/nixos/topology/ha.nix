@@ -76,8 +76,10 @@
         then " port ${toString svc.checkPort}"
         else "";
       sslSuffix =
-        if svc.checkSsl
+        if svc.checkSsl && svc.mode == "http"
         then " ssl verify none check-ssl"
+        else if svc.checkSsl
+        then " check-ssl verify none"
         else "";
     in ''
 
