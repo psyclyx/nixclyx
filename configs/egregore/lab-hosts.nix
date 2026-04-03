@@ -24,13 +24,7 @@ let
     seaweedfs-master = { port = 9327; networks = ["infra"]; };
   };
 
-  labInterfaces = {
-    infra = { device = "eno1"; };
-    stage = { device = "eno2"; };
-    prod  = { device = "eno3"; };
-  };
-
-  mkLabHost = { n, mgmtMac, eno1Mac, eno2Mac, eno3Mac, eno4Mac, wgKey, exporters }: {
+  mkLabHost = { n, mgmtMac, eno1Mac, eno2Mac, eno3Mac, eno4Mac, sfpDataMac, sfpProdMac, sfpDataDev, sfpProdDev, wgKey, exporters }: {
     type = "host";
     tags = ["server" "lab" "apartment" "fixed"];
     refs.bmc = "lab-${toString n}-ilo";
@@ -41,10 +35,19 @@ let
         eno2 = eno2Mac;
         eno3 = eno3Mac;
         eno4 = eno4Mac;
+        ${sfpDataDev} = sfpDataMac;
+        ${sfpProdDev} = sfpProdMac;
       };
-      interfaces = labInterfaces;
+      interfaces = {
+        main  = { device = "bond0.10"; };
+        infra = { device = "bond0.25"; };
+        stage = { device = "bond0.31"; };
+        prod  = { device = sfpProdDev; };
+        data  = { device = sfpDataDev; };
+      };
       addresses = {
         vpn   = { ipv4 = "10.157.0.${toString (10 + n)}"; };
+        main  = { ipv4 = "10.0.10.${toString (10 + n)}";  ipv6 = "fd9a:e830:4b1e:a::${lib.toHexString (10 + n)}"; };
         infra = { ipv4 = "10.0.25.${toString (10 + n)}";  ipv6 = "fd9a:e830:4b1e:19::${lib.toHexString (10 + n)}"; };
         prod  = { ipv4 = "10.0.30.${toString (10 + n)}";  ipv6 = "fd9a:e830:4b1e:1e::${lib.toHexString (10 + n)}"; };
         stage = { ipv4 = "10.0.31.${toString (10 + n)}";  ipv6 = "fd9a:e830:4b1e:1f::${lib.toHexString (10 + n)}"; };
@@ -70,6 +73,10 @@ in {
         eno2Mac = "94:18:82:79:b9:f1";
         eno3Mac = "94:18:82:79:b9:f2";
         eno4Mac = "94:18:82:79:b9:f3";
+        sfpDataMac = "98:f2:b3:d7:58:c1";  # eno50np1 → CRS326 sfp-sfpplus1
+        sfpProdMac = "98:f2:b3:d7:58:c0";  # eno49np0 → CRS326 sfp-sfpplus2
+        sfpDataDev = "eno50np1";
+        sfpProdDev = "eno49np0";
         wgKey   = "gLXnmGgfyhDIvlFeHaoY3ZzbOArm3zW0HUqI8JtF3R8=";
         exporters = labMasterExporters;
       };
@@ -81,6 +88,10 @@ in {
         eno2Mac = "94:18:82:89:83:71";
         eno3Mac = "94:18:82:89:83:72";
         eno4Mac = "94:18:82:89:83:73";
+        sfpDataMac = "14:02:ec:90:67:19";  # ens1f1 → CRS326 sfp-sfpplus3
+        sfpProdMac = "14:02:ec:90:67:18";  # ens1f0 → CRS326 sfp-sfpplus4
+        sfpDataDev = "ens1f1";
+        sfpProdDev = "ens1f0";
         wgKey   = "0EjNTYFGhcUgKr/xQ5iW3vN95mm4GwOv9iO5jGxX+xg=";
         exporters = labMasterExporters;
       };
@@ -92,6 +103,10 @@ in {
         eno2Mac = "14:02:ec:35:02:a5";
         eno3Mac = "14:02:ec:35:02:a6";
         eno4Mac = "14:02:ec:35:02:a7";
+        sfpDataMac = "14:02:ec:44:29:dc";  # eno50 → CRS326 sfp-sfpplus5
+        sfpProdMac = "14:02:ec:44:29:d8";  # eno49 → CRS326 sfp-sfpplus6
+        sfpDataDev = "eno50";
+        sfpProdDev = "eno49";
         wgKey   = "vel9qfECtCSjJxzsMhdzVDgEyNzT7sIEqQ3T1pIiNT0=";
         exporters = labMasterExporters;
       };
@@ -103,6 +118,10 @@ in {
         eno2Mac = "14:02:ec:33:97:a1";
         eno3Mac = "14:02:ec:33:97:a2";
         eno4Mac = "14:02:ec:33:97:a3";
+        sfpDataMac = "98:f2:b3:d7:b9:d1";  # eno50np1 → CRS326 sfp-sfpplus7
+        sfpProdMac = "98:f2:b3:d7:b9:d0";  # eno49np0 → CRS326 sfp-sfpplus8
+        sfpDataDev = "eno50np1";
+        sfpProdDev = "eno49np0";
         wgKey   = "DpCTkovVZTGzRzjPFJg6ZTnFVN05mugTb94v+UgfclA=";
         exporters = labExporters;
       };
