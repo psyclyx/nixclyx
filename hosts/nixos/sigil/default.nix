@@ -32,7 +32,7 @@
     network = {
       dns.client.enable = true;
       firewall = {
-        zones.lan.interfaces = ["bond0" "wg0"];
+        zones.lan.interfaces = ["br0" "wg0"];
         input.lan.policy = "accept";
       };
     };

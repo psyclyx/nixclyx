@@ -17,6 +17,12 @@
             MIIMonitorSec = "1s";
           };
         };
+        "15-br0" = {
+          netdevConfig = {
+            Name = "br0";
+            Kind = "bridge";
+          };
+        };
       };
 
       # Direct peer to iyr over LAN (bypasses tleilax VPN hub)
@@ -42,18 +48,27 @@
       networks = {
         "20-bond0-ports" = {
           matchConfig.Name = "enp5s0f?";
-          networkConfig = {
-            Bond = "bond0";
-          };
+          networkConfig.Bond = "bond0";
         };
         "20-bond0" = {
           matchConfig.Name = "bond0";
+          networkConfig.Bridge = "br0";
+        };
+        "25-br0" = {
+          matchConfig.Name = "br0";
           networkConfig = {
             DHCP = "yes";
             IPv6AcceptRA = true;
           };
           dhcpV4Config.UseDomains = true;
           dhcpV6Config.WithoutRA = "solicit";
+          dns = ["10.0.10.1"];
+          domains = [
+            "~home.psyclyx.net"
+            "infra.home.psyclyx.net"
+            "home.psyclyx.net"
+            "mgmt.home.psyclyx.net"
+          ];
         };
       };
     };
