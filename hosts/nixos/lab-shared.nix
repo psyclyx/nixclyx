@@ -82,7 +82,7 @@
     "10-bond0" = {
       netdevConfig = { Name = "bond0"; Kind = "bond"; };
       extraConfig = "[Link]\nMACAddressPolicy=none";
-      bondConfig = { Mode = "802.3ad"; MIIMonitorSec = "0.1"; TransmitHashPolicy = "layer2+3"; };
+      bondConfig = { Mode = "balance-xor"; MIIMonitorSec = "0.1"; TransmitHashPolicy = "layer2+3"; };
     };
   } // builtins.listToAttrs (map (vlan:
     lib.nameValuePair "10-bond0.${toString vlan.id}" {
