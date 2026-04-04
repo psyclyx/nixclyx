@@ -106,8 +106,8 @@ egregorLib.mkType {
       source_unknown   = false;
       speed            = 0;
       storm_rate       = 100;
-      vlan_mode        = if isEnabled then 2 else 0;
-      vlan_receive     = 0;
+      vlan_mode        = if isEnabled then (if mode == "trunk" then 1 else 2) else 0;
+      vlan_receive     = if mode == "trunk" then 2 else 0;
     };
 
     projection = {
@@ -128,7 +128,7 @@ egregorLib.mkType {
         allow_from_all_mgmt       = false;
         auto_info                 = true;
         discovery                 = true;
-        drop_tagged               = allPorts1;
+        drop_tagged               = builtins.filter (n: modeAt (n - 1) != "trunk") allPorts1;
         frame_size_check          = false;
         identity                  = identity;
         igmp_flood                = false;

@@ -80,8 +80,7 @@
   # Bond netdev + network + slave + VLAN netdev units (shared between initrd and real system).
   bondNetdevs = {
     "10-bond0" = {
-      netdevConfig = { Name = "bond0"; Kind = "bond"; };
-      extraConfig = "[Link]\nMACAddressPolicy=none";
+      netdevConfig = { Name = "bond0"; Kind = "bond"; MACAddress = me.mac.eno1; };
       bondConfig = { Mode = "balance-xor"; MIIMonitorSec = "0.1"; TransmitHashPolicy = "layer2+3"; };
     };
   } // builtins.listToAttrs (map (vlan:
