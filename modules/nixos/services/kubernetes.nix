@@ -83,7 +83,7 @@
         masterAddress = groupVip;
         apiserverAddress = "https://${groupVip}:6443";
         clusterCidr = cfg.podCIDR;
-        easyCerts = true;
+        easyCerts = false;
 
         apiserver = {
           advertiseAddress = bindAddr;
@@ -93,6 +93,20 @@
           allowPrivileged = true; # required by Cilium
 
           etcd.servers = etcdEndpoints;
+          etcd.caFile = "${config.services.kubernetes.secretsPath}/ca.pem";
+          etcd.certFile = "${config.services.kubernetes.secretsPath}/kube-apiserver-etcd-client.pem";
+          etcd.keyFile = "${config.services.kubernetes.secretsPath}/kube-apiserver-etcd-client-key.pem";
+
+          clientCaFile = "${config.services.kubernetes.secretsPath}/ca.pem";
+          tlsCertFile = "${config.services.kubernetes.secretsPath}/kube-apiserver.pem";
+          tlsKeyFile = "${config.services.kubernetes.secretsPath}/kube-apiserver-key.pem";
+          kubeletClientCaFile = "${config.services.kubernetes.secretsPath}/ca.pem";
+          kubeletClientCertFile = "${config.services.kubernetes.secretsPath}/kube-apiserver-kubelet-client.pem";
+          kubeletClientKeyFile = "${config.services.kubernetes.secretsPath}/kube-apiserver-kubelet-client-key.pem";
+          serviceAccountSigningKeyFile = "${config.services.kubernetes.secretsPath}/service-account-key.pem";
+          serviceAccountKeyFile = "${config.services.kubernetes.secretsPath}/service-account.pem";
+          proxyClientCertFile = "${config.services.kubernetes.secretsPath}/kube-apiserver-proxy-client.pem";
+          proxyClientKeyFile = "${config.services.kubernetes.secretsPath}/kube-apiserver-proxy-client-key.pem";
 
           extraSANs = [
             bindAddr
@@ -106,12 +120,36 @@
           leaderElect = true;
           allocateNodeCIDRs = true;
           clusterCidr = cfg.podCIDR;
+          kubeconfig = {
+            caFile = "${config.services.kubernetes.secretsPath}/ca.pem";
+            certFile = "${config.services.kubernetes.secretsPath}/kube-controller-manager-client.pem";
+            keyFile = "${config.services.kubernetes.secretsPath}/kube-controller-manager-client-key.pem";
+          };
+          rootCaFile = "${config.services.kubernetes.secretsPath}/ca.pem";
+          serviceAccountKeyFile = "${config.services.kubernetes.secretsPath}/service-account-key.pem";
+          tlsCertFile = "${config.services.kubernetes.secretsPath}/kube-controller-manager.pem";
+          tlsKeyFile = "${config.services.kubernetes.secretsPath}/kube-controller-manager-key.pem";
         };
 
-        scheduler.leaderElect = true;
+        scheduler = {
+          leaderElect = true;
+          kubeconfig = {
+            caFile = "${config.services.kubernetes.secretsPath}/ca.pem";
+            certFile = "${config.services.kubernetes.secretsPath}/kube-scheduler-client.pem";
+            keyFile = "${config.services.kubernetes.secretsPath}/kube-scheduler-client-key.pem";
+          };
+        };
 
         kubelet = {
           nodeIp = bindAddr;
+          clientCaFile = "${config.services.kubernetes.secretsPath}/ca.pem";
+          tlsCertFile = "${config.services.kubernetes.secretsPath}/kubelet.pem";
+          tlsKeyFile = "${config.services.kubernetes.secretsPath}/kubelet-key.pem";
+          kubeconfig = {
+            caFile = "${config.services.kubernetes.secretsPath}/ca.pem";
+            certFile = "${config.services.kubernetes.secretsPath}/kubelet-client.pem";
+            keyFile = "${config.services.kubernetes.secretsPath}/kubelet-client-key.pem";
+          };
           # No CNI config — Cilium installs its own after bootstrap
           cni.packages = [pkgs.cni-plugins];
           cni.config = [];
@@ -124,18 +162,7 @@
         # CoreDNS addon — uses the NixOS module's built-in
         addons.dns.enable = true;
 
-        # PKI: leader generates the CA, others bootstrap trust
-        pki = {
-          genCfsslCACert = isInit;
-          genCfsslAPICerts = isInit;
-          pkiTrustOnBootstrap = true;
-
-          # Point non-init nodes to the leader for cert bootstrapping
-          caCertPathPrefix =
-            if isInit
-            then "${config.services.cfssl.dataDir}/ca"
-            else "${config.services.kubernetes.secretsPath}/ca";
-        };
+        pki.caCertPathPrefix = "${config.services.kubernetes.secretsPath}/ca";
 
         addonManager = {
           enable = true;

@@ -18,6 +18,7 @@
             webdav     = { port = 7333; };
             postgresql = { port = 5432; mode = "tcp"; check = "/primary"; checkPort = 8008; };
             openbao    = { port = 8200; check = "/v1/sys/health?standbyok=true"; };
+            k8s-api    = { port = 6443; mode = "tcp"; check = "/readyz"; checkSsl = true; };
           };
         };
       };

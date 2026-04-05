@@ -186,6 +186,10 @@ in {
       };
       openbao-pki.enable = true;
       openbao-kv.enable = true;
+      kubernetes = {
+        enable = true;
+        clusterNodes = labHostNames;
+      };
       icecream = {
         enable = true;
         schedulerHost = "10.0.25.11"; # lab-1 infra
