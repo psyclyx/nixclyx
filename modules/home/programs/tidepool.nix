@@ -213,6 +213,10 @@
         "super+shift+f" = "actions/gather-floats";
         "super+bracketright" = "actions/focus-float-next";
         "super+bracketleft" = "actions/focus-float-prev";
+        # Media
+        "XF86AudioRaiseVolume" = ''(actions/spawn "pactl" "set-sink-volume" "@DEFAULT_SINK@" "+5%")'';
+        "XF86AudioLowerVolume" = ''(actions/spawn "pactl" "set-sink-volume" "@DEFAULT_SINK@" "-5%")'';
+        "XF86AudioMute" = ''(actions/spawn "pactl" "set-sink-mute" "@DEFAULT_SINK@" "toggle")'';
         # Launchers
         "super+p" = ''(actions/spawn "${rofi-rbw}")'';
         "super+s" = ''(actions/spawn "${lib.getExe screenshot-menu}")'';
