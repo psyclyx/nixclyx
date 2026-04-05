@@ -175,7 +175,15 @@
         };
       };
 
-      # ── CLI tools on the hosts ───────────────────────────────
+      # ── containerd v2 needs config version 3 + unpack platform ──
+      virtualisation.containerd.settings = {
+        version = lib.mkForce 3;
+        plugins."io.containerd.transfer.v1.local".unpack_config = [
+          { platform = "linux/amd64"; snapshotter = "overlayfs"; }
+        ];
+      };
+
+      # ── CLI tools on the hosts ─────────��─────────────────────
       environment.systemPackages = [
         pkgs.kubernetes
         pkgs.kubectl

@@ -70,7 +70,10 @@
       ++ lib.optional (addr.ipv6 != null) "${addr.ipv6}/64";
     routes =
       if isDefault then [{ Gateway = net.gateway4; }]
-      else [{ Gateway = net.gateway4; Table = vlan.id; }];
+      else [
+        { Gateway = net.gateway4; Table = vlan.id; }
+        { Destination = "${net.prefix}/${toString net.prefixLen}"; Table = vlan.id; }
+      ];
     routingPolicyRules =
       lib.optional (!isDefault) { From = "${addr.ipv4}/32"; Table = vlan.id; Priority = 100; };
     dns = lib.optional isDefault net.gateway4;
