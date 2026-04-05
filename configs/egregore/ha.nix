@@ -34,8 +34,8 @@
           vrid = 201;
           members = ["lab-1" "lab-2" "lab-3" "lab-4"];
           services = {
-            ingress-http  = { port = 80; check = "/healthz"; checkPort = 10254; };
-            ingress-https = { port = 443; mode = "tcp"; };
+            ingress-http  = { port = 80; backendPort = 30080; check = "/healthz"; checkPort = 30254; };
+            ingress-https = { port = 443; backendPort = 30443; mode = "tcp"; };
           };
         };
       };

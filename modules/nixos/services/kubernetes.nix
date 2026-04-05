@@ -90,7 +90,7 @@
           bindAddress = bindAddr;
           securePort = 6443;
           serviceClusterIpRange = cfg.serviceCIDR;
-          allowPrivileged = true; # required by Cilium
+          allowPrivileged = true;
 
           etcd.servers = etcdEndpoints;
           etcd.caFile = "${config.services.kubernetes.secretsPath}/ca.pem";
@@ -150,14 +150,18 @@
             certFile = "${config.services.kubernetes.secretsPath}/kubelet-client.pem";
             keyFile = "${config.services.kubernetes.secretsPath}/kubelet-client-key.pem";
           };
-          # No CNI config — Cilium installs its own after bootstrap
-          cni.packages = [pkgs.cni-plugins];
-          cni.config = [];
+          cni.packages = [pkgs.cni-plugins pkgs.cni-plugin-flannel];
         };
 
-        # Cilium replaces both kube-proxy and flannel
-        proxy.enable = false;
-        flannel.enable = false;
+        proxy = {
+          enable = true;
+          kubeconfig = {
+            caFile = "${config.services.kubernetes.secretsPath}/ca.pem";
+            certFile = "${config.services.kubernetes.secretsPath}/cluster-admin.pem";
+            keyFile = "${config.services.kubernetes.secretsPath}/cluster-admin-key.pem";
+          };
+        };
+        flannel.enable = true;
 
         # CoreDNS addon — uses the NixOS module's built-in
         addons.dns.enable = true;
@@ -173,6 +177,13 @@
             }
             // cfg.addons;
         };
+      };
+
+      # Flannel needs a kubeconfig and the correct interface (easyCerts=false
+      # means the PKI module doesn't auto-generate one).
+      services.flannel = {
+        kubeconfig = "/etc/kubernetes/cluster-admin.kubeconfig";
+        publicIp = bindAddr;
       };
 
       # ── containerd v2 needs config version 3 + unpack platform ──
@@ -200,6 +211,9 @@
           10250 # kubelet
           10257 # controller-manager
           10259 # scheduler
+        ];
+        udp = [
+          8472 # flannel VXLAN
         ];
       };
     };

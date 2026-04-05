@@ -136,8 +136,9 @@ in {
   systemd.network.networks = bondNetworks // vlanNetworkUnits // directNetworkUnits;
 
   psyclyx.nixos.network.firewall = {
-    zones.lan.interfaces = allDevices ++ ["wg0"];
+    zones.lan.interfaces = allDevices ++ ["wg0" "flannel*" "mynet*"];
     input.lan.policy = "accept";
+    forward = [{ from = "lan"; to = "lan"; }];
   };
 
   boot.kernel.sysctl = {
