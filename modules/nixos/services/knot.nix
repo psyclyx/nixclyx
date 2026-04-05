@@ -53,7 +53,7 @@
 
     zoneSettings = lib.mapAttrs (name: zoneCfg: {
       file = pkgs.writeText "${name}.zone" zoneCfg.data;
-      zonefile-load = if zoneCfg.ddns then "difference" else "whole";
+      zonefile-load = if zoneCfg.ddns then "difference-no-serial" else "whole";
     } // lib.optionalAttrs zoneCfg.ddns {
       journal-content = "all";
       zonefile-sync = -1;
