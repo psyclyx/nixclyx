@@ -208,6 +208,11 @@
         "super+shift+3" = "(actions/send-to-tag 3)";
         "super+shift+4" = "(actions/send-to-tag 4)";
         "super+shift+5" = "(actions/send-to-tag 5)";
+        # Float
+        "super+f" = "actions/toggle-float";
+        "super+shift+f" = "actions/gather-floats";
+        "super+bracketright" = "actions/focus-float-next";
+        "super+bracketleft" = "actions/focus-float-prev";
         # Launchers
         "super+p" = ''(actions/spawn "${rofi-rbw}")'';
         "super+s" = ''(actions/spawn "${lib.getExe screenshot-menu}")'';
