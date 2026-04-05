@@ -75,7 +75,7 @@
         { Destination = "${net.prefix}/${toString net.prefixLen}"; Table = vlan.id; }
       ];
     routingPolicyRules =
-      lib.optional (!isDefault) { From = "${addr.ipv4}/32"; Table = vlan.id; Priority = 100; };
+      lib.optional (!isDefault) { From = "${addr.ipv4}/32"; Table = vlan.id; Priority = 200; };
     dns = lib.optional isDefault net.gateway4;
     networkConfig.IPv6AcceptRA = true;
     linkConfig.RequiredForOnline =

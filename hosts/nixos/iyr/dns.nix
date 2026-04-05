@@ -63,7 +63,7 @@
         iyr  IN AAAA ${net.gateway6}
         ${serverRecords}
         ${vipRecords}
-        ${lib.optionalString (name == "stage") "angelbeats IN CNAME lab-1"}
+        ${lib.optionalString (name == "stage") "angelbeats IN CNAME lab-stage-vip"}
       '';
     };
   };

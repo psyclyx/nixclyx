@@ -22,6 +22,23 @@
           };
         };
       };
+
+      lab-stage = {
+        type = "ha-group";
+        ha-group = {
+          network = "stage";
+          vip = {
+            ipv4 = "10.0.31.200";
+            ipv6 = "fd9a:e830:4b1e:1f::c8";
+          };
+          vrid = 201;
+          members = ["lab-1" "lab-2" "lab-3" "lab-4"];
+          services = {
+            ingress-http  = { port = 80; check = "/healthz"; checkPort = 10254; };
+            ingress-https = { port = 443; mode = "tcp"; };
+          };
+        };
+      };
     };
   };
 }
