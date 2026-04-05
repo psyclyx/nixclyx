@@ -151,6 +151,7 @@
       pkgs.jq
       pkgs.libnotify
       pkgs.wl-clipboard
+      pkgs.playerctl
       screenshot-menu
     ];
 
@@ -217,6 +218,10 @@
         "XF86AudioRaiseVolume" = ''(actions/spawn "pactl" "set-sink-volume" "@DEFAULT_SINK@" "+5%")'';
         "XF86AudioLowerVolume" = ''(actions/spawn "pactl" "set-sink-volume" "@DEFAULT_SINK@" "-5%")'';
         "XF86AudioMute" = ''(actions/spawn "pactl" "set-sink-mute" "@DEFAULT_SINK@" "toggle")'';
+        "XF86AudioPlay" = ''(actions/spawn "playerctl" "play-pause")'';
+        "XF86AudioNext" = ''(actions/spawn "playerctl" "next")'';
+        "XF86AudioPrev" = ''(actions/spawn "playerctl" "previous")'';
+        "XF86AudioStop" = ''(actions/spawn "playerctl" "stop")'';
         # Launchers
         "super+p" = ''(actions/spawn "${rofi-rbw}")'';
         "super+s" = ''(actions/spawn "${lib.getExe screenshot-menu}")'';
