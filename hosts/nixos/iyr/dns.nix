@@ -49,7 +49,7 @@
     ) servers;
     vipRecords = vipRecordsForNetwork name;
   in {
-    inherit name;
+    name = net.zoneName;
     value = {
       ddns = true;
       data = ''
@@ -63,6 +63,7 @@
         iyr  IN AAAA ${net.gateway6}
         ${serverRecords}
         ${vipRecords}
+        ${lib.optionalString (name == "stage") "angelbeats IN CNAME lab-1"}
       '';
     };
   };

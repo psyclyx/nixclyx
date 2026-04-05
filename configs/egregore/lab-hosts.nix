@@ -17,7 +17,6 @@ let
     etcd             = { port = 2379; networks = ["infra"]; };
     patroni          = { port = 8008; networks = ["infra"]; };
     openbao          = { port = 8200; networks = ["infra"]; };
-    k8s              = { port = 6443; networks = ["infra"]; };
   };
 
   labMasterExporters = labExporters // {

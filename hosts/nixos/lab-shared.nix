@@ -56,6 +56,8 @@
   ) directNetworks;
 
   # Bond VLAN network units.
+  # Non-default VLANs get source-based policy routing so replies
+  # route back through iyr rather than directly on the main VLAN.
   mkVlanNetworkUnit = vlan: let
     addr = me.addresses.${vlan.name};
     net = eg.entities.${vlan.name}.attrs;
@@ -66,7 +68,11 @@
     address =
       ["${addr.ipv4}/${prefixLen}"]
       ++ lib.optional (addr.ipv6 != null) "${addr.ipv6}/64";
-    routes = lib.optional isDefault { Gateway = net.gateway4; };
+    routes =
+      if isDefault then [{ Gateway = net.gateway4; }]
+      else [{ Gateway = net.gateway4; Table = vlan.id; }];
+    routingPolicyRules =
+      lib.optional (!isDefault) { From = "${addr.ipv4}/32"; Table = vlan.id; Priority = 100; };
     dns = lib.optional isDefault net.gateway4;
     networkConfig.IPv6AcceptRA = true;
     linkConfig.RequiredForOnline =
@@ -162,10 +168,10 @@ in {
         enable = true;
         dataNetwork = "infra";
         clusterNodes = labHostNames;
-        tls = let secrets = config.services.kubernetes.secretsPath; in {
-          certFile = "${secrets}/etcd.pem";
-          keyFile = "${secrets}/etcd-key.pem";
-          caFile = "${secrets}/ca.pem";
+        tls = let etcdPki = "/run/openbao-pki/etcd"; in {
+          certFile = "${etcdPki}/etcd.pem";
+          keyFile = "${etcdPki}/etcd-key.pem";
+          caFile = "${etcdPki}/ca.pem";
         };
       };
       patroni = {
@@ -183,10 +189,6 @@ in {
       icecream = {
         enable = true;
         schedulerHost = "10.0.25.11"; # lab-1 infra
-      };
-      kubernetes = {
-        enable = true;
-        clusterNodes = labHostNames;
       };
     };
   };
