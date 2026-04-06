@@ -12,6 +12,7 @@
           };
           connector = mkOption {
             type = types.str;
+            default = "";
           };
           mode = mkOption {
             type = types.nullOr (

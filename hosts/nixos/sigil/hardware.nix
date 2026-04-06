@@ -13,7 +13,6 @@
 
       monitors = {
         gawfolk = {
-          connector = "DP-1";
           identifier = "QHX GF005";
           mode = {
             width = 3840;
@@ -22,7 +21,6 @@
         };
 
         benq = {
-          connector = "DP-6";
           identifier = "BNQ BenQ RD280U V5R0042101Q";
           mode = {
             width = 3840;
@@ -32,7 +30,6 @@
         };
 
         dell = {
-          connector = "DP-3";
           identifier = "Dell Inc. DELL S2721QS 9PPZM43";
           mode = {
             width = 3840;
