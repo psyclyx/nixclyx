@@ -16,6 +16,10 @@
         extraReservations = [
           { "hw-address" = "04:F4:1C:54:1D:8A"; "ip-address" = "10.0.240.2"; hostname = "mdf-agg01"; }
           { "hw-address" = "2C:C8:1B:00:82:89"; "ip-address" = "10.0.240.3"; hostname = "mdf-acc01"; }
+          { "hw-address" = "94:18:82:74:f4:e0"; "ip-address" = "10.0.240.11"; hostname = "lab-1-ilo"; }
+          { "hw-address" = "94:18:82:85:00:82"; "ip-address" = "10.0.240.12"; hostname = "lab-2-ilo"; }
+          { "hw-address" = "14:02:EC:37:A1:48"; "ip-address" = "10.0.240.13"; hostname = "lab-3-ilo"; }
+          { "hw-address" = "94:57:a5:51:20:62"; "ip-address" = "10.0.240.14"; hostname = "lab-4-ilo"; }
         ];
       };
     };
