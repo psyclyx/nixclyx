@@ -91,7 +91,7 @@
             };
           };
           forwardZones = {
-            "home.psyclyx.net" = {
+            "apt.psyclyx.net" = {
               forward-addr = ["10.157.0.2"];
             };
             "0.10.in-addr.arpa" = {
@@ -126,6 +126,44 @@
         };
       };
     };
+  };
+
+  # ACME wildcard cert for *.stage.psyclyx.net via DNS-01 (RFC 2136 → Knot)
+  security.acme.certs."stage.psyclyx.net" = let
+    authCfg = config.psyclyx.nixos.network.dns.authoritative;
+  in {
+    domain = "stage.psyclyx.net";
+    extraDomainNames = ["*.stage.psyclyx.net"];
+    dnsProvider = "rfc2136";
+    credentialFiles = {
+      "RFC2136_NAMESERVER_FILE" = pkgs.writeText "rfc2136-ns-stage" "${builtins.head authCfg.interfaces}:${toString authCfg.port}";
+      "RFC2136_TSIG_ALGORITHM_FILE" = pkgs.writeText "rfc2136-algo-stage" "hmac-sha256.";
+      "RFC2136_TSIG_KEY_FILE" = pkgs.writeText "rfc2136-keyname-stage" authCfg.tsigKeyName;
+      "RFC2136_TSIG_SECRET_FILE" = authCfg.tsigSecretFile;
+    };
+    group = "nginx";
+  };
+
+  # Stage ingress — tleilax reverse proxies to apartment stage VIP
+  services.nginx.virtualHosts."angelbeats.stage.psyclyx.net" = {
+    useACMEHost = "stage.psyclyx.net";
+    forceSSL = true;
+    locations."/" = {
+      proxyPass = "http://10.0.31.200:80";
+      proxyWebsockets = true;
+    };
+  };
+
+  # DNS: stage.psyclyx.net zone (DDNS for iyr to add records)
+  psyclyx.nixos.network.dns.authoritative.zones."stage.psyclyx.net" = {
+    ttl = 300;
+    ddns = true;
+    extraRecords = ''
+      @          IN A     199.255.18.171
+      @          IN AAAA  2606:7940:32:26::10
+      angelbeats IN A     199.255.18.171
+      angelbeats IN AAAA  2606:7940:32:26::10
+    '';
   };
 
   # ACME wildcard cert for *.psyclyx.net via DNS-01 (RFC 2136 → Knot)

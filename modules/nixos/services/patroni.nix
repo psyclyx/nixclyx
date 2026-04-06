@@ -33,6 +33,11 @@
         default = 8008;
         description = "Port for the Patroni REST API.";
       };
+      raftPort = lib.mkOption {
+        type = lib.types.port;
+        default = 2222;
+        description = "Port for Patroni Raft consensus.";
+      };
       replicationUser = lib.mkOption {
         type = lib.types.str;
         default = "replicator";
@@ -114,9 +119,9 @@
 
       otherNodes = builtins.filter (name: name != hostname) cfg.clusterNodes;
 
-      etcdHosts = lib.concatStringsSep "," (map (name:
-        "${memberAddr name}:2379"
-      ) cfg.clusterNodes);
+      raftPartner = map (name:
+        "${memberAddr name}:${toString cfg.raftPort}"
+      ) otherNodes;
     in
     {
       services.patroni = {
@@ -134,8 +139,10 @@
           # nixpkgs sets listen from nodeIp; override to bind all interfaces for HAProxy
           restapi.listen = lib.mkForce "0.0.0.0:${toString cfg.restApiPort}";
 
-          etcd3 = {
-            hosts = etcdHosts;
+          raft = {
+            data_dir = "/var/lib/patroni/raft";
+            self_addr = "${dataAddr}:${toString cfg.raftPort}";
+            partner_addrs = raftPartner;
           };
 
           bootstrap = {
@@ -208,11 +215,10 @@
 
       systemd.tmpfiles.rules = [
         "d /run/postgresql 0755 patroni patroni -"
+        "d /var/lib/patroni/raft 0700 patroni patroni -"
       ];
 
       systemd.services.patroni = {
-        after = ["etcd.service"];
-        wants = ["etcd.service"];
         serviceConfig.ExecStartPre = let
           requiredFiles = lib.filter (f: f != null) [
             cfg.replicationPasswordFile
@@ -268,6 +274,6 @@
         openFirewall = true;
       };
 
-      psyclyx.nixos.network.ports.patroni = [cfg.port cfg.restApiPort];
+      psyclyx.nixos.network.ports.patroni = [cfg.port cfg.restApiPort cfg.raftPort];
     };
 }

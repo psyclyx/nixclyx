@@ -35,6 +35,11 @@ egregorLib.mkType {
       type = lib.types.nullOr lib.types.int;
       default = null;
     };
+    site = lib.mkOption {
+      type = lib.types.nullOr lib.types.str;
+      default = null;
+      description = "Site entity name this network belongs to.";
+    };
   };
 
   attrs = name: entity: top: let
@@ -42,8 +47,13 @@ egregorLib.mkType {
     prefix = prefixOf net.ipv4;
     gw = top.conventions.gatewayOffset or 1;
     ulaPrefix = top.ipv6UlaPrefix or "";
-    homeDomain = top.domains.home or "";
     hasV6 = ulaPrefix != "" && net.ulaSubnetHex != "";
+
+    # Zone name: use site domain if available, fall back to domains.home.
+    siteEntity = if net.site != null then top.entities.${net.site} or null else null;
+    siteDomain = if siteEntity != null then siteEntity.site.domain or null else null;
+    baseDomain = if siteDomain != null then siteDomain
+                 else top.domains.home or "";
   in {
     vlan = net.vlan;
     prefix = prefix;
@@ -52,8 +62,9 @@ egregorLib.mkType {
     network4 = "${prefix}.0";
     subnet6 = lib.optionalString hasV6 "${ulaPrefix}:${net.ulaSubnetHex}::/64";
     gateway6 = lib.optionalString hasV6 "${ulaPrefix}:${net.ulaSubnetHex}::${lib.toHexString gw}";
-    zoneName = lib.optionalString (homeDomain != "") "${name}.${homeDomain}";
+    zoneName = lib.optionalString (baseDomain != "") "${name}.${baseDomain}";
     label = "VLAN ${toString net.vlan} (${net.ipv4})";
+    site = net.site;
     # DNS PTR reverse zone components.
     ip6Reverse = lib.optionalString (net.ulaSubnetHex != "")
       (reverseNibbles 4 net.ulaSubnetHex);

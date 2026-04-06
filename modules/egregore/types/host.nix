@@ -36,6 +36,11 @@ egregorLib.mkType {
       });
       default = null;
     };
+    site = lib.mkOption {
+      type = lib.types.nullOr lib.types.str;
+      default = null;
+      description = "Site entity name where this host lives.";
+    };
     roles = lib.mkOption { type = lib.types.listOf lib.types.str; default = []; };
     sshPort = lib.mkOption { type = lib.types.int; default = 22; };
     deployAddress = lib.mkOption {
@@ -62,17 +67,29 @@ egregorLib.mkType {
     };
   };
 
-  attrs = name: entity: _top: let
+  attrs = name: entity: top: let
     h = entity.host;
     vpn = h.addresses.vpn or null;
+    siteEntity = if h.site != null then top.entities.${h.site} or null else null;
+    siteDomain = if siteEntity != null then siteEntity.site.domain or null else null;
   in {
     address = if vpn != null then vpn.ipv4 else null;
+    fqdn = if siteDomain != null then "${name}.${siteDomain}" else null;
+    site = h.site;
     roles = h.roles;
     sshPort = h.sshPort;
     deployAddress = h.deployAddress;
     hasTpm = h.hardware.tpm;
     label = builtins.concatStringsSep ", " h.roles;
   };
+
+  assertions = name: entity: top: let
+    h = entity.host;
+  in
+    lib.optional (h.site != null) {
+      assertion = top.entities ? ${h.site} && top.entities.${h.site}.type == "site";
+      message = "host '${name}' references site '${h.site}' which is not a site entity";
+    };
 
   verbs = name: entity: _top: let
     h = entity.host;

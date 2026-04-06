@@ -1,59 +1,4 @@
-{config, lib, pkgs, ...}: let
-  eg = config.psyclyx.egregore;
-
-  networks = lib.filterAttrs (_: e: e.type == "network") eg.entities;
-
-  # Nibble-reverse for DNS PTR.
-  reverseNibbles = width: hex: let
-    padded = lib.fixedWidthString width "0" hex;
-  in lib.concatStringsSep "." (lib.reverseList (lib.stringToCharacters padded));
-
-  ulaReverseBase = let
-    stripped = lib.replaceStrings [":"] [""] eg.ipv6UlaPrefix;
-  in lib.concatStringsSep "." (lib.reverseList (lib.stringToCharacters stripped));
-
-  cfg = config.psyclyx.nixos.services.dhcp;
-
-  mkForwardDdnsDomain = _poolName: pool: let
-    na = eg.entities.${pool.network}.attrs;
-  in {
-    name = "${na.zoneName}.";
-    key-name = "ddns-iyr";
-    dns-servers = [{
-      ip-address = "127.0.0.1";
-      port = config.psyclyx.nixos.network.dns.authoritative.port;
-    }];
-  };
-
-  mkReverseDdnsDomain4 = _poolName: pool: let
-    na = eg.entities.${pool.network}.attrs;
-    octets = lib.splitString "." na.prefix;
-    reverseZone = "${lib.concatStringsSep "." (lib.reverseList octets)}.in-addr.arpa";
-  in {
-    name = "${reverseZone}.";
-    key-name = "ddns-iyr";
-    dns-servers = [{
-      ip-address = "127.0.0.1";
-      port = config.psyclyx.nixos.network.dns.authoritative.port;
-    }];
-  };
-
-  mkReverseDdnsDomain6 = _poolName: pool: let
-    net = eg.entities.${pool.network};
-    reverseZone = "${net.attrs.ip6Reverse}.${ulaReverseBase}.ip6.arpa";
-  in {
-    name = "${reverseZone}.";
-    key-name = "ddns-iyr";
-    dns-servers = [{
-      ip-address = "127.0.0.1";
-      port = config.psyclyx.nixos.network.dns.authoritative.port;
-    }];
-  };
-
-  forwardDdnsDomains = lib.mapAttrsToList mkForwardDdnsDomain cfg.pools;
-  reverseDdnsDomains4 = lib.mapAttrsToList mkReverseDdnsDomain4 cfg.pools;
-  reverseDdnsDomains6 = lib.mapAttrsToList mkReverseDdnsDomain6 cfg.pools;
-in {
+{config, ...}: {
   psyclyx.nixos.services.dhcp = {
     enable = true;
     interface = "enp1s0";
@@ -94,17 +39,4 @@ in {
       }];
     };
   };
-
-  services.kea.dhcp-ddns = {
-    enable = true;
-    settings = {
-      ip-address = "127.0.0.1";
-      port = 53001;
-      forward-ddns.ddns-domains = forwardDdnsDomains;
-      reverse-ddns.ddns-domains = reverseDdnsDomains4 ++ reverseDdnsDomains6;
-    };
-  };
-
-  systemd.services.kea-dhcp4-server.after = ["knot.service" "kea-dhcp-ddns-server.service"];
-  systemd.services.kea-dhcp6-server.after = ["knot.service" "kea-dhcp-ddns-server.service"];
 }

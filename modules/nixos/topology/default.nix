@@ -1,7 +1,7 @@
 {
   path = ["psyclyx" "egregore"];
   gate = "always";
-  imports = [./wireguard.nix ./dns.nix ./monitoring.nix ./deployment.nix ./dhcp.nix ./ha.nix];
+  imports = [./wireguard.nix ./dns.nix ./monitoring.nix ./deployment.nix ./dhcp.nix ./ha.nix ./zones.nix ./network.nix];
 
   extraOptions = { lib, ... }: {
     psyclyx.egregore = lib.mkOption {

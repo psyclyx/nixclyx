@@ -18,7 +18,6 @@
             webdav     = { port = 7333; };
             postgresql = { port = 5432; mode = "tcp"; check = "/primary"; checkPort = 8008; };
             openbao    = { port = 8200; check = "/v1/sys/health?standbyok=true"; };
-            k8s-api    = { port = 6443; mode = "tcp"; check = "/readyz"; checkSsl = true; };
             redis      = { port = 6379; mode = "tcp"; };
           };
         };
@@ -35,8 +34,8 @@
           vrid = 201;
           members = ["lab-1" "lab-2" "lab-3" "lab-4"];
           services = {
-            ingress-http  = { port = 80; backendPort = 30080; check = "/healthz"; checkPort = 30254; };
-            ingress-https = { port = 443; backendPort = 30443; mode = "tcp"; };
+            http  = { port = 80; };
+            https = { port = 443; mode = "tcp"; };
           };
         };
       };

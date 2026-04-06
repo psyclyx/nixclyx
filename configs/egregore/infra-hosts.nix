@@ -7,6 +7,7 @@
         type = "host";
         tags = ["server" "colo" "fixed"];
         host = {
+          site = "cofractal-sea";
           wireguard = {
             publicKey = "Hsytr+mjAfsBPoC99XHKLh9+jEbyz1REF0okmlviUVc=";
             endpoint  = "vpn.psyclyx.xyz:51820";
@@ -29,6 +30,7 @@
         type = "host";
         tags = ["server" "apartment" "router" "fixed"];
         host = {
+          site = "apt";
           wireguard = {
             publicKey = "9wnevbvkDGcyNnMECEzgfaghqi4tEw4GsgC/TUcSTS4=";
             exportedRoutes = [
@@ -38,7 +40,7 @@
           };
           addresses.vpn.ipv4 = "10.157.0.2";
           sshPort = 17891;
-          deployAddress = "iyr.psyclyx.net";
+          deployAddress = "iyr.apt.psyclyx.net";
           roles = ["server" "router"];
           hardware.tpm = true;
           exporters = {
@@ -52,13 +54,14 @@
         type = "host";
         tags = ["workstation" "desktop" "apartment" "fixed"];
         host = {
+          site = "apt";
           wireguard = {
             publicKey = "XKqqjC62uOUhbCn3JPpI0M6WFYqRf8sLpML90JZ1CmE=";
-            allowedNetworks = ["main" "infra" "prod" "stage" "data" "mgmt"];
+            allowedNetworks = [];
           };
           addresses.vpn.ipv4 = "10.157.0.3";
           roles = ["workstation"];
-          deployAddress = "sigil.psyclyx.net";
+          deployAddress = "sigil.apt.psyclyx.net";
           hardware.tpm = true;
           exporters = {
             node     = { port = 9100; networks = ["vpn"]; };
@@ -103,6 +106,26 @@
           };
           addresses.vpn.ipv4 = "10.157.0.6";
           roles = ["workstation"];
+        };
+      };
+
+      semuta = {
+        type = "host";
+        tags = ["server" "vps" "fixed"];
+        host = {
+          site = "hetzner-pdx";
+          wireguard = {
+            publicKey = "co3+vTgO4y2IPzQOH9cNLl0fjFDrkzsukUNL9gR75TI=";
+            allowedNetworks = ["main"];
+          };
+          addresses.vpn.ipv4 = "10.157.0.7";
+          publicIPv4 = "5.78.144.186";
+          publicIPv6 = "2a01:4ff:1f0:1a53::1";
+          deployAddress = "5.78.144.186";
+          roles = ["server"];
+          exporters = {
+            node = { port = 9100; networks = ["vpn"]; };
+          };
         };
       };
     };

@@ -69,6 +69,19 @@
     };
   };
 
+  semuta = {...}: {
+    imports = [nixclyx.modules.nixos nixclyx.hosts.nixos.semuta];
+    config.deployment = {
+      tags = [
+        "server"
+        "vps"
+        "fixed"
+      ];
+      targetHost = "5.78.144.186";
+      targetUser = "root";
+    };
+  };
+
   lab-1 = {...}: {
     imports = [nixclyx.modules.nixos nixclyx.hosts.nixos.lab-1];
     config.deployment = {
@@ -78,7 +91,7 @@
         "lab"
         "fixed"
       ];
-      targetHost = "10.0.25.11";
+      targetHost = "lab-1.infra.apt.psyclyx.net";
       targetUser = "root";
     };
   };
@@ -92,7 +105,7 @@
         "lab"
         "fixed"
       ];
-      targetHost = "10.0.25.12";
+      targetHost = "lab-2.infra.apt.psyclyx.net";
       targetUser = "root";
     };
   };
@@ -106,7 +119,7 @@
         "lab"
         "fixed"
       ];
-      targetHost = "10.0.25.13";
+      targetHost = "lab-3.infra.apt.psyclyx.net";
       targetUser = "root";
     };
   };
@@ -120,7 +133,7 @@
         "lab"
         "fixed"
       ];
-      targetHost = "10.0.25.14";
+      targetHost = "lab-4.infra.apt.psyclyx.net";
       targetUser = "root";
     };
   };

@@ -1,54 +1,16 @@
-{
-  config,
-  lib,
-  ...
-}: {
-  fileSystems = {
-      "/" = {
-        device = "/dev/disk/by-partlabel/nvme0-root";
-        fsType = "bcachefs";
-        options = ["X-mount.subdir=subvolumes/root/@live"];
-      };
-
-      "/nix" = {
-        device = "/dev/disk/by-partlabel/nvme0-root";
-        fsType = "bcachefs";
-        options = ["X-mount.subdir=subvolumes/nix/@live"];
-        neededForBoot = true;
-      };
-
-      "/persist" = {
-        device = "/dev/disk/by-partlabel/nvme0-root";
-        fsType = "bcachefs";
-        options = ["X-mount.subdir=subvolumes/persist/@live"];
-        neededForBoot = true;
-      };
-
-      "/var/log" = {
-        device = "/dev/disk/by-partlabel/nvme0-root";
-        fsType = "bcachefs";
-        options = ["X-mount.subdir=subvolumes/log/@live"];
-        neededForBoot = true;
-      };
-
-      "/home/psyc" = {
-        device = "/dev/disk/by-partlabel/nvme0-root";
-        fsType = "bcachefs";
-        options = ["X-mount.subdir=subvolumes/home_psyc/@live"];
-      };
-
-      "/root" = {
-        device = "/dev/disk/by-partlabel/nvme0-root";
-        fsType = "bcachefs";
-        options = ["X-mount.subdir=subvolumes/home_root/@live"];
-      };
-
-      "/boot" = {
-        device = "/dev/disk/by-partlabel/nvme0-boot";
-        fsType = "vfat";
-        options = ["umask=0077"];
-      };
+{...}: {
+  psyclyx.nixos.filesystems.layouts.bcachefs-subvols = {
+    enable = true;
+    rootPartlabel = "nvme0-root";
+    bootPartlabel = "nvme0-boot";
+    swapPartlabel = "nvme0-swap";
+    subvolumes = {
+      "/"         = { subdir = "subvolumes/root/@live"; };
+      "/nix"      = { subdir = "subvolumes/nix/@live"; neededForBoot = true; };
+      "/persist"  = { subdir = "subvolumes/persist/@live"; neededForBoot = true; };
+      "/var/log"  = { subdir = "subvolumes/log/@live"; neededForBoot = true; };
+      "/home/psyc" = { subdir = "subvolumes/home_psyc/@live"; };
+      "/root"     = { subdir = "subvolumes/home_root/@live"; };
     };
-
-  swapDevices = [{device = "/dev/disk/by-partlabel/nvme0-swap";}];
+  };
 }

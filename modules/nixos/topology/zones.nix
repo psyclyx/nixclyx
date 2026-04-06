@@ -1,14 +1,16 @@
+# Authoritative DNS zone generation from egregore entities.
+#
+# Generates forward, reverse (IPv4), and reverse (IPv6) zones for all
+# network entities, plus a home umbrella zone.  Wires into
+# psyclyx.nixos.network.dns.authoritative.zones.
 {config, lib, ...}: let
   eg = config.psyclyx.egregore;
 
   networks = lib.filterAttrs (_: e: e.type == "network") eg.entities;
-  hosts = lib.filterAttrs (_: e: e.type == "host") eg.entities;
 
-  # Sorted VLAN IDs for all networks.
   dhcpVlans = lib.sort builtins.lessThan
     (lib.mapAttrsToList (_: e: e.network.vlan) networks);
 
-  # VLAN ID → network entity name.
   vlanNameMap = builtins.listToAttrs (lib.mapAttrsToList (name: e:
     lib.nameValuePair (toString e.network.vlan) name
   ) networks);
@@ -39,6 +41,10 @@
       "${groupName}-vip IN A ${g.ha-group.vip.ipv4}"
     ) groups);
 
+  cfg = config.psyclyx.nixos.network.dns;
+  gwName = cfg.zones.gatewayHostname;
+  gwEntity = eg.entities.${gwName} or null;
+
   mkForwardZoneData = vlanId: let
     name = vlanNameMap.${toString vlanId};
     net = eg.entities.${name}.attrs;
@@ -59,11 +65,11 @@
                      1 3600 900 604800 300 )
         @    IN NS   ns1.${net.zoneName}.
         ns1  IN A    ${net.gateway4}
-        iyr  IN A    ${net.gateway4}
-        iyr  IN AAAA ${net.gateway6}
+        ${gwName}  IN A    ${net.gateway4}
+        ${gwName}  IN AAAA ${net.gateway6}
         ${serverRecords}
         ${vipRecords}
-        ${lib.optionalString (name == "stage") "angelbeats IN CNAME lab-stage-vip"}
+        ${cfg.zones.extraRecords.${name} or ""}
       '';
     };
   };
@@ -92,7 +98,7 @@
         @    IN SOA  ns1.${net.zoneName}. admin.${net.zoneName}. (
                      1 3600 900 604800 300 )
         @    IN NS   ns1.${net.zoneName}.
-        ${gwLastOctet} IN PTR iyr.${net.zoneName}.
+        ${gwLastOctet} IN PTR ${gwName}.${net.zoneName}.
         ${serverPtrs}
       '';
     };
@@ -122,7 +128,7 @@
         @    IN SOA  ns1.${na.zoneName}. admin.${na.zoneName}. (
                      1 3600 900 604800 300 )
         @    IN NS   ns1.${na.zoneName}.
-        ${gwReverseNibbles} IN PTR iyr.${na.zoneName}.
+        ${gwReverseNibbles} IN PTR ${gwName}.${na.zoneName}.
         ${serverPtrs}
       '';
     };
@@ -143,12 +149,33 @@
     };
   };
 
-  authoritativeZones = builtins.listToAttrs (
+  generatedZones = builtins.listToAttrs (
     [homeZone]
     ++ (map mkForwardZoneData dhcpVlans)
     ++ (map mkReverseZoneData dhcpVlans)
     ++ (map mkIp6ReverseZoneData dhcpVlans)
   );
 in {
-  psyclyx.nixos.network.dns.authoritative.zones = authoritativeZones;
+  options.psyclyx.nixos.network.dns.zones = {
+    enable = lib.mkEnableOption "auto-generate authoritative zones from egregore";
+    gatewayHostname = lib.mkOption {
+      type = lib.types.str;
+      description = "Hostname of the gateway/DNS server (for NS/A glue records).";
+    };
+    extraRecords = lib.mkOption {
+      type = lib.types.attrsOf lib.types.lines;
+      default = {};
+      description = "Extra records appended to generated forward zones, keyed by egregore network name.";
+      example = { stage = "angelbeats IN CNAME lab-stage-vip"; };
+    };
+    extraZones = lib.mkOption {
+      type = lib.types.attrsOf lib.types.anything;
+      default = {};
+      description = "Additional zones merged with generated ones.";
+    };
+  };
+
+  config = lib.mkIf cfg.zones.enable {
+    psyclyx.nixos.network.dns.authoritative.zones = generatedZones // cfg.zones.extraZones;
+  };
 }

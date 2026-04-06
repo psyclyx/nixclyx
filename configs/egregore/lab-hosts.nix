@@ -29,6 +29,7 @@ let
     tags = ["server" "lab" "apartment" "fixed"];
     refs.bmc = "lab-${toString n}-ilo";
     host = {
+      site = "apt";
       mac = {
         mgmt = mgmtMac;
         eno1 = eno1Mac;

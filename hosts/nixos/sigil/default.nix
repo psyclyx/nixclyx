@@ -42,6 +42,11 @@
     services = {
       openrgb.enable = true;
       tailscale.exitNode = true;
+      icecream = {
+        enable = true;
+        schedulerHost = "10.0.25.11"; # lab-1 via WireGuard
+        noRemote = true;
+      };
     };
 
     system = {
