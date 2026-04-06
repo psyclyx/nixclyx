@@ -139,6 +139,9 @@
           # nixpkgs sets listen from nodeIp; override to bind all interfaces for HAProxy
           restapi.listen = lib.mkForce "0.0.0.0:${toString cfg.restApiPort}";
 
+          # Use built-in Raft for DCS (no external etcd dependency).
+          # Override etcd3 to null to prevent nixpkgs from auto-generating it.
+          etcd3 = lib.mkForce null;
           raft = {
             data_dir = "/var/lib/patroni/raft";
             self_addr = "${dataAddr}:${toString cfg.raftPort}";
