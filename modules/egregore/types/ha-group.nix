@@ -8,19 +8,22 @@ egregorLib.mkType {
   options = {
     network = lib.mkOption {
       type = lib.types.str;
+      default = "";
       description = "Network entity where the VIP lives.";
     };
     vip = lib.mkOption {
       type = lib.types.submodule {
         options = {
-          ipv4 = lib.mkOption { type = lib.types.str; };
+          ipv4 = lib.mkOption { type = lib.types.str; default = ""; };
           ipv6 = lib.mkOption { type = lib.types.nullOr lib.types.str; default = null; };
         };
       };
+      default = {};
     };
-    vrid = lib.mkOption { type = lib.types.int; };
+    vrid = lib.mkOption { type = lib.types.int; default = 0; };
     members = lib.mkOption {
       type = lib.types.listOf lib.types.str;
+      default = [];
       description = "Member host entity names.";
     };
     services = lib.mkOption {
@@ -28,7 +31,7 @@ egregorLib.mkType {
         options = {
           port = lib.mkOption { type = lib.types.int; };
           backendPort = lib.mkOption { type = lib.types.nullOr lib.types.int; default = null; };
-          mode = lib.mkOption { type = lib.types.nullOr lib.types.str; default = null; };
+          mode = lib.mkOption { type = lib.types.str; default = "http"; };
           check = lib.mkOption { type = lib.types.nullOr lib.types.str; default = null; };
           checkPort = lib.mkOption { type = lib.types.nullOr lib.types.int; default = null; };
           checkSsl = lib.mkOption { type = lib.types.bool; default = false; };
