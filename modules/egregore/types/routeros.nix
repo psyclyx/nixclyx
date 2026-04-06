@@ -30,8 +30,10 @@ egregorLib.mkType {
           type = lib.types.submodule {
             options.ipv4 = lib.mkOption { type = lib.types.str; default = ""; };
           };
+          default = {};
         };
       };
+      default = {};
     };
     ports = lib.mkOption {
       type = lib.types.attrsOf (lib.types.submodule portDef.module);
