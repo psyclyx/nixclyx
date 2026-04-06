@@ -17,7 +17,7 @@ egregorLib.mkType {
       type = lib.types.submodule {
         options.mgmt = lib.mkOption {
           type = lib.types.submodule {
-            options.ipv4 = lib.mkOption { type = lib.types.str; };
+            options.ipv4 = lib.mkOption { type = lib.types.str; default = ""; };
           };
         };
       };
@@ -106,8 +106,8 @@ egregorLib.mkType {
       source_unknown   = false;
       speed            = 0;
       storm_rate       = 100;
-      vlan_mode        = if isEnabled then (if mode == "trunk" then 1 else 2) else 0;
-      vlan_receive     = if mode == "trunk" then 2 else 0;
+      vlan_mode        = if isEnabled then 2 else 0;
+      vlan_receive     = 0;
     };
 
     projection = {
@@ -192,7 +192,7 @@ EGREGORE_EOF
         diff --color=auto -u <(echo "$live") <(echo "$desired") || true'';
     };
     deploy = {
-      description = "Deploy config to switch (restore backup).";
+      description = "Deploy config to switch via per-section POST.";
       impl = ''
         echo "Generating config..." >&2
         tmpfile=$(mktemp --suffix=.swb)
@@ -201,12 +201,52 @@ EGREGORE_EOF
 ${json}
 EGREGORE_EOF
 
-        echo "Uploading to ${mgmtIp}..." >&2
-        curl -sf --connect-timeout 5 --max-time 30 ${curlAuth} \
-          -F "file=@$tmpfile" \
-          "http://${mgmtIp}/backup.swb" >/dev/null 2>&1 || true
+        echo "Deploying to ${mgmtIp}..." >&2
+        # SwOS ignores multipart backup uploads; POST each section individually
+        python3 - "$tmpfile" "${mgmtIp}" << 'DEPLOY_EOF'
+import re, subprocess, sys
 
-        echo "Deploy complete. Switch may take a moment to apply." >&2'';
+data = open(sys.argv[1]).read()
+mgmt_ip = sys.argv[2]
+sections = []
+i = 0
+while i < len(data):
+    m = re.match(r'(\w+\.b):', data[i:])
+    if not m:
+        i += 1
+        continue
+    name = m.group(1)
+    start = i + len(m.group(0))
+    depth = 0
+    for j, c in enumerate(data[start:]):
+        if c in '{[': depth += 1
+        elif c in '}]': depth -= 1
+        if depth == 0:
+            content = data[start:start+j+1]
+            sections.append((name, content))
+            i = start + j + 2  # skip closing + comma
+            break
+    else:
+        break
+
+failed = False
+for name, content in sections:
+    r = subprocess.run(
+        ['curl', '-sf', '--connect-timeout', '5', '--max-time', '10',
+         '--digest', '-u', 'admin:',
+         '-X', 'POST', '-d', content,
+         f'http://{mgmt_ip}/' + name],
+        capture_output=True, timeout=15
+    )
+    status = 'OK' if r.returncode == 0 else 'FAIL'
+    print(f'  {status}: {name}', file=sys.stderr)
+    if r.returncode != 0:
+        failed = True
+if failed:
+    sys.exit(1)
+DEPLOY_EOF
+
+        echo "Deploy complete." >&2'';
     };
     port-map = {
       description = "Show human-readable port map.";

@@ -18,7 +18,7 @@ egregorLib.mkType {
       type = lib.types.submodule {
         options.mgmt = lib.mkOption {
           type = lib.types.submodule {
-            options.ipv4 = lib.mkOption { type = lib.types.str; };
+            options.ipv4 = lib.mkOption { type = lib.types.str; default = ""; };
           };
         };
       };

@@ -24,8 +24,8 @@ egregorLib.mkType {
   description = "VLAN-backed network segment.";
 
   options = {
-    vlan = lib.mkOption { type = lib.types.int; description = "802.1Q VLAN ID."; };
-    ipv4 = lib.mkOption { type = lib.types.str; description = "IPv4 CIDR (e.g. 10.0.25.0/24)."; };
+    vlan = lib.mkOption { type = lib.types.int; default = 0; description = "802.1Q VLAN ID."; };
+    ipv4 = lib.mkOption { type = lib.types.str; default = ""; description = "IPv4 CIDR (e.g. 10.0.25.0/24)."; };
     ulaSubnetHex = lib.mkOption {
       type = lib.types.str;
       default = "";

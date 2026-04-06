@@ -17,7 +17,7 @@ egregorLib.mkType {
     };
     interfaces = lib.mkOption {
       type = lib.types.attrsOf (lib.types.submodule {
-        options.device = lib.mkOption { type = lib.types.str; };
+        options.device = lib.mkOption { type = lib.types.str; default = ""; };
       });
       default = {};
     };
@@ -28,7 +28,7 @@ egregorLib.mkType {
     wireguard = lib.mkOption {
       type = lib.types.nullOr (lib.types.submodule {
         options = {
-          publicKey = lib.mkOption { type = lib.types.str; };
+          publicKey = lib.mkOption { type = lib.types.str; default = ""; };
           endpoint = lib.mkOption { type = lib.types.nullOr lib.types.str; default = null; };
           exportedRoutes = lib.mkOption { type = lib.types.listOf lib.types.str; default = []; };
           allowedNetworks = lib.mkOption { type = lib.types.listOf lib.types.str; default = []; };
@@ -59,7 +59,7 @@ egregorLib.mkType {
     exporters = lib.mkOption {
       type = lib.types.attrsOf (lib.types.submodule {
         options = {
-          port = lib.mkOption { type = lib.types.int; };
+          port = lib.mkOption { type = lib.types.int; default = 0; };
           networks = lib.mkOption { type = lib.types.listOf lib.types.str; default = []; };
         };
       });

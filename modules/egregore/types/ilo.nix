@@ -12,6 +12,7 @@ egregorLib.mkType {
   options = {
     hostname = lib.mkOption {
       type = lib.types.str;
+      default = "";
       description = "iLO hostname or IP for Redfish API access.";
     };
     model = lib.mkOption {

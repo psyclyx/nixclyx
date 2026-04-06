@@ -28,7 +28,7 @@ egregorLib.mkType {
       type = lib.types.submodule {
         options.mgmt = lib.mkOption {
           type = lib.types.submodule {
-            options.ipv4 = lib.mkOption { type = lib.types.str; };
+            options.ipv4 = lib.mkOption { type = lib.types.str; default = ""; };
           };
         };
       };
@@ -40,8 +40,8 @@ egregorLib.mkType {
     bonds = lib.mkOption {
       type = lib.types.attrsOf (lib.types.submodule {
         options = {
-          mode = lib.mkOption { type = lib.types.str; };
-          slaves = lib.mkOption { type = lib.types.listOf lib.types.str; };
+          mode = lib.mkOption { type = lib.types.str; default = ""; };
+          slaves = lib.mkOption { type = lib.types.listOf lib.types.str; default = []; };
           lacpMode = lib.mkOption { type = lib.types.nullOr lib.types.str; default = null; };
           comment = lib.mkOption { type = lib.types.nullOr lib.types.str; default = null; };
         };

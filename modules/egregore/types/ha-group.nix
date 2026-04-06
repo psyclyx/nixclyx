@@ -29,7 +29,7 @@ egregorLib.mkType {
     services = lib.mkOption {
       type = lib.types.attrsOf (lib.types.submodule {
         options = {
-          port = lib.mkOption { type = lib.types.int; };
+          port = lib.mkOption { type = lib.types.int; default = 0; };
           backendPort = lib.mkOption { type = lib.types.nullOr lib.types.int; default = null; };
           mode = lib.mkOption { type = lib.types.str; default = "http"; };
           check = lib.mkOption { type = lib.types.nullOr lib.types.str; default = null; };
