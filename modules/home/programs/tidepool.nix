@@ -25,18 +25,53 @@
 
     sign-clipboard = pkgs.writeShellScriptBin "tidepool-sign-clipboard" ''
       set -euo pipefail
-      challenge=$(${wl-paste} --no-newline 2>/dev/null)
+
+      state_dir="''${XDG_STATE_HOME:-$HOME/.local/state}/sign-clipboard"
+      mkdir -p "$state_dir"
+      ns_history="$state_dir/namespaces"
+      touch "$ns_history"
+
+      # 1. Check clipboard
+      challenge=$(${wl-paste} --no-newline 2>/dev/null || true)
       if [ -z "$challenge" ]; then
         ${notify-send} -u critical "Sign" "Clipboard is empty"
         exit 1
       fi
-      sig=$(echo -n "$challenge" | ${ssh-keygen} -Y sign -f ~/.ssh/id_monolyx_root -n auth-portal 2>/dev/null)
+
+      # 2. Pick key
+      keys=""
+      for f in ~/.ssh/id_*; do
+        [ -f "$f" ] || continue
+        [[ "$f" == *.pub ]] && continue
+        keys="$keys''${keys:+$'\n'}$(basename "$f")"
+      done
+      if [ -z "$keys" ]; then
+        ${notify-send} -u critical "Sign" "No SSH keys found"
+        exit 1
+      fi
+      key=$(echo "$keys" | ${shoal-dmenu} -p "Key: ") || exit 0
+
+      # 3. Pick namespace (recent first, then type custom)
+      recent=$(tac "$ns_history" | awk '!seen[$0]++' | head -10)
+      ns=$(echo "$recent" | ${shoal-dmenu} -p "Namespace: ") || exit 0
+      if [ -z "$ns" ]; then
+        ${notify-send} -u critical "Sign" "No namespace"
+        exit 1
+      fi
+
+      # Update history
+      echo "$ns" >> "$ns_history"
+      # Keep last 100 entries
+      tail -100 "$ns_history" > "$ns_history.tmp" && mv "$ns_history.tmp" "$ns_history"
+
+      # 4. Sign
+      sig=$(echo -n "$challenge" | ${ssh-keygen} -Y sign -f "$HOME/.ssh/$key" -n "$ns" 2>/dev/null)
       if [ $? -ne 0 ] || [ -z "$sig" ]; then
-        ${notify-send} -u critical "Sign" "Signing failed"
+        ${notify-send} -u critical "Sign" "Signing failed ($key / $ns)"
         exit 1
       fi
       echo -n "$sig" | ${wl-copy}
-      ${notify-send} "Sign" "Challenge signed and copied to clipboard"
+      ${notify-send} "Sign" "Signed with $key (ns: $ns)"
     '';
 
     screenshot-menu = pkgs.writeShellScriptBin "tidepool-screenshot-menu" ''
