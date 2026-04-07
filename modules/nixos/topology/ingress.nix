@@ -78,8 +78,27 @@
   '' + lib.optionalString (opts != "") (opts + "\n")
      + "    server srv1 ${a.resolvedAddress}:${toString a.resolvedPort} check inter 10s\n";
 
+  # Collect unique cert domains needed for a set of services.
+  certDomainsFor = svcs: lib.unique (lib.mapAttrsToList (name: e:
+    let
+      domain = e.attrs.resolvedDomain;
+      tier = tierOf name;
+    in
+      # Public services use per-domain certs; internal use wildcard;
+      # environment services use their env's wildcard.
+      if tier == "internal" then eg.domains.internal
+      else if tier == "environment" then
+        (builtins.head (builtins.filter (d:
+          lib.hasSuffix ".${d}" domain || domain == d
+        ) envDomains))
+      else domain
+  ) svcs);
+
   mkFrontend = frontendName: bindAddr: svcs: let
     svcList = lib.mapAttrsToList lib.nameValuePair svcs;
+    crtFiles = lib.concatMapStringsSep " "
+      (d: "crt /var/lib/acme/${d}/full.pem")
+      (certDomainsFor svcs);
     acls = map
       (s: "    acl host_${s.name} hdr(host) -i ${s.value.attrs.resolvedDomain}")
       svcList;
@@ -89,7 +108,7 @@
   in ''
 
     frontend ft_https_${frontendName}
-      bind ${bindAddr}:443 ssl crt /var/lib/acme/ strict-sni
+      bind ${bindAddr}:443 ssl ${crtFiles} strict-sni
       mode http
       option forwardfor
       http-request set-header X-Forwarded-Proto https
