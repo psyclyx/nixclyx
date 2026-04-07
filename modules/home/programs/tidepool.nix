@@ -20,6 +20,25 @@
     slurp = lib.getExe pkgs.slurp;
     wl-copy = lib.getExe' pkgs.wl-clipboard "wl-copy";
 
+    wl-paste = lib.getExe' pkgs.wl-clipboard "wl-paste";
+    ssh-keygen = "${pkgs.openssh}/bin/ssh-keygen";
+
+    sign-clipboard = pkgs.writeShellScriptBin "tidepool-sign-clipboard" ''
+      set -euo pipefail
+      challenge=$(${wl-paste} --no-newline 2>/dev/null)
+      if [ -z "$challenge" ]; then
+        ${notify-send} -u critical "Sign" "Clipboard is empty"
+        exit 1
+      fi
+      sig=$(echo -n "$challenge" | ${ssh-keygen} -Y sign -f ~/.ssh/id_monolyx_root -n auth-portal 2>/dev/null)
+      if [ $? -ne 0 ] || [ -z "$sig" ]; then
+        ${notify-send} -u critical "Sign" "Signing failed"
+        exit 1
+      fi
+      echo -n "$sig" | ${wl-copy}
+      ${notify-send} "Sign" "Challenge signed and copied to clipboard"
+    '';
+
     screenshot-menu = pkgs.writeShellScriptBin "tidepool-screenshot-menu" ''
       options="Full Screen\nSelection\nFull Screen (Clipboard)\nSelection (Clipboard)"
       chosen=$(echo -e "$options" | ${shoal-dmenu} -p "Screenshot: ")
@@ -153,6 +172,7 @@
       pkgs.wl-clipboard
       pkgs.playerctl
       screenshot-menu
+      sign-clipboard
     ];
 
     psyclyx.home.programs.shoal.enable = lib.mkDefault true;
@@ -210,10 +230,9 @@
         "super+shift+4" = "(actions/send-to-tag 4)";
         "super+shift+5" = "(actions/send-to-tag 5)";
         # Float
-        "super+f" = "actions/toggle-float";
-        "super+shift+f" = "actions/gather-floats";
-        "super+bracketright" = "actions/focus-float-next";
-        "super+bracketleft" = "actions/focus-float-prev";
+        "super+f" = "actions/toggle-focus-float";
+        "super+shift+f" = "actions/toggle-float";
+        "super+ctrl+f" = "actions/gather-floats";
         # Media
         "XF86AudioRaiseVolume" = ''(actions/spawn "pactl" "set-sink-volume" "@DEFAULT_SINK@" "+5%")'';
         "XF86AudioLowerVolume" = ''(actions/spawn "pactl" "set-sink-volume" "@DEFAULT_SINK@" "-5%")'';
@@ -225,6 +244,7 @@
         # Launchers
         "super+p" = ''(actions/spawn "${rofi-rbw}")'';
         "super+s" = ''(actions/spawn "${lib.getExe screenshot-menu}")'';
+        "super+shift+s" = ''(actions/spawn "${lib.getExe sign-clipboard}")'';
       };
       extraConfig = ''
         (put config :outer-padding 12)
