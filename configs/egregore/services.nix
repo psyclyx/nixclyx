@@ -19,7 +19,7 @@
         tags = ["public" "static"];
         service = {
           domain = "docs.psyclyx.xyz";
-          backend.local.port = 8081;
+          backend.local.port = 8084;
           label = "Documentation";
         };
       };
