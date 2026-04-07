@@ -28,6 +28,16 @@ egregorLib.mkType {
       type = lib.types.attrsOf (lib.types.submodule portDef.module);
       default = {};
     };
+    username = lib.mkOption {
+      type = lib.types.str;
+      default = "admin";
+      description = "HTTP digest auth username.";
+    };
+    password = lib.mkOption {
+      type = lib.types.str;
+      default = "";
+      description = "HTTP digest auth password (empty = no password).";
+    };
   };
 
   attrs = name: entity: _top: let
@@ -147,7 +157,7 @@ egregorLib.mkType {
         stp_priority              = 32768;
         watchdog                  = true;
       };
-      password     = "";
+      password     = sw.password;
       snmp         = { community = "public"; contact = ""; enabled = true; location = ""; };
       rstp         = { enabled_ports = allPorts1; };
       mirror       = { target_port = 1; };
@@ -158,8 +168,8 @@ egregorLib.mkType {
 
     json = builtins.toJSON projection;
 
-    # SwOS uses HTTP digest auth (default admin / no password).
-    curlAuth = ''--digest -u "admin:"'';
+    # SwOS uses HTTP digest auth.
+    curlAuth = ''--digest -u "${sw.username}:${sw.password}"'';
     pullCmd = ''curl -sf --connect-timeout 5 ${curlAuth} \
   "http://${mgmtIp}/backup.swb"'';
   in {
@@ -235,7 +245,7 @@ failed = False
 for name, content in sections:
     r = subprocess.run(
         ['curl', '-sf', '--connect-timeout', '5', '--max-time', '10',
-         '--digest', '-u', 'admin:',
+         '--digest', '-u', '${sw.username}:${sw.password}',
          '-X', 'POST', '-d', content,
          f'http://{mgmt_ip}/' + name],
         capture_output=True, timeout=15

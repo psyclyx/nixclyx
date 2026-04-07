@@ -29,6 +29,16 @@ egregorLib.mkType {
       type = lib.types.attrsOf (lib.types.submodule portDef.module);
       default = {};
     };
+    username = lib.mkOption {
+      type = lib.types.str;
+      default = "admin";
+      description = "Web UI auth username.";
+    };
+    password = lib.mkOption {
+      type = lib.types.str;
+      default = "admin";
+      description = "Web UI auth password.";
+    };
   };
 
   attrs = name: entity: _top: let
@@ -100,7 +110,7 @@ egregorLib.mkType {
         netmask = mgmtMask;
         gateway = mgmtGw;
       };
-      auth = { username = "admin"; };
+      auth = { username = sw.username; };
       ports = map mkPort allPortNums;
       vlans = map (vlan: {
         id      = vlan;
@@ -115,8 +125,8 @@ egregorLib.mkType {
     json = builtins.toJSON projection;
     mgmtIp = sw.addresses.mgmt.ipv4;
 
-    # Sodola auth: cookie = md5("admin" + "admin").
-    cookie = "admin=f6fdffe48c908deb0f4c3bd36c032e72";
+    # Sodola auth: cookie = md5(username + password).
+    cookie = "${sw.username}=${builtins.hashString "md5" "${sw.username}${sw.password}"}";
     curlAuth = ''-b "${cookie}" -e "http://${mgmtIp}/"'';
     pullCmd = ''curl -sf --connect-timeout 5 ${curlAuth} \
   "http://${mgmtIp}/config_back.cgi?cmd=conf_backup"'';
