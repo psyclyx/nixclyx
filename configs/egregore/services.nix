@@ -140,7 +140,7 @@
         type = "service";
         tags = ["monolyx"];
         service = {
-          environment = "env-stage";
+          domain = "login.stage.psyclyx.net";
           backend.host = { address = "10.0.31.11"; port = 8080; };
           label = "Login (Stage)";
         };
