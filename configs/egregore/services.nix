@@ -136,6 +136,16 @@
         };
       };
 
+      login-stage = {
+        type = "service";
+        tags = ["monolyx"];
+        service = {
+          environment = "env-stage";
+          backend.host = { address = "10.0.31.11"; port = 8080; };
+          label = "Login (Stage)";
+        };
+      };
+
       # --- Static sites (served by nginx on localhost) ---
       # psyclyx.link is split-horizon: public and internal variants on
       # different nginx ports. The ingress host config wires the split;
