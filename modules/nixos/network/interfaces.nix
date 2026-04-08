@@ -16,7 +16,7 @@
           type = lib.types.either lib.types.str (lib.types.listOf lib.types.str);
           description = "Slave interfaces (glob pattern or explicit list).";
         };
-        mode = lib.mkOption { type = lib.types.str; default = "balance-xor"; };
+        mode = lib.mkOption { type = lib.types.str; default = "802.3ad"; };
         hashPolicy = lib.mkOption { type = lib.types.str; default = "layer2+3"; };
         miiMonitorSec = lib.mkOption { type = lib.types.str; default = "0.1"; };
         lacpTransmitRate = lib.mkOption {
