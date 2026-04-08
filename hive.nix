@@ -91,7 +91,7 @@
         "lab"
         "fixed"
       ];
-      targetHost = "lab-1.infra.apt.psyclyx.net";
+      targetHost = "10.157.0.11";
       targetUser = "root";
     };
   };
@@ -105,7 +105,7 @@
         "lab"
         "fixed"
       ];
-      targetHost = "lab-2.infra.apt.psyclyx.net";
+      targetHost = "10.157.0.12";
       targetUser = "root";
     };
   };
@@ -119,7 +119,7 @@
         "lab"
         "fixed"
       ];
-      targetHost = "lab-3.infra.apt.psyclyx.net";
+      targetHost = "10.157.0.13";
       targetUser = "root";
     };
   };
@@ -133,7 +133,7 @@
         "lab"
         "fixed"
       ];
-      targetHost = "lab-4.infra.apt.psyclyx.net";
+      targetHost = "10.157.0.14";
       targetUser = "root";
     };
   };
