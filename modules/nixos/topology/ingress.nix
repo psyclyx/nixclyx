@@ -172,12 +172,14 @@
     else ""
   ) (builtins.attrValues publicHttp);
 
-  # Stage/environment services: authoritative DNS records per env zone.
+  # Environment services: authoritative DNS records per env zone.
+  # Includes both services with `environment` set and services with explicit
+  # domains that fall in an environment zone.
   envDnsRecords = builtins.listToAttrs (map (envDomain:
     let
       envSvcs = lib.filter (e:
-        e.service.environment != null
-        && eg.entities.${e.service.environment}.environment.domain == envDomain
+        let domain = e.attrs.resolvedDomain;
+        in lib.hasSuffix ".${envDomain}" domain
       ) (builtins.attrValues httpServices);
       records = lib.concatMapStringsSep "\n" (e: let
         sub = lib.removeSuffix ".${envDomain}" e.attrs.resolvedDomain;
