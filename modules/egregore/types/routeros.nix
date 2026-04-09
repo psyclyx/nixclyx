@@ -39,6 +39,21 @@ egregorLib.mkType {
       type = lib.types.attrsOf (lib.types.submodule portDef.module);
       default = {};
     };
+    mgmtNetwork = lib.mkOption {
+      type = lib.types.str;
+      default = "mgmt";
+      description = "Network entity providing management VLAN and gateway.";
+    };
+    timezone = lib.mkOption {
+      type = lib.types.str;
+      default = "America/Los_Angeles";
+      description = "System timezone for the switch.";
+    };
+    sshUser = lib.mkOption {
+      type = lib.types.str;
+      default = "admin";
+      description = "SSH user for admin key injection.";
+    };
     bonds = lib.mkOption {
       type = lib.types.attrsOf (lib.types.submodule {
         options = {
@@ -68,7 +83,7 @@ egregorLib.mkType {
     sw = entity.routeros;
     identity = if sw.identity != null then sw.identity else name;
 
-    mgmt      = top.entities.mgmt;
+    mgmt      = top.entities.${sw.mgmtNetwork};
     mgmtVlan  = mgmt.network.vlan;
     mgmtIp    = sw.addresses.mgmt.ipv4;
     mgmtPLen  = mgmt.attrs.prefixLen;
@@ -126,11 +141,11 @@ egregorLib.mkType {
 
       system = {
         inherit identity;
-        timezone    = "America/Los_Angeles";
+        timezone    = sw.timezone;
         dns_servers = [mgmtGw];
         ssh = {
           host_key_type = "ed25519";
-          keys = map (key: { inherit key; user = "admin"; }) adminKeys;
+          keys = map (key: { inherit key; user = sw.sshUser; }) adminKeys;
         };
         snmp = { enabled = true; };
       };

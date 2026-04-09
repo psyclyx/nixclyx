@@ -29,6 +29,11 @@ egregorLib.mkType {
       type = lib.types.attrsOf (lib.types.submodule portDef.module);
       default = {};
     };
+    mgmtNetwork = lib.mkOption {
+      type = lib.types.str;
+      default = "mgmt";
+      description = "Network entity providing management VLAN and gateway.";
+    };
     username = lib.mkOption {
       type = lib.types.str;
       default = "admin";
@@ -56,7 +61,7 @@ egregorLib.mkType {
   verbs = name: entity: top: let
     sw = entity.sodola;
 
-    mgmt     = top.entities.mgmt;
+    mgmt     = top.entities.${sw.mgmtNetwork};
     mgmtVlan = mgmt.network.vlan;
     mgmtGw   = mgmt.attrs.gateway4;
     mgmtPLen = mgmt.attrs.prefixLen;
