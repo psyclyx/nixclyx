@@ -11,44 +11,59 @@ egregorLib.mkType {
 
   options = {
     hostname = lib.mkOption {
-      type = lib.types.str;
-      default = "";
-      description = "iLO hostname or IP for Redfish API access.";
+      type = lib.types.nullOr lib.types.str;
+      default = null;
+      description = "iLO hostname for Redfish API. Null = derive from entity name + host site.";
     };
     model = lib.mkOption {
       type = lib.types.str;
       default = "";
       description = "Server hardware model.";
     };
+    mgmtNetwork = lib.mkOption {
+      type = lib.types.str;
+      default = "mgmt";
+      description = "Network entity for deriving the management zone domain.";
+    };
   };
 
-  attrs = _name: entity: _top: {
-    address = entity.ilo.hostname;
-    label =
-      if entity.ilo.model != ""
-      then "${entity.ilo.model}"
-      else entity.attrs.name;
+  attrs = name: entity: top: let
+    ilo = entity.ilo;
+    # Derive hostname from entity name + mgmt zone domain if not explicit.
+    mgmtNet = top.entities.${ilo.mgmtNetwork} or null;
+    zoneName = if mgmtNet != null then mgmtNet.attrs.zoneName or null else null;
+    derivedHostname = if zoneName != null then "${name}.${zoneName}" else name;
+    resolvedHostname = if ilo.hostname != null then ilo.hostname else derivedHostname;
+  in {
+    address = resolvedHostname;
+    label = if ilo.model != "" then ilo.model else name;
   };
 
-  verbs = _name: entity: _top: let
-    host = entity.ilo.hostname;
+  verbs = name: entity: top: let
+    host = (egregorLib.mkType {}).attrs name entity top; # can't self-reference attrs easily
+    # Resolve hostname the same way as attrs
+    ilo = entity.ilo;
+    mgmtNet = top.entities.${ilo.mgmtNetwork} or null;
+    zoneName = if mgmtNet != null then mgmtNet.attrs.zoneName or null else null;
+    derivedHostname = if zoneName != null then "${name}.${zoneName}" else name;
+    resolvedHostname = if ilo.hostname != null then ilo.hostname else derivedHostname;
   in {
     power = {
       description = "Server power control (on|off|reset, or show state).";
       impl = ''
         action="''${1:-}"
         case "$action" in
-          on)    ${rf host "Systems -F reset On"} ;;
-          off)   ${rf host "Systems -F reset ForceOff"} ;;
-          reset) ${rf host "Systems -F reset ForceRestart"} ;;
-          "")    ${rf host "Systems -F get"} ;;
+          on)    ${rf resolvedHostname "Systems -F reset On"} ;;
+          off)   ${rf resolvedHostname "Systems -F reset ForceOff"} ;;
+          reset) ${rf resolvedHostname "Systems -F reset ForceRestart"} ;;
+          "")    ${rf resolvedHostname "Systems -F get"} ;;
           *)     echo "Unknown power action: $action" >&2; exit 1 ;;
         esac
       '';
     };
     info = {
       description = "Show system information.";
-      impl = rf host "Systems -F get";
+      impl = rf resolvedHostname "Systems -F get";
     };
   };
 }
