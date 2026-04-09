@@ -68,7 +68,7 @@
       policyRouting = {
         table = eg.entities.${netName}.network.vlan;
         gateway = net.gateway4;
-        subnet = "${net.prefix}/${toString net.prefixLen}";
+        subnet = "${net.network4}/${toString net.prefixLen}";
       };
     });
   };
