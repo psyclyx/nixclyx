@@ -28,6 +28,11 @@ egregorLib.mkType {
       type = lib.types.attrsOf (lib.types.submodule portDef.module);
       default = {};
     };
+    mgmtNetwork = lib.mkOption {
+      type = lib.types.str;
+      default = "mgmt";
+      description = "Network entity providing management VLAN and gateway.";
+    };
     username = lib.mkOption {
       type = lib.types.str;
       default = "admin";
@@ -56,7 +61,7 @@ egregorLib.mkType {
     sw = entity.swos;
     identity = if sw.identity != null then sw.identity else name;
 
-    mgmtVlan = top.entities.mgmt.network.vlan;
+    mgmtVlan = top.entities.${sw.mgmtNetwork}.network.vlan;
     mgmtIp   = sw.addresses.mgmt.ipv4;
 
     # CSS326: 24 copper + 2 SFP+ = 26 ports.

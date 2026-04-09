@@ -48,6 +48,11 @@ egregorLib.mkType {
       default = null;
       description = "SSH target for deployment. Null = not remotely deployable.";
     };
+    deployUser = lib.mkOption {
+      type = lib.types.str;
+      default = "root";
+      description = "SSH user for deployment.";
+    };
     publicIPv4 = lib.mkOption { type = lib.types.nullOr lib.types.str; default = null; };
     publicIPv6 = lib.mkOption { type = lib.types.nullOr lib.types.str; default = null; };
     hardware = lib.mkOption {
@@ -96,7 +101,7 @@ egregorLib.mkType {
     target = h.deployAddress;
     portFlag = lib.optionalString (h.sshPort != 22) "-p ${toString h.sshPort} ";
     sshOpts = lib.optionalString (h.sshPort != 22) "-o Port=${toString h.sshPort} ";
-    sshDest = "root@${target}";
+    sshDest = "${h.deployUser}@${target}";
   in lib.optionalAttrs (target != null) {
     deploy = {
       description = "Build, copy, and switch. Pass nix-build args (e.g. ./default.nix -A hosts.${name}).";
