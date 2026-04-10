@@ -64,9 +64,9 @@
       },
       "branch": "main",
       "submodules": false,
-      "revision": "1502716eda71a8739e8b0cf0835df30a17922ad3",
-      "url": "https://github.com/psyclyx/emacs/archive/1502716eda71a8739e8b0cf0835df30a17922ad3.tar.gz",
-      "hash": "sha256-8gjUEZfoGYOFogkjqxYURRzFjUHaUYYTWdS/yhcTxrU="
+      "revision": "5b5584d0107f5bc74a2ae0d1e89b1b6624ada0b6",
+      "url": "https://github.com/psyclyx/emacs/archive/5b5584d0107f5bc74a2ae0d1e89b1b6624ada0b6.tar.gz",
+      "hash": "sha256-nNSLEJdaC+Nf88qOrE0Oa9K/o7Ob4w1/cGraktMHmLg="
     },
     "flake-compat": {
       "type": "Git",
@@ -234,9 +234,9 @@
       },
       "branch": "main",
       "submodules": false,
-      "revision": "d64cdfe4adb37eeb588bc70d0c0bc29ca0364496",
-      "url": "https://github.com/psyclyx/shoal/archive/d64cdfe4adb37eeb588bc70d0c0bc29ca0364496.tar.gz",
-      "hash": "sha256-HSQRLtzUByLHbPWHMuVdqjqtrHAaR2DZqbXPAXiUExU="
+      "revision": "01ef11a03ab8c194cc609eb150a867216ab6657e",
+      "url": "https://github.com/psyclyx/shoal/archive/01ef11a03ab8c194cc609eb150a867216ab6657e.tar.gz",
+      "hash": "sha256-XEOMNFsG0qNwRlm2EHgi11nOej/tswvqE0OgQV3D5OM="
     },
     "sops-nix": {
       "type": "Git",
@@ -273,9 +273,9 @@
       },
       "branch": "main",
       "submodules": false,
-      "revision": "9dd156a0286e94dc80f4619ed4aa5065f5a943ab",
-      "url": "https://github.com/psyclyx/tidepool/archive/9dd156a0286e94dc80f4619ed4aa5065f5a943ab.tar.gz",
-      "hash": "sha256-2gthOLmGMYw9ET4x5qquMdQL/zLh7QxdvSoGNLcUZC4="
+      "revision": "19ad0caf694aa263864f00a9de5f37fa3d706ffb",
+      "url": "https://github.com/psyclyx/tidepool/archive/19ad0caf694aa263864f00a9de5f37fa3d706ffb.tar.gz",
+      "hash": "sha256-UrwLjGFikfcAMZK7JjKkXIw+xOXEfaTj5Y7sTwouMWc="
     }
   },
   "version": 7
