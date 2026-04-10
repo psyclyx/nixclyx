@@ -34,6 +34,7 @@ in {
       firewall = {
         input.lan.policy = "accept";
         forward = [{ from = "lan"; to = "lan"; }];
+        zones.lan.interfaces = ["eno49np0" "eno50np1"];
       };
     };
 
@@ -73,4 +74,5 @@ in {
   };
 
   boot.kernel.sysctl."kernel.sched_autogroup_enabled" = 0;
+  boot.supportedFilesystems = ["bcachefs"];
 }
