@@ -136,11 +136,6 @@
     pkgs.nodejs
     pkgs.yarn
     pkgs.pnpm
-    pkgs.nodePackages.typescript-language-server
-    pkgs.nodePackages.vscode-langservers-extracted
-    pkgs.nodePackages.eslint
-    pkgs.nodePackages.prettier
-    pkgs.nodePackages.node-gyp
 
     # Rust
     pkgs.rustc
