@@ -79,6 +79,11 @@
         fsType = "zfs";
         options = ["zfsutil"];
       };
+      "/var/lib/containerd/io.containerd.snapshotter.v1.zfs" = {
+        device = "${pool}/containerd";
+        fsType = "zfs";
+        options = ["zfsutil"];
+      };
       "/boot" = {
         device = "UUID=${cfg.boot.UUID}";
         fsType = "vfat";
