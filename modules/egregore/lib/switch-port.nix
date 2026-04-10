@@ -26,6 +26,11 @@
         type = lib.types.listOf lib.types.int;
         default = [];
       };
+      lacpGroup = lib.mkOption {
+        type = lib.types.int;
+        default = 0;
+        description = "LACP group ID (0 = none).";
+      };
       meta = lib.mkOption {
         type = lib.types.submodule {
           options = {
