@@ -36,6 +36,7 @@
       network.dns.client.enable = true;
 
       programs = {
+        adb.enable = lib.mkDefault true;
         ccache.enable = lib.mkDefault true;
         river.enable = lib.mkDefault true;
         sway.enable = lib.mkDefault true;
