@@ -2,6 +2,8 @@
   imports = [ ../lab-shared.nix ];
 
   networking.hostName = "lab-1";
+  psyclyx.nixos.services.icecream.scheduler = true;
+
   psyclyx.nixos.filesystems.layouts.zfs-pool = {
     enable = true;
     hostId = "bafe257f";
