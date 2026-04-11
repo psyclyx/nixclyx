@@ -34,7 +34,12 @@
           vrid = 201;
           members = ["lab-1" "lab-2" "lab-3" "lab-4"];
           services = {
-            http  = { port = 80; };
+            # Stage services that sit behind this VIP are expected to
+            # expose GET /health → 200. angelbeats does (it's also an
+            # unauth-bypass public path in the shared auth middleware
+            # so a gated service still health-checks through without
+            # flapping during redirect-to-login cycles).
+            http  = { port = 80; check = "/health"; };
             https = { port = 443; mode = "tcp"; };
           };
         };
