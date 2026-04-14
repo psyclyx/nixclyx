@@ -15,6 +15,7 @@
         iniContent = {
           pull.rebase = true;
           core.fsmonitor = true;
+          submodule.recurse = true;
         };
       };
     };
