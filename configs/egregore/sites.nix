@@ -7,7 +7,7 @@
         type = "site";
         tags = ["apartment"];
         site = {
-          location = "Portland, OR — apartment";
+          location = "Seattle, WA — apartment";
           domain = "apt.psyclyx.net";
         };
       };
