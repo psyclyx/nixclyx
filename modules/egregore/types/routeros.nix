@@ -54,6 +54,26 @@ egregorLib.mkType {
       default = "admin";
       description = "SSH user for admin key injection.";
     };
+    bridge = lib.mkOption {
+      type = lib.types.submodule {
+        options.multicast = lib.mkOption {
+          type = lib.types.submodule {
+            options = {
+              snooping = lib.mkOption { type = lib.types.bool; default = true; };
+              querier = lib.mkOption { type = lib.types.bool; default = false; };
+              router = lib.mkOption {
+                type = lib.types.enum [ "disabled" "temporary-query" "permanent" ];
+                default = "temporary-query";
+              };
+              igmpVersion = lib.mkOption { type = lib.types.enum [ 2 3 ]; default = 3; };
+              mldVersion = lib.mkOption { type = lib.types.enum [ 1 2 ]; default = 2; };
+            };
+          };
+          default = {};
+        };
+      };
+      default = {};
+    };
     bonds = lib.mkOption {
       type = lib.types.attrsOf (lib.types.submodule {
         options = {
@@ -166,7 +186,11 @@ egregorLib.mkType {
       bridge = {
         name            = "bridge1";
         protocol_mode   = "none";
-        igmp_snooping   = true;
+        igmp_snooping    = sw.bridge.multicast.snooping;
+        multicast_querier = sw.bridge.multicast.querier;
+        multicast_router  = sw.bridge.multicast.router;
+        igmp_version      = sw.bridge.multicast.igmpVersion;
+        mld_version       = sw.bridge.multicast.mldVersion;
         vlan_filtering  = true;
         ports = map (iface: let
           portName = if sw.bonds ? ${iface}
