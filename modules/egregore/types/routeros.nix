@@ -219,7 +219,7 @@ ${json}
 EGREGORE_EOF'';
     };
     deploy = {
-      description = "Deploy config to switch (upload + reset-configuration).";
+      description = "Deploy config to switch (upload + reset-configuration). Args are passed as extra SSH/SCP options (e.g. -J iyr).";
       impl = ''
         echo "Generating ${rscName}..." >&2
         tmpfile=$(mktemp --suffix=.rsc)
@@ -230,11 +230,11 @@ EGREGORE_EOF
 
         echo "Uploading to ${mgmtIp} via SCP..." >&2
         scp -o StrictHostKeyChecking=no -o ConnectTimeout=5 \
-          "$tmpfile" "admin@${mgmtIp}:/${rscName}"
+          "$@" "$tmpfile" "admin@${mgmtIp}:/${rscName}"
 
         echo "Resetting configuration (switch will reboot)..." >&2
         ssh -o StrictHostKeyChecking=no -o ConnectTimeout=5 \
-          "admin@${mgmtIp}" \
+          "$@" "admin@${mgmtIp}" \
           "/system/reset-configuration no-defaults=yes run-after-reset=${rscName}"
 
         echo "Deploy complete. Switch will reboot and apply ${rscName}." >&2'';
