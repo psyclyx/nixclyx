@@ -14,6 +14,7 @@ in {
           model = "CRS326-24S+2Q+RM";
           identity = "mdf-agg01";
           addresses.mgmt.ipv4 = "10.0.240.2";
+          bridge.multicast.querier = true;
 
           bonds = {
             bond-css326 = {
