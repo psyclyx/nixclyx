@@ -41,7 +41,9 @@
             unitConfig.OnSuccess = ["${targetName}.target"];
             serviceConfig.KeyringMode = "inherit";
             serviceConfig.ExecCondition = lib.mkForce
-              "!${pkgs.bcachefs-tools}/bin/bcachefs mount -k fail ${lib.escapeShellArg devicePath}";
+              "${pkgs.writeShellScript "check-bcachefs-needs-unlock-${escaped}" ''
+                ! ${pkgs.bcachefs-tools}/bin/bcachefs mount -k fail ${lib.escapeShellArg devicePath} 2>/dev/null
+              ''}";
           }
       );
     };
