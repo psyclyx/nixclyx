@@ -1,5 +1,5 @@
 { lib, pkgs, nixclyx, ... }: {
-  imports = [./hardware.nix ./network.nix ./filesystems.nix];
+  imports = [./hardware.nix ./network.nix];
 
   networking.hostName = "sigil";
 
@@ -12,11 +12,17 @@
   ];
 
   psyclyx.nixos = {
-    # TODO: enable after migration is verified and /persist is populated
-    # filesystems.impermanence = {
-    #   enable = true;
-    #   device = "UUID=055d9737-c13b-4262-abe6-2ebcb8681307";
-    # };
+    filesystems.layouts.bcachefs-pool = {
+      enable = true;
+      UUID = {
+        root = "ccb2b4e2-b5b7-4d85-aca8-039ca1ccc985";
+        boot = "71AE-12DD";
+      };
+      wants = [
+        "/dev/disk/by-id/nvme-eui.0025384c41416f3c"
+        "/dev/disk/by-id/nvme-eui.ace42e00457c0fbf2ee4ac0000000001"
+      ];
+    };
 
     programs = {
       glasgow.enable = true;
