@@ -223,6 +223,16 @@ def generate(config):
             parts.append(
                 f"igmp-snooping={'yes' if bridge['igmp_snooping'] else 'no'}"
             )
+        if bridge.get("multicast_querier") is not None:
+            parts.append(
+                f"multicast-querier={'yes' if bridge['multicast_querier'] else 'no'}"
+            )
+        if bridge.get("multicast_router") is not None:
+            parts.append(f"multicast-router={bridge['multicast_router']}")
+        if bridge.get("igmp_version") is not None:
+            parts.append(f"igmp-version={bridge['igmp_version']}")
+        if bridge.get("mld_version") is not None:
+            parts.append(f"mld-version={bridge['mld_version']}")
         if bridge.get("priority") is not None:
             parts.append(f"priority={bridge['priority']:#06x}")
         if bridge.get("ageing_time") is not None:
