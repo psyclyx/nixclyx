@@ -18,6 +18,13 @@
         pkgs.mpv
         pkgs.vlc
         pkgs.psyclyx.ilo
+
+        # Graphics / creative
+        pkgs.blender
+        pkgs.inkscape
+        pkgs.gimp
+        pkgs.krita
+        pkgs.pinta
       ];
 
     home-manager.users.psyc = {
