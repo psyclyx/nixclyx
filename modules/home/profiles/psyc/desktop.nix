@@ -12,6 +12,11 @@
       pkgs.psyclyx.janet-lsp
       pkgs.psyclyx.spork
       pkgs.signal-desktop
+
+      # LLM coding agents
+      pkgs.llm-agents.opencode
+      pkgs.llm-agents.codex
+      pkgs.llm-agents.gemini-cli
     ];
 
     psyclyx.home = {
