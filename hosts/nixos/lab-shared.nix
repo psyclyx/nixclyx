@@ -51,7 +51,7 @@ in {
       };
       redis-sentinel = {
         enable = true;
-        dataNetwork = "infra";
+        dataNetwork = "data";
         clusterNodes = labHostNames;
       };
       patroni = {
