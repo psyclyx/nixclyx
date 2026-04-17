@@ -151,6 +151,19 @@
         };
       };
 
+      # --- Public HTTP (llm) ---
+
+      llm = {
+        type = "service";
+        tags = ["public"];
+        service = {
+          domain = "llm.psyclyx.xyz";
+          backend.local.port = 8086;
+          websockets = true;
+          label = "LLM Chat";
+        };
+      };
+
       # --- Static sites (served by nginx on localhost) ---
       # psyclyx.link is split-horizon: public and internal variants on
       # different nginx ports. The ingress host config wires the split;
