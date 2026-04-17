@@ -104,7 +104,7 @@
     action-menu = pkgs.writeShellScript "tidepool-action-menu" ''
       set -euo pipefail
 
-      actions_json=$(${tidepoolmsg} eval '(print (ipc/list-actions))' | head -1)
+      actions_json=$(${tidepoolmsg} exec '(print (ipc/list-actions))' | head -1)
 
       # Build parallel arrays: display (aligned columns) and data (name|spec)
       display=$(echo "$actions_json" | ${jq} -r '
@@ -137,7 +137,7 @@
                 args="$args mark $mark"
                 ;;
               "wid...")
-                wid_pick=$(${tidepoolmsg} eval '(print (ipc/list-windows))' | head -1 \
+                wid_pick=$(${tidepoolmsg} exec '(print (ipc/list-windows))' | head -1 \
                   | ${jq} -r '.[] | "\(.wid)|\(.app) — \(.title)"' \
                   | ${shoal-dmenu} -p "Window: ") || exit 0
                 wid=$(echo "$wid_pick" | cut -d'|' -f1)
@@ -167,35 +167,35 @@
       done
 
       # Step 3: Execute
-      ${tidepoolmsg} action "$action_name" $args
+      ${tidepoolmsg} dispatch "$action_name" $args
     '';
 
     # Shortcut scripts: skip the first dmenu step for common operations
     summon-menu = pkgs.writeShellScript "tidepool-summon-menu" ''
       set -euo pipefail
-      chosen=$(${tidepoolmsg} eval '(print (ipc/list-windows))' | head -1 \
+      chosen=$(${tidepoolmsg} exec '(print (ipc/list-windows))' | head -1 \
         | ${jq} -r '.[] | "\(.wid)|\(.app) — \(.title)\(if .mark then " [\(.mark)]" else "" end)"' \
         | ${shoal-dmenu} -p "Summon: ") || exit 0
       wid=$(echo "$chosen" | cut -d'|' -f1)
-      [ -n "$wid" ] && ${tidepoolmsg} action summon wid "$wid"
+      [ -n "$wid" ] && ${tidepoolmsg} dispatch summon wid "$wid"
     '';
 
     mark-set-menu = pkgs.writeShellScript "tidepool-mark-set-menu" ''
       set -euo pipefail
       mark=$(echo "" | ${shoal-dmenu} -p "Mark: ") || exit 0
-      [ -n "$mark" ] && ${tidepoolmsg} action mark-set "$mark"
+      [ -n "$mark" ] && ${tidepoolmsg} dispatch mark-set "$mark"
     '';
 
     # Generic mark picker: lists existing marks, runs "$1 mark <name>"
     mark-pick = pkgs.writeShellScript "tidepool-mark-pick" ''
       set -euo pipefail
       action="''${1:?usage: tidepool-mark-pick <action>}"
-      marks=$(${tidepoolmsg} eval '(print (ipc/list-marks))' | head -1 \
+      marks=$(${tidepoolmsg} exec '(print (ipc/list-marks))' | head -1 \
         | ${jq} -r '.[] | "\(.name)|\(.app) — \(.title)"')
       [ -z "$marks" ] && exit 0
       chosen=$(echo "$marks" | ${shoal-dmenu} -p "Mark: ") || exit 0
       name=$(echo "$chosen" | cut -d'|' -f1)
-      [ -n "$name" ] && ${tidepoolmsg} action "$action" mark "$name"
+      [ -n "$name" ] && ${tidepoolmsg} dispatch "$action" mark "$name"
     '';
 
   in {
@@ -235,19 +235,20 @@
         "super+shift+l" = "actions/swap-right";
         "super+shift+j" = "actions/swap-down";
         "super+shift+k" = "actions/swap-up";
-        # Join / Leave
-        "super+ctrl+h" = "actions/join-left";
-        "super+ctrl+l" = "actions/join-right";
-        "super+ctrl+j" = "actions/join-down";
-        "super+ctrl+k" = "actions/join-up";
-        "super+ctrl+space" = "actions/leave";
+        # Absorb / Eject / Expel
+        "super+ctrl+h" = "actions/absorb-left";
+        "super+ctrl+l" = "actions/absorb-right";
+        "super+ctrl+j" = "actions/absorb-down";
+        "super+ctrl+k" = "actions/absorb-up";
+        "super+ctrl+space" = "actions/eject";
+        "super+ctrl+shift+h" = "actions/expel-left";
+        "super+ctrl+shift+l" = "actions/expel-right";
+        "super+ctrl+shift+j" = "actions/expel-down";
+        "super+ctrl+shift+k" = "actions/expel-up";
         # Width
         "super+r" = "actions/grow";
-        # Insert mode
-        "super+i" = "actions/toggle-insert-mode";
         # Tabs
-        "super+t" = "actions/make-tabbed";
-        "super+shift+t" = "actions/make-split";
+        "super+t" = "actions/toggle-split-tabbed";
         "super+Tab" = "actions/focus-tab-next";
         "super+shift+Tab" = "actions/focus-tab-prev";
         # Output focus
@@ -264,6 +265,8 @@
         "super+shift+3" = "(actions/send-to-tag 3)";
         "super+shift+4" = "(actions/send-to-tag 4)";
         "super+shift+5" = "(actions/send-to-tag 5)";
+        # Fullscreen
+        "super+slash" = "actions/toggle-fullscreen";
         # Float
         "super+f" = "actions/toggle-focus-float";
         "super+shift+f" = "actions/toggle-float";
