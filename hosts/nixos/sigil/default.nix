@@ -47,6 +47,12 @@
         schedulerHost = "10.0.25.11"; # lab-1 via WireGuard
         noRemote = true;
       };
+      ollama = {
+        enable = true;
+        host = "0.0.0.0";
+        acceleration = "cuda";
+        keepAlive = "10m";
+      };
     };
 
     system = {
