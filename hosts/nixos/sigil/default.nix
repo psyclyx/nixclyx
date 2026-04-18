@@ -52,6 +52,7 @@
         host = "0.0.0.0";
         acceleration = "cuda";
         keepAlive = "10m";
+        extraEnv.OLLAMA_FLASH_ATTENTION = "0"; # gemma4 FA crashes on Ampere (RTX 3090)
       };
     };
 
