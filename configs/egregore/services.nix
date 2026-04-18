@@ -158,7 +158,7 @@
         tags = ["public"];
         service = {
           domain = "llm.psyclyx.xyz";
-          backend.local.port = 8086;
+          backend.local.port = 8085;
           websockets = true;
           label = "LLM Chat";
         };
