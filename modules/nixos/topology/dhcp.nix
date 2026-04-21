@@ -24,6 +24,8 @@
   mkSubnet4 = _poolName: pool: let
     net = eg.entities.${pool.network};
     na = net.attrs;
+    siteEntity = if net.network.site != null then eg.entities.${net.network.site} or null else null;
+    siteDomain = if siteEntity != null then siteEntity.site.domain or eg.domains.home else eg.domains.home;
   in {
     id = na.vlan;
     subnet = "${na.prefix}.0/${toString na.prefixLen}";
@@ -31,10 +33,10 @@
     "option-data" = [
       { name = "routers"; data = na.gateway4; }
       { name = "domain-name-servers"; data = na.gateway4; }
-      { name = "domain-name"; data = na.zoneName; }
-      { name = "domain-search"; data = "${na.zoneName}, ${eg.domains.home}, ${eg.domains.internal}"; }
+      { name = "domain-name"; data = siteDomain; }
+      { name = "domain-search"; data = "${siteDomain}, ${na.zoneName}, ${eg.domains.internal}"; }
     ];
-    ddns-qualifying-suffix = "${na.zoneName}.";
+    ddns-qualifying-suffix = "${siteDomain}.";
     reservations = let
       servers = managedHostsOnNetwork pool.network;
       labReservations = map (name: {
@@ -50,6 +52,8 @@
     net = eg.entities.${pool.network};
     na = net.attrs;
     prefix6 = "${eg.ipv6UlaPrefix}:${net.network.ulaSubnetHex}";
+    siteEntity = if net.network.site != null then eg.entities.${net.network.site} or null else null;
+    siteDomain = if siteEntity != null then siteEntity.site.domain or eg.domains.home else eg.domains.home;
   in {
     id = na.vlan;
     subnet = na.subnet6;
@@ -57,9 +61,9 @@
     pools = [{pool = "${prefix6}::${pool.ipv6Suffix.start} - ${prefix6}::${pool.ipv6Suffix.end}";}];
     "option-data" = [
       { name = "dns-servers"; data = na.gateway6; }
-      { name = "domain-search"; data = "${na.zoneName}, ${eg.domains.home}, ${eg.domains.internal}"; }
+      { name = "domain-search"; data = "${siteDomain}, ${na.zoneName}, ${eg.domains.internal}"; }
     ];
-    ddns-qualifying-suffix = "${na.zoneName}.";
+    ddns-qualifying-suffix = "${siteDomain}.";
     reservations = let
       servers = managedHostsOnNetwork pool.network;
     in map (name: {

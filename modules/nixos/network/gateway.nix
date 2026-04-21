@@ -85,6 +85,8 @@
       name = vlanNameMap.${toString vlanId};
       net = eg.entities.${name};
       na = net.attrs;
+      siteEntity = if net.network.site != null then eg.entities.${net.network.site} or null else null;
+      siteDomain = if siteEntity != null then siteEntity.site.domain or eg.domains.home else eg.domains.home;
     in lib.nameValuePair "31-${vlanIface vlanId}" {
       matchConfig.Name = vlanIface vlanId;
       address = [
@@ -103,7 +105,7 @@
         Managed = true;
         OtherInformation = true;
         DNS = "_link_local";
-        Domains = "${na.zoneName} ${eg.domains.home} ${eg.domains.internal}";
+        Domains = "${siteDomain} ${na.zoneName} ${eg.domains.internal}";
       };
       ipv6Prefixes = [
         { Prefix = "${eg.ipv6UlaPrefix}:${net.network.ulaSubnetHex}::/64"; }
