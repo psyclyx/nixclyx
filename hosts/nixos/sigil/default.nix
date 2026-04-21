@@ -1,5 +1,5 @@
 { lib, pkgs, nixclyx, ... }: {
-  imports = [./hardware.nix ./network.nix];
+  imports = [./hardware.nix ./network.nix ./filesystems.nix];
 
   networking.hostName = "sigil";
 
@@ -12,16 +12,10 @@
   ];
 
   psyclyx.nixos = {
-    filesystems.layouts.bcachefs-pool = {
+    filesystems.impermanence = {
       enable = true;
-      UUID = {
-        root = "ccb2b4e2-b5b7-4d85-aca8-039ca1ccc985";
-        boot = "71AE-12DD";
-      };
-      wants = [
-        "/dev/disk/by-id/nvme-eui.0025384c41416f3c"
-        "/dev/disk/by-id/nvme-eui.ace42e00457c0fbf2ee4ac0000000001"
-      ];
+      device = "UUID=055d9737-c13b-4262-abe6-2ebcb8681307";
+      prune = false;
     };
 
     programs = {
@@ -59,6 +53,23 @@
     system = {
       emulation.enable = true;
       swap.swappiness = 5;
+    };
+  };
+
+  users.users.psyc.hashedPasswordFile = "/persist/etc/shadow.psyc";
+
+  preservation = {
+    enable = true;
+    preserveAt."/persist" = {
+      directories = [
+        "/var/lib/nixos"
+        "/var/lib/systemd"
+      ];
+      files = [
+        {file = "/etc/machine-id"; inInitrd = true;}
+        "/etc/ssh/ssh_host_ed25519_key"
+        "/etc/ssh/ssh_host_ed25519_key.pub"
+      ];
     };
   };
 

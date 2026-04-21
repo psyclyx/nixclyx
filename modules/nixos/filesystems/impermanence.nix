@@ -15,6 +15,12 @@
       description = "Path within bcachefs to the root subvolume group (containing @blank and @live)";
     };
 
+    prune = lib.mkOption {
+      type = lib.types.bool;
+      default = true;
+      description = "Whether to prune old root snapshots according to the retention policy.";
+    };
+
     retention = retentionOptions {monthly = 3;};
   };
 
@@ -55,11 +61,11 @@
           mv "$root/@live" "$root/@$timestamp"
         fi
 
-        ${pruneScript {
+        ${lib.optionalString cfg.prune (pruneScript {
           dir = "$root";
           glob = "@[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]T[0-9][0-9]:[0-9][0-9]:[0-9][0-9]";
           inherit (cfg.retention) keepLast hourly daily weekly monthly;
-        }}
+        })}
 
         bcachefs subvolume snapshot "$root/@blank" "$root/@live"
 
