@@ -134,27 +134,49 @@
     };
   };
 
-  homeZone = {
-    name = eg.domains.home;
-    value = {
-      ddns = false;
+  # Site umbrella zone — the primary DNS namespace for hosts at a site.
+  # Populated with static A records from a configured network + DDNS for dynamic clients.
+  siteZoneCfg = cfg.zones.siteZone;
+  siteZone = lib.optionalAttrs siteZoneCfg.enable (let
+    me = eg.entities.${gwName} or null;
+    mySiteName = if me != null then me.host.site or null else null;
+    mySite = if mySiteName != null then eg.entities.${mySiteName} or null else null;
+    siteDomain = if mySite != null then mySite.site.domain or null else null;
+    net = eg.entities.${siteZoneCfg.network};
+    na = net.attrs;
+
+    # All hosts at this site with an address on the configured network.
+    siteHosts = lib.filterAttrs (_: e:
+      e.type == "host" && e.host.site == mySiteName
+      && e.host.addresses ? ${siteZoneCfg.network}
+      && e.host.addresses.${siteZoneCfg.network}.ipv4 != null
+    ) eg.entities;
+
+    hostRecords = lib.concatMapStringsSep "\n" (hostname: let
+      addr = eg.entities.${hostname}.host.addresses.${siteZoneCfg.network}.ipv4;
+    in "${hostname} IN A ${addr}")
+    (lib.sort builtins.lessThan (builtins.attrNames siteHosts));
+  in lib.optionalAttrs (siteDomain != null) {
+    ${siteDomain} = {
+      ddns = true;
       data = ''
-        $ORIGIN ${eg.domains.home}.
+        $ORIGIN ${siteDomain}.
         $TTL 300
-        @    IN SOA  ns1.${eg.domains.home}. admin.${eg.domains.home}. (
+        @    IN SOA  ns1.${siteDomain}. admin.${siteDomain}. (
                      1 3600 900 604800 300 )
-        @    IN NS   ns1.${eg.domains.home}.
-        ns1  IN A    10.0.10.1
+        @    IN NS   ns1.${siteDomain}.
+        ns1  IN A    ${na.gateway4}
+        ${gwName}  IN A    ${na.gateway4}
+        ${hostRecords}
       '';
     };
-  };
+  });
 
   generatedZones = builtins.listToAttrs (
-    [homeZone]
-    ++ (map mkForwardZoneData dhcpVlans)
+    (map mkForwardZoneData dhcpVlans)
     ++ (map mkReverseZoneData dhcpVlans)
     ++ (map mkIp6ReverseZoneData dhcpVlans)
-  );
+  ) // siteZone;
 in {
   options.psyclyx.nixos.network.dns.zones = {
     enable = lib.mkEnableOption "auto-generate authoritative zones from egregore";
@@ -172,6 +194,14 @@ in {
       type = lib.types.attrsOf lib.types.anything;
       default = {};
       description = "Additional zones merged with generated ones.";
+    };
+    siteZone = {
+      enable = lib.mkEnableOption "site umbrella zone with host A records";
+      network = lib.mkOption {
+        type = lib.types.str;
+        default = "";
+        description = "Network entity whose addresses populate the site zone.";
+      };
     };
   };
 

@@ -7,6 +7,12 @@
   hub = eg.entities.${eg.overlay.hub};
   isHub = hasWg && hostName == eg.overlay.hub;
 
+  # Does this host's site have a local DNS server (refs.dns)?
+  hasLocalSiteDns = let
+    mySiteName = if me != null && me.type == "host" then me.host.site or null else null;
+    mySite = if mySiteName != null then eg.entities.${mySiteName} or null else null;
+  in mySite != null && mySite.type == "site" && mySite.refs ? dns;
+
   wgPeers = lib.filterAttrs (name: e:
     name != hostName && e.type == "host" && e.host.wireguard != null
   ) eg.entities;
@@ -98,7 +104,9 @@ in {
             wgPrefixLen = builtins.elemAt (lib.splitString "/" eg.overlay.subnet) 1;
           in ["${me.host.addresses.vpn.ipv4}/${wgPrefixLen}"];
         }
-        (lib.mkIf (!isHub) {
+        # Only set WG DNS for road warriors (no site or no local DNS server).
+        # Site hosts use the local resolver which handles cross-site forwarding.
+        (lib.mkIf (!isHub && !hasLocalSiteDns) {
           dns = [hub.host.addresses.vpn.ipv4];
           domains = ["~${eg.domains.internal}"];
         })

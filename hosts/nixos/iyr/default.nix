@@ -61,6 +61,10 @@ in {
           enable = true;
           gatewayHostname = "iyr";
           extraRecords.stage = "angelbeats IN CNAME lab-stage-vip";
+          siteZone = {
+            enable = true;
+            network = "main";
+          };
         };
         resolver = {
           enable = true;
@@ -76,11 +80,8 @@ in {
             "fe80::/10 allow"
             "::1/128 allow"
           ];
-          forwardZones = {
-            "psyclyx.net" = {
-              forward-addr = ["10.157.0.1"];
-            };
-          };
+          # Cross-site forwarding auto-derived from egregore site refs.dns
+          # by topology/dns-forwarding.nix.
         };
       };
 
