@@ -1,20 +1,20 @@
-{
-  config,
-  lib,
-  ...
-}: let
+{ config, lib, ... }:
+let
   cfg = config.psyclyx.nixos.hosts.semuta.network;
-in {
+  eg = config.psyclyx.egregore;
+  me = eg.entities.semuta;
+in
+{
   options.psyclyx.nixos.hosts.semuta.network = {
     ipv4 = lib.mkOption {
       type = lib.types.str;
-      default = "192.0.2.1";
+      default = me.host.publicIPv4;
       description = "Public IPv4 address.";
     };
-    ipv6Prefix = lib.mkOption {
+    ipv6 = lib.mkOption {
       type = lib.types.str;
-      default = "2001:db8::";
-      description = "IPv6 prefix.";
+      default = me.host.publicIPv6;
+      description = "Public IPv6 address.";
     };
   };
 
@@ -27,7 +27,7 @@ in {
 
         address = [
           "${cfg.ipv4}/32"
-          "${cfg.ipv6Prefix}1/64"
+          "${cfg.ipv6}/64"
         ];
 
         networkConfig = {
@@ -47,7 +47,10 @@ in {
           }
         ];
 
-        dns = ["185.12.64.1" "185.12.64.2"];
+        dns = [
+          "185.12.64.1"
+          "185.12.64.2"
+        ];
       };
     };
   };
