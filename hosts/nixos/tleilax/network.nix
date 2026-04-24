@@ -1,19 +1,18 @@
-{
-  config,
-  lib,
-  ...
-}: let
+{ config, lib, ... }:
+let
   cfg = config.psyclyx.nixos.hosts.tleilax.network;
-in {
+  eg = config.psyclyx.egregore;
+  me = eg.entities.tleilax;
+in
+{
   options.psyclyx.nixos.hosts.tleilax.network = {
     ipv4 = lib.mkOption {
       type = lib.types.str;
-      default = "192.0.2.1"; # TEST-NET-1 placeholder
+      default = me.host.publicIPv4;
       description = "Public IPv4 address.";
     };
     ipv6 = lib.mkOption {
       type = lib.types.str;
-      default = "2001:db8::"; # Documentation prefix placeholder
       description = "IPv6 prefix (e.g., '2606:7940:32:26::').";
     };
   };
@@ -71,7 +70,10 @@ in {
             }
           ];
 
-          dns = ["127.0.0.1" "::1"];
+          dns = [
+            "127.0.0.1"
+            "::1"
+          ];
         };
       };
     };
