@@ -1,65 +1,110 @@
-# bcachefs subvolume layout using X-mount.subdir.
-#
-# Standard ephemeral-root pattern: root/@blank + root/@live snapshots,
-# persistent /nix, /persist, /var/log, /home/*, /boot.
 {
-  path = ["psyclyx" "nixos" "filesystems" "layouts" "bcachefs-subvols"];
-  description = "bcachefs subvolume layout (partlabel-based)";
-  options = { lib, ... }: let
-    subvolType = lib.types.submodule {
-      options = {
-        subdir = lib.mkOption {
-          type = lib.types.str;
-          description = "Path within bcachefs (X-mount.subdir value).";
+  path = [
+    "psyclyx"
+    "nixos"
+    "filesystems"
+    "layouts"
+    "bcachefs-subvols"
+  ];
+  description = "bcachefs subvolume layout";
+  options =
+    { lib, ... }:
+    let
+      subvolType = lib.types.submodule {
+        options = {
+          subdir = lib.mkOption {
+            type = lib.types.str;
+            description = "Path within the bcachefs filesystem.";
+          };
+          neededForBoot = lib.mkOption {
+            type = lib.types.bool;
+            default = false;
+          };
         };
-        neededForBoot = lib.mkOption {
-          type = lib.types.bool;
-          default = false;
-        };
       };
-    };
-  in {
-    rootPartlabel = lib.mkOption {
-      type = lib.types.str;
-      description = "Partlabel for the bcachefs root partition.";
-      example = "nvme0-root";
-    };
-    bootPartlabel = lib.mkOption {
-      type = lib.types.str;
-      description = "Partlabel for the EFI boot partition.";
-      example = "nvme0-boot";
-    };
-    swapPartlabel = lib.mkOption {
-      type = lib.types.nullOr lib.types.str;
-      default = null;
-      description = "Partlabel for swap partition (null to disable).";
-    };
-    subvolumes = lib.mkOption {
-      type = lib.types.attrsOf subvolType;
-      description = "Mount point → subvolume mapping.";
-      example = {
-        "/" = { subdir = "subvolumes/root/@live"; };
-        "/nix" = { subdir = "subvolumes/nix/@live"; neededForBoot = true; };
+    in
+    {
+      device = lib.mkOption {
+        type = lib.types.str;
+        description = "Root bcachefs device (fstab syntax: UUID=..., PARTLABEL=..., etc.).";
+        example = "UUID=0b6d93c8-c6d3-4243-9413-25543a093c65";
       };
-    };
-  };
-  config = { cfg, lib, ... }: let
-    rootDevice = "/dev/disk/by-partlabel/${cfg.rootPartlabel}";
-  in {
-    fileSystems = lib.mapAttrs (_mountpoint: vol: {
-      device = rootDevice;
-      fsType = "bcachefs";
-      options = ["X-mount.subdir=${vol.subdir}"];
-      inherit (vol) neededForBoot;
-    }) cfg.subvolumes // {
-      "/boot" = {
-        device = "/dev/disk/by-partlabel/${cfg.bootPartlabel}";
-        fsType = "vfat";
-        options = ["umask=0077"];
+      bootDevice = lib.mkOption {
+        type = lib.types.str;
+        description = "EFI boot partition device (fstab syntax).";
+        example = "PARTLABEL=nvme0-boot";
       };
-    };
 
-    swapDevices = lib.optional (cfg.swapPartlabel != null)
-      { device = "/dev/disk/by-partlabel/${cfg.swapPartlabel}"; };
-  };
+      extraDeviceWants = lib.mkOption {
+        type = lib.types.listOf lib.types.str;
+        default = [ ];
+        description = "Additional device paths for multi-device pools (x-systemd.wants=).";
+      };
+      baseMount = lib.mkOption {
+        type = lib.types.nullOr lib.types.str;
+        default = null;
+        description = ''
+          Mount point for the raw bcachefs filesystem. When set,
+          non-root subvolumes bind-mount from this path instead of
+          using separate X-mount.subdir mounts.
+        '';
+      };
+      subvolumes = lib.mkOption {
+        type = lib.types.attrsOf subvolType;
+        description = "Mount point → subvolume mapping.";
+      };
+    };
+  config =
+    { cfg, lib, ... }:
+    let
+      wantOpts = map (d: "x-systemd.wants=${d}") cfg.extraDeviceWants;
+
+      mkSubvolMount =
+        mountpoint: vol:
+        let
+          useBind = cfg.baseMount != null && mountpoint != "/";
+          base = (
+            if useBind then
+              {
+                device = "${cfg.baseMount}/${vol.subdir}";
+                fsType = "none";
+                options = [ "bind" ];
+                depends = [ cfg.baseMount ];
+              }
+            else
+              {
+                device = cfg.device;
+                fsType = "bcachefs";
+                options = wantOpts ++ [ "X-mount.subdir=${vol.subdir}" ];
+              }
+          );
+        in
+        base // lib.optionalAttrs vol.neededForBoot { inherit (vol) neededForBoot; };
+
+      baseMountEntry =
+        if cfg.baseMount != null then
+          {
+            ${cfg.baseMount} = {
+              device = cfg.device;
+              fsType = "bcachefs";
+              options = wantOpts;
+              neededForBoot = true;
+            };
+          }
+        else
+          { };
+    in
+    {
+      fileSystems =
+        lib.mapAttrs mkSubvolMount cfg.subvolumes
+        // {
+          "/boot" = {
+            device = cfg.bootDevice;
+            fsType = "vfat";
+            options = [ "umask=0077" ];
+          };
+        }
+        // baseMountEntry;
+
+    };
 }
