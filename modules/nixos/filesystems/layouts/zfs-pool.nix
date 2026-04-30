@@ -90,5 +90,11 @@
         options = ["umask=0077"];
       };
     };
+
+    # These layouts manage all boot-time ZFS mounts via explicit fileSystems
+    # entries. Leaving zfs-mount.service enabled races systemd's generated
+    # .mount units when the datasets still have non-legacy mountpoints, which
+    # can drop the host into emergency mode on boot.
+    systemd.services.zfs-mount.wantedBy = lib.mkForce [];
   };
 }
