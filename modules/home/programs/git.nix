@@ -11,6 +11,7 @@
     programs = {
       git = {
         enable = true;
+        ignores = [".codex"];
         settings.user = lib.mapAttrs (_: lib.mkDefault) {inherit (info) name email;};
         iniContent = {
           pull.rebase = true;
