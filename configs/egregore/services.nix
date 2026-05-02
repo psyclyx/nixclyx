@@ -46,6 +46,17 @@
         };
       };
 
+      light = {
+        type = "service";
+        tags = ["internal" "homelab"];
+        service = {
+          domain = "light.psyclyx.net";
+          backend.host = { address = "10.157.0.2"; port = 8080; };
+          streaming = true;
+          label = "Lights";
+        };
+      };
+
       s3 = {
         type = "service";
         tags = ["internal" "monolyx" "infra"];
