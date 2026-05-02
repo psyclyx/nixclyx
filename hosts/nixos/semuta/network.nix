@@ -8,12 +8,12 @@ in
   options.psyclyx.nixos.hosts.semuta.network = {
     ipv4 = lib.mkOption {
       type = lib.types.str;
-      default = me.host.publicIPv4;
+      default = me.attrs.addresses.public.ipv4;
       description = "Public IPv4 address.";
     };
     ipv6 = lib.mkOption {
       type = lib.types.str;
-      default = me.host.publicIPv6;
+      default = me.attrs.addresses.public.ipv6;
       description = "Public IPv6 address.";
     };
   };

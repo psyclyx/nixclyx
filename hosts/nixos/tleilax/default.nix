@@ -79,10 +79,10 @@ in
 
       dns = {
         authoritative = {
-          ns = me.host.publicIPv4;
+          ns = me.attrs.addresses.public.ipv4;
           interfaces = [
-            me.host.publicIPv4
-            me.host.publicIPv6
+            me.attrs.addresses.public.ipv4
+            me.attrs.addresses.public.ipv6
           ];
           port = 53;
           tsigKeyName = "acme-tleilax";
@@ -138,8 +138,8 @@ in
     ttl = 300;
     ddns = true;
     extraRecords = ''
-      @          IN A     ${me.host.publicIPv4}
-      @          IN AAAA  ${me.host.publicIPv6}
+      @          IN A     ${me.attrs.addresses.public.ipv4}
+      @          IN AAAA  ${me.attrs.addresses.public.ipv6}
     '';
   };
 }

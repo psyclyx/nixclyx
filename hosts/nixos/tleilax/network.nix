@@ -8,7 +8,7 @@ in
   options.psyclyx.nixos.hosts.tleilax.network = {
     ipv4 = lib.mkOption {
       type = lib.types.str;
-      default = me.host.publicIPv4;
+      default = me.attrs.addresses.public.ipv4;
       description = "Public IPv4 address.";
     };
     ipv6 = lib.mkOption {

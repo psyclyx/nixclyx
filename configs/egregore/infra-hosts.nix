@@ -21,8 +21,6 @@
               ipv6 = "2606:7940:32:26::10";
             };
           };
-          publicIPv4 = "199.255.18.171";
-          publicIPv6 = "2606:7940:32:26::10";
           dnsAuthority = ["psyclyx.net" "stage.psyclyx.net" "prod.psyclyx.net" "psyclyx.xyz"];
           publicAcme = true;
           sshPort = 17891;
@@ -134,8 +132,6 @@
               ipv6 = "2a01:4ff:1f0:1a53::1";
             };
           };
-          publicIPv4 = "5.78.144.186";
-          publicIPv6 = "2a01:4ff:1f0:1a53::1";
           publicAcme = true;
           deployAddress = "5.78.144.186";
           roles = ["server"];

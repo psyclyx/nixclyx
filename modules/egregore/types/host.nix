@@ -114,20 +114,6 @@ egregorLib.mkType {
       default = "root";
       description = "SSH user for deployment.";
     };
-    publicIPv4 = lib.mkOption {
-      type = lib.types.nullOr lib.types.str;
-      default = null;
-      description = ''
-        Legacy. Prefer declaring `addresses.public.ipv4` directly. When
-        set, host.attrs.addresses.public is back-filled with this value
-        for consumers that read the resolved view.
-      '';
-    };
-    publicIPv6 = lib.mkOption {
-      type = lib.types.nullOr lib.types.str;
-      default = null;
-      description = "Legacy. See publicIPv4.";
-    };
     dnsAuthority = lib.mkOption {
       type = lib.types.listOf lib.types.str;
       default = [ ];
@@ -185,10 +171,9 @@ egregorLib.mkType {
       siteDomain = if siteEntity != null then siteEntity.site.domain or null else null;
 
       # Resolved addresses view — declared addresses, plus gateway-derived
-      # entries (for networks where this host is the declared gateway,
-      # either via network.refs.gateway directly or inherited from
-      # site.refs.gateway), plus a back-filled `public` entry from the
-      # legacy publicIPv4/publicIPv6 fields. Declared always wins.
+      # entries for networks where this host is the declared gateway
+      # (network.refs.gateway directly or inherited from site.refs.gateway).
+      # Declared always wins.
       networkEntities = lib.filterAttrs (_: e: e.type == "network") (top.entities or { });
 
       gatewayHostFor =
@@ -207,17 +192,9 @@ egregorLib.mkType {
         dhcp = false;
       }) (lib.filterAttrs (netName: net: gatewayHostFor netName net == name) networkEntities);
 
-      publicFromLegacy = lib.optionalAttrs (h.publicIPv4 != null || h.publicIPv6 != null) {
-        public = {
-          ipv4 = h.publicIPv4;
-          ipv6 = h.publicIPv6;
-          dhcp = false;
-        };
-      };
-
-      # Resolution order (last write wins under //): start with derived
-      # (gateway addrs, public-from-legacy), then declared overrides.
-      resolvedAddresses = gatewayDerivedAddresses // publicFromLegacy // h.addresses;
+      # Resolution order (last write wins under //): gateway-derived
+      # addresses provide the floor; declared addresses always win.
+      resolvedAddresses = gatewayDerivedAddresses // h.addresses;
 
       isServer = builtins.elem "server" (h.roles or [ ]);
 
