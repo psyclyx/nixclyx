@@ -61,7 +61,10 @@
   config = { cfg, config, lib, ... }: let
     eg = config.psyclyx.egregore;
 
-    networks = lib.filterAttrs (_: e: e.type == "network") eg.entities;
+    # VLAN-iterating logic — overlay/non-VLAN networks (vpn) are excluded.
+    networks = lib.filterAttrs
+      (_: e: e.type == "network" && e.network.vlan != null)
+      eg.entities;
     dhcpVlans = lib.sort builtins.lessThan
       (lib.mapAttrsToList (_: e: e.network.vlan) networks);
     vlanNameMap = builtins.listToAttrs (lib.mapAttrsToList (name: e:
