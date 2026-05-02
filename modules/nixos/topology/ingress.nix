@@ -55,18 +55,20 @@
   internalDomain = eg.domains.internal;
 
   # Returns { name; extraDomainNames; } describing the cert that covers
-  # `domain`. Wildcard for *.psyclyx.net and env zones; per-domain for
-  # public/external domains.
+  # `domain`. Env wildcards are checked BEFORE the internal wildcard
+  # because env zones are subdomains of the internal zone
+  # (stage.psyclyx.net under psyclyx.net) — *.psyclyx.net does not
+  # cover *.stage.psyclyx.net (wildcards are single-label).
   certFor = domain: let
     envD = lib.findFirst
       (d: d == domain || lib.hasSuffix ".${d}" domain)
       null
       envDomains;
   in
-    if internalDomain != "" && lib.hasSuffix ".${internalDomain}" domain then
-      { name = internalDomain; extraDomainNames = ["*.${internalDomain}"]; }
-    else if envD != null then
+    if envD != null then
       { name = envD; extraDomainNames = ["*.${envD}"]; }
+    else if internalDomain != "" && lib.hasSuffix ".${internalDomain}" domain then
+      { name = internalDomain; extraDomainNames = ["*.${internalDomain}"]; }
     else
       { name = domain; extraDomainNames = []; };
 
