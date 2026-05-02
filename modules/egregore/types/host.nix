@@ -23,10 +23,25 @@ egregorLib.mkType {
               type = lib.types.nullOr lib.types.str;
               default = null;
             };
+            dhcp = lib.mkOption {
+              type = lib.types.bool;
+              default = false;
+              description = ''
+                Address is assigned at runtime by DHCP. ipv4/ipv6 may be
+                null at config-eval time; consumers that need a literal
+                address must use a runtime mechanism (interface-bound
+                binds, DDNS).
+              '';
+            };
           };
         }
       );
       default = { };
+      description = ''
+        Declared host addresses. Read host.attrs.addresses for the
+        resolved view, which extends declared entries with addresses
+        derived from networks where this host is the gateway.
+      '';
     };
     interfaces = lib.mkOption {
       type = lib.types.attrsOf (
@@ -54,6 +69,14 @@ egregorLib.mkType {
             endpoint = lib.mkOption {
               type = lib.types.nullOr lib.types.str;
               default = null;
+            };
+            port = lib.mkOption {
+              type = lib.types.int;
+              default = 51820;
+              description = ''
+                UDP listen port for hubs. Spokes that don't accept
+                inbound connections can leave the default.
+              '';
             };
             exportedRoutes = lib.mkOption {
               type = lib.types.listOf lib.types.str;
@@ -94,10 +117,36 @@ egregorLib.mkType {
     publicIPv4 = lib.mkOption {
       type = lib.types.nullOr lib.types.str;
       default = null;
+      description = ''
+        Legacy. Prefer declaring `addresses.public.ipv4` directly. When
+        set, host.attrs.addresses.public is back-filled with this value
+        for consumers that read the resolved view.
+      '';
     };
     publicIPv6 = lib.mkOption {
       type = lib.types.nullOr lib.types.str;
       default = null;
+      description = "Legacy. See publicIPv4.";
+    };
+    dnsAuthority = lib.mkOption {
+      type = lib.types.listOf lib.types.str;
+      default = [ ];
+      description = ''
+        DNS zones this host can update via TSIG/DDNS. Used both for
+        serving authoritative DNS and for ACME DNS-01 challenges. The
+        ingress projection picks an issuer for a given cert by finding
+        a host with the cert's parent zone in dnsAuthority.
+      '';
+    };
+    publicAcme = lib.mkOption {
+      type = lib.types.bool;
+      default = false;
+      description = ''
+        This host accepts ACME challenges (HTTP-01 / TLS-ALPN-01) at
+        its public address for any FQDN that resolves there. Used as
+        a fallback when no host has DNS authority for the cert's zone.
+        Wildcards always require DNS-01 and ignore this.
+      '';
     };
     hardware = lib.mkOption {
       type = lib.types.submodule {
@@ -134,6 +183,41 @@ egregorLib.mkType {
       vpn = h.addresses.vpn or null;
       siteEntity = if h.site != null then top.entities.${h.site} or null else null;
       siteDomain = if siteEntity != null then siteEntity.site.domain or null else null;
+
+      # Resolved addresses view — declared addresses, plus gateway-derived
+      # entries (for networks where this host is the declared gateway,
+      # either via network.refs.gateway directly or inherited from
+      # site.refs.gateway), plus a back-filled `public` entry from the
+      # legacy publicIPv4/publicIPv6 fields. Declared always wins.
+      networkEntities = lib.filterAttrs (_: e: e.type == "network") (top.entities or { });
+
+      gatewayHostFor =
+        netName: net:
+        let
+          netGw = net.refs.gateway or null;
+          siteName = net.network.site or null;
+          site = if siteName != null then top.entities.${siteName} or null else null;
+          siteGw = if site != null then site.refs.gateway or null else null;
+        in
+        if netGw != null then netGw else siteGw;
+
+      gatewayDerivedAddresses = lib.mapAttrs (_: net: {
+        ipv4 = net.attrs.gateway4 or null;
+        ipv6 = net.attrs.gateway6 or null;
+        dhcp = false;
+      }) (lib.filterAttrs (netName: net: gatewayHostFor netName net == name) networkEntities);
+
+      publicFromLegacy = lib.optionalAttrs (h.publicIPv4 != null || h.publicIPv6 != null) {
+        public = {
+          ipv4 = h.publicIPv4;
+          ipv6 = h.publicIPv6;
+          dhcp = false;
+        };
+      };
+
+      # Resolution order (last write wins under //): start with derived
+      # (gateway addrs, public-from-legacy), then declared overrides.
+      resolvedAddresses = gatewayDerivedAddresses // publicFromLegacy // h.addresses;
 
       isServer = builtins.elem "server" (h.roles or [ ]);
 
@@ -192,6 +276,7 @@ egregorLib.mkType {
     in
     {
       address = if vpn != null then vpn.ipv4 else null;
+      addresses = resolvedAddresses;
       fqdn = if siteDomain != null then "${name}.${siteDomain}" else null;
       site = h.site;
       roles = h.roles;
