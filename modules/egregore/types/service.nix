@@ -55,6 +55,15 @@ egregorLib.mkType {
       type = lib.types.bool;
       default = false;
     };
+    streaming = lib.mkOption {
+      type = lib.types.bool;
+      default = false;
+      description = ''
+        Long-lived HTTP responses (SSE, long polling). Disables
+        compression for the backend and bumps `timeout server` so idle
+        streams aren't killed.
+      '';
+    };
     label = lib.mkOption {
       type = lib.types.nullOr lib.types.str;
       default = null;
@@ -120,6 +129,7 @@ egregorLib.mkType {
     label = if s.label != null then s.label else name;
     protocol = s.protocol;
     websockets = s.websockets;
+    streaming = s.streaming;
   };
 
   assertions = name: entity: top: let

@@ -65,6 +65,10 @@
     s = entity.service;
     opts = lib.concatStringsSep "\n" (
       lib.optional s.websockets "    option http-server-close"
+      ++ lib.optionals s.streaming [
+        "    timeout server 1h"
+        "    compression algo identity"
+      ]
       ++ lib.optionals (s.check != null) [
         "    option httpchk"
         "    http-check send meth GET uri ${s.check} ver HTTP/1.1 hdr Host localhost"
@@ -134,9 +138,11 @@
       log global
       option dontlognull
       timeout connect 5s
-      timeout client 50s
-      timeout server 50s
+      timeout client 1h
+      timeout server 1m
       retries 3
+      compression algo gzip
+      compression type text/html text/plain text/css text/javascript application/javascript application/json application/xml application/xhtml+xml image/svg+xml
   '' + mkFrontend "public" publicAddr publicHttp
      + mkFrontend "internal" vpnAddr internalHttp
      + backends;
