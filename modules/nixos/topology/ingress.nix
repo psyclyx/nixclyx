@@ -266,16 +266,15 @@ in {
       security.acme = lib.mkIf (locallyIssuedCerts != {}) {
         acceptTerms = true;
         defaults.email = config.psyclyx.nixos.services.nginx.acme.email;
+        certs = lib.mapAttrs (_: c: {
+          domain = c.name;
+          extraDomainNames = c.extraDomainNames;
+          dnsProvider = "rfc2136";
+          credentialFiles = mkDns01Credentials;
+          group = "acme";
+          reloadServices = ["haproxy.service"];
+        }) locallyIssuedCerts;
       };
-
-      security.acme.certs = lib.mapAttrs (_: c: {
-        domain = c.name;
-        extraDomainNames = c.extraDomainNames;
-        dnsProvider = "rfc2136";
-        credentialFiles = mkDns01Credentials;
-        group = "acme";
-        reloadServices = ["haproxy.service"];
-      }) locallyIssuedCerts;
 
       psyclyx.nixos.network.ports.haproxy-ingress = {
         tcp = [80 443];
