@@ -16,7 +16,8 @@ let
     _: e: e.type == "host" && e.attrs.resolvedExporters != { }
   ) eg.entities;
 
-  spokeHosts = lib.filterAttrs (name: _: name != eg.overlay.hub) monitoredHosts;
+  hubName = eg.entities.vpn.attrs.gatewayRef;
+  spokeHosts = lib.filterAttrs (name: _: name != hubName) monitoredHosts;
 
   collectTargets =
     hosts:
@@ -41,10 +42,10 @@ let
     static_configs = [ { targets = map (t: t.target) targets; } ];
   }) extraServices;
 
-  hubVpnAddress = monitoredHosts.${eg.overlay.hub}.host.addresses.vpn.ipv4;
+  hubVpnAddress = monitoredHosts.${hubName}.host.addresses.vpn.ipv4;
 
   hubExporters = lib.filterAttrs (name: _: name != "node") (
-    monitoredHosts.${eg.overlay.hub}.attrs.resolvedExporters or { }
+    monitoredHosts.${hubName}.attrs.resolvedExporters or { }
   );
 
   hubExtraScrapeConfigs = lib.mapAttrsToList (svcName: svc: {

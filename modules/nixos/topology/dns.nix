@@ -5,15 +5,18 @@
 {config, lib, ...}: let
   eg = config.psyclyx.egregore;
   hostName = config.networking.hostName;
-  isHub = hostName == eg.overlay.hub;
+
+  vpnNet = eg.entities.vpn;
+  hubName = vpnNet.attrs.gatewayRef;
+  isHub = hostName == hubName;
 
   wgHosts = lib.filterAttrs (_: e:
     e.type == "host" && e.host.wireguard != null
   ) eg.entities;
 
-  vpnZoneName = "vpn.${eg.domains.internal}";
+  vpnZoneName = vpnNet.attrs.zoneName;
 
-  hubVpnIp = eg.entities.${eg.overlay.hub}.host.addresses.vpn.ipv4;
+  hubVpnIp = eg.entities.${hubName}.host.addresses.vpn.ipv4;
 
   hostRecords = lib.concatMapStringsSep "\n" (name: let
     addr = eg.entities.${name}.host.addresses.vpn.ipv4;

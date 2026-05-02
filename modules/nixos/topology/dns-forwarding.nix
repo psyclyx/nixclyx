@@ -30,12 +30,14 @@
   }) (lib.filterAttrs (_: site: site.refs.dns != hostName) dnsSites);
 
   # Forward overlay zones to the hub (unless we are the hub).
-  # - vpn.psyclyx.net: VPN peer records
-  # - psyclyx.net: service records served by the ingress hub
-  isHub = hostName == eg.overlay.hub;
-  hubVpnIp = eg.entities.${eg.overlay.hub}.host.addresses.vpn.ipv4;
+  # - vpn.<internal>: VPN peer records
+  # - <internal>: service records served by the ingress hub
+  vpnNet = eg.entities.vpn;
+  hubName = vpnNet.attrs.gatewayRef;
+  isHub = hostName == hubName;
+  hubVpnIp = eg.entities.${hubName}.host.addresses.vpn.ipv4;
   hubForwards = lib.optionalAttrs (!isHub) {
-    "vpn.${eg.domains.internal}" = { forward-addr = [hubVpnIp]; };
+    ${vpnNet.attrs.zoneName} = { forward-addr = [hubVpnIp]; };
     ${eg.domains.internal} = { forward-addr = [hubVpnIp]; };
   };
 in {

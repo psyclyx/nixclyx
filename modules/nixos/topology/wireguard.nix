@@ -4,8 +4,13 @@
   me = eg.entities.${hostName} or null;
   hasWg = me != null && me.type == "host" && me.host.wireguard != null;
 
-  hub = eg.entities.${eg.overlay.hub};
-  isHub = hasWg && hostName == eg.overlay.hub;
+  # Overlay topology comes from the vpn network entity + its hub host.
+  vpnNet = eg.entities.vpn;
+  vpnSubnet = vpnNet.network.ipv4;
+  hubName = vpnNet.attrs.gatewayRef;
+  hub = eg.entities.${hubName};
+  hubPort = hub.host.wireguard.port;
+  isHub = hasWg && hostName == hubName;
 
   # Does this host's site have a local DNS server (refs.dns)?
   hasLocalSiteDns = let
@@ -24,15 +29,15 @@
   resolvedAllowedIPs =
     if me.host.wireguard.allowedNetworks != null
     then
-      [eg.overlay.subnet]
+      [vpnSubnet]
       ++ map (name: eg.entities.${name}.network.ipv4) me.host.wireguard.allowedNetworks
     else
-      [eg.overlay.subnet] ++ allPeerExportedRoutes;
+      [vpnSubnet] ++ allPeerExportedRoutes;
 
   hubEndpoint =
     if hub.host.wireguard.endpoint != null
     then hub.host.wireguard.endpoint
-    else "vpn.${eg.domains.public}:${toString eg.overlay.port}";
+    else "vpn.${eg.domains.public}:${toString hubPort}";
 
   privateKeyPath = "/etc/secrets/wireguard/private.key";
 in {
@@ -44,7 +49,7 @@ in {
 
   config = lib.mkIf hasWg {
     psyclyx.nixos.wireguard.autoGenerateKeys = lib.mkDefault [privateKeyPath];
-    psyclyx.nixos.network.ports.wireguard = {udp = [eg.overlay.port];};
+    psyclyx.nixos.network.ports.wireguard = {udp = [hubPort];};
 
     systemd.services.wireguard-keygen = {
       description = "Auto-generate WireGuard private keys";
@@ -77,7 +82,7 @@ in {
 
         wireguardConfig = lib.mkMerge [
           {PrivateKeyFile = privateKeyPath;}
-          (lib.mkIf isHub {ListenPort = eg.overlay.port;})
+          (lib.mkIf isHub {ListenPort = hubPort;})
         ];
 
         wireguardPeers =
@@ -101,7 +106,7 @@ in {
         {
           matchConfig.Name = "wg0";
           address = let
-            wgPrefixLen = builtins.elemAt (lib.splitString "/" eg.overlay.subnet) 1;
+            wgPrefixLen = toString vpnNet.attrs.prefixLen;
           in ["${me.host.addresses.vpn.ipv4}/${wgPrefixLen}"];
         }
         # Only set WG DNS for road warriors (no site or no local DNS server).
