@@ -6,14 +6,17 @@
 {config, lib, ...}: let
   eg = config.psyclyx.egregore;
 
+  # VLAN-keyed maps only cover networks with an actual VLAN ID; overlay
+  # networks (vlan = null) are skipped here and handled as plain L3.
   networks = lib.filterAttrs (_: e: e.type == "network") eg.entities;
+  vlanNetworks = lib.filterAttrs (_: e: e.network.vlan != null) networks;
 
   dhcpVlans = lib.sort builtins.lessThan
-    (lib.mapAttrsToList (_: e: e.network.vlan) networks);
+    (lib.mapAttrsToList (_: e: e.network.vlan) vlanNetworks);
 
   vlanNameMap = builtins.listToAttrs (lib.mapAttrsToList (name: e:
     lib.nameValuePair (toString e.network.vlan) name
-  ) networks);
+  ) vlanNetworks);
 
   # Hosts with MAC + interface on a network.
   managedHostsOnNetwork = network:

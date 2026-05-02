@@ -2,7 +2,10 @@
 let
   eg = config.psyclyx.egregore;
 
-  networkEntities = lib.filterAttrs (_: e: e.type == "network") eg.entities;
+  # VLAN-keyed iteration — overlay/non-VLAN networks (vpn) are excluded.
+  networkEntities = lib.filterAttrs
+    (_: e: e.type == "network" && e.network.vlan != null)
+    eg.entities;
   sortedNets = lib.sort (a: b: a.network.vlan < b.network.vlan) (lib.attrValues networkEntities);
 
   dhcpVlans = lib.sort builtins.lessThan (lib.mapAttrsToList (_: e: e.network.vlan) networkEntities);
