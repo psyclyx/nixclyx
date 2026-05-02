@@ -75,12 +75,11 @@ egregorLib.mkType {
       description = "Health check path (HTTP services only).";
     };
     audiences = lib.mkOption {
-      type = lib.types.nullOr (lib.types.listOf lib.types.str);
-      default = null;
+      type = lib.types.listOf lib.types.str;
       description = ''
         Reachability contexts (named in globals.audiences) where this
-        service can be reached. Becomes required once the fleet's
-        services are fully migrated; null is a transitional default.
+        service is reachable. Required — every service must enumerate
+        the audiences it participates in.
       '';
     };
     ingress = lib.mkOption {
@@ -141,15 +140,15 @@ egregorLib.mkType {
 
     # Resolve audience → ingress host. Per-service ingress override wins,
     # otherwise fall back to the audience's defaultIngress.
-    audiences = top.audiences or {};
+    audienceDefs = top.audiences or {};
     effectiveIngress = builtins.listToAttrs (map (a: let
       override = s.ingress.${a} or null;
-      audience = audiences.${a} or null;
+      audience = audienceDefs.${a} or null;
       host =
         if override != null then override
         else if audience != null then audience.defaultIngress
         else null;
-    in lib.nameValuePair a host) (s.audiences or []));
+    in lib.nameValuePair a host) s.audiences);
   in {
     inherit resolvedDomain backendType resolvedAddress resolvedPort;
     inherit effectiveIngress;
@@ -177,10 +176,9 @@ egregorLib.mkType {
       then s.backend.ha.${haGroupName}
       else null;
     knownAudiences = builtins.attrNames (top.audiences or {});
-    declaredAudiences = if s.audiences != null then s.audiences else [];
-    unknownAudiences = builtins.filter (a: !(builtins.elem a knownAudiences)) declaredAudiences;
+    unknownAudiences = builtins.filter (a: !(builtins.elem a knownAudiences)) s.audiences;
     overrideKeys = builtins.attrNames s.ingress;
-    extraIngressKeys = builtins.filter (k: !(builtins.elem k declaredAudiences)) overrideKeys;
+    extraIngressKeys = builtins.filter (k: !(builtins.elem k s.audiences)) overrideKeys;
     invalidIngressHosts = lib.filter
       (h: !(top.entities ? ${h} && top.entities.${h}.type == "host"))
       (builtins.attrValues s.ingress);
@@ -214,14 +212,14 @@ egregorLib.mkType {
     assertion = top.entities.${haGroupName}.ha-group.services ? ${haSvcName};
     message = "service '${name}': ha-group '${haGroupName}' has no service '${haSvcName}'";
   }
-  ++ lib.optional (s.audiences != null) {
-    assertion = unknownAudiences == [];
-    message = "service '${name}': unknown audiences ${builtins.toJSON unknownAudiences} (known: ${builtins.toJSON knownAudiences})";
-  }
   ++ [
     {
+      assertion = unknownAudiences == [];
+      message = "service '${name}': unknown audiences ${builtins.toJSON unknownAudiences} (known: ${builtins.toJSON knownAudiences})";
+    }
+    {
       assertion = extraIngressKeys == [];
-      message = "service '${name}': ingress override keys ${builtins.toJSON extraIngressKeys} not in declared audiences ${builtins.toJSON declaredAudiences}";
+      message = "service '${name}': ingress override keys ${builtins.toJSON extraIngressKeys} not in declared audiences ${builtins.toJSON s.audiences}";
     }
     {
       assertion = invalidIngressHosts == [];

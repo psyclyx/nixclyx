@@ -1,12 +1,13 @@
 # Services — named, reachable endpoints.
 #
-# Each service gets a domain name (explicit or derived from environment),
-# a backend (HA group VIP, remote host, or localhost on ingress), and
-# a protocol (http or tcp).
+# Each service declares its domain (explicit or environment-derived), a
+# backend (HA group VIP, remote host, or localhost on the ingress host),
+# a protocol, and the audiences it's reachable in. The ingress projection
+# composes everything else (HAProxy frontends, certs, DNS records) from
+# this data plus the audience definitions and host capabilities.
 #
-# The ingress projection module reads these to generate haproxy config,
-# DNS records, and ACME certs. The psyclyx-link package reads these to
-# generate the links page.
+# Multi-audience services (e.g. light) are reachable directly in each
+# audience — no hairpin through a single global ingress host.
 {
   gate = "always";
   config = {
@@ -20,6 +21,7 @@
         service = {
           domain = "docs.psyclyx.xyz";
           backend.local.port = 8084;
+          audiences = ["public"];
           label = "Documentation";
         };
       };
@@ -32,6 +34,7 @@
         service = {
           domain = "metrics.psyclyx.net";
           backend.local.port = 2134;
+          audiences = ["vpn"];
           label = "Metrics";
         };
       };
@@ -42,6 +45,7 @@
         service = {
           domain = "torrent.psyclyx.net";
           backend.host = { address = "172.16.0.2"; port = 8080; };
+          audiences = ["vpn"];
           label = "Torrents";
         };
       };
@@ -53,6 +57,10 @@
           domain = "light.psyclyx.net";
           backend.host = { address = "10.157.0.2"; port = 8080; };
           streaming = true;
+          audiences = ["apt" "vpn"];
+          # apt's defaultIngress is iyr already; override vpn to iyr too
+          # so road warriors hit iyr directly instead of hairpinning.
+          ingress = { vpn = "iyr"; };
           label = "Lights";
         };
       };
@@ -63,6 +71,7 @@
         service = {
           domain = "s3.psyclyx.net";
           backend.ha.lab = "s3";
+          audiences = ["vpn"];
           check = "/status";
           label = "S3";
         };
@@ -74,6 +83,7 @@
         service = {
           domain = "webdav.psyclyx.net";
           backend.ha.lab = "webdav";
+          audiences = ["vpn"];
           label = "WebDAV";
         };
       };
@@ -84,6 +94,7 @@
         service = {
           domain = "openbao.psyclyx.net";
           backend.ha.lab = "openbao";
+          audiences = ["vpn"];
           check = "/v1/sys/health?standbyok=true";
           label = "OpenBao";
         };
@@ -98,6 +109,7 @@
           domain = "postgresql.psyclyx.net";
           protocol = "tcp";
           backend.ha.lab = "postgresql";
+          audiences = ["vpn"];
           label = "PostgreSQL";
         };
       };
@@ -109,6 +121,7 @@
           domain = "redis.psyclyx.net";
           protocol = "tcp";
           backend.ha.lab = "redis";
+          audiences = ["vpn"];
           label = "Redis";
         };
       };
@@ -126,6 +139,7 @@
           # from the VIP leak out bond0.25 instead of bond0.31. Follow-up
           # fix belongs in nixclyx topology; for now point directly.
           backend.host = { address = "10.0.31.12"; port = 80; };
+          audiences = ["public"];
           websockets = true;
           label = "Angelbeats";
         };
@@ -139,6 +153,7 @@
         service = {
           domain = "llm.psyclyx.xyz";
           backend.local.port = 8085;
+          audiences = ["public"];
           websockets = true;
           label = "LLM Chat";
         };
@@ -155,6 +170,7 @@
         service = {
           domain = "psyclyx.link";
           backend.local.port = 8082;
+          audiences = ["public"];
           label = "Links";
         };
       };

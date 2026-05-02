@@ -11,11 +11,20 @@
           wireguard = {
             publicKey = "Hsytr+mjAfsBPoC99XHKLh9+jEbyz1REF0okmlviUVc=";
             endpoint  = "vpn.psyclyx.xyz:51820";
+            port = 51820;
             allowedNetworks = ["main"];
           };
-          addresses.vpn.ipv4 = "10.157.0.1";
+          addresses = {
+            vpn.ipv4 = "10.157.0.1";
+            public = {
+              ipv4 = "199.255.18.171";
+              ipv6 = "2606:7940:32:26::10";
+            };
+          };
           publicIPv4 = "199.255.18.171";
           publicIPv6 = "2606:7940:32:26::10";
+          dnsAuthority = ["psyclyx.net" "stage.psyclyx.net" "prod.psyclyx.net" "psyclyx.xyz"];
+          publicAcme = true;
           sshPort = 17891;
           deployAddress = "tleilax.psyclyx.net";
           roles = ["server" "vpn-hub"];
@@ -118,9 +127,16 @@
             publicKey = "co3+vTgO4y2IPzQOH9cNLl0fjFDrkzsukUNL9gR75TI=";
             allowedNetworks = ["main"];
           };
-          addresses.vpn.ipv4 = "10.157.0.7";
+          addresses = {
+            vpn.ipv4 = "10.157.0.7";
+            public = {
+              ipv4 = "5.78.144.186";
+              ipv6 = "2a01:4ff:1f0:1a53::1";
+            };
+          };
           publicIPv4 = "5.78.144.186";
           publicIPv6 = "2a01:4ff:1f0:1a53::1";
+          publicAcme = true;
           deployAddress = "5.78.144.186";
           roles = ["server"];
           exporters = {

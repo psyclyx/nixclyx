@@ -6,7 +6,10 @@
       apt = {
         type = "site";
         tags = ["apartment"];
-        refs.dns = "iyr";
+        refs = {
+          dns = "iyr";
+          gateway = "iyr";
+        };
         site = {
           location = "Seattle, WA — apartment";
           domain = "apt.psyclyx.net";
