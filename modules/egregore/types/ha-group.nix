@@ -45,16 +45,16 @@ egregorLib.mkType {
         lib.types.submodule {
           options = {
             port = lib.mkOption {
-              type = lib.types.int;
-              default = 0;
+              type = lib.types.nullOr lib.types.int;
+              default = null;
             };
             backendPort = lib.mkOption {
               type = lib.types.nullOr lib.types.int;
               default = null;
             };
             mode = lib.mkOption {
-              type = lib.types.str;
-              default = "http";
+              type = lib.types.nullOr lib.types.str;
+              default = null;
             };
             check = lib.mkOption {
               type = lib.types.nullOr lib.types.str;
@@ -105,7 +105,23 @@ egregorLib.mkType {
           mode = "http";
         };
       };
-      resolvedServices = lib.mapAttrs (name: svc: (defaultServiceMeta.${name} or { }) // svc) ha.services;
+      resolvedServices = lib.mapAttrs (
+        name: svc:
+        let
+          meta = defaultServiceMeta.${name} or { };
+          pick =
+            field: fallback:
+            if svc.${field} != null then svc.${field} else meta.${field} or fallback;
+        in
+        {
+          port = pick "port" null;
+          backendPort = pick "backendPort" null;
+          mode = pick "mode" "http";
+          check = pick "check" null;
+          checkPort = pick "checkPort" null;
+          checkSsl = svc.checkSsl;
+        }
+      ) ha.services;
     in
     {
       vip = ha.vip.ipv4;
