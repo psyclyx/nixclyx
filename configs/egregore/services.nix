@@ -46,17 +46,6 @@
         };
       };
 
-      home-assistant = {
-        type = "service";
-        tags = ["internal" "homelab"];
-        service = {
-          domain = "ha.psyclyx.net";
-          backend.host = { address = "10.0.110.100"; port = 8123; };
-          websockets = true;
-          label = "Home Assistant";
-        };
-      };
-
       torrent = {
         type = "service";
         tags = ["internal" "homelab"];
