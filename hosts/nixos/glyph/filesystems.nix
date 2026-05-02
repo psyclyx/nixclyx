@@ -4,7 +4,6 @@
     enable = true;
     device = "PARTLABEL=nvme0-root";
     bootDevice = "PARTLABEL=nvme0-boot";
-    baseMount = "/.fs";
     subvolumes = {
       "/" = {
         subdir = "subvolumes/root/@live";

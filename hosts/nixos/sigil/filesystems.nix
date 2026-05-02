@@ -10,7 +10,6 @@
       "/dev/disk/by-id/ata-WDC_WDS500G2B0A-00SM50_194894802985"
       "/dev/disk/by-id/ata-ST4000NM0035-1V4107_ZC12M6AQ"
     ];
-    baseMount = "/.fs";
     subvolumes = {
       "/" = {
         subdir = "subvolumes/root/@live";

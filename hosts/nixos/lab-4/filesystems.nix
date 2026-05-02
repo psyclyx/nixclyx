@@ -8,9 +8,14 @@
     bootDevice = "UUID=CF86-D5FF";
     extraDeviceWants = [
       "/dev/disk/by-partlabel/lab4-ssd"
+      "/dev/disk/by-partlabel/lab4-ssd-2"
+      "/dev/disk/by-partlabel/lab4-ssd-3"
       "/dev/disk/by-partlabel/lab4-hdd"
+      "/dev/disk/by-partlabel/lab4-hdd-2"
+      "/dev/disk/by-partlabel/lab4-hdd-3"
+      "/dev/disk/by-partlabel/lab4-hdd-4"
+      "/dev/disk/by-partlabel/lab4-hdd-5"
     ];
-    baseMount = "/.fs";
     subvolumes = {
       "/" = {
         subdir = "subvolumes/root/@live";
