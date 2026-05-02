@@ -210,6 +210,11 @@
       configFile = pkgs.writeText "openbao-seal-oracle.json" (builtins.toJSON configData);
       runtimeConfig = "/run/openbao-seal/config.json";
       jq = "${pkgs.jq}/bin/jq";
+
+      autounsealPolicy = pkgs.writeText "openbao-autounseal-policy.hcl" ''
+        path "transit/encrypt/autounseal" { capabilities = ["update"] }
+        path "transit/decrypt/autounseal" { capabilities = ["update"] }
+      '';
     in
     {
       assertions = [
@@ -327,14 +332,11 @@
               bao write -f transit/keys/autounseal
             fi
 
-            bao policy write autounseal - <<'POLICY'
-            path "transit/encrypt/autounseal" { capabilities = ["update"] }
-            path "transit/decrypt/autounseal" { capabilities = ["update"] }
-            POLICY
+            bao policy write autounseal ${autounsealPolicy}
 
             ${pkiScript}
 
-          ${cfg.configure}
+            ${cfg.configure}
 
             echo "Seal oracle configuration converged"
         '';
