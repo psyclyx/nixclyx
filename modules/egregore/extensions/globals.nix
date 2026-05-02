@@ -41,17 +41,5 @@
       default = "";
       description = "IPv6 ULA prefix (e.g. fd9a:e830:4b1e).";
     };
-
-    overlay = lib.mkOption {
-      description = "VPN overlay network configuration.";
-      type = lib.types.submodule {
-        options = {
-          subnet = lib.mkOption { type = lib.types.str; default = ""; };
-          port = lib.mkOption { type = lib.types.int; default = 51820; };
-          hub = lib.mkOption { type = lib.types.str; default = ""; };
-        };
-      };
-      default = {};
-    };
   };
 }

@@ -17,11 +17,5 @@
     };
 
     ipv6UlaPrefix = "fd9a:e830:4b1e";
-
-    overlay = {
-      subnet = "10.157.0.0/24";
-      port   = 51820;
-      hub    = "tleilax";
-    };
   };
 }

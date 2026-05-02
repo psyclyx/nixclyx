@@ -55,7 +55,9 @@
         tags = ["internal" "homelab"];
         service = {
           domain = "light.psyclyx.net";
-          backend.host = { address = "10.157.0.2"; port = 8080; };
+          # psyclight runs on iyr bound to localhost; HAProxy on iyr
+          # terminates TLS for both apt-LAN and VPN clients.
+          backend.local.port = 8080;
           streaming = true;
           audiences = ["apt" "vpn"];
           # apt's defaultIngress is iyr already; override vpn to iyr too

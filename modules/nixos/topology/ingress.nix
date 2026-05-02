@@ -1,48 +1,90 @@
-# Ingress projection — generates haproxy, ACME, and DNS config from
-# service entities on the overlay hub (ingress host).
+# Ingress projection — audience-driven.
 #
-# HAProxy terminates TLS and routes by Host header to backends.
-# Nginx (localhost-only) serves static files as just another backend.
-# TCP services get DNS records only (no haproxy frontend).
+# For every (service, audience) pair, the projection determines who runs
+# ingress (service.attrs.effectiveIngress) and emits, on that host:
+#
+#   - one HAProxy backend per service (shared across audiences)
+#   - one HAProxy frontend per audience, bound on this host's address
+#     for that audience's network
+#   - ACME cert config when this host can issue locally (its
+#     dnsAuthority covers the cert's zone). Hosts that need a cert they
+#     can't issue locally fetch it via the cert distribution module.
+#   - resolver localZones records on the resolver host for non-public
+#     audiences (audience.address resolves to a network entity whose
+#     refs.dns names the resolver).
+#   - authoritative zone A/AAAA records for the public audience, on
+#     hosts with dnsAuthority for the matching zone.
+#
+# DNS resolution targets the *ingress host*'s address on the audience's
+# network — so road warriors hitting tleilax's resolver for
+# light.psyclyx.net get back iyr's vpn IP, not tleilax's, and there's
+# no hairpin.
 { config, lib, pkgs, ... }: let
   eg = config.psyclyx.egregore;
   hostname = config.psyclyx.nixos.host;
   me = eg.entities.${hostname};
 
-  isIngress = hostname == eg.overlay.hub;
-
   services = lib.filterAttrs (_: e: e.type == "service") eg.entities;
   httpServices = lib.filterAttrs (_: e: e.service.protocol == "http") services;
   tcpServices = lib.filterAttrs (_: e: e.service.protocol == "tcp") services;
 
-  # Domain tier classification — determines listen address, ACME strategy, DNS zone.
-  # Environment domains are checked before internal because they're subdomains
-  # of the internal domain (e.g. stage.psyclyx.net under psyclyx.net).
-  envDomains = lib.mapAttrsToList (_: e: e.environment.domain)
-    (lib.filterAttrs (_: e: e.type == "environment" && e.environment.domain != null) eg.entities);
+  audiences = eg.audiences;
+  envEntities = lib.filterAttrs
+    (_: e: e.type == "environment" && e.environment.domain != null)
+    eg.entities;
+  envDomains = lib.mapAttrsToList (_: e: e.environment.domain) envEntities;
 
-  domainTier = domain:
-    if lib.hasSuffix ".${eg.domains.public}" domain
-    then "public"
-    else if builtins.any (d: lib.hasSuffix ".${d}" domain || domain == d) envDomains
-    then "environment"
-    else if lib.hasSuffix ".${eg.domains.internal}" domain
-    then "internal"
-    # Domains not matching any tier (e.g. psyclyx.link) are public.
-    else "public";
+  # --- Tuple expansion ---
 
-  tierOf = name: domainTier (services.${name}).attrs.resolvedDomain;
+  mkTuples = svcs: lib.concatLists (lib.mapAttrsToList (svcName: e:
+    lib.mapAttrsToList (audName: ingHost: {
+      inherit svcName audName ingHost;
+      svc = e;
+      audAddress = audiences.${audName}.address;
+    }) e.attrs.effectiveIngress
+  ) svcs);
 
-  # Partition HTTP services by which haproxy frontend they belong to.
-  publicHttp = lib.filterAttrs (n: _: tierOf n == "public" || tierOf n == "environment") httpServices;
-  internalHttp = lib.filterAttrs (n: _: tierOf n == "internal") httpServices;
+  httpTuples = mkTuples httpServices;
+  tcpTuples = mkTuples tcpServices;
 
-  publicAddr = me.host.publicIPv4;
-  vpnAddr = me.host.addresses.vpn.ipv4;
+  myIngressTuples = lib.filter (t: t.ingHost == hostname) httpTuples;
+  myTuplesByAudience = builtins.groupBy (t: t.audName) myIngressTuples;
+
+  # --- Cert resolution ---
+
+  internalDomain = eg.domains.internal;
+
+  # Returns { name; extraDomainNames; } describing the cert that covers
+  # `domain`. Wildcard for *.psyclyx.net and env zones; per-domain for
+  # public/external domains.
+  certFor = domain: let
+    envD = lib.findFirst
+      (d: d == domain || lib.hasSuffix ".${d}" domain)
+      null
+      envDomains;
+  in
+    if internalDomain != "" && lib.hasSuffix ".${internalDomain}" domain then
+      { name = internalDomain; extraDomainNames = ["*.${internalDomain}"]; }
+    else if envD != null then
+      { name = envD; extraDomainNames = ["*.${envD}"]; }
+    else
+      { name = domain; extraDomainNames = []; };
+
+  # A host can issue an ACME cert for `domain` via DNS-01 if any zone in
+  # its dnsAuthority is `domain` itself or a parent of it (TSIG access
+  # to the parent suffices for _acme-challenge.<domain> updates).
+  hostHasAuthority = hostName: domain: let
+    h = eg.entities.${hostName} or null;
+    zones = if h != null && h.type == "host" then h.host.dnsAuthority or [] else [];
+  in builtins.any (z: z == domain || lib.hasSuffix ".${z}" domain) zones;
+
+  iCanIssue = domain: hostHasAuthority hostname domain;
+
+  # Resolved cert path (haproxy bind directive looks here).
+  certPath = name: "/var/lib/acme/${name}/full.pem";
 
   authCfg = config.psyclyx.nixos.network.dns.authoritative;
 
-  # ACME credential files for DNS-01 via RFC 2136 (shared by all wildcard certs).
   mkDns01Credentials = {
     "RFC2136_NAMESERVER_FILE" = pkgs.writeText "rfc2136-ns" "${builtins.head authCfg.interfaces}:${toString authCfg.port}";
     "RFC2136_TSIG_ALGORITHM_FILE" = pkgs.writeText "rfc2136-algo" "hmac-sha256.";
@@ -50,19 +92,20 @@
     "RFC2136_TSIG_SECRET_FILE" = authCfg.tsigSecretFile;
   };
 
-  # Collect unique environment domains that have services.
-  envDomainsWithServices = lib.unique (lib.concatMap (e:
-    let svc = e.service;
-    in if svc.environment != null
-       then [eg.entities.${svc.environment}.environment.domain]
-       else []
-  ) (builtins.attrValues httpServices));
+  # Unique cert specs needed for my ingress (one per cert.name).
+  myCertSpecs = let
+    perTuple = map (t: certFor t.svc.attrs.resolvedDomain) myIngressTuples;
+    byName = builtins.groupBy (c: c.name) perTuple;
+  in lib.mapAttrs (_: cs: builtins.head cs) byName;
 
-  # --- HAProxy config generation ---
+  # Certs I can issue locally — emitted as security.acme entries.
+  locallyIssuedCerts = lib.filterAttrs (_: c: iCanIssue c.name) myCertSpecs;
 
-  mkBackend = name: entity: let
-    a = entity.attrs;
-    s = entity.service;
+  # --- HAProxy backend (one per service) ---
+
+  mkBackend = svcName: e: let
+    a = e.attrs;
+    s = e.service;
     opts = lib.concatStringsSep "\n" (
       lib.optional s.websockets "    option http-server-close"
       ++ lib.optionals s.streaming [
@@ -77,42 +120,32 @@
     );
   in ''
 
-    backend bk_svc_${name}
+    backend bk_svc_${svcName}
       mode http
   '' + lib.optionalString (opts != "") (opts + "\n")
      + "    server srv1 ${a.resolvedAddress}:${toString a.resolvedPort} check inter 10s\n";
 
-  # Collect unique cert domains needed for a set of services.
-  certDomainsFor = svcs: lib.unique (lib.mapAttrsToList (name: e:
-    let
-      domain = e.attrs.resolvedDomain;
-      tier = tierOf name;
-    in
-      # Public services use per-domain certs; internal use wildcard;
-      # environment services use their env's wildcard.
-      if tier == "internal" then eg.domains.internal
-      else if tier == "environment" then
-        (builtins.head (builtins.filter (d:
-          lib.hasSuffix ".${d}" domain || domain == d
-        ) envDomains))
-      else domain
-  ) svcs);
+  myBackendSvcs = lib.unique (map (t: t.svcName) myIngressTuples);
+  backends = lib.concatStringsSep "" (map
+    (n: mkBackend n httpServices.${n})
+    myBackendSvcs);
 
-  mkFrontend = frontendName: bindAddr: svcs: let
-    svcList = lib.mapAttrsToList lib.nameValuePair svcs;
-    crtFiles = lib.concatMapStringsSep " "
-      (d: "crt /var/lib/acme/${d}/full.pem")
-      (certDomainsFor svcs);
+  # --- HAProxy frontend (one per audience) ---
+
+  mkFrontend = audName: tuples: let
+    bind = me.attrs.addresses.${audiences.${audName}.address}.ipv4;
+    certs = lib.unique (map (t: certPath (certFor t.svc.attrs.resolvedDomain).name) tuples);
+    crtArgs = lib.concatMapStringsSep " " (p: "crt ${p}") certs;
     acls = map
-      (s: "    acl host_${s.name} hdr(host) -i ${s.value.attrs.resolvedDomain}")
-      svcList;
+      (t: "    acl host_${t.svcName} hdr(host) -i ${t.svc.attrs.resolvedDomain}")
+      tuples;
     useBackends = map
-      (s: "    use_backend bk_svc_${s.name} if host_${s.name}")
-      svcList;
+      (t: "    use_backend bk_svc_${t.svcName} if host_${t.svcName}")
+      tuples;
   in ''
 
-    frontend ft_https_${frontendName}
-      bind ${bindAddr}:443 ssl ${crtFiles} strict-sni
+    frontend ft_https_${audName}
+      bind ${bind}:443 ssl ${crtArgs} strict-sni
       mode http
       option forwardfor
       http-request set-header X-Forwarded-Proto https
@@ -120,13 +153,14 @@
      + lib.concatStringsSep "\n" useBackends + ''
 
 
-    frontend ft_http_${frontendName}
-      bind ${bindAddr}:80
+    frontend ft_http_${audName}
+      bind ${bind}:80
       mode http
       redirect scheme https code 301
   '';
 
-  backends = lib.concatStringsSep "" (lib.mapAttrsToList mkBackend httpServices);
+  frontends = lib.concatStringsSep ""
+    (lib.mapAttrsToList mkFrontend myTuplesByAudience);
 
   haproxyConfig = ''
     global
@@ -143,140 +177,124 @@
       retries 3
       compression algo gzip
       compression type text/html text/plain text/css text/javascript application/javascript application/json application/xml application/xhtml+xml image/svg+xml
-  '' + mkFrontend "public" publicAddr publicHttp
-     + mkFrontend "internal" vpnAddr internalHttp
-     + backends;
+  '' + frontends + backends;
 
-  # --- DNS record generation ---
+  # --- DNS records ---
 
-  # Internal HTTP services: resolver localZone pointing to VPN IP.
-  # All internal traffic goes through ingress haproxy for TLS termination,
-  # even HA-backed services — VPN clients may not have routes to VIPs.
-  internalDnsRecords = lib.mapAttrsToList (_: e:
-    "${e.attrs.resolvedDomain}. IN A ${vpnAddr}"
-  ) internalHttp;
+  # Ingress host's bind address for an audience's network — what DNS
+  # records for that (audience, service) pair point at.
+  ingressBindAddr = audAddress: ingHost: let
+    addr = (eg.entities.${ingHost}.attrs.addresses.${audAddress} or null);
+  in if addr != null then addr.ipv4 else null;
 
-  # TCP services with HA backends: resolver localZone pointing to VIP directly.
-  tcpDnsRecords = lib.concatLists (lib.mapAttrsToList (_: e:
-    let a = e.attrs;
-    in lib.optional (a.backendType == "ha" && a.resolvedAddress != null)
-      "${a.resolvedDomain}. IN A ${a.resolvedAddress}"
-  ) tcpServices);
+  # Resolver localzone records: emitted on the resolver host for each
+  # network-backed audience (skips public). Pulls all (service, audience)
+  # tuples whose audience.address resolves to a network entity served by
+  # this host's resolver, including TCP services (which use the HA VIP
+  # directly via service.attrs.resolvedAddress, not an ingress address).
+  resolverLocalZoneRecords = let
+    isResolverFor = audAddress: let
+      net = eg.entities.${audAddress} or null;
+    in net != null && net.type == "network" && (net.attrs.dnsRef or null) == hostname;
 
-  # Public HTTP services: authoritative DNS A/AAAA records.
-  publicDnsRecords = lib.concatMapStringsSep "\n" (e: let
-    # Extract subdomain from FQDN.
-    domain = e.attrs.resolvedDomain;
-  in
-    # Only generate for subdomains of known zones; top-level domains
-    # (like psyclyx.link) have their own zone config.
-    if lib.hasSuffix ".${eg.domains.public}" domain then let
-      sub = lib.removeSuffix ".${eg.domains.public}" domain;
-    in ''
-      ${sub}    IN A     ${publicAddr}
-      ${sub}    IN AAAA  ${me.host.publicIPv6}''
-    else ""
-  ) (builtins.attrValues publicHttp);
+    httpRecs = lib.concatMap (t:
+      lib.optional (isResolverFor t.audAddress)
+        "${t.svc.attrs.resolvedDomain}. IN A ${ingressBindAddr t.audAddress t.ingHost}"
+    ) httpTuples;
 
-  # Environment services: authoritative DNS records per env zone.
-  # Includes both services with `environment` set and services with explicit
-  # domains that fall in an environment zone.
-  envDnsRecords = builtins.listToAttrs (map (envDomain:
-    let
-      envSvcs = lib.filter (e:
-        let domain = e.attrs.resolvedDomain;
-        in lib.hasSuffix ".${envDomain}" domain
-      ) (builtins.attrValues httpServices);
-      records = lib.concatMapStringsSep "\n" (e: let
-        sub = lib.removeSuffix ".${envDomain}" e.attrs.resolvedDomain;
-      in ''
-        ${sub} IN A     ${publicAddr}
-        ${sub} IN AAAA  ${me.host.publicIPv6}'') envSvcs;
-    in lib.nameValuePair envDomain records
-  ) envDomainsWithServices);
+    tcpRecs = lib.concatMap (t: let
+      a = t.svc.attrs;
+    in
+      lib.optional (isResolverFor t.audAddress
+                    && a.resolvedAddress != null)
+        "${a.resolvedDomain}. IN A ${a.resolvedAddress}"
+    ) tcpTuples;
+  in lib.unique (httpRecs ++ tcpRecs);
 
+  # Authoritative public-zone records: emitted on hosts whose
+  # dnsAuthority covers the matching zone, for services in the public
+  # audience.
+  publicTuples = lib.filter (t: t.audAddress == "public") httpTuples;
+
+  authoritativeZoneRecords = let
+    publicDomain = eg.domains.public or "";
+
+    # Pick the matching zone for a service domain.
+    zoneFor = domain:
+      if publicDomain != "" && lib.hasSuffix ".${publicDomain}" domain then publicDomain
+      else lib.findFirst
+        (d: d == domain || lib.hasSuffix ".${d}" domain)
+        null
+        envDomains;
+
+    perTuple = lib.concatMap (t: let
+      domain = t.svc.attrs.resolvedDomain;
+      zone = zoneFor domain;
+      ingEntity = eg.entities.${t.ingHost};
+      ipv4 = (ingEntity.attrs.addresses.public or { ipv4 = null; }).ipv4;
+      ipv6 = (ingEntity.attrs.addresses.public or { ipv6 = null; }).ipv6;
+      sub = lib.removeSuffix ".${zone}" domain;
+    in
+      lib.optional (zone != null && (me.host.dnsAuthority or []) != [] && builtins.elem zone me.host.dnsAuthority && ipv4 != null) {
+        inherit zone sub ipv4 ipv6;
+      }
+    ) publicTuples;
+
+    byZone = builtins.groupBy (r: r.zone) perTuple;
+  in lib.mapAttrs (_: rs:
+    lib.concatMapStringsSep "\n" (r:
+      "${r.sub} IN A     ${r.ipv4}"
+      + (if r.ipv6 != null then "\n${r.sub} IN AAAA  ${r.ipv6}" else "")
+    ) rs
+  ) byZone;
 in {
-  config = lib.mkIf isIngress {
-    # --- HAProxy ---
-    services.haproxy = {
-      enable = true;
-      config = haproxyConfig;
-    };
+  config = lib.mkMerge [
+    # --- Ingress side: HAProxy + ACME + firewall ---
+    (lib.mkIf (myIngressTuples != []) {
+      services.haproxy = {
+        enable = true;
+        config = haproxyConfig;
+      };
 
-    systemd.services.haproxy = {
-      after = ["network-online.target" "acme-selfsigned-certificates.target"];
-      wants = ["network-online.target"];
-    };
+      systemd.services.haproxy = {
+        after = ["network-online.target" "acme-selfsigned-certificates.target"];
+        wants = ["network-online.target"];
+      };
 
-    # haproxy needs to read ACME certs.
-    users.users.haproxy.extraGroups = ["acme"];
+      users.users.haproxy.extraGroups = ["acme"];
 
-    # --- ACME ---
-    # ACME defaults — email sourced from nginx module (still enabled for
-    # static file serving). Will migrate to a dedicated option later.
-    security.acme = {
-      acceptTerms = true;
-      defaults.email = config.psyclyx.nixos.services.nginx.acme.email;
-    };
+      security.acme = lib.mkIf (locallyIssuedCerts != {}) {
+        acceptTerms = true;
+        defaults.email = config.psyclyx.nixos.services.nginx.acme.email;
+      };
 
-    security.acme.certs = let
-      mkCert = domain: extra: {
-        inherit domain;
+      security.acme.certs = lib.mapAttrs (_: c: {
+        domain = c.name;
+        extraDomainNames = c.extraDomainNames;
         dnsProvider = "rfc2136";
         credentialFiles = mkDns01Credentials;
         group = "acme";
         reloadServices = ["haproxy.service"];
-      } // extra;
+      }) locallyIssuedCerts;
 
-      # Wildcard cert for *.psyclyx.net (internal services).
-      internalWildcard = {
-        "psyclyx.net" = mkCert "psyclyx.net" {
-          extraDomainNames = ["*.psyclyx.net"];
-        };
+      psyclyx.nixos.network.ports.haproxy-ingress = {
+        tcp = [80 443];
       };
+    })
 
-      # Wildcard certs for environment domains (e.g. *.stage.psyclyx.net).
-      envWildcards = builtins.listToAttrs (map (envDomain:
-        lib.nameValuePair envDomain (mkCert envDomain {
-          extraDomainNames = ["*.${envDomain}"];
-        })
-      ) envDomainsWithServices);
+    # --- Resolver side: localzone records for network-backed audiences ---
+    (lib.mkIf (resolverLocalZoneRecords != []) {
+      psyclyx.nixos.network.dns.resolver.localZones.${eg.domains.internal} = {
+        type = "transparent";
+        records = resolverLocalZoneRecords;
+      };
+    })
 
-      # Per-domain certs for public services (DNS-01).
-      publicCerts = builtins.listToAttrs (lib.concatLists (
-        lib.mapAttrsToList (name: e: let
-          domain = e.attrs.resolvedDomain;
-          tier = tierOf name;
-        in
-          lib.optional (tier == "public") (lib.nameValuePair domain (mkCert domain {}))
-        ) httpServices
-      ));
-    in internalWildcard // envWildcards // publicCerts;
-
-    # --- DNS: resolver localZones for internal + TCP services ---
-    psyclyx.nixos.network.dns.resolver.localZones."psyclyx.net" = {
-      type = "transparent";
-      records = internalDnsRecords ++ tcpDnsRecords;
-    };
-
-    # DNS: localZone for psyclyx.link (split-horizon → VPN IP).
-    psyclyx.nixos.network.dns.resolver.localZones."psyclyx.link" = {
-      type = "transparent";
-      records = ["psyclyx.link. IN A ${vpnAddr}"];
-    };
-
-    # --- DNS: authoritative zone records ---
-    psyclyx.nixos.network.dns.authoritative.zones =
-      # Public service A/AAAA records in psyclyx.xyz zone.
-      { "psyclyx.xyz".extraRecords = lib.mkAfter publicDnsRecords; }
-      # Environment service records (e.g. stage.psyclyx.net zone).
-      // builtins.mapAttrs (_: records: {
+    # --- Authoritative side: zone records for public audience ---
+    {
+      psyclyx.nixos.network.dns.authoritative.zones = lib.mapAttrs (_: records: {
         extraRecords = lib.mkAfter records;
-      }) envDnsRecords;
-
-    # --- Firewall ---
-    psyclyx.nixos.network.ports.haproxy-ingress = {
-      tcp = [80 443];
-    };
-  };
+      }) authoritativeZoneRecords;
+    }
+  ];
 }
