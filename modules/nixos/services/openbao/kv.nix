@@ -174,21 +174,20 @@
       secretConfigs = lib.mapAttrs mkSecretService cfg.secrets;
     in
     {
-      systemd.services =
-        lib.mapAttrs' (name: c: lib.nameValuePair "openbao-kv-${name}" c.service) secretConfigs
-        // (lib.mkMerge (
-          lib.flatten (
-            lib.mapAttrsToList (
-              secretName: secret:
-              map (unit: {
-                "${lib.removeSuffix ".service" unit}" = {
-                  after = [ "openbao-kv-${secretName}.service" ];
-                  wants = [ "openbao-kv-${secretName}.service" ];
-                };
-              }) secret.reloadUnits
-            ) cfg.secrets
-          )
-        ));
+      systemd.services = lib.mkMerge (
+        [ (lib.mapAttrs' (name: c: lib.nameValuePair "openbao-kv-${name}" c.service) secretConfigs) ]
+        ++ lib.flatten (
+          lib.mapAttrsToList (
+            secretName: secret:
+            map (unit: {
+              "${lib.removeSuffix ".service" unit}" = {
+                after = [ "openbao-kv-${secretName}.service" ];
+                wants = [ "openbao-kv-${secretName}.service" ];
+              };
+            }) secret.reloadUnits
+          ) cfg.secrets
+        )
+      );
       systemd.timers = lib.mapAttrs' (
         name: c: lib.nameValuePair "openbao-kv-${name}" c.timer
       ) secretConfigs;
