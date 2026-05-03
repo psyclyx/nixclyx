@@ -111,11 +111,13 @@ in
         {
           enable = true;
           zones = {
-            lan.interfaces = internal ++ [ "wg0" ];
+            lan.interfaces = internal;
+            wg.interfaces = [ "wg0" ];
             wan.interfaces = [ "enp3s0.${toString eg.conventions.transitVlan}" ];
           };
           input = {
             lan.policy = "accept";
+            wg.policy = "accept";
             wan = {
               policy = "drop";
               allowICMP = true;
@@ -134,20 +136,22 @@ in
             };
           };
           forward = [
-            {
-              from = "lan";
-              to = "wan";
-            }
-            {
-              from = "lan";
-              to = "lan";
-            }
+            { from = "lan"; to = "wan"; }
+            { from = "lan"; to = "lan"; }
+            { from = "wg";  to = "lan"; }
+            { from = "wg";  to = "wan"; }
+            { from = "lan"; to = "wg"; }
           ];
           masquerade = [
-            {
-              from = "lan";
-              to = "wan";
-            }
+            { from = "lan"; to = "wan"; }
+            # WG-routed traffic to apt VLANs needs source NAT: hub-side
+            # peers (tleilax et al.) can't be reached symmetrically by lab
+            # hosts replying directly via their own WG tunnel — the WG
+            # cryptokey check at the hub drops sources outside the peer's
+            # AllowedIPs. Masquerading at iyr makes apt-side traffic look
+            # like it originated locally, so replies stay on apt-LAN and
+            # come back through iyr.
+            { from = "wg"; to = "lan"; }
           ];
         };
     };
