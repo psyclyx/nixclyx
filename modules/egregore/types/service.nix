@@ -133,7 +133,10 @@ egregorLib.mkType {
       else null;
     resolvedPort =
       if backendType == "ha" && haGroup != null
-      then haGroup.ha-group.services.${haSvcName}.port
+      # Read attrs.services (resolved with defaultServiceMeta merged in)
+      # rather than ha-group.services (raw entity values, where ports
+      # default to null per the per-service-overrides-only convention).
+      then haGroup.attrs.services.${haSvcName}.port
       else if backendType == "host" then s.backend.host.port
       else if backendType == "local" then s.backend.local.port
       else null;
