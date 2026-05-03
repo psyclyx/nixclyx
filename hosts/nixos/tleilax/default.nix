@@ -14,12 +14,6 @@ in
 
   networking.hostName = "tleilax";
 
-  # WireGuard extras (topology module handles base wg0 config)
-  systemd.network.networks."30-wg0" = {
-    address = [ "10.0.10.2/24" ];
-    routes = [ { Destination = "10.0.0.0/24"; } ];
-  };
-
   fileSystems = {
     "/" = {
       device = "UUID=a5823c8f-07c7-41c5-ad9f-4782cb5ba154";
