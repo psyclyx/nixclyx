@@ -24,8 +24,12 @@
     {
       psyclyx.egregore = lib.mkOption {
         type = lib.types.anything;
-        readOnly = true;
-        description = "Evaluated egregore entity registry.";
+        description = ''
+          Evaluated egregore entity registry. Default is nixclyx's
+          shipped root spec; consumers wrapping nixclyx (e.g. privclyx)
+          override this with a registry built from a root that imports
+          nixclyx's via egregore's own module-import system.
+        '';
       };
     };
 
@@ -34,9 +38,8 @@
     let
       spec = import ../../../egregore.nix;
       egregorePkg = import spec.lib { inherit lib; };
-      result = egregorePkg.eval { inherit (spec) modules; };
     in
     {
-      psyclyx.egregore = result;
+      psyclyx.egregore = egregorePkg.eval { modules = [spec.root]; };
     };
 }

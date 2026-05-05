@@ -26,12 +26,17 @@ let
   };
 
   configSpecs = map builtins.import (fs.collectModules ./.);
-in {
-  inherit lib;
-  egregoreLib = ../../egregore;
 
-  modules =
-    mods.types
-    ++ mods.extensions
-    ++ map mkEgregoreModule configSpecs;
+  # Single root spec: every nixclyx-shipped module reachable via its
+  # `imports`. Out-of-tree consumers compose by writing their own root
+  # spec with `imports = [nixclyx.root ...local specs...]`.
+  root = {
+    imports =
+      mods.types
+      ++ mods.extensions
+      ++ map mkEgregoreModule configSpecs;
+  };
+in {
+  inherit lib mkEgregoreModule root;
+  egregoreLib = ../../egregore;
 }

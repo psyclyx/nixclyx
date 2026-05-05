@@ -128,20 +128,6 @@
         };
       };
 
-      # --- AngelBeats ---
-
-      angelbeats-dl = {
-        type = "service";
-        tags = ["public" "monolyx"];
-        service = {
-          domain = "dl.angelbeats.me";
-          # Direct to lab-2's vpn address — single-instance, no HA.
-          backend.host = { address = "10.157.0.12"; port = 8092; };
-          audiences = ["public"];
-          label = "AngelBeats Downloads";
-        };
-      };
-
       # --- Public HTTP (llm) ---
 
       llm = {

@@ -95,7 +95,7 @@ let
       fleet-viz = pkgs: let
         spec = import ./egregore.nix;
         egregorePkg = import spec.lib { inherit (pkgs) lib; };
-        egregorData = egregorePkg.eval { inherit (spec) modules; };
+        egregorData = egregorePkg.eval { modules = [spec.root]; };
       in import ./packages/fleet-viz {
           inherit pkgs egregorData;
         };

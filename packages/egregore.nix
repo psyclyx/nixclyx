@@ -70,7 +70,7 @@ let
         fi
       fi
 
-      PREAMBLE="let lib = import <nixpkgs/lib>; spec = import $EGREGORE_FILE; egregore = import spec.lib { inherit lib; }; fleet = egregore.eval { inherit (spec) modules; }; in"
+      PREAMBLE="let lib = import <nixpkgs/lib>; spec = import $EGREGORE_FILE; egregore = import spec.lib { inherit lib; }; fleet = egregore.eval { modules = [spec.root]; }; in"
 
       nix_eval_json() {
         local expr="$1"
