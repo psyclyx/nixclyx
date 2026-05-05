@@ -45,6 +45,10 @@
               "10.0.50.0/24" "10.0.100.0/24" "10.0.110.0/24" "10.0.240.0/24"
             ];
           };
+          # iyr is the apt site gateway; the gateway projection wires
+          # all VLANs onto enp1s0. Declaring main here lets data-driven
+          # projections (e.g. overlay shortcuts) target the right unit.
+          interfaces.main.device = "enp1s0.10";
           addresses.vpn.ipv4 = "10.157.0.2";
           sshPort = 17891;
           deployAddress = "iyr.apt.psyclyx.net";
@@ -66,7 +70,11 @@
             publicKey = "XKqqjC62uOUhbCn3JPpI0M6WFYqRf8sLpML90JZ1CmE=";
             allowedNetworks = [];
           };
-          addresses.vpn.ipv4 = "10.157.0.3";
+          interfaces.main.device = "br0";
+          addresses = {
+            vpn.ipv4 = "10.157.0.3";
+            main.dhcp = true;
+          };
           roles = ["workstation"];
           deployAddress = "sigil.apt.psyclyx.net";
           hardware.tpm = true;

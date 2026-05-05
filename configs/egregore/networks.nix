@@ -25,6 +25,11 @@
         network = {
           # No vlan, no site — overlay spans sites via WG.
           ipv4 = "10.157.0.0/24";
+          # Within apt, reach VPN peers via the main LAN instead of
+          # hairpinning through the WG hub. Apt-resident peers (e.g.
+          # lab-1..4) own their VPN IP on wg0 but accept it on any
+          # interface; the apt site router emits /32 routes from this.
+          underlay.apt = "main";
         };
       };
     };

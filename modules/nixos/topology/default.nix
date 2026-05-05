@@ -15,6 +15,7 @@
     ./ha-services.nix
     ./zones.nix
     ./network.nix
+    ./overlay.nix
     ./ingress.nix
   ];
 

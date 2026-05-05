@@ -48,6 +48,21 @@ egregorLib.mkType {
       default = null;
       description = "Site entity name this network belongs to.";
     };
+    underlay = lib.mkOption {
+      type = lib.types.attrsOf lib.types.str;
+      default = { };
+      description = ''
+        Per-site underlay mapping for overlay networks. Each entry
+        site → networkName declares: "within <site>, addresses on this
+        overlay are also reachable via the host's address on
+        <networkName>." A site router projection can then emit /32
+        host routes for overlay-peer addresses via their underlay
+        address, avoiding hairpin through the overlay's transport.
+
+        Has no effect on non-overlay networks. Empty (default) means
+        the overlay has no site-local shortcut anywhere.
+      '';
+    };
   };
 
   attrs = name: entity: top: let
