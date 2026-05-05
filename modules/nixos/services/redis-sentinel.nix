@@ -126,32 +126,58 @@
           RestartSec = 5;
         };
 
+        # Reconcile the sentinel.conf from nix on every start. Sentinel
+        # persists discovered peers, the elected master, and voting epochs
+        # into this file at runtime, so without rewriting it we can never
+        # correct stale ring membership (e.g. a peer removed from
+        # clusterNodes lingers forever in the gossip table).
+        #
+        # We preserve `sentinel myid` and `sentinel current-epoch` because
+        # losing them would make the daemon look like a fresh sentinel each
+        # restart, disrupting voting. Everything else (known-sentinel /
+        # known-replica / leader-epoch) is dropped and re-learned from the
+        # configured monitor target.
         preStart = ''
-          if [ ! -f ${sentinelConf} ]; then
-            cat > ${sentinelConf}.tmp <<'SENTINEL_EOF'
-          port ${toString cfg.sentinelPort}
-          bind ${bindAddr}
-          sentinel monitor ${cfg.masterName} ${masterAddr} ${toString cfg.redisPort} ${toString cfg.quorum}
-          sentinel down-after-milliseconds ${cfg.masterName} 5000
-          sentinel failover-timeout ${cfg.masterName} 10000
-          sentinel parallel-syncs ${cfg.masterName} 1
-          SENTINEL_EOF
+          STATIC=${pkgs.writeText "sentinel-static.conf" ''
+            port ${toString cfg.sentinelPort}
+            bind ${bindAddr}
+            sentinel monitor ${cfg.masterName} ${masterAddr} ${toString cfg.redisPort} ${toString cfg.quorum}
+            sentinel down-after-milliseconds ${cfg.masterName} 5000
+            sentinel failover-timeout ${cfg.masterName} 10000
+            sentinel parallel-syncs ${cfg.masterName} 1
+          ''}
 
-            ${lib.optionalString (cfg.requirePassFile != null) ''
-              PASS=$(cat ${cfg.requirePassFile})
-              echo "sentinel auth-pass ${cfg.masterName} $PASS" >> ${sentinelConf}.tmp
-            ''}
+          PRESERVED=""
+          if [ -f ${sentinelConf} ]; then
+            PRESERVED=$(${pkgs.gnugrep}/bin/grep -E '^sentinel (myid|current-epoch) ' ${sentinelConf} || true)
+          fi
 
-            mv ${sentinelConf}.tmp ${sentinelConf}
+          # install -m sets perms atomically and clobbers any read-only
+          # leftover from a prior interrupted run.
+          install -m 0640 "$STATIC" ${sentinelConf}.tmp
+          if [ -n "$PRESERVED" ]; then
+            printf '%s\n' "$PRESERVED" >> ${sentinelConf}.tmp
           fi
 
           ${lib.optionalString (cfg.requirePassFile != null) ''
             PASS=$(cat ${cfg.requirePassFile})
-            ${pkgs.gnused}/bin/sed -i "s/^sentinel auth-pass ${cfg.masterName} .*/sentinel auth-pass ${cfg.masterName} $PASS/" ${sentinelConf}
+            echo "sentinel auth-pass ${cfg.masterName} $PASS" >> ${sentinelConf}.tmp
           ''}
 
-          # Remove requirepass if present (SeaweedFS redis2_sentinel can't authenticate to sentinel)
-          ${pkgs.gnused}/bin/sed -i '/^requirepass /d' ${sentinelConf}
+          mv ${sentinelConf}.tmp ${sentinelConf}
+        '';
+
+        # Once sentinel is responsive, flush the runtime peer/master cache
+        # so any stale entries from a previous ring shape are forgotten and
+        # re-learned from the freshly-written monitor line.
+        postStart = ''
+          for i in $(seq 1 30); do
+            if ${pkgs.redis}/bin/redis-cli -h ${bindAddr} -p ${toString cfg.sentinelPort} ping 2>/dev/null | ${pkgs.gnugrep}/bin/grep -q PONG; then
+              ${pkgs.redis}/bin/redis-cli -h ${bindAddr} -p ${toString cfg.sentinelPort} sentinel reset ${cfg.masterName} >/dev/null || true
+              exit 0
+            fi
+            sleep 1
+          done
         '';
       };
 

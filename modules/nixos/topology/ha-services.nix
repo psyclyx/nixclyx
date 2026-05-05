@@ -35,11 +35,19 @@ in
         clusterNodes = clusterNodesFor "postgresql";
       };
 
-      redis-sentinel = lib.mkIf (hasService "redis") {
-        enable = true;
-        dataNetwork = networkFor "redis";
-        clusterNodes = clusterNodesFor "redis";
-      };
+      redis-sentinel =
+        let
+          # Odd-sized sentinel ring: a 4-node ring still needs 3 alive to
+          # elect a failover leader, so it tolerates the same single-node
+          # loss as a 3-node ring at twice the operational footprint.
+          # Mirrors the SeaweedFS master raft ring (also 3).
+          redisNodes = lib.take 3 (clusterNodesFor "redis");
+        in
+        lib.mkIf (hasService "redis" && builtins.elem hostname redisNodes) {
+          enable = true;
+          dataNetwork = networkFor "redis";
+          clusterNodes = redisNodes;
+        };
 
       openbao = lib.mkIf (hasService "openbao") {
         enable = true;
