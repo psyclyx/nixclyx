@@ -1,27 +1,12 @@
 # Environments — logical deployment contexts.
 #
-# Named env-* to avoid collision with network entities (stage, prod VLANs).
-# The VLAN is the L2/L3 segment; the environment is the logical context.
+# Named env-* to avoid collision with network entities (e.g. VLANs of the
+# same name). The VLAN is the L2/L3 segment; the environment is the
+# logical context. Currently empty — stage was decommissioned and prod
+# was never wired up. Add new env entities here as services need them.
 {
   gate = "always";
   config = {
-    entities = {
-      env-stage = {
-        type = "environment";
-        tags = ["staging"];
-        environment = {
-          domain = "stage.psyclyx.net";
-          site = "apt";
-        };
-      };
-      env-prod = {
-        type = "environment";
-        tags = ["production"];
-        environment = {
-          domain = "prod.psyclyx.net";
-          site = "apt";
-        };
-      };
-    };
+    entities = {};
   };
 }

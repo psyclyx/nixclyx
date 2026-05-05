@@ -128,12 +128,4 @@ in
     };
   };
 
-  psyclyx.nixos.network.dns.authoritative.zones."stage.psyclyx.net" = {
-    ttl = 300;
-    ddns = true;
-    extraRecords = ''
-      @          IN A     ${me.attrs.addresses.public.ipv4}
-      @          IN AAAA  ${me.attrs.addresses.public.ipv6}
-    '';
-  };
 }

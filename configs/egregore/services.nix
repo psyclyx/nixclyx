@@ -128,25 +128,6 @@
         };
       };
 
-      # --- Stage HTTP (environment-scoped) ---
-
-      angelbeats = {
-        type = "service";
-        tags = ["monolyx"];
-        service = {
-          environment = "env-stage";
-          # Direct to lab-2 rather than via the lab-stage HA VIP:
-          # the VIP is unreachable from tleilax because lab-1's policy
-          # routing has no `from 10.0.31.200 lookup 31` rule, so replies
-          # from the VIP leak out bond0.25 instead of bond0.31. Follow-up
-          # fix belongs in nixclyx topology; for now point directly.
-          backend.host = { address = "10.0.31.12"; port = 80; };
-          audiences = ["public"];
-          websockets = true;
-          label = "Angelbeats";
-        };
-      };
-
       # --- Public HTTP (llm) ---
 
       llm = {
