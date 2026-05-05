@@ -89,6 +89,10 @@ in
               ttl = 3600;
               ddns = true;
             };
+            "angelbeats.me" = {
+              ttl = 3600;
+              ddns = true;
+            };
           };
         };
         resolver = {

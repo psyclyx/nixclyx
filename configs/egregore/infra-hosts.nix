@@ -21,7 +21,7 @@
               ipv6 = "2606:7940:32:26::10";
             };
           };
-          dnsAuthority = ["psyclyx.net" "psyclyx.xyz" "psyclyx.link"];
+          dnsAuthority = ["psyclyx.net" "psyclyx.xyz" "psyclyx.link" "angelbeats.me"];
           publicAcme = true;
           sshPort = 17891;
           deployAddress = "tleilax.psyclyx.net";
