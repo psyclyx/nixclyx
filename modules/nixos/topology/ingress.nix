@@ -219,15 +219,15 @@
   publicTuples = lib.filter (t: t.audAddress == "public") httpTuples;
 
   authoritativeZoneRecords = let
-    publicDomain = eg.domains.public or "";
+    myZones = me.host.dnsAuthority or [];
 
-    # Pick the matching zone for a service domain.
-    zoneFor = domain:
-      if publicDomain != "" && lib.hasSuffix ".${publicDomain}" domain then publicDomain
-      else lib.findFirst
-        (d: d == domain || lib.hasSuffix ".${d}" domain)
-        null
-        envDomains;
+    # Longest-suffix match from this host's dnsAuthority. Returns the
+    # most specific zone covering `domain`, or null if none does.
+    zoneFor = domain: lib.foldl' (best: z:
+      if (z == domain || lib.hasSuffix ".${z}" domain)
+         && (best == null || lib.stringLength z > lib.stringLength best)
+      then z else best
+    ) null myZones;
 
     perTuple = lib.concatMap (t: let
       domain = t.svc.attrs.resolvedDomain;
@@ -235,9 +235,9 @@
       ingEntity = eg.entities.${t.ingHost};
       ipv4 = (ingEntity.attrs.addresses.public or { ipv4 = null; }).ipv4;
       ipv6 = (ingEntity.attrs.addresses.public or { ipv6 = null; }).ipv6;
-      sub = lib.removeSuffix ".${zone}" domain;
+      sub = if zone == domain then "@" else lib.removeSuffix ".${zone}" domain;
     in
-      lib.optional (zone != null && (me.host.dnsAuthority or []) != [] && builtins.elem zone me.host.dnsAuthority && ipv4 != null) {
+      lib.optional (zone != null && ipv4 != null) {
         inherit zone sub ipv4 ipv6;
       }
     ) publicTuples;
