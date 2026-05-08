@@ -255,6 +255,14 @@ egregorLib.mkType {
       address = if vpn != null then vpn.ipv4 else null;
       addresses = resolvedAddresses;
       fqdn = if siteDomain != null then "${name}.${siteDomain}" else null;
+      fqdns = lib.mapAttrs (
+        addrKey: _:
+        let
+          netEnt = top.entities.${addrKey} or null;
+          zone = if netEnt != null && netEnt.type == "network" then netEnt.attrs.zoneName or "" else "";
+        in
+        if zone != "" then "${name}.${zone}" else null
+      ) resolvedAddresses;
       site = h.site;
       roles = h.roles;
       sshPort = h.sshPort;
