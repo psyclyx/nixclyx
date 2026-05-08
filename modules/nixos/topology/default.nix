@@ -7,6 +7,7 @@
   imports = [
     ./wireguard.nix
     ./dns.nix
+    ./dns-authority.nix
     ./dns-forwarding.nix
     ./monitoring.nix
     ./deployment.nix

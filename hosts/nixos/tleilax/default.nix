@@ -80,20 +80,7 @@ in
           ];
           port = 53;
           tsigKeyName = "acme-tleilax";
-          zones = {
-            "psyclyx.xyz" = {
-              ttl = 3600;
-              ddns = true;
-            };
-            "psyclyx.net" = {
-              ttl = 3600;
-              ddns = true;
-            };
-            "angelbeats.me" = {
-              ttl = 3600;
-              ddns = true;
-            };
-          };
+          # Zones come from host.dnsAuthority via topology/dns-authority.nix.
         };
         zones = {
           enable = true;
