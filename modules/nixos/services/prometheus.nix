@@ -50,8 +50,6 @@
     pkgs,
     ...
   }: let
-    eg = config.psyclyx.egregore;
-    selfTarget = "${config.psyclyx.nixos.host}.${eg.domains.internal}:9100";
     mkSnmpExporter = {
       enable = true;
       configurationPath = "${pkgs.prometheus-snmp-exporter.src}/snmp.yml";
@@ -110,7 +108,7 @@
               {
                 job_name = "node";
                 static_configs = [
-                  {targets = cfg.server.scrapeTargets ++ [selfTarget];}
+                  {targets = cfg.server.scrapeTargets ++ ["localhost:9100"];}
                 ];
               }
             ]

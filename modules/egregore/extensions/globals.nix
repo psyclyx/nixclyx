@@ -28,9 +28,24 @@
     domains = lib.mkOption {
       type = lib.types.submodule {
         options = {
-          internal = lib.mkOption { type = lib.types.str; default = ""; };
-          public = lib.mkOption { type = lib.types.str; default = ""; };
-          home = lib.mkOption { type = lib.types.str; default = ""; };
+          internal = lib.mkOption {
+            type = lib.types.str;
+            default = "";
+            description = ''
+              Parent zone for internal-audience services. Subdomains
+              resolve via per-site resolver localZones; the wildcard
+              cert is issued by the host(s) authoritative for it.
+            '';
+          };
+          public = lib.mkOption {
+            type = lib.types.str;
+            default = "";
+            description = ''
+              Parent zone for the public hub endpoint (ACME, WG hub
+              external address). Per-service public domains live as
+              individual zones in host.dnsAuthority.
+            '';
+          };
         };
       };
       default = {};

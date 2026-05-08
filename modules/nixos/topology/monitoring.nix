@@ -2,15 +2,13 @@
 let
   eg = config.psyclyx.egregore;
 
-  resolveAddress =
-    hostName: network:
-    if network == "vpn" then
-      "${hostName}.${eg.domains.internal}"
-    else
-      "${hostName}.${network}.${eg.domains.home}";
-
   mkTarget =
-    hostName: svc: "${resolveAddress hostName (builtins.head svc.networks)}:${toString svc.port}";
+    hostName: svc:
+    let
+      net = builtins.head svc.networks;
+      fqdn = eg.entities.${hostName}.attrs.fqdns.${net} or null;
+    in
+    if fqdn != null then "${fqdn}:${toString svc.port}" else null;
 
   monitoredHosts = lib.filterAttrs (
     _: e: e.type == "host" && e.attrs.resolvedExporters != { }
@@ -31,7 +29,7 @@ let
       ) hosts
     );
 
-  spokeTargetPairs = collectTargets spokeHosts;
+  spokeTargetPairs = lib.filter (t: t.target != null) (collectTargets spokeHosts);
   targetsByService = builtins.groupBy (t: t.svcName) spokeTargetPairs;
 
   nodeTargets = map (t: t.target) (targetsByService.node or [ ]);

@@ -13,7 +13,6 @@
     domains = {
       internal = "psyclyx.net";
       public   = "psyclyx.xyz";
-      home     = "apt.psyclyx.net";
     };
 
     ipv6UlaPrefix = "fd9a:e830:4b1e";

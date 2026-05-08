@@ -72,14 +72,14 @@ egregorLib.mkType {
     ulaPrefix = top.ipv6UlaPrefix or "";
     hasV6 = ulaPrefix != "" && net.ulaSubnetHex != "";
 
-    # Zone name: use site domain if available, fall back to domains.internal
-    # for non-site networks (overlays), else domains.home.
+    # Zone name: site domain for site networks; for site-less overlays
+    # (e.g. wireguard) fall back to domains.internal. A network with
+    # neither is a config error and yields an empty zoneName.
     siteEntity = if net.site != null then top.entities.${net.site} or null else null;
     siteDomain = if siteEntity != null then siteEntity.site.domain or null else null;
-    baseDomain = if siteDomain != null then siteDomain
-                 else if net.site == null && (top.domains.internal or "") != ""
-                      then top.domains.internal
-                 else top.domains.home or "";
+    baseDomain =
+      if siteDomain != null then siteDomain
+      else top.domains.internal or "";
 
     # Refs with site-level fallback.
     netRefs = entity.refs or {};
