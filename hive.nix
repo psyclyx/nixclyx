@@ -13,7 +13,7 @@
         "fixed"
       ];
       allowLocalDeployment = true;
-      targetHost = "sigil.psyclyx.net";
+      targetHost = "sigil.apt.psyclyx.net";
       targetUser = "root";
     };
   };
@@ -51,7 +51,7 @@
         "minipc"
         "fixed"
       ];
-      targetHost = "iyr.psyclyx.net";
+      targetHost = "iyr.apt.psyclyx.net";
       targetUser = "root";
     };
   };
@@ -64,7 +64,7 @@
         "colo"
         "fixed"
       ];
-      targetHost = "tleilax.psyclyx.net";
+      targetHost = "199.255.18.171";
       targetUser = "root";
     };
   };

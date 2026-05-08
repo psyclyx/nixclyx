@@ -24,7 +24,7 @@
           dnsAuthority = ["psyclyx.net" "psyclyx.xyz" "psyclyx.link" "angelbeats.me"];
           publicAcme = true;
           sshPort = 17891;
-          deployAddress = "tleilax.psyclyx.net";
+          deployAddress = "199.255.18.171";
           roles = ["server" "vpn-hub"];
           exporters = {
             node     = { port = 9100; networks = ["vpn"]; };
