@@ -1,15 +1,22 @@
 # Authoritative DNS zone generation from egregore entities.
 #
-# Generates forward, reverse (IPv4), and reverse (IPv6) zones for all
-# network entities, plus a home umbrella zone.  Wires into
+# Generates forward, reverse (IPv4), and reverse (IPv6) zones for the
+# networks gated by `gatewayHostname` (i.e. the networks this host is
+# the gateway for), plus an optional site umbrella zone. Wires into
 # psyclyx.nixos.network.dns.authoritative.zones.
 {config, lib, ...}: let
   eg = config.psyclyx.egregore;
 
-  # VLAN-keyed maps only cover networks with an actual VLAN ID; overlay
-  # networks (vlan = null) are skipped here and handled as plain L3.
+  cfg = config.psyclyx.nixos.network.dns;
+  gwName = cfg.zones.gatewayHostname;
+
+  # VLAN-keyed maps only cover networks with an actual VLAN ID, gated
+  # to networks where gwName is the gateway. A host without that role
+  # for a given network has no business being authoritative for it.
   networks = lib.filterAttrs (_: e: e.type == "network") eg.entities;
-  vlanNetworks = lib.filterAttrs (_: e: e.network.vlan != null) networks;
+  vlanNetworks = lib.filterAttrs (
+    _: e: e.network.vlan != null && (e.attrs.gatewayRef or null) == gwName
+  ) networks;
 
   dhcpVlans = lib.sort builtins.lessThan
     (lib.mapAttrsToList (_: e: e.network.vlan) vlanNetworks);
@@ -43,10 +50,6 @@
     lib.concatStringsSep "\n" (lib.mapAttrsToList (groupName: g:
       "${groupName}-vip IN A ${g.ha-group.vip.ipv4}"
     ) groups);
-
-  cfg = config.psyclyx.nixos.network.dns;
-  gwName = cfg.zones.gatewayHostname;
-  gwEntity = eg.entities.${gwName} or null;
 
   mkForwardZoneData = vlanId: let
     name = vlanNameMap.${toString vlanId};

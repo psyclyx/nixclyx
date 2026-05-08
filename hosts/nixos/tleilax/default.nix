@@ -95,6 +95,14 @@ in
             };
           };
         };
+        zones = {
+          enable = true;
+          gatewayHostname = "tleilax";
+          siteZone = {
+            enable = true;
+            network = "vpn";
+          };
+        };
         resolver = {
           enable = true;
           interfaces = [ "10.157.0.1" ];
