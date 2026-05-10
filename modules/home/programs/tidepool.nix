@@ -8,7 +8,8 @@
     ...
   }: let
     monitors = config.psyclyx.home.hardware.monitors;
-    sortedMonitors = lib.sort (a: b: a.position.x < b.position.x)
+    sortedMonitors =
+      lib.sort (a: b: a.position.x < b.position.x)
       (lib.attrValues (lib.filterAttrs (_: m: m.enable) monitors));
     c = config.lib.stylix.colors;
 
@@ -169,35 +170,6 @@
       # Step 3: Execute
       ${tidepoolmsg} dispatch "$action_name" $args
     '';
-
-    # Shortcut scripts: skip the first dmenu step for common operations
-    summon-menu = pkgs.writeShellScript "tidepool-summon-menu" ''
-      set -euo pipefail
-      chosen=$(${tidepoolmsg} exec '(print (ipc/list-windows))' | head -1 \
-        | ${jq} -r '.[] | "\(.wid)|\(.app) — \(.title)\(if .mark then " [\(.mark)]" else "" end)"' \
-        | ${shoal-dmenu} -p "Summon: ") || exit 0
-      wid=$(echo "$chosen" | cut -d'|' -f1)
-      [ -n "$wid" ] && ${tidepoolmsg} dispatch summon wid "$wid"
-    '';
-
-    mark-set-menu = pkgs.writeShellScript "tidepool-mark-set-menu" ''
-      set -euo pipefail
-      mark=$(echo "" | ${shoal-dmenu} -p "Mark: ") || exit 0
-      [ -n "$mark" ] && ${tidepoolmsg} dispatch mark-set "$mark"
-    '';
-
-    # Generic mark picker: lists existing marks, runs "$1 mark <name>"
-    mark-pick = pkgs.writeShellScript "tidepool-mark-pick" ''
-      set -euo pipefail
-      action="''${1:?usage: tidepool-mark-pick <action>}"
-      marks=$(${tidepoolmsg} exec '(print (ipc/list-marks))' | head -1 \
-        | ${jq} -r '.[] | "\(.name)|\(.app) — \(.title)"')
-      [ -z "$marks" ] && exit 0
-      chosen=$(echo "$marks" | ${shoal-dmenu} -p "Mark: ") || exit 0
-      name=$(echo "$chosen" | cut -d'|' -f1)
-      [ -n "$name" ] && ${tidepoolmsg} dispatch "$action" mark "$name"
-    '';
-
   in {
     home.packages = [
       pkgs.grim
@@ -216,10 +188,12 @@
       enable = true;
       package = pkgs.psyclyx.tidepool;
 
-      outputOrder = lib.imap1 (i: m: {
-        match = m.identifier;
-        tag = i;
-      }) sortedMonitors;
+      outputOrder =
+        lib.imap1 (i: m: {
+          match = m.identifier;
+          tag = i;
+        })
+        sortedMonitors;
 
       keybindings = {
         "super+Return" = ''(actions/spawn "uwsm" "app" "--" "xdg-terminal-exec")'';
