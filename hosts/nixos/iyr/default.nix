@@ -15,6 +15,8 @@ in
 
   networking.hostName = "iyr";
 
+  systemd.network.networks."31-enp3s0.${toString eg.conventions.transitVlan}".linkConfig.MTUBytes = 1500;
+
   services.prometheus.exporters.node.listenAddress = eg.entities.iyr.host.addresses.vpn.ipv4;
   services.prometheus.exporters.smartctl.listenAddress = eg.entities.iyr.host.addresses.vpn.ipv4;
   services.prometheus.exporters.snmp.listenAddress = "127.0.0.1";
