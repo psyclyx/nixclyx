@@ -36,7 +36,12 @@
       { name = "domain-name"; data = siteDomain; }
       { name = "domain-search"; data = "${siteDomain}, ${na.zoneName}"; }
     ];
-    ddns-qualifying-suffix = "${siteDomain}.";
+    # Per-VLAN qualifying-suffix: each interface registers under its
+    # own zone (e.g. lab-1.main.apt.psyclyx.net) instead of the site
+    # apex. The site apex is static-only (siteZone seeds A records
+    # from egregore data), avoiding the multi-interface last-write
+    # collision that previously broke A/AAAA at the apex.
+    ddns-qualifying-suffix = "${na.zoneName}.";
     reservations = let
       servers = managedHostsOnNetwork pool.network;
       labReservations = map (name: {
@@ -63,7 +68,7 @@
       { name = "dns-servers"; data = na.gateway6; }
       { name = "domain-search"; data = "${siteDomain}, ${na.zoneName}"; }
     ];
-    ddns-qualifying-suffix = "${siteDomain}.";
+    ddns-qualifying-suffix = "${na.zoneName}.";
     reservations = let
       servers = managedHostsOnNetwork pool.network;
     in map (name: {

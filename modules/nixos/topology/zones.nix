@@ -159,12 +159,17 @@
     ) eg.entities;
 
     hostRecords = lib.concatMapStringsSep "\n" (hostname: let
-      addr = eg.entities.${hostname}.host.addresses.${siteZoneCfg.network}.ipv4;
-    in "${hostname} IN A ${addr}")
+      addrs = eg.entities.${hostname}.host.addresses.${siteZoneCfg.network};
+      v4 = "${hostname} IN A ${addrs.ipv4}";
+      v6 = lib.optionalString (addrs.ipv6 or null != null)
+        "\n${hostname} IN AAAA ${addrs.ipv6}";
+    in v4 + v6)
     (lib.sort builtins.lessThan (builtins.attrNames siteHosts));
   in lib.optionalAttrs (siteDomain != null) {
     ${siteDomain} = {
-      ddns = true;
+      # Static-only: no DDNS into the site apex. DHCP clients
+      # register under their per-VLAN zone (see topology/dhcp.nix).
+      ddns = false;
       data = ''
         $ORIGIN ${siteDomain}.
         $TTL 300

@@ -64,28 +64,17 @@
     forwardDdnsDomains = lib.mapAttrsToList mkForwardDdnsDomain dhcpCfg.pools;
     reverseDdnsDomains4 = lib.mapAttrsToList mkReverseDdnsDomain4 dhcpCfg.pools;
     reverseDdnsDomains6 = lib.mapAttrsToList mkReverseDdnsDomain6 dhcpCfg.pools;
-
-    # Site zone DDNS domain — clients register as hostname.siteDomain.
-    # Deduplicated: all pools at the same site share one site zone entry.
-    siteZoneCfg = config.psyclyx.nixos.network.dns.zones.siteZone or { enable = false; };
-    siteDdnsDomains = let
-      hostName = config.networking.hostName;
-      me = eg.entities.${hostName} or null;
-      mySiteName = if me != null then me.host.site or null else null;
-      mySite = if mySiteName != null then eg.entities.${mySiteName} or null else null;
-      siteDomain = if mySite != null then mySite.site.domain or null else null;
-    in lib.optional (siteZoneCfg.enable && siteDomain != null) {
-      name = "${siteDomain}.";
-      key-name = cfg.keyName;
-      dns-servers = [mkDnsServer];
-    };
   in lib.mkIf (dhcpCfg.enable && dhcpCfg.pools != {}) {
     services.kea.dhcp-ddns = {
       enable = true;
       settings = {
         ip-address = "127.0.0.1";
         inherit (cfg) port;
-        forward-ddns.ddns-domains = siteDdnsDomains ++ forwardDdnsDomains;
+        # No site-zone DDNS forwarder: the site apex is static-only,
+        # populated from egregore by topology/zones.nix:siteZone.
+        # Each interface DDNS-registers under its per-VLAN zone via
+        # the per-pool ddns-qualifying-suffix in topology/dhcp.nix.
+        forward-ddns.ddns-domains = forwardDdnsDomains;
         reverse-ddns.ddns-domains = reverseDdnsDomains4 ++ reverseDdnsDomains6;
       };
     };
