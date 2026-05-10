@@ -106,7 +106,7 @@
     systemd.user.services.swaybg = {
       Unit = {
         Description = "Wallpaper (swaybg)";
-        After = ["tidepool.service"];
+        After = ["graphical-session.target"];
         PartOf = ["graphical-session.target"];
       };
       Service = {
