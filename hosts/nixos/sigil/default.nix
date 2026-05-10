@@ -67,7 +67,10 @@
       ];
       files = [
         {file = "/etc/machine-id"; inInitrd = true;}
-        "/etc/ssh/ssh_host_ed25519_key"
+        # Private host key must be 0600; preservation otherwise
+        # chmods the source back to the default (0644) on every
+        # boot, and sshd then refuses to load it.
+        {file = "/etc/ssh/ssh_host_ed25519_key"; mode = "0600";}
         "/etc/ssh/ssh_host_ed25519_key.pub"
       ];
     };
