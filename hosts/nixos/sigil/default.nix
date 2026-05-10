@@ -8,7 +8,6 @@
     pkgs.bitwig-studio4
     pkgs.gimp-with-plugins
     pkgs.kicad
-    pkgs.orca-slicer
   ];
 
   psyclyx.nixos = {
@@ -20,6 +19,7 @@
 
     programs = {
       glasgow.enable = true;
+      orca-slicer.enable = true;
       steam.enable = true;
     };
 
