@@ -90,6 +90,16 @@
       na = net.attrs;
       siteEntity = if net.network.site != null then eg.entities.${net.network.site} or null else null;
       siteDomain = if siteEntity != null then siteEntity.site.domain else null;
+      # Routing-only domain (~prefix) for the internal apex: clients
+      # send any *.psyclyx.net query through this gateway's resolver,
+      # which already forwards the apex to the VPN hub. Without this
+      # apartment clients route only *.apt.psyclyx.net here and fall
+      # through to upstream DNS for the bare apex zone.
+      internalDomain = eg.domains.internal or null;
+      raDomains =
+        lib.optional (internalDomain != null && internalDomain != "") "~${internalDomain}"
+        ++ lib.optional (siteDomain != null) siteDomain
+        ++ [ na.zoneName ];
     in lib.nameValuePair "31-${vlanIface vlanId}" {
       matchConfig.Name = vlanIface vlanId;
       address = [
@@ -108,8 +118,7 @@
         Managed = true;
         OtherInformation = true;
         DNS = "_link_local";
-        Domains = lib.concatStringsSep " "
-          (lib.optional (siteDomain != null) siteDomain ++ [ na.zoneName ]);
+        Domains = lib.concatStringsSep " " raDomains;
       };
       ipv6Prefixes = [
         { Prefix = "${eg.ipv6UlaPrefix}:${net.network.ulaSubnetHex}::/64"; }
