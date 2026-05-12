@@ -13,8 +13,7 @@
       (lib.attrValues (lib.filterAttrs (_: m: m.enable) monitors));
     c = config.lib.stylix.colors;
 
-    shoal-dmenu = "${lib.getExe config.programs.shoal.package} --dmenu";
-    tidepoolmsg = lib.getExe' config.services.tidepool.package "tidepoolmsg";
+    fuzzel-dmenu = "${lib.getExe config.programs.fuzzel.package} --dmenu";
     rofi-rbw = lib.getExe pkgs.rofi-rbw-wayland;
     grim = lib.getExe pkgs.grim;
     notify-send = lib.getExe' pkgs.libnotify "notify-send";
@@ -50,11 +49,11 @@
         ${notify-send} -u critical "Sign" "No SSH keys found"
         exit 1
       fi
-      key=$(echo "$keys" | ${shoal-dmenu} -p "Key: ") || exit 0
+      key=$(echo "$keys" | ${fuzzel-dmenu} -p "Key: ") || exit 0
 
       # 3. Pick namespace (recent first, then type custom)
       recent=$(tac "$ns_history" | awk '!seen[$0]++' | head -10)
-      ns=$(echo "$recent" | ${shoal-dmenu} -p "Namespace: ") || exit 0
+      ns=$(echo "$recent" | ${fuzzel-dmenu} -p "Namespace: ") || exit 0
       if [ -z "$ns" ]; then
         ${notify-send} -u critical "Sign" "No namespace"
         exit 1
@@ -77,7 +76,7 @@
 
     screenshot-menu = pkgs.writeShellScriptBin "tidepool-screenshot-menu" ''
       options="Full Screen\nSelection\nFull Screen (Clipboard)\nSelection (Clipboard)"
-      chosen=$(echo -e "$options" | ${shoal-dmenu} -p "Screenshot: ")
+      chosen=$(echo -e "$options" | ${fuzzel-dmenu} -p "Screenshot: ")
       screenshot_dir="''${XDG_PICTURES_DIR:-$HOME/Pictures}/screenshots"
       mkdir -p "$screenshot_dir"
       filename="$screenshot_dir/screenshot-$(date +%Y%m%d-%H%M%S).png"
@@ -99,82 +98,10 @@
       esac
     '';
 
-    jq = lib.getExe pkgs.jq;
-    column = lib.getExe' pkgs.util-linux "column";
-
-    action-menu = pkgs.writeShellScript "tidepool-action-menu" ''
-      set -euo pipefail
-
-      actions_json=$(${tidepoolmsg} exec '(print (ipc/list-actions))' | head -1)
-
-      # Build parallel arrays: display (aligned columns) and data (name|spec)
-      display=$(echo "$actions_json" | ${jq} -r '
-        .[] | (.desc // .name) + "\t" + (.key // "")
-      ' | ${column} -t -s $'\t')
-      data=$(echo "$actions_json" | ${jq} -r '
-        .[] | .name + "\t" + (.spec // [] | tojson)
-      ')
-
-      # Step 1: Pick an action
-      chosen_line=$(echo "$display" | ${shoal-dmenu} -p "Action: ") || exit 0
-      line_num=$(echo "$display" | grep -nxF "$chosen_line" | head -1 | cut -d: -f1)
-      entry=$(echo "$data" | sed -n "''${line_num}p")
-      action_name=$(echo "$entry" | cut -f1)
-      spec_json=$(echo "$entry" | cut -f2)
-
-      # Step 2: Collect args interactively based on spec
-      args=""
-      for spec_entry in $(echo "$spec_json" | ${jq} -c '.[]'); do
-        spec_type=$(echo "$spec_entry" | ${jq} -r 'if type == "string" then . else .[0] end')
-
-        case "$spec_type" in
-          resolver)
-            # Show directions + special options
-            pick=$(printf '%s\n' left right up down next prev last "mark..." "wid..." \
-              | ${shoal-dmenu} -p "Target: ") || exit 0
-            case "$pick" in
-              "mark...")
-                mark=$(echo "" | ${shoal-dmenu} -p "Mark name: ") || exit 0
-                args="$args mark $mark"
-                ;;
-              "wid...")
-                wid_pick=$(${tidepoolmsg} exec '(print (ipc/list-windows))' | head -1 \
-                  | ${jq} -r '.[] | "\(.wid)|\(.app) — \(.title)"' \
-                  | ${shoal-dmenu} -p "Window: ") || exit 0
-                wid=$(echo "$wid_pick" | cut -d'|' -f1)
-                args="$args wid $wid"
-                ;;
-              *)
-                args="$args $pick"
-                ;;
-            esac
-            ;;
-          choice)
-            options=$(echo "$spec_entry" | ${jq} -r '.[1:][]')
-            pick=$(echo "$options" | ${shoal-dmenu} -p "$action_name: ") || exit 0
-            args="$args $pick"
-            ;;
-          number)
-            prompt=$(echo "$spec_entry" | ${jq} -r '.[1]')
-            num=$(echo "" | ${shoal-dmenu} -p "$prompt: ") || exit 0
-            args="$args $num"
-            ;;
-          string)
-            prompt=$(echo "$spec_entry" | ${jq} -r '.[1]')
-            str=$(echo "" | ${shoal-dmenu} -p "$prompt: ") || exit 0
-            args="$args $str"
-            ;;
-        esac
-      done
-
-      # Step 3: Execute
-      ${tidepoolmsg} dispatch "$action_name" $args
-    '';
   in {
     home.packages = [
       pkgs.grim
       pkgs.slurp
-      pkgs.jq
       pkgs.libnotify
       pkgs.wl-clipboard
       pkgs.playerctl
@@ -183,6 +110,7 @@
     ];
 
     psyclyx.home.programs.shoal.enable = lib.mkDefault true;
+    psyclyx.home.programs.fuzzel.enable = lib.mkDefault true;
 
     services.tidepool = {
       enable = true;
@@ -245,6 +173,12 @@
         "super+f" = "actions/toggle-focus-float";
         "super+shift+f" = "actions/toggle-float";
         "super+ctrl+f" = "actions/gather-floats";
+        # Resize
+        "super+alt+h" = "actions/shrink-width";
+        "super+alt+l" = "actions/grow-width";
+        "super+alt+k" = "actions/shrink-height";
+        "super+alt+j" = "actions/grow-height";
+        "super+alt+r" = "actions/reset-size";
         # Media
         "XF86AudioRaiseVolume" = ''(actions/spawn "pactl" "set-sink-volume" "@DEFAULT_SINK@" "+5%")'';
         "XF86AudioLowerVolume" = ''(actions/spawn "pactl" "set-sink-volume" "@DEFAULT_SINK@" "-5%")'';
@@ -257,6 +191,9 @@
         "super+p" = ''(actions/spawn "${rofi-rbw}")'';
         "super+s" = ''(actions/spawn "${lib.getExe screenshot-menu}")'';
         "super+shift+s" = ''(actions/spawn "${lib.getExe sign-clipboard}")'';
+      };
+      pointerBindings = {
+        "super+left" = "actions/pointer-move-float";
       };
       extraConfig = ''
         (put config :outer-padding 12)
