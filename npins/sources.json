@@ -55,6 +55,19 @@
       "url": "https://github.com/zhaofengli/colmena/archive/349b035a5027f23d88eeb3bc41085d7ee29f18ed.tar.gz",
       "hash": "sha256-QVey3iP3UEoiFVXgypyjTvCrsIlA4ecx6Acaz5C8/PQ="
     },
+    "disko": {
+      "type": "Git",
+      "repository": {
+        "type": "GitHub",
+        "owner": "nix-community",
+        "repo": "disko"
+      },
+      "branch": "master",
+      "submodules": false,
+      "revision": "6e8dc7aa0e65fce67c76e18227a13a7d529f2cdf",
+      "url": "https://github.com/nix-community/disko/archive/6e8dc7aa0e65fce67c76e18227a13a7d529f2cdf.tar.gz",
+      "hash": "sha256-6pvS9rIF9mZRj1ENwu9fDLHeG1JFDTCpRyy6vJhXkTA="
+    },
     "emacs": {
       "type": "Git",
       "repository": {
@@ -133,6 +146,19 @@
       "revision": "aeb2069920742d0d6570089e8b3b8620050bacf2",
       "url": "https://github.com/zhaofengli-wip/nix-homebrew/archive/aeb2069920742d0d6570089e8b3b8620050bacf2.tar.gz",
       "hash": "sha256-WynkkG0hdZ5niYPJUbVg7oMfu8MVwGGzKZ6lKmfa+O8="
+    },
+    "nixos-anywhere": {
+      "type": "Git",
+      "repository": {
+        "type": "GitHub",
+        "owner": "nix-community",
+        "repo": "nixos-anywhere"
+      },
+      "branch": "main",
+      "submodules": false,
+      "revision": "92f82c5196a5f8588be4967e535c4cfd35e85902",
+      "url": "https://github.com/nix-community/nixos-anywhere/archive/92f82c5196a5f8588be4967e535c4cfd35e85902.tar.gz",
+      "hash": "sha256-D+RQ+DaIC/GVwv5lUs7e8jSmh8aPc77Kg/gRjaS25Zk="
     },
     "nixos-apple-silicon": {
       "type": "Git",
@@ -247,9 +273,9 @@
       },
       "branch": "main",
       "submodules": false,
-      "revision": "b53192c53ec2a6975952fe0147393ccf6ba9e837",
-      "url": "https://github.com/psyclyx/shoal/archive/b53192c53ec2a6975952fe0147393ccf6ba9e837.tar.gz",
-      "hash": "sha256-6QyNWjUhwoTyvRkTia6n4tu9B/8MLTh7O58I0dnk5U4="
+      "revision": "d3a9dc0392446dd1687aed8f07753c56b2b15286",
+      "url": "https://github.com/psyclyx/shoal/archive/d3a9dc0392446dd1687aed8f07753c56b2b15286.tar.gz",
+      "hash": "sha256-JZ7Noulr+k2KjjeilGP9yt125L0ww85ESMlgRCNhUkw="
     },
     "sops-nix": {
       "type": "Git",
