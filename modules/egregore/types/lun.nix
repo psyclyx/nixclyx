@@ -20,8 +20,14 @@ egregorLib.mkType {
 
   options = {
     sizeGiB = lib.mkOption {
-      type = lib.types.ints.positive;
-      description = "Allocation size in GiB. Volume blocksize controls under-the-hood layout.";
+      type = lib.types.ints.unsigned;
+      default = 0;
+      description = ''
+        Allocation size in GiB. Required for real luns (asserted
+        non-zero below) — the default of 0 only exists so non-lun
+        entities don't trip the option-without-default check when
+        consumers like psyclyx-link serialize the whole entity tree.
+      '';
     };
     pool = lib.mkOption {
       type = lib.types.str;
@@ -99,6 +105,10 @@ egregorLib.mkType {
       {
         assertion = top.entities ? ${l.network} && top.entities.${l.network}.type == "network";
         message = "lun '${name}' network '${l.network}' must be a network entity";
+      }
+      {
+        assertion = l.sizeGiB > 0;
+        message = "lun '${name}' requires sizeGiB > 0";
       }
     ]
     ++ map (c: {

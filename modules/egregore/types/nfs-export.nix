@@ -18,7 +18,13 @@ egregorLib.mkType {
   options = {
     path = lib.mkOption {
       type = lib.types.str;
-      description = "Path on the producer that's exported.";
+      default = "";
+      description = ''
+        Path on the producer that's exported. Required for real
+        exports (asserted non-empty below) — default is "" only so
+        non-nfs-export entities don't trip the option-without-default
+        check when consumers serialize the whole entity tree.
+      '';
     };
     network = lib.mkOption {
       type = lib.types.str;
@@ -79,6 +85,10 @@ egregorLib.mkType {
       {
         assertion = top.entities ? ${n.network} && top.entities.${n.network}.type == "network";
         message = "nfs-export '${name}' network '${n.network}' must be a network entity";
+      }
+      {
+        assertion = n.path != "";
+        message = "nfs-export '${name}' requires a non-empty path";
       }
     ]
     ++ map (c: {
