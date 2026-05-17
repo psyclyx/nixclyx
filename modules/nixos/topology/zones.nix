@@ -148,24 +148,38 @@
     mySiteName = if me != null then me.host.site or null else null;
     mySite = if mySiteName != null then eg.entities.${mySiteName} or null else null;
     siteDomain = if mySite != null then mySite.site.domain or null else null;
-    net = eg.entities.${siteZoneCfg.network};
-    na = net.attrs;
 
-    # All hosts at this site with an address on the configured network.
+    # ns1 glue uses the first network's gateway. Picking from the
+    # configured preference order keeps the choice predictable when
+    # the site spans multiple gateway'd networks.
+    ns1Net = eg.entities.${lib.head siteZoneCfg.networks};
+    ns1Addr = ns1Net.attrs.gateway4;
+
+    # All hosts at this site — we'll filter to those with a resolvable
+    # address (incl. gateway-derived) on one of the listed networks.
     siteHosts = lib.filterAttrs (_: e:
-      e.type == "host" && e.host.site == mySiteName
-      && e.host.addresses ? ${siteZoneCfg.network}
-      && e.host.addresses.${siteZoneCfg.network}.ipv4 != null
+      e.type == "host" && (e.host.site or null) == mySiteName
     ) eg.entities;
 
-    hostRecords = lib.concatMapStringsSep "\n" (hostname: let
-      addrs = eg.entities.${hostname}.host.addresses.${siteZoneCfg.network};
-      v4 = "${hostname} IN A ${addrs.ipv4}";
-      v6 = lib.optionalString (addrs.ipv6 or null != null)
+    # Pick the first network in the preference list for which this host
+    # has a non-null IPv4 in its resolved addresses (host.attrs.addresses
+    # already folds in gateway-derived entries).
+    pickAddr = h: let
+      candidates = h.attrs.addresses or {};
+      hit = lib.findFirst
+        (n: candidates ? ${n} && (candidates.${n}.ipv4 or null) != null)
+        null
+        siteZoneCfg.networks;
+    in if hit == null then null else candidates.${hit};
+
+    hostRecords = lib.concatStringsSep "\n" (lib.filter (s: s != "") (map (hostname: let
+      addrs = pickAddr eg.entities.${hostname};
+      v4 = lib.optionalString (addrs != null) "${hostname} IN A ${addrs.ipv4}";
+      v6 = lib.optionalString (addrs != null && (addrs.ipv6 or null) != null)
         "\n${hostname} IN AAAA ${addrs.ipv6}";
     in v4 + v6)
-    (lib.sort builtins.lessThan (builtins.attrNames siteHosts));
-  in lib.optionalAttrs (siteDomain != null) {
+    (lib.sort builtins.lessThan (builtins.attrNames siteHosts))));
+  in lib.optionalAttrs (siteDomain != null && siteZoneCfg.networks != []) {
     ${siteDomain} = {
       # Static-only: no DDNS into the site apex. DHCP clients
       # register under their per-VLAN zone (see topology/dhcp.nix).
@@ -176,8 +190,7 @@
         @    IN SOA  ns1.${siteDomain}. admin.${siteDomain}. (
                      1 3600 900 604800 300 )
         @    IN NS   ns1.${siteDomain}.
-        ns1  IN A    ${na.gateway4}
-        ${gwName}  IN A    ${na.gateway4}
+        ns1  IN A    ${ns1Addr}
         ${hostRecords}
       '';
     };
@@ -208,10 +221,15 @@ in {
     };
     siteZone = {
       enable = lib.mkEnableOption "site umbrella zone with host A records";
-      network = lib.mkOption {
-        type = lib.types.str;
-        default = "";
-        description = "Network entity whose addresses populate the site zone.";
+      networks = lib.mkOption {
+        type = lib.types.listOf lib.types.str;
+        default = [];
+        description = ''
+          Ordered preference list of network entities. For each host at
+          the site, the first network in this list for which the host
+          has a non-null IPv4 (including gateway-derived addresses) is
+          used to seed its site-apex A/AAAA record.
+        '';
       };
     };
   };

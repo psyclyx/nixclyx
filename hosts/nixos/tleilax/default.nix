@@ -87,7 +87,7 @@ in
           gatewayHostname = "tleilax";
           siteZone = {
             enable = true;
-            network = "vpn";
+            networks = [ "vpn" ];
           };
         };
         resolver = {
