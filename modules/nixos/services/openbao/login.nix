@@ -66,11 +66,22 @@
           RemainAfterExit = true;
           RuntimeDirectory = "openbao-auth";
           RuntimeDirectoryMode = "0700";
+          # Backstop: if the script gets wedged (e.g. unreachable
+          # endpoint with slow TCP timeouts), systemd kills it. The
+          # in-script loop is bounded to ~20s, so 60s is plenty.
+          TimeoutStartSec = "60s";
         };
+
+        # Hourly retry — if OpenBao was unreachable at boot, we'll pick
+        # up an authenticated token within an hour of it coming back.
+        startAt = "hourly";
 
         environment = {
           BAO_ADDR = cfg.vaultAddr;
           HOME = "/run/openbao-auth";
+          # Cap each `bao login` attempt's HTTP timeout (default is 60s).
+          # We want fail-fast on connection problems, not a long wait.
+          VAULT_CLIENT_TIMEOUT = "5";
         };
 
         path = [
@@ -84,7 +95,10 @@
           PASS=$(cat ${lib.escapeShellArg cfg.authPasswordFile})
 
           LOGIN_FILE=$(mktemp)
-          for i in $(seq 1 120); do
+          # Short retry budget — boot must not wait long on this. The
+          # systemd timer rearms hourly so a transient unreachable
+          # endpoint self-heals later.
+          for i in $(seq 1 5); do
             if bao login -method=userpass -format=json \
                   username=${lib.escapeShellArg cfg.username} \
                   password="$PASS" > "$LOGIN_FILE" 2>/dev/null; then
@@ -99,8 +113,9 @@
           done
           rm -f "$LOGIN_FILE"
 
-          echo "WARNING: Could not authenticate with ${cfg.vaultAddr} after 120 attempts"
-          # Don't fail — dependents using openbao-kv have a fallback path.
+          echo "WARNING: Could not authenticate with ${cfg.vaultAddr} after 5 attempts"
+          # Don't fail — dependents using openbao-kv have a fallback path,
+          # and the hourly timer will retry.
           exit 0
         '';
       };

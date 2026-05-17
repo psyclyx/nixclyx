@@ -22,6 +22,11 @@ in
 
   systemd.network.networks."31-enp3s0.${toString eg.conventions.transitVlan}".linkConfig.MTUBytes = 1500;
 
+  # gateway.nix's "30-enp1s0" unit only lists VLANs iyr gateways in its
+  # `vlan = [...]`. We need enp1s0.210 attached too (for the L2-only
+  # lab listener); list-merge appends.
+  systemd.network.networks."30-enp1s0".vlan = [ "enp1s0.210" ];
+
   services.prometheus.exporters.node.listenAddress = eg.entities.iyr.host.addresses.vpn.ipv4;
   services.prometheus.exporters.smartctl.listenAddress = eg.entities.iyr.host.addresses.vpn.ipv4;
   services.prometheus.exporters.snmp.listenAddress = "127.0.0.1";
@@ -55,7 +60,10 @@ in
     network = {
       # iyr is on the lab VLAN as an L2-only DHCP listener. The gateway
       # projection skips lab (refs.gateway = mdf-agg01), so we add the
-      # VLAN netdev + IP by hand here.
+      # VLAN netdev + IP by hand here. The gateway module's
+      # `vlan = [...]` list on the lan-interface network unit only
+      # includes networks iyr gateways, so we also need to extend it
+      # with enp1s0.210 (done below in systemd.network.networks).
       interfaces = {
         vlans."enp1s0.210" = { id = 210; parent = "enp1s0"; };
         networks."enp1s0.210" = {
