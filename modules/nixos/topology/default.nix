@@ -18,6 +18,8 @@
     ./network.nix
     ./overlay.nix
     ./ingress.nix
+    ./iscsi.nix
+    ./nfs.nix
   ];
 
   extraOptions =
