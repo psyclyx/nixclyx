@@ -302,15 +302,31 @@ def generate(config):
                 f"name={vi['name']}",
                 f"vlan-id={vi['vlan_id']}",
             ]
+            if vi.get("mtu") is not None:
+                parts.append(f"mtu={vi['mtu']}")
             if vi.get("comment"):
                 parts.append(f'comment="{vi["comment"]}"')
             lines.append(" ".join(parts))
         lines.append("")
 
-    # ── L3HW settings ─────────────────────────────────────────
+    # ── L3 hardware offloading ─────────────────────────────────
+    # Two distinct knobs land here:
+    #   system.l3_hw_offload (bool) — enables bridge-level inter-VLAN
+    #     routing offload on Marvell Prestera chipsets (CRS3xx, RouterOS
+    #     7.6+). Maps to `/interface bridge settings set l3-hw-offloading=yes`.
+    #   l3hw_settings.* (dict) — fine-grained switch-chip L3 knobs
+    #     (IPv6 hardware path, ICMP reply behavior). Maps to
+    #     `/interface ethernet switch l3hw-settings set ...`.
+    if system.get("l3_hw_offload"):
+        lines.append("# ── Bridge L3 hardware offloading ──")
+        lines.append(
+            "/interface bridge settings set l3-hw-offloading=yes"
+        )
+        lines.append("")
+
     l3hw = config.get("l3hw_settings", {})
     if l3hw:
-        lines.append("# ── L3 hardware offloading ──")
+        lines.append("# ── L3HW chip settings ──")
         parts = ["/interface ethernet switch l3hw-settings set"]
         if l3hw.get("ipv6_hw") is not None:
             val = "yes" if l3hw["ipv6_hw"] else "no"
