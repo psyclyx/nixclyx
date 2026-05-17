@@ -2,9 +2,14 @@
 let
   eg = config.psyclyx.egregore;
 
-  # VLAN-keyed iteration — overlay/non-VLAN networks (vpn) are excluded.
+  # VLAN-keyed iteration. Only networks for which iyr is the gateway —
+  # switch-routed networks (storage, lab) live downstream of the CRS326
+  # and don't get a VLAN interface here. Overlays (vpn) excluded.
   networkEntities = lib.filterAttrs
-    (_: e: e.type == "network" && e.network.vlan != null)
+    (_: e:
+      e.type == "network"
+      && e.network.vlan != null
+      && (e.attrs.gatewayRef or null) == "iyr")
     eg.entities;
   sortedNets = lib.sort (a: b: a.network.vlan < b.network.vlan) (lib.attrValues networkEntities);
 
@@ -79,7 +84,6 @@ in
         zones = {
           enable = true;
           gatewayHostname = "iyr";
-          extraRecords.stage = "angelbeats IN CNAME lab-stage-vip";
           siteZone = {
             enable = true;
             network = "main";

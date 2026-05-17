@@ -99,6 +99,11 @@
           type = lib.types.nullOr lib.types.str;
           default = null;
         };
+        mtu = lib.mkOption {
+          type = lib.types.nullOr lib.types.ints.positive;
+          default = null;
+          description = "Link MTU in bytes. Null leaves the kernel default.";
+        };
       };
     };
   in {
@@ -228,6 +233,8 @@
         RequiredForOnline = net.requiredForOnline;
       } // lib.optionalAttrs (net.mac != null) {
         MACAddress = net.mac;
+      } // lib.optionalAttrs (net.mtu != null) {
+        MTUBytes = toString net.mtu;
       };
     }
     // lib.optionalAttrs (net.addresses != []) { address = net.addresses; }

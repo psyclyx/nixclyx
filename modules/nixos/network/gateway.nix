@@ -60,16 +60,50 @@
   };
   config = { cfg, config, lib, ... }: let
     eg = config.psyclyx.egregore;
+    hostname = config.psyclyx.nixos.host;
 
-    # VLAN-iterating logic — overlay/non-VLAN networks (vpn) are excluded.
+    # Networks this host is the gateway for (declared explicitly or via
+    # site-level fallback). VLAN-only — overlays (vpn) are excluded.
+    # Networks routed by other entities (e.g. CRS326 acting as L3 router)
+    # are skipped here; we serve their hosts via static routes instead.
     networks = lib.filterAttrs
-      (_: e: e.type == "network" && e.network.vlan != null)
+      (_: e:
+        e.type == "network"
+        && e.network.vlan != null
+        && (e.attrs.gatewayRef or null) == hostname)
       eg.entities;
     dhcpVlans = lib.sort builtins.lessThan
       (lib.mapAttrsToList (_: e: e.network.vlan) networks);
     vlanNameMap = builtins.listToAttrs (lib.mapAttrsToList (name: e:
       lib.nameValuePair (toString e.network.vlan) name
     ) networks);
+
+    # Switch-routed networks we need static routes to. For each routeros
+    # switch with `routedNetworks`, emit a /24 (or appropriate prefix)
+    # next-hopped at the switch's uplinkNetwork IP. The static route
+    # attaches to whichever of our VLAN units shares that uplink network.
+    switches = lib.filterAttrs (_: e: e.type == "routeros") eg.entities;
+    staticRoutesByVlan = let
+      perSwitch = lib.mapAttrsToList (_swName: sw: let
+        r = sw.routeros;
+        uplinkName =
+          if r.uplinkNetwork != null then r.uplinkNetwork
+          else r.mgmtNetwork;
+        uplinkNet = eg.entities.${uplinkName};
+        nextHopV4 = r.addresses.${uplinkName}.ipv4 or null;
+      in map (netName: {
+        uplinkVlan = uplinkNet.network.vlan;
+        destSubnet = "${eg.entities.${netName}.attrs.network4}/${toString eg.entities.${netName}.attrs.prefixLen}";
+        gateway = nextHopV4;
+      }) sw.attrs.routedNetworks)
+        switches;
+      flat = builtins.filter (r: r.gateway != null) (lib.flatten perSwitch);
+    in lib.foldl' (acc: r:
+      let vid = toString r.uplinkVlan; in
+      acc // {
+        ${vid} = (acc.${vid} or []) ++ [{ Destination = r.destSubnet; Gateway = r.gateway; }];
+      }
+    ) {} flat;
 
     transitVlan = eg.conventions.transitVlan;
     vlanIface = id: "${cfg.lanInterface}.${builtins.toString id}";
@@ -100,7 +134,8 @@
         lib.optional (internalDomain != null && internalDomain != "") "~${internalDomain}"
         ++ lib.optional (siteDomain != null) siteDomain
         ++ [ na.zoneName ];
-    in lib.nameValuePair "31-${vlanIface vlanId}" {
+      extraRoutes = staticRoutesByVlan.${toString vlanId} or [];
+    in lib.nameValuePair "31-${vlanIface vlanId}" ({
       matchConfig.Name = vlanIface vlanId;
       address = [
         "${na.gateway4}/${toString na.prefixLen}"
@@ -124,7 +159,9 @@
         { Prefix = "${eg.ipv6UlaPrefix}:${net.network.ulaSubnetHex}::/64"; }
       ];
       linkConfig.RequiredForOnline = "routable";
-    };
+    } // lib.optionalAttrs (extraRoutes != []) {
+      routes = extraRoutes;
+    });
 
     # Initrd VLAN networking.
     initrdVlanIds = map (name: eg.entities.${name}.network.vlan) cfg.initrdVlans;

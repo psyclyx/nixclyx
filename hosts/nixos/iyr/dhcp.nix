@@ -5,9 +5,9 @@
     pools = {
       main  = { network = "main";  ipv4Range = { start = "10.0.10.100";  end = "10.0.10.199"; }; };
       infra = { network = "infra"; ipv4Range = { start = "10.0.25.100";  end = "10.0.25.199"; }; };
-      prod  = { network = "prod";  ipv4Range = { start = "10.0.30.100";  end = "10.0.30.199"; }; };
-      stage = { network = "stage"; ipv4Range = { start = "10.0.31.100";  end = "10.0.31.199"; }; };
-      data  = { network = "data";  ipv4Range = { start = "10.0.50.100";  end = "10.0.50.199"; }; };
+      # prod/stage/data networks were retired in the 2026 storage-host
+      # rework. storage(200) and lab(210) are routed by mdf-agg01 and use
+      # static addressing — no DHCP pools here.
       guest = { network = "guest"; ipv4Range = { start = "10.0.100.10";  end = "10.0.100.249"; }; };
       iot   = { network = "iot";   ipv4Range = { start = "10.0.110.10";  end = "10.0.110.249"; }; };
       mgmt  = {

@@ -47,11 +47,13 @@
 
   # Generate L3 network entries for all host networks.
   mkNetworkEntry = netName: _addr: let
+    netEnt = eg.entities.${netName};
     device = me.interfaces.${netName}.device;
     addr = me.addresses.${netName};
-    net = eg.entities.${netName}.attrs;
+    net = netEnt.attrs;
     prefixLen = toString net.prefixLen;
     isDefault = netName == cfg.defaultNetwork;
+    mtu = netEnt.network.mtu or 1500;
   in {
     name = device;
     value = {
@@ -60,13 +62,16 @@
         ++ lib.optional (addr.ipv6 or null != null) "${addr.ipv6}/64";
       ipv6AcceptRA = true;
       requiredForOnline = if isDefault then "routable" else "no";
+      # Only emit non-default MTU so existing 1500-byte interfaces keep
+      # leaving the kernel default.
+      mtu = if mtu != 1500 then mtu else null;
     }
     // (if isDefault then {
       gateway = net.gateway4;
       dns = [net.gateway4];
     } else {
       policyRouting = {
-        table = eg.entities.${netName}.network.vlan;
+        table = netEnt.network.vlan;
         gateway = net.gateway4;
         subnet = "${net.network4}/${toString net.prefixLen}";
       };
