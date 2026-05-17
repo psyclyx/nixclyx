@@ -44,17 +44,26 @@ in
     };
 
     # PXE-boot infrastructure for the lab. iyr serves the iPXE chainload
-    # binary over TFTP + per-host netboot bundles over HTTP. Clients on
-    # the lab VLAN reach 10.0.10.1 through the CRS326's hardware-offloaded
-    # routing. DHCP boot options for those clients still need to be wired
-    # (either by adding a Kea subnet for the lab VLAN with a DHCP relay
-    # on the CRS326, or by giving iyr an L2 presence on the lab VLAN).
+    # binary over TFTP + per-host netboot bundles over HTTP. Clients
+    # DHCP-discover on the lab VLAN — iyr participates as an L2-only
+    # listener there (the lab VLAN is gateway'd by mdf-agg01, not iyr).
     topology.pxe = {
       serve = true;
-      bindAddress = "10.0.10.1";
+      bindAddress = "10.0.210.2";
     };
 
     network = {
+      # iyr is on the lab VLAN as an L2-only DHCP listener. The gateway
+      # projection skips lab (refs.gateway = mdf-agg01), so we add the
+      # VLAN netdev + IP by hand here.
+      interfaces = {
+        vlans."enp1s0.210" = { id = 210; parent = "enp1s0"; };
+        networks."enp1s0.210" = {
+          addresses = [ "10.0.210.2/24" ];
+          requiredForOnline = "no";
+        };
+      };
+
       gateway = {
         enable = true;
         lanInterface = "enp1s0";

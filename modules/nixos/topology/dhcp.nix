@@ -6,10 +6,17 @@
   hosts = lib.filterAttrs (_: e: e.type == "host") eg.entities;
 
   # Hosts with MAC addresses that have an interface on a given network.
+  # PXE-mode hosts whose pxeInterface lands on this network are skipped:
+  # the PXE projection emits their reservation separately, with boot-file-name
+  # and next-server. Emitting both here would duplicate the reservation
+  # by MAC, which Kea rejects.
   managedHostsOnNetwork = network:
     lib.sort builtins.lessThan
       (builtins.attrNames (lib.filterAttrs (_: e:
-        e.host.mac != {} && e.host.interfaces ? ${network}
+        e.host.mac != {}
+        && e.host.interfaces ? ${network}
+        && !((e.host.boot.mode or "local") == "pxe"
+             && (e.host.boot.pxeInterface or null) == network)
       ) hosts));
 
   # MAC address for a host's physical interface on a network.

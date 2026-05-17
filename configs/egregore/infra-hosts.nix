@@ -49,10 +49,19 @@
             ];
           };
           # iyr is the apt site gateway; the gateway projection wires
-          # all VLANs onto enp1s0. Declaring main here lets data-driven
+          # most VLANs onto enp1s0. Declaring main here lets data-driven
           # projections (e.g. overlay shortcuts) target the right unit.
-          interfaces.main.device = "enp1s0.10";
-          addresses.vpn.ipv4 = "10.157.0.2";
+          # iyr also participates on the lab VLAN as an L2-only DHCP
+          # listener — lab is gateway'd by mdf-agg01, but iyr serves
+          # the boot-file-name / next-server options for PXE clients.
+          interfaces = {
+            main.device = "enp1s0.10";
+            lab.device  = "enp1s0.210";
+          };
+          addresses = {
+            vpn.ipv4 = "10.157.0.2";
+            lab.ipv4 = "10.0.210.2";
+          };
           sshPort = 17891;
           deployAddress = "iyr.apt.psyclyx.net";
           roles = ["server" "router"];
