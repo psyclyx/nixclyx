@@ -39,7 +39,16 @@
             };
             options = lib.mkOption {
               type = lib.types.listOf lib.types.str;
-              default = ["zfsutil"];
+              default = [ "defaults" ];
+              description = ''
+                Mount options. "defaults" is fine for datasets that
+                use a legacy mountpoint (the common case when systemd
+                .mount units own the mount). Use ["zfsutil"] only if
+                the dataset has a native ZFS mountpoint property —
+                "zfsutil" is documented as a private flag for the
+                `zfs` utility's internal mounts and conflicts with
+                legacy datasets.
+              '';
             };
             neededForBoot = lib.mkOption {
               type = lib.types.bool;

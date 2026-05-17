@@ -132,32 +132,36 @@
     hostId = "6fa90ede";
     arc.maxBytes = 137438953472; # 128 GiB
 
+    # NOTE: all datasets below set `options.mountpoint = "legacy"` in
+    # the disko block above, so DO NOT pass `zfsutil`. `mount -t zfs -o
+    # zfsutil` is for native-mountpoint datasets; with legacy it fails
+    # ("cannot be mounted using 'zfs mount'") and stage-1 drops to
+    # emergency mode.
     datasets = {
       "tank/persist/lab-4" = {
         mountpoint = "/persist";
-        options = [ "zfsutil" ];
+        options = [ "defaults" ];
         # Stage-1 needs /persist available so preservation can bind
         # /etc/machine-id, /etc/ssh/ssh_host_*, etc. before systemd
-        # and sshd read them. Tank is imported in initrd; the operator
-        # types the encryption-root passphrase at iLO console (until
-        # tang/clevis lands).
+        # and sshd read them. Tank is imported in initrd; clevis pulls
+        # the key from iyr's tang to avoid console interaction.
         neededForBoot = true;
       };
       "tank/nix-shared" = {
         mountpoint = "/srv/nfs/nix";
-        options = [ "zfsutil" ];
+        options = [ "defaults" ];
       };
       "tank/persist/lab-1" = {
         mountpoint = "/srv/nfs/persist/lab-1";
-        options = [ "zfsutil" ];
+        options = [ "defaults" ];
       };
       "tank/persist/lab-2" = {
         mountpoint = "/srv/nfs/persist/lab-2";
-        options = [ "zfsutil" ];
+        options = [ "defaults" ];
       };
       "tank/persist/lab-3" = {
         mountpoint = "/srv/nfs/persist/lab-3";
-        options = [ "zfsutil" ];
+        options = [ "defaults" ];
       };
     };
   };
