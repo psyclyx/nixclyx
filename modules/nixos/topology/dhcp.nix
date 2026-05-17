@@ -32,28 +32,29 @@
   # routed by something other than the pool's gateway. If a switch in
   # this site L3-routes some other network, clients on this pool should
   # send traffic for that network directly to the switch's IP on this
-  # network — not via the pool's primary gateway (iyr), which would
-  # cause asymmetric routing and break stateful forwarding at iyr.
+  # network — not via the pool's primary gateway, which would cause
+  # asymmetric routing and break stateful forwarding at the gateway.
+  #
+  # RFC 3442 requires option-121-aware clients to IGNORE option 3
+  # (default router) when option 121 is present. So whenever we emit
+  # option 121 we must also include a default 0.0.0.0/0 entry, or
+  # clients drop their default route entirely.
   #
   # Format: "<dst-prefix>-<via>, <dst-prefix>-<via>, ..." per Kea's
   # built-in option 121 type.
   classlessRoutesFor = pool: let
     sitePool = pool.network;
-    poolSite = (eg.entities.${sitePool}.network.site or null);
+    poolNet = eg.entities.${sitePool}.attrs;
 
     switches = lib.filterAttrs (_: e: e.type == "routeros") eg.entities;
 
     # All routed networks across all switches in this site, paired with
     # the switch's IP on the POOL'S network (i.e. the next hop visible
     # to a client on this pool).
-    routes = lib.flatten (lib.mapAttrsToList (swName: sw: let
+    switchRoutes = lib.flatten (lib.mapAttrsToList (_: sw: let
       r = sw.routeros;
       nextHopOnPoolNet = r.addresses.${sitePool}.ipv4 or null;
-      routedHere = lib.filter (n:
-        # Only emit if this network isn't directly reachable from the
-        # pool (i.e. the destination's not the pool itself).
-        n != sitePool
-      ) sw.attrs.routedNetworks;
+      routedHere = lib.filter (n: n != sitePool) sw.attrs.routedNetworks;
     in
       if nextHopOnPoolNet == null then []
       else map (netName: let
@@ -63,6 +64,14 @@
         via = nextHopOnPoolNet;
       }) routedHere
     ) switches);
+
+    # If we emit any classless routes, we must also re-state the
+    # default route — RFC 3442 clients otherwise lose it.
+    defaultRoute = lib.optional (switchRoutes != []) {
+      dst = "0.0.0.0/0";
+      via = poolNet.gateway4;
+    };
+    routes = switchRoutes ++ defaultRoute;
   in
     lib.concatMapStringsSep ", " (r: "${r.dst}-${r.via}") routes;
 
