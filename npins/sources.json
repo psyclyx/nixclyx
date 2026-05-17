@@ -121,6 +121,19 @@
       "url": "https://github.com/numtide/llm-agents.nix/archive/c741913095c4815f6651aa0a2c24b3ce15e414e4.tar.gz",
       "hash": "sha256-7FkBnR56KZ8RwY5kPd3ans8f68IYjF1J66gOUlLsiLA="
     },
+    "microvm.nix": {
+      "type": "Git",
+      "repository": {
+        "type": "GitHub",
+        "owner": "astro",
+        "repo": "microvm.nix"
+      },
+      "branch": "main",
+      "submodules": false,
+      "revision": "a7a7009064cec75d9da652c6723412ce27b9bc44",
+      "url": "https://github.com/astro/microvm.nix/archive/a7a7009064cec75d9da652c6723412ce27b9bc44.tar.gz",
+      "hash": "sha256-WT2iimtOBZM/6AcZeBoJU2EgUSaywtlItsEgNkZBda0="
+    },
     "nix-darwin": {
       "type": "Git",
       "repository": {
