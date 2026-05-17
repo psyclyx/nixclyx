@@ -20,6 +20,7 @@
     ./ingress.nix
     ./iscsi.nix
     ./nfs.nix
+    ./pxe.nix
   ];
 
   extraOptions =

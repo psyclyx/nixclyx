@@ -43,6 +43,17 @@ in
       gpu.intel.enable = true;
     };
 
+    # PXE-boot infrastructure for the lab. iyr serves the iPXE chainload
+    # binary over TFTP + per-host netboot bundles over HTTP. Clients on
+    # the lab VLAN reach 10.0.10.1 through the CRS326's hardware-offloaded
+    # routing. DHCP boot options for those clients still need to be wired
+    # (either by adding a Kea subnet for the lab VLAN with a DHCP relay
+    # on the CRS326, or by giving iyr an L2 presence on the lab VLAN).
+    topology.pxe = {
+      serve = true;
+      bindAddress = "10.0.10.1";
+    };
+
     network = {
       gateway = {
         enable = true;

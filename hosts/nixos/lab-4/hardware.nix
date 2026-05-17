@@ -1,7 +1,12 @@
-{ ... }:
+{ lib, ... }:
 {
   psyclyx.nixos = {
     hardware.presets.hpe.dl360-gen9.enable = true;
+
+    # PXE-boot only — no on-disk bootloader. The base role defaults
+    # systemd-boot on, which conflicts with the netboot module's
+    # tmpfs root + ramdisk-supplied kernel.
+    boot.systemd.loader.enable = lib.mkForce false;
 
     network = {
       interfaces = {
