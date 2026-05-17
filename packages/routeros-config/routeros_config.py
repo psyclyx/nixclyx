@@ -123,8 +123,46 @@ def generate(config):
     lines.append("")
 
     # ── System ──────────────────────────────────────────────────
+    #
+    # User accounts and SSH service come FIRST so that even if a later
+    # section errors out mid-script, we retain SSH access to recover.
+    # After `system reset-configuration no-defaults=yes`, the switch has
+    # no users and ssh is disabled — we have to (re)create both before
+    # anything else.
     lines.append("# ── System ──")
     lines.append(f'/system identity set name="{identity}"')
+
+    ssh = system.get("ssh", {})
+    ssh_keys = ssh.get("keys", [])
+
+    # Unique users mentioned in the SSH keys list (typically just "admin").
+    users_needed = sorted({k.get("user", "admin") for k in ssh_keys})
+    if users_needed:
+        lines.append("# ── User accounts (lockout-safety: do this before everything else) ──")
+        for user in users_needed:
+            # Idempotent: try add, fall back to set if user already exists.
+            # password="" + key-only login is the canonical RouterOS
+            # pattern. Group `full` so the SSH-key user can run anything.
+            lines.append(
+                f':do {{ /user add name={user} group=full password="" }} '
+                f'on-error={{ /user set [find name={user}] group=full password="" }}'
+            )
+        lines.append("/ip service set [find name=ssh] disabled=no port=22")
+        lines.append("")
+
+    # SSH keys (now that the user exists).
+    if ssh_keys:
+        lines.append("# ── SSH keys ──")
+        for idx, k in enumerate(ssh_keys, 1):
+            user = k.get("user", "admin")
+            key = k["key"]
+            fname = f"admin-key{idx}.pub"
+            lines.append(f'/file add name={fname} contents="{key}"')
+            lines.append(
+                f"/user ssh-keys import public-key-file={fname} user={user}"
+            )
+            lines.append(f":do {{ /file remove {fname} }} on-error={{}}")
+        lines.append("")
 
     tz = system.get("timezone")
     if tz:
@@ -139,7 +177,6 @@ def generate(config):
         lines.append("/system ntp client set enabled=yes")
         lines.append(f"/system ntp client servers add address={ntp[0]}")
 
-    ssh = system.get("ssh", {})
     hkt = ssh.get("host_key_type")
     if hkt:
         lines.append(f"/ip ssh set host-key-type={hkt}")
@@ -154,20 +191,6 @@ def generate(config):
         if snmp.get("location"):
             parts.append(f'location="{snmp["location"]}"')
         lines.append(" ".join(parts))
-
-    # SSH keys
-    ssh_keys = ssh.get("keys", [])
-    if ssh_keys:
-        lines.append("# ── SSH keys ──")
-        for idx, k in enumerate(ssh_keys, 1):
-            user = k.get("user", "admin")
-            key = k["key"]
-            fname = f"admin-key{idx}.pub"
-            lines.append(f'/file add name={fname} contents="{key}"')
-            lines.append(
-                f"/user ssh-keys import public-key-file={fname} user={user}"
-            )
-            lines.append(f":do {{ /file remove {fname} }} on-error={{}}")
 
     lines.append("")
 
