@@ -27,6 +27,19 @@ in
   # lab listener); list-merge appends.
   systemd.network.networks."30-enp1s0".vlan = [ "enp1s0.210" ];
 
+  # Tang server for clevis-based ZFS unlock on lab hosts. Lab-4's
+  # initrd reaches us at our lab-VLAN IP and pulls the ephemeral
+  # decryption material to unseal its tank/persist key. Listen + IP
+  # allow-list are scoped to the lab subnet so the service isn't
+  # reachable from elsewhere.
+  services.tang = let
+    labNet = eg.entities.lab.attrs;
+  in {
+    enable = true;
+    listenStream = [ "${eg.entities.iyr.host.addresses.lab.ipv4}:7654" ];
+    ipAddressAllow = [ "${labNet.network4}/${toString labNet.prefixLen}" ];
+  };
+
   services.prometheus.exporters.node.listenAddress = eg.entities.iyr.host.addresses.vpn.ipv4;
   services.prometheus.exporters.smartctl.listenAddress = eg.entities.iyr.host.addresses.vpn.ipv4;
   services.prometheus.exporters.snmp.listenAddress = "127.0.0.1";
@@ -114,7 +127,10 @@ in
           gatewayHostname = "iyr";
           siteZone = {
             enable = true;
-            network = "main";
+            # main first (iyr/sigil), then lab so lab hosts (no main
+            # address since they live behind the L3 switch) still land
+            # at <host>.apt.psyclyx.net via their lab-VLAN IP.
+            networks = [ "main" "lab" ];
           };
         };
         resolver = {

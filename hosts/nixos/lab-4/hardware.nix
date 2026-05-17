@@ -11,9 +11,10 @@
     # ZFS in initrd so /persist (encrypted root tank/persist/lab-4) is
     # available BEFORE stage-2 — preservation needs /persist mounted
     # to bind machine-id, SSH host keys, etc. before systemd and sshd
-    # read them. Passphrase prompts at the iLO console (initrd-ssh
-    # would need a sops-managed initrd host key baked at build time,
-    # which we'll wire up alongside tang/clevis later).
+    # read them. Clevis (below) unseals the key against iyr's tang
+    # server, so no console interaction is needed in the normal case;
+    # if tang is unreachable the upstream zfs initrd falls through to
+    # a passphrase prompt at the iLO console.
     filesystems.zfs.encryption.enable = true;
 
     network = {
@@ -46,6 +47,19 @@
   };
 
   boot.kernel.sysctl."kernel.sched_autogroup_enabled" = 0;
+
+  # Clevis unlocks tank's encryption roots (persist + luns) by fetching
+  # ephemeral key material from iyr's tang server. The .jwe blobs are
+  # safe to keep in the repo: without the matching tang key (kept on
+  # iyr's /var/lib/tang, never persisted here), they're inert. Both
+  # encryption roots share the same passphrase, so the same JWE works
+  # for both.
+  boot.initrd.clevis = {
+    enable = true;
+    useTang = true;
+    devices."tank/persist".secretFile = ./persist.jwe;
+    devices."tank/luns".secretFile = ./persist.jwe;
+  };
 
   # Lab-4's root is tmpfs (PXE-booted). /persist (on tank, encrypted)
   # is where identity continuity lives — machine-id stays stable across
