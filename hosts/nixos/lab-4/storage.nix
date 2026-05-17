@@ -1,19 +1,38 @@
-{ ... }:
+{ config, ... }:
+let
+  eg = config.psyclyx.egregore;
+in
 {
-  psyclyx.nixos.topology = {
-    # Project nfs-export entities into services.nfs-server.exports here +
-    # fileSystems on each consumer.
-    nfs.enable = true;
+  psyclyx.nixos = {
+    # NFS shares + iSCSI targets/initiators projected from egregore data.
+    topology.nfs.enable = true;
+    topology.iscsi.enable = true;
 
-    # Project lun entities. No iSCSI consumers yet (no VMs spun up), so
-    # this is a no-op until LUNs appear.
-    iscsi.enable = true;
+    # Single-node OpenBao for PKI. The Raft cluster has one member;
+    # transit-unseal comes from iyr's seal oracle. iyr's openbao-login
+    # and tleilax's openbao-cert-publish target this instance on the
+    # lab VLAN (10.0.210.14:8200).
+    #
+    # The transitTokenFile / authPasswordFile paths are sops-managed,
+    # so the privclyx layer at hosts/nixos/lab-4.nix fills them in;
+    # everything intrinsic to the cluster shape lives here.
+    services.openbao = {
+      enable = true;
+      clusterNodes = [ "lab-4" ];
+      dataNetwork = "lab";
+      settings.transitAddress =
+        "http://${eg.entities.iyr.attrs.addresses.main.ipv4 or "10.0.10.1"}:8200";
+
+      pki = {
+        enable = true;
+        commonName = "psyclyx Lab CA";
+        roles = [
+          {
+            name = "postgres-server";
+            allowedDomains = "psyclyx.net";
+          }
+        ];
+      };
+    };
   };
-
-  # Single-node OpenBao for PKI cert issuance — iyr's openbao-login
-  # talks here over the lab VLAN. The full Raft-clustered setup is on
-  # hold until lab-1..3 come back online; for now lab-4 runs OpenBao
-  # standalone using the existing services/openbao/cluster.nix module.
-  #
-  # services.openbao.cluster wiring goes here in a follow-up commit.
 }
