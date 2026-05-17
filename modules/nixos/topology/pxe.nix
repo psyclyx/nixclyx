@@ -82,7 +82,16 @@
         # to switch into ("failed to find nixos closure" then emergency
         # shell). Matches the cmdline nixpkgs' netboot module emits in
         # its own iPXE script.
+        #
+        # ip=dhcp bootstraps initrd networking from the kernel directly
+        # (no systemd-networkd dance), which is what clevis-tang needs
+        # to be able to reach the tang server BEFORE the ZFS encryption
+        # key load. Relying on initrd systemd-networkd alone was racy
+        # here: wait-online would time out, the network-online target
+        # would still fire, and the clevis decrypt would then fail with
+        # "Error communicating with server" → emergency mode.
         cmdline = "init=${nodeCfg.system.build.toplevel}/init "
+          + "ip=dhcp "
           + lib.concatStringsSep " " nodeCfg.boot.kernelParams;
       };
     }
