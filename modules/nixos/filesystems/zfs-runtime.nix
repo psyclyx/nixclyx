@@ -70,9 +70,10 @@
         hostId = cfg.hostId;
         pools = [ cfg.poolName ];
         arc.maxBytes = cfg.arc.maxBytes;
-        # The runtime model loads encryption keys per-dataset post-boot
-        # (operator or seal oracle), not via initrd passphrase prompts.
-        encryption.enable = false;
+        # Encryption-credential handling (initrd prompt vs deferred
+        # post-boot vs tang/clevis) is host policy; let the underlying
+        # filesystems.zfs module default (true → initrd prompt) apply
+        # and let hosts override as needed.
       };
     };
 

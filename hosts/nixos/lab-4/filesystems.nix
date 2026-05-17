@@ -9,12 +9,11 @@
     "${modulesPath}/installer/netboot/netboot.nix"
   ];
 
-  # --- Pool layout (used by nixos-anywhere on first install) -----------
+  # --- Pool layout (used by disko on first install) --------------------
   #
-  # 8 × 800 GB SSDs as 4 mirrored vdevs (~3.2 TiB usable). Disk by-id
-  # paths must be filled in before running nixos-anywhere; the names
-  # used here (SSD0..SSD7) are placeholders the operator replaces with
-  # the real device IDs from `ls -la /dev/disk/by-id/`.
+  # 8 × 800 GB SSDs as a single RAIDZ2 vdev (~4.8 TiB usable, any
+  # 2 disks can fail). Random-IO penalty vs 4× mirror is small on SSDs
+  # and the capacity gain is worth it at current SSD prices.
   disko.devices = {
     disk =
       let
@@ -34,14 +33,14 @@
         };
       in
       {
-        ssd0 = mkDisk "PLACEHOLDER-SSD0";
-        ssd1 = mkDisk "PLACEHOLDER-SSD1";
-        ssd2 = mkDisk "PLACEHOLDER-SSD2";
-        ssd3 = mkDisk "PLACEHOLDER-SSD3";
-        ssd4 = mkDisk "PLACEHOLDER-SSD4";
-        ssd5 = mkDisk "PLACEHOLDER-SSD5";
-        ssd6 = mkDisk "PLACEHOLDER-SSD6";
-        ssd7 = mkDisk "PLACEHOLDER-SSD7";
+        ssd0 = mkDisk "wwn-0x55cd2e404c258d01"; # sda LK0800GEYMU
+        ssd1 = mkDisk "wwn-0x55cd2e404c3a6735"; # sdb LK0800GEYMU
+        ssd2 = mkDisk "wwn-0x55cd2e404c157a56"; # sdc INTEL SSDSC2BX800G4
+        ssd3 = mkDisk "wwn-0x55cd2e404c2594de"; # sdd LK0800GEYMU
+        ssd4 = mkDisk "wwn-0x55cd2e404c25f5ea"; # sde LK0800GEYMU
+        ssd5 = mkDisk "wwn-0x5000cca04fb8e258"; # sdf HUSMM1680ASS204
+        ssd6 = mkDisk "wwn-0x5000cca02b04a3ec"; # sdg MO0800JDVEV
+        ssd7 = mkDisk "wwn-0x5000cca02b11aab0"; # sdh MO0800JDVEV
       };
 
     zpool.tank = {
@@ -49,10 +48,10 @@
       mode = {
         topology.type = "topology";
         topology.vdev = [
-          { mode = "mirror"; members = [ "ssd0" "ssd1" ]; }
-          { mode = "mirror"; members = [ "ssd2" "ssd3" ]; }
-          { mode = "mirror"; members = [ "ssd4" "ssd5" ]; }
-          { mode = "mirror"; members = [ "ssd6" "ssd7" ]; }
+          {
+            mode = "raidz2";
+            members = [ "ssd0" "ssd1" "ssd2" "ssd3" "ssd4" "ssd5" "ssd6" "ssd7" ];
+          }
         ];
       };
 
@@ -137,11 +136,12 @@
       "tank/persist/lab-4" = {
         mountpoint = "/persist";
         options = [ "zfsutil" ];
-        # NOT neededForBoot — pre-disko, the tank pool doesn't exist
-        # yet, and stage-1 would hang waiting. Best-effort: if the
-        # pool's there we mount; if not, boot proceeds without /persist
-        # (SSH host keys regenerated each boot until disko runs).
-        neededForBoot = false;
+        # Stage-1 needs /persist available so preservation can bind
+        # /etc/machine-id, /etc/ssh/ssh_host_*, etc. before systemd
+        # and sshd read them. Tank is imported in initrd; the operator
+        # types the encryption-root passphrase at iLO console (until
+        # tang/clevis lands).
+        neededForBoot = true;
       };
       "tank/nix-shared" = {
         mountpoint = "/srv/nfs/nix";
