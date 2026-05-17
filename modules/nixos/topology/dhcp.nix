@@ -28,11 +28,50 @@
     if h.mac ? ${physDev} then h.mac.${physDev}
     else h.mac.eno1;  # bond VLANs inherit the bond MAC
 
+  # Classless static routes (DHCP option 121, RFC 3442) for networks
+  # routed by something other than the pool's gateway. If a switch in
+  # this site L3-routes some other network, clients on this pool should
+  # send traffic for that network directly to the switch's IP on this
+  # network — not via the pool's primary gateway (iyr), which would
+  # cause asymmetric routing and break stateful forwarding at iyr.
+  #
+  # Format: "<dst-prefix>-<via>, <dst-prefix>-<via>, ..." per Kea's
+  # built-in option 121 type.
+  classlessRoutesFor = pool: let
+    sitePool = pool.network;
+    poolSite = (eg.entities.${sitePool}.network.site or null);
+
+    switches = lib.filterAttrs (_: e: e.type == "routeros") eg.entities;
+
+    # All routed networks across all switches in this site, paired with
+    # the switch's IP on the POOL'S network (i.e. the next hop visible
+    # to a client on this pool).
+    routes = lib.flatten (lib.mapAttrsToList (swName: sw: let
+      r = sw.routeros;
+      nextHopOnPoolNet = r.addresses.${sitePool}.ipv4 or null;
+      routedHere = lib.filter (n:
+        # Only emit if this network isn't directly reachable from the
+        # pool (i.e. the destination's not the pool itself).
+        n != sitePool
+      ) sw.attrs.routedNetworks;
+    in
+      if nextHopOnPoolNet == null then []
+      else map (netName: let
+        destNet = eg.entities.${netName};
+      in {
+        dst = "${destNet.attrs.network4}/${toString destNet.attrs.prefixLen}";
+        via = nextHopOnPoolNet;
+      }) routedHere
+    ) switches);
+  in
+    lib.concatMapStringsSep ", " (r: "${r.dst}-${r.via}") routes;
+
   mkSubnet4 = _poolName: pool: let
     net = eg.entities.${pool.network};
     na = net.attrs;
     siteEntity = eg.entities.${net.network.site};
     siteDomain = siteEntity.site.domain;
+    classless = classlessRoutesFor pool;
   in {
     id = na.vlan;
     subnet = "${na.prefix}.0/${toString na.prefixLen}";
@@ -42,7 +81,11 @@
       { name = "domain-name-servers"; data = na.gateway4; }
       { name = "domain-name"; data = siteDomain; }
       { name = "domain-search"; data = "${siteDomain}, ${na.zoneName}"; }
-    ];
+    ]
+    ++ lib.optional (classless != "") {
+      name = "classless-static-route";
+      data = classless;
+    };
     # Per-VLAN qualifying-suffix: each interface registers under its
     # own zone (e.g. lab-1.main.apt.psyclyx.net) instead of the site
     # apex. The site apex is static-only (siteZone seeds A records

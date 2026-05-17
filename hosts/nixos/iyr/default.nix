@@ -140,7 +140,11 @@ in
       firewall =
         let
           vlanIface = id: "enp1s0.${builtins.toString id}";
-          internal = [ "enp1s0" ] ++ map vlanIface dhcpVlans;
+          # `enp1s0.210` is included even though iyr doesn't gateway lab
+          # (the gateway projection filters it out of dhcpVlans). iyr
+          # is on lab as an L2-only DHCP listener; firewall-wise it's
+          # a regular LAN interface.
+          internal = [ "enp1s0" "enp1s0.210" ] ++ map vlanIface dhcpVlans;
         in
         {
           enable = true;

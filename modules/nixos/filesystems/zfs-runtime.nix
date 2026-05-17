@@ -91,5 +91,13 @@
     # fileSystems entries to avoid racing systemd's generated .mount
     # units against zfs-mount.service.
     systemd.services.zfs-mount.wantedBy = lib.mkForce [];
+
+    # Fail-fast on first boot when the pool doesn't exist yet (pre-disko).
+    # Default upstream timeout is several minutes and there's no point
+    # blocking multi-user.target waiting for a pool that needs operator
+    # action to create. Boot proceeds; bring the pool up and the import
+    # service will succeed on next start (or restart manually).
+    systemd.services."zfs-import-${cfg.poolName}".serviceConfig.TimeoutStartSec =
+      lib.mkDefault "30s";
   };
 }
