@@ -77,7 +77,13 @@
         inherit mac;
         kernel = "${nodeCfg.system.build.kernel}/bzImage";
         initrd = "${nodeCfg.system.build.netbootRamdisk}/initrd";
-        cmdline = lib.concatStringsSep " " nodeCfg.boot.kernelParams;
+        # init= is the system toplevel's stage-2 init — without it,
+        # stage-1 mounts the squashfs but doesn't know which closure
+        # to switch into ("failed to find nixos closure" then emergency
+        # shell). Matches the cmdline nixpkgs' netboot module emits in
+        # its own iPXE script.
+        cmdline = "init=${nodeCfg.system.build.toplevel}/init "
+          + lib.concatStringsSep " " nodeCfg.boot.kernelParams;
       };
     }
     else null;

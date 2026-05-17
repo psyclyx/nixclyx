@@ -78,10 +78,24 @@
       lib.nameValuePair (toString e.network.vlan) name
     ) networks);
 
+    # Networks this host directly participates in (egregore-declared
+    # interfaces on the host). Used to skip static-route emission for
+    # subnets we have a connected interface on — the kernel would prefer
+    # the static route's gateway over the connected route's link-scope
+    # source, and replies go out the wrong interface with the wrong src
+    # IP. Caused atftpd → PXE-client replies to land on the lan VLAN
+    # with src=10.0.10.1 instead of src=10.0.210.2 on the lab VLAN.
+    myHost = eg.entities.${hostname}.host or null;
+    myConnectedNetworks =
+      if myHost == null then []
+      else lib.attrNames (myHost.interfaces or {});
+
     # Switch-routed networks we need static routes to. For each routeros
     # switch with `routedNetworks`, emit a /24 (or appropriate prefix)
     # next-hopped at the switch's uplinkNetwork IP. The static route
     # attaches to whichever of our VLAN units shares that uplink network.
+    # Skip networks this host has a connected interface on — the kernel
+    # will use the connected route directly.
     switches = lib.filterAttrs (_: e: e.type == "routeros") eg.entities;
     staticRoutesByVlan = let
       perSwitch = lib.mapAttrsToList (_swName: sw: let
@@ -92,12 +106,15 @@
         uplinkNet = eg.entities.${uplinkName};
         nextHopV4 = r.addresses.${uplinkName}.ipv4 or null;
       in map (netName: {
+        inherit netName;
         uplinkVlan = uplinkNet.network.vlan;
         destSubnet = "${eg.entities.${netName}.attrs.network4}/${toString eg.entities.${netName}.attrs.prefixLen}";
         gateway = nextHopV4;
       }) sw.attrs.routedNetworks)
         switches;
-      flat = builtins.filter (r: r.gateway != null) (lib.flatten perSwitch);
+      flat = builtins.filter
+        (r: r.gateway != null && !(builtins.elem r.netName myConnectedNetworks))
+        (lib.flatten perSwitch);
     in lib.foldl' (acc: r:
       let vid = toString r.uplinkVlan; in
       acc // {

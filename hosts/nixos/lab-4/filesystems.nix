@@ -137,7 +137,11 @@
       "tank/persist/lab-4" = {
         mountpoint = "/persist";
         options = [ "zfsutil" ];
-        neededForBoot = true;
+        # NOT neededForBoot — pre-disko, the tank pool doesn't exist
+        # yet, and stage-1 would hang waiting. Best-effort: if the
+        # pool's there we mount; if not, boot proceeds without /persist
+        # (SSH host keys regenerated each boot until disko runs).
+        neededForBoot = false;
       };
       "tank/nix-shared" = {
         mountpoint = "/srv/nfs/nix";
