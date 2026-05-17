@@ -67,66 +67,12 @@
         };
       };
 
-      s3 = {
-        type = "service";
-        tags = ["internal" "monolyx" "infra"];
-        service = {
-          domain = "s3.psyclyx.net";
-          backend.ha.lab = "s3";
-          audiences = ["vpn"];
-          check = "/status";
-          label = "S3";
-        };
-      };
-
-      webdav = {
-        type = "service";
-        tags = ["internal" "monolyx" "infra"];
-        service = {
-          domain = "webdav.psyclyx.net";
-          backend.ha.lab = "webdav";
-          audiences = ["vpn"];
-          label = "WebDAV";
-        };
-      };
-
-      openbao = {
-        type = "service";
-        tags = ["internal" "infra"];
-        service = {
-          domain = "openbao.psyclyx.net";
-          backend.ha.lab = "openbao";
-          audiences = ["vpn"];
-          check = "/v1/sys/health?standbyok=true";
-          label = "OpenBao";
-        };
-      };
-
-      # --- Internal TCP (DNS only, no ingress proxy) ---
-
-      postgresql = {
-        type = "service";
-        tags = ["internal" "monolyx" "infra"];
-        service = {
-          domain = "postgresql.psyclyx.net";
-          protocol = "tcp";
-          backend.ha.lab = "postgresql";
-          audiences = ["vpn"];
-          label = "PostgreSQL";
-        };
-      };
-
-      redis = {
-        type = "service";
-        tags = ["internal" "monolyx" "infra"];
-        service = {
-          domain = "redis.psyclyx.net";
-          protocol = "tcp";
-          backend.ha.lab = "redis";
-          audiences = ["vpn"];
-          label = "Redis";
-        };
-      };
+      # The s3 / webdav / openbao / postgresql / redis service entities used
+      # to be backed by the `lab` HA group. The cluster (and HA group) was
+      # removed in the 2026 storage-host rework. iyr now reaches OpenBao PKI
+      # directly at lab-4's lab-VLAN IP — no ingress proxy needed. Restore
+      # service entries here when the corresponding clustered services come
+      # back online.
 
       # --- Public HTTP (llm) ---
 

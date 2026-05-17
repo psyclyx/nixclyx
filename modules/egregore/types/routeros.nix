@@ -25,15 +25,20 @@ egregorLib.mkType {
     model = lib.mkOption { type = lib.types.str; default = ""; };
     identity = lib.mkOption { type = lib.types.nullOr lib.types.str; default = null; };
     addresses = lib.mkOption {
-      type = lib.types.submodule {
-        options.mgmt = lib.mkOption {
-          type = lib.types.submodule {
-            options.ipv4 = lib.mkOption { type = lib.types.str; default = ""; };
-          };
-          default = {};
+      type = lib.types.attrsOf (lib.types.submodule {
+        options = {
+          ipv4 = lib.mkOption { type = lib.types.nullOr lib.types.str; default = null; };
+          ipv6 = lib.mkOption { type = lib.types.nullOr lib.types.str; default = null; };
         };
-      };
+      });
       default = {};
+      description = ''
+        Addresses this switch holds, keyed by network entity name. The
+        mgmt entry is required (it backs the SSH/SNMP/management plane).
+        Additional entries are emitted as L3 interfaces — for networks
+        the switch routes (see routedNetworks), they become the network's
+        gateway; for other networks they're transit-only interfaces.
+      '';
     };
     ports = lib.mkOption {
       type = lib.types.attrsOf (lib.types.submodule portDef.module);
@@ -42,7 +47,35 @@ egregorLib.mkType {
     mgmtNetwork = lib.mkOption {
       type = lib.types.str;
       default = "mgmt";
-      description = "Network entity providing management VLAN and gateway.";
+      description = "Network entity name providing the management plane (SSH/SNMP).";
+    };
+    uplinkNetwork = lib.mkOption {
+      type = lib.types.nullOr lib.types.str;
+      default = null;
+      description = ''
+        Network whose gateway becomes this switch's IPv4 default route.
+        Null = use mgmtNetwork. Set explicitly when the switch is an L3
+        router and you want cross-VLAN egress to avoid hairpinning
+        through a lower-bandwidth mgmt path.
+      '';
+    };
+    l3HwOffload = lib.mkOption {
+      type = lib.types.bool;
+      default = false;
+      description = ''
+        Enable hardware-offloaded inter-VLAN routing on the bridge.
+        Supported on CRS3xx (Marvell Prestera) running RouterOS 7.6+.
+      '';
+    };
+    routedNetworks = lib.mkOption {
+      type = lib.types.listOf lib.types.str;
+      default = [];
+      description = ''
+        Networks this switch is the L3 gateway for. Explicit entries are
+        unioned with networks whose attrs.gatewayRef points at this
+        entity. Routed networks get an /interface vlan + /ip address
+        emitted using the switch's matching addresses.<network> entry.
+      '';
     };
     timezone = lib.mkOption {
       type = lib.types.str;
@@ -87,16 +120,22 @@ egregorLib.mkType {
     };
   };
 
-  attrs = name: entity: _top: let
+  attrs = name: entity: top: let
     r = entity.routeros;
     active = lib.filterAttrs (_: p: portType p != "unused") r.ports;
+    mgmtAddr = r.addresses.${r.mgmtNetwork}.ipv4 or null;
+    networkEntities = lib.filterAttrs (_: e: e.type == "network") (top.entities or {});
+    autoRouted = lib.attrNames (
+      lib.filterAttrs (_: net: (net.attrs.gatewayRef or null) == name) networkEntities
+    );
   in {
-    address = r.addresses.mgmt.ipv4;
+    address = mgmtAddr;
     label = "${if r.identity != null then r.identity else name} (${r.model})";
     platform = "routeros";
     model = r.model;
     portCount = builtins.length (builtins.attrNames r.ports);
     activePortCount = builtins.length (builtins.attrNames active);
+    routedNetworks = lib.unique (r.routedNetworks ++ autoRouted);
   };
 
   verbs = name: entity: top: let
@@ -105,11 +144,21 @@ egregorLib.mkType {
 
     mgmt      = top.entities.${sw.mgmtNetwork};
     mgmtVlan  = mgmt.network.vlan;
-    mgmtIp    = sw.addresses.mgmt.ipv4;
-    mgmtPLen  = mgmt.attrs.prefixLen;
-    mgmtNet   = mgmt.attrs.network4;
-    mgmtGw    = mgmt.attrs.gateway4;
+    mgmtIp    = sw.addresses.${sw.mgmtNetwork}.ipv4;
+
+    # Default route derives from the uplink network's gateway. Falls back
+    # to mgmt when no uplink override is set.
+    uplinkName = if sw.uplinkNetwork != null then sw.uplinkNetwork else sw.mgmtNetwork;
+    uplinkNet  = top.entities.${uplinkName};
+    uplinkGw   = uplinkNet.attrs.gateway4;
+
     adminKeys = top.conventions.adminSshKeys or [];
+
+    # All entries in sw.addresses get an L3 interface. Routed networks
+    # are the gateway for their subnet; others are transit-only IPs that
+    # let the switch participate on the VLAN (e.g. to reach a next-hop).
+    addressedNetworks = lib.attrNames sw.addresses;
+    routedSet = lib.genAttrs entity.attrs.routedNetworks (_: true);
 
     # Port config lookup with default for unassigned hardware ports.
     portCfg = pname: sw.ports.${pname} or {
@@ -162,7 +211,8 @@ egregorLib.mkType {
       system = {
         inherit identity;
         timezone    = sw.timezone;
-        dns_servers = [mgmtGw];
+        dns_servers = [mgmt.attrs.gateway4];
+        l3_hw_offload = sw.l3HwOffload;
         ssh = {
           host_key_type = "ed25519";
           keys = map (key: { inherit key; user = sw.sshUser; }) adminKeys;
@@ -209,22 +259,31 @@ egregorLib.mkType {
         vlans = map vlanEntry usedVlans;
       };
 
-      vlan_interfaces = [{
+      vlan_interfaces = map (netName: let
+        net = top.entities.${netName};
+      in {
         interface = "bridge1";
-        name      = "vlan${toString mgmtVlan}";
-        vlan_id   = mgmtVlan;
-      }];
+        name      = "vlan${toString net.network.vlan}";
+        vlan_id   = net.network.vlan;
+        mtu       = net.network.mtu;
+        routed    = routedSet ? ${netName};
+      }) addressedNetworks;
 
-      addresses = [{
-        address   = "${mgmtIp}/${toString mgmtPLen}";
-        interface = "vlan${toString mgmtVlan}";
-        network   = mgmtNet;
-      }];
+      addresses = map (netName: let
+        net = top.entities.${netName};
+      in {
+        address   = "${sw.addresses.${netName}.ipv4}/${toString net.attrs.prefixLen}";
+        interface = "vlan${toString net.network.vlan}";
+        network   = net.attrs.network4;
+      }) addressedNetworks;
 
       routes = [{
-        disabled = true;
+        # Non-L3 switches keep the default route declared-but-disabled
+        # (matches prior behavior — a placeholder operators enable by
+        # hand if needed). L3 routers must have it active.
+        disabled = !sw.l3HwOffload;
         dst      = "0.0.0.0/0";
-        gateway  = mgmtGw;
+        gateway  = uplinkGw;
       }];
     };
 

@@ -143,6 +143,34 @@ egregorLib.mkType {
       };
       default = { };
     };
+    boot = lib.mkOption {
+      type = lib.types.submodule {
+        options = {
+          mode = lib.mkOption {
+            type = lib.types.enum [ "local" "pxe" ];
+            default = "local";
+            description = ''
+              How this host boots. local = bootloader on local media,
+              managed by the host's NixOS config. pxe = PXE-boot from
+              the fleet's PXE server; this host has no bootloader.
+            '';
+          };
+          pxeInterface = lib.mkOption {
+            type = lib.types.nullOr lib.types.str;
+            default = null;
+            description = ''
+              Egregore network name of the interface used for PXE boot.
+              Firmware must have boot order set to use the corresponding
+              NIC. The PXE projection derives the host's PXE MAC from
+              host.interfaces.<pxeInterface>.device → host.mac.<device>.
+              Null for mode = "local".
+            '';
+          };
+        };
+      };
+      default = {};
+      description = "How the host gets its kernel + initrd at power-on.";
+    };
     exporters = lib.mkOption {
       type = lib.types.attrsOf (
         lib.types.submodule {
@@ -276,10 +304,16 @@ egregorLib.mkType {
     name: entity: top:
     let
       h = entity.host;
+      pxe = h.boot.mode == "pxe";
+      ifName = h.boot.pxeInterface;
     in
     lib.optional (h.site != null) {
       assertion = top.entities ? ${h.site} && top.entities.${h.site}.type == "site";
       message = "host '${name}' references site '${h.site}' which is not a site entity";
+    }
+    ++ lib.optional pxe {
+      assertion = ifName != null && (h.interfaces ? ${ifName});
+      message = "host '${name}' boot.mode = \"pxe\" requires boot.pxeInterface to name a declared interface";
     };
 
   verbs =

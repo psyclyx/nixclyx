@@ -16,5 +16,9 @@
     };
 
     ipv6UlaPrefix = "fd9a:e830:4b1e";
+
+    iscsi = {
+      baseIqn = "iqn.2026-05.net.psyclyx";
+    };
   };
 }

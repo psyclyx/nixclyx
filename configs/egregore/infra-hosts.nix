@@ -40,9 +40,12 @@
           site = "apt";
           wireguard = {
             publicKey = "9wnevbvkDGcyNnMECEzgfaghqi4tEw4GsgC/TUcSTS4=";
+            # Apartment subnets advertised to VPN peers. storage/lab are
+            # routed by mdf-agg01, but iyr still forwards there via its
+            # static routes on vlan10, so peers reach them transparently.
             exportedRoutes = [
-              "10.0.10.0/24" "10.0.25.0/24" "10.0.30.0/24" "10.0.31.0/24"
-              "10.0.50.0/24" "10.0.100.0/24" "10.0.110.0/24" "10.0.240.0/24"
+              "10.0.10.0/24"  "10.0.25.0/24"  "10.0.100.0/24" "10.0.110.0/24"
+              "10.0.200.0/24" "10.0.210.0/24" "10.0.240.0/24"
             ];
           };
           # iyr is the apt site gateway; the gateway projection wires

@@ -1,7 +1,11 @@
 # Network switches — RouterOS, SwOS, Sodola, and unmanaged devices.
 let
   # Standard VLAN sets for port definitions.
-  internal = [10 25 30 31 50 100 110 240];
+  #
+  # 30/31/50 (prod/stage/data) were removed in the 2026 storage-host
+  # rework; the lab traffic now lives on 200/210 (storage/lab) with
+  # mdf-agg01 doing L3 hardware-offloaded routing.
+  internal = [10 25 100 110 200 210 240];
   all      = internal ++ [250];
 in {
   gate = "always";
@@ -9,12 +13,24 @@ in {
     entities = {
       mdf-agg01 = {
         type = "routeros";
-        tags = ["switch" "mdf" "10g"];
+        tags = ["switch" "mdf" "10g" "l3"];
         routeros = {
           model = "CRS326-24S+2Q+RM";
           identity = "mdf-agg01";
-          addresses.mgmt.ipv4 = "10.0.240.2";
           bridge.multicast.querier = true;
+
+          # L3 routing — the switch is the gateway for storage (200) and
+          # lab (210). Its main-VLAN IP is a transit-only address so the
+          # default route to iyr (10.0.10.1) avoids hairpinning through
+          # the mgmt VLAN.
+          l3HwOffload = true;
+          uplinkNetwork = "main";
+          addresses = {
+            mgmt.ipv4    = "10.0.240.2";
+            main.ipv4    = "10.0.10.2";
+            storage.ipv4 = "10.0.200.1";   # convention gateway (.1)
+            lab.ipv4     = "10.0.210.1";
+          };
 
           bonds = {
             bond-css326 = {
@@ -30,15 +46,19 @@ in {
             };
           };
 
+          # Lab-host wiring is unchanged from before — each host's two
+          # 10G NICs still land on the same SFP+ pair. Convention:
+          # the host's sfpDataDev → storage (VLAN 200) and sfpProdDev →
+          # lab (VLAN 210).
           ports = {
-            "sfp-sfpplus1"  = { vlan = 50; meta = { host = "lab-1"; description = "data"; }; };
-            "sfp-sfpplus2"  = { vlan = 30; meta = { host = "lab-1"; description = "prod"; }; };
-            "sfp-sfpplus3"  = { vlan = 50; meta = { host = "lab-2"; description = "data"; }; };
-            "sfp-sfpplus4"  = { vlan = 30; meta = { host = "lab-2"; description = "prod"; }; };
-            "sfp-sfpplus5"  = { vlan = 50; meta = { host = "lab-3"; description = "data"; }; };
-            "sfp-sfpplus6"  = { vlan = 30; meta = { host = "lab-3"; description = "prod"; }; };
-            "sfp-sfpplus7"  = { vlan = 50; meta = { host = "lab-4"; description = "data"; }; };
-            "sfp-sfpplus8"  = { vlan = 30; meta = { host = "lab-4"; description = "prod"; }; };
+            "sfp-sfpplus1"  = { vlan = 200; meta = { host = "lab-1"; description = "storage"; }; };
+            "sfp-sfpplus2"  = { vlan = 210; meta = { host = "lab-1"; description = "lab"; }; };
+            "sfp-sfpplus3"  = { vlan = 200; meta = { host = "lab-2"; description = "storage"; }; };
+            "sfp-sfpplus4"  = { vlan = 210; meta = { host = "lab-2"; description = "lab"; }; };
+            "sfp-sfpplus5"  = { vlan = 200; meta = { host = "lab-3"; description = "storage"; }; };
+            "sfp-sfpplus6"  = { vlan = 210; meta = { host = "lab-3"; description = "lab"; }; };
+            "sfp-sfpplus7"  = { vlan = 200; meta = { host = "lab-4"; description = "storage"; }; };
+            "sfp-sfpplus8"  = { vlan = 210; meta = { host = "lab-4"; description = "lab"; }; };
             "sfp-sfpplus9"  = { vlans = internal; meta.peer = "mdf-acc01"; };
             "sfp-sfpplus10" = { vlans = internal; meta.peer = "mdf-acc01"; };
             "sfp-sfpplus11" = { vlan = 10; meta.host = "sigil"; };
@@ -68,27 +88,32 @@ in {
           identity = "mdf-acc01";
           addresses.mgmt.ipv4 = "10.0.240.3";
 
+          # Lab hosts dropped their 1G bonds in the 2026 rework — all
+          # lab traffic now lives on the 10G NICs via mdf-agg01. The
+          # copper ports formerly carrying the bond are left unused
+          # (the physical cables can stay plugged in; they just have
+          # no VLAN assignment now).
           ports = {
             ether1  = { vlan = 240; meta = { host = "lab-1"; description = "BMC/iLO"; }; };
-            ether2  = { vlans = [10 25 31]; meta = { host = "lab-1"; description = "bond (eno1)"; }; };
-            ether3  = { vlans = [10 25 31]; meta = { host = "lab-1"; description = "bond (eno2)"; }; };
-            ether4  = { vlans = [10 25 31]; meta = { host = "lab-1"; description = "bond (eno3)"; }; };
-            ether5  = { vlans = [10 25 31]; meta = { host = "lab-1"; description = "bond (eno4)"; }; };
+            ether2  = {};
+            ether3  = {};
+            ether4  = {};
+            ether5  = {};
             ether6  = { vlan = 240; meta = { host = "lab-2"; description = "BMC/iLO"; }; };
-            ether7  = { vlans = [10 25 31]; meta = { host = "lab-2"; description = "bond (eno1)"; }; };
-            ether8  = { vlans = [10 25 31]; meta = { host = "lab-2"; description = "bond (eno2)"; }; };
-            ether9  = { vlans = [10 25 31]; meta = { host = "lab-2"; description = "bond (eno3)"; }; };
-            ether10 = { vlans = [10 25 31]; meta = { host = "lab-2"; description = "bond (eno4)"; }; };
+            ether7  = {};
+            ether8  = {};
+            ether9  = {};
+            ether10 = {};
             ether11 = { vlan = 240; meta = { host = "lab-3"; description = "BMC/iLO"; }; };
-            ether12 = { vlans = [10 25 31]; meta = { host = "lab-3"; description = "bond (eno1)"; }; };
-            ether13 = { vlans = [10 25 31]; meta = { host = "lab-3"; description = "bond (eno2)"; }; };
-            ether14 = { vlans = [10 25 31]; meta = { host = "lab-3"; description = "bond (eno3)"; }; };
-            ether15 = { vlans = [10 25 31]; meta = { host = "lab-3"; description = "bond (eno4)"; }; };
+            ether12 = {};
+            ether13 = {};
+            ether14 = {};
+            ether15 = {};
             ether16 = { vlan = 240; meta = { host = "lab-4"; description = "BMC/iLO"; }; };
-            ether17 = { vlans = [10 25 31]; meta = { host = "lab-4"; description = "bond (eno1)"; }; };
-            ether18 = { vlans = [10 25 31]; meta = { host = "lab-4"; description = "bond (eno2)"; }; };
-            ether19 = { vlans = [10 25 31]; meta = { host = "lab-4"; description = "bond (eno3)"; }; };
-            ether20 = { vlans = [10 25 31]; meta = { host = "lab-4"; description = "bond (eno4)"; }; };
+            ether17 = {};
+            ether18 = {};
+            ether19 = {};
+            ether20 = {};
             ether21 = {};
             ether22 = {};
             ether23 = {};

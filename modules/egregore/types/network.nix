@@ -34,6 +34,11 @@ egregorLib.mkType {
       '';
     };
     ipv4 = lib.mkOption { type = lib.types.str; default = ""; description = "IPv4 CIDR (e.g. 10.0.25.0/24)."; };
+    mtu = lib.mkOption {
+      type = lib.types.int;
+      default = 1500;
+      description = "Link MTU for this segment. Hosts/switches inherit when projecting interfaces.";
+    };
     ulaSubnetHex = lib.mkOption {
       type = lib.types.str;
       default = "";
