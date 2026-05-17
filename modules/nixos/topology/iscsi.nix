@@ -2,8 +2,8 @@
 #
 # Reads `lun` entities and projects them into the appropriate service
 # config:
-#   - If this host is the lun's producer, populate scst.targets.
-#   - If this host is a consumer, populate iscsi-initiator.mounts.
+#   - If this host is the lun's producer, populate iscsi.target.targets.
+#   - If this host is a consumer, populate iscsi.initiator.mounts.
 #
 # IQNs compose from globals.iscsi.baseIqn + producer + lun name. Portal
 # addresses come from the producer's address on the lun's network. All
@@ -40,7 +40,6 @@
       luns = [{
         device = "/dev/zvol/${lun.attrs.dataset}";
         lun = 0;
-        blockSize = lun.lun.blockSize;
         readOnly = lun.lun.readOnly;
       }];
       aclIqns = map (consumer:
@@ -98,19 +97,21 @@ in {
   };
 
   config = lib.mkIf enabled {
-    psyclyx.nixos.services.iscsi.scst = lib.mkIf (producedLuns != {}) {
+    psyclyx.nixos.services.iscsi.target = lib.mkIf (producedLuns != {}) {
+      enable = true;
       portals = producerPortals;
       targets = producerTargets;
     };
 
     psyclyx.nixos.services.iscsi.initiator = lib.mkIf (consumedLuns != {}) {
+      enable = true;
       inherit initiatorIqn;
       mounts = consumerMounts;
     };
 
     # Producer-side: ensure the parent zvol dataset exists. Actual zvol
-    # creation per LUN is handled by a oneshot before scst.service in a
-    # follow-up; for now the operator runs `zfs create -V <size> <ds>`
+    # creation per LUN is handled by a oneshot before target.service in
+    # a follow-up; for now the operator runs `zfs create -V <size> <ds>`
     # manually after pool init.
   };
 }

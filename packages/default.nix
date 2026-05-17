@@ -14,7 +14,6 @@ let
     sodola-config = ./sodola-config;
     swos-config = ./swos-config;
     routeros-config = ./routeros-config;
-    scst = ./scst;
   };
 in
   packages // {
