@@ -64,16 +64,18 @@ in {
         keys = config.psyclyx.nixos.wireguard.autoGenerateKeys;
       in lib.concatMapStringsSep "\n" (keyPath: ''
         keyDir=$(dirname "${keyPath}")
-        # Ensure the directory is traversable by systemd-network so it
-        # can read the key file (the file has group=systemd-network mode
-        # 0640, but that's useless if the parent dir is root:root 0750).
-        umask 027
+        # Make sure every parent down to the keyDir is traversable
+        # world-x (0755) so systemd-network can reach the secret. The
+        # keyDir itself stays group-only (root:systemd-network 0750)
+        # and the file gets group-only read (0640). mkdir -p uses
+        # umask for new components, so set 022 explicitly.
+        umask 022
         mkdir -p "$keyDir"
         chown root:systemd-network "$keyDir"
         chmod 0750 "$keyDir"
         if [ ! -f "${keyPath}" ] || [ ! -s "${keyPath}" ]; then
           echo "Generating WireGuard key: ${keyPath}"
-          ${wg} genkey > "${keyPath}"
+          (umask 027; ${wg} genkey > "${keyPath}")
           chown root:systemd-network "${keyPath}"
           chmod 0640 "${keyPath}"
         fi
