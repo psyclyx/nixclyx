@@ -28,16 +28,20 @@ in
   systemd.network.networks."30-enp1s0".vlan = [ "enp1s0.210" ];
 
   # Tang server for clevis-based ZFS unlock on lab hosts. Lab-4's
-  # initrd reaches us at our lab-VLAN IP and pulls the ephemeral
-  # decryption material to unseal its tank/persist key. Listen + IP
-  # allow-list are scoped to the lab subnet so the service isn't
-  # reachable from elsewhere.
+  # initrd reaches us via the JWE-embedded URL on our lab-VLAN IP;
+  # clients on main route there via mdf-agg01. ACL allows both lab
+  # and main subnets to cover the "for now" eno1 fallback path while
+  # the 10G driver story is unresolved.
   services.tang = let
-    labNet = eg.entities.lab.attrs;
+    labNet  = eg.entities.lab.attrs;
+    mainNet = eg.entities.main.attrs;
   in {
     enable = true;
     listenStream = [ "${eg.entities.iyr.host.addresses.lab.ipv4}:7654" ];
-    ipAddressAllow = [ "${labNet.network4}/${toString labNet.prefixLen}" ];
+    ipAddressAllow = [
+      "${labNet.network4}/${toString labNet.prefixLen}"
+      "${mainNet.network4}/${toString mainNet.prefixLen}"
+    ];
   };
 
   services.prometheus.exporters.node.listenAddress = eg.entities.iyr.host.addresses.vpn.ipv4;
@@ -63,11 +67,13 @@ in
 
     # PXE-boot infrastructure for the lab. iyr serves the iPXE chainload
     # binary over TFTP + per-host netboot bundles over HTTP. Clients
-    # DHCP-discover on the lab VLAN — iyr participates as an L2-only
-    # listener there (the lab VLAN is gateway'd by mdf-agg01, not iyr).
+    # currently DHCP-discover on main (lab hosts on eno1 1G fallback);
+    # when the 10G driver story is sorted out and pxeInterface flips
+    # back to "lab", iyr already participates there as an L2-only
+    # listener and this address just needs flipping back.
     topology.pxe = {
       serve = true;
-      bindAddress = "10.0.210.2";
+      bindAddress = "10.0.10.1";
     };
 
     network = {

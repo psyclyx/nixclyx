@@ -88,29 +88,29 @@ in {
           identity = "mdf-acc01";
           addresses.mgmt.ipv4 = "10.0.240.3";
 
-          # Lab hosts dropped their 1G bonds in the 2026 rework — all
-          # lab traffic now lives on the 10G NICs via mdf-agg01. The
-          # copper ports formerly carrying the bond are left unused
-          # (the physical cables can stay plugged in; they just have
-          # no VLAN assignment now).
+          # Lab hosts dropped the 1G LACP bonds in the 2026 rework. As a
+          # "for now" fallback while the 10G NIC driver story is sorted
+          # out, eno1 on each lab host is re-enabled on VLAN 10 (main)
+          # as an access port — PXE, SSH, and tang reach travel here.
+          # The remaining 1G ports (eno2-4) stay disabled.
           ports = {
             ether1  = { vlan = 240; meta = { host = "lab-1"; description = "BMC/iLO"; }; };
-            ether2  = {};
+            ether2  = { vlan = 10;  meta = { host = "lab-1"; description = "eno1 (1G fallback)"; }; };
             ether3  = {};
             ether4  = {};
             ether5  = {};
             ether6  = { vlan = 240; meta = { host = "lab-2"; description = "BMC/iLO"; }; };
-            ether7  = {};
+            ether7  = { vlan = 10;  meta = { host = "lab-2"; description = "eno1 (1G fallback)"; }; };
             ether8  = {};
             ether9  = {};
             ether10 = {};
             ether11 = { vlan = 240; meta = { host = "lab-3"; description = "BMC/iLO"; }; };
-            ether12 = {};
+            ether12 = { vlan = 10;  meta = { host = "lab-3"; description = "eno1 (1G fallback)"; }; };
             ether13 = {};
             ether14 = {};
             ether15 = {};
             ether16 = { vlan = 240; meta = { host = "lab-4"; description = "BMC/iLO"; }; };
-            ether17 = {};
+            ether17 = { vlan = 10;  meta = { host = "lab-4"; description = "eno1 (1G fallback)"; }; };
             ether18 = {};
             ether19 = {};
             ether20 = {};

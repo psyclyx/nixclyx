@@ -15,6 +15,7 @@ let
     {
       n,
       mgmtMac,
+      eno1Mac,
       storageMac,
       labMac,
       storageDev,
@@ -34,16 +35,26 @@ let
         site = "apt";
         mac = {
           mgmt = mgmtMac;
+          eno1 = eno1Mac;
           ${storageDev} = storageMac;
           ${labDev} = labMac;
         };
+        # eno1 (1G, tg3) is the "for now" path — we don't have a kernel
+        # module yet for the 10G NICs in netboot, so storage/lab stay
+        # declared (for switch wiring + addressing once they come back)
+        # but main is the default network and the PXE/deploy path.
         interfaces = {
+          main    = { device = "eno1"; };
           storage = { device = storageDev; };
           lab     = { device = labDev; };
         };
         addresses = {
           vpn = {
             ipv4 = "10.157.0.${toString (10 + n)}";
+          };
+          main = {
+            ipv4 = "10.0.10.${toString (10 + n)}";
+            ipv6 = "fd9a:e830:4b1e:a::${lib.toHexString (10 + n)}";
           };
           storage = {
             ipv4 = "10.0.200.${toString (10 + n)}";
@@ -54,12 +65,12 @@ let
             ipv6 = "fd9a:e830:4b1e:d2::${lib.toHexString (10 + n)}";
           };
         };
-        # All lab hosts PXE-boot from iyr over the lab VLAN. Firmware
-        # boot order must select the labDev NIC; the PXE projection
-        # uses host.mac.<labDev> for per-MAC reservations.
+        # PXE-boot via eno1 on main while the 10G fallback is parked.
+        # The PXE projection uses host.mac.eno1 for the main-pool
+        # reservation; BIOS boot order must select the eno1 NIC.
         boot = {
           mode = "pxe";
-          pxeInterface = "lab";
+          pxeInterface = "main";
         };
         wireguard = {
           publicKey = wgKey;
@@ -69,9 +80,7 @@ let
           "server"
           "lab"
         ];
-        # Reach lab hosts on the lab VLAN. Other apartment hosts route to
-        # 10.0.210.0/24 via mdf-agg01 (hardware-offloaded).
-        deployAddress = "10.0.210.${toString (10 + n)}";
+        deployAddress = "10.0.10.${toString (10 + n)}";
       };
     };
 in
@@ -82,6 +91,7 @@ in
       lab-1 = mkLabHost {
         n = 1;
         mgmtMac    = "94:18:82:74:f4:e0";
+        eno1Mac    = "94:18:82:79:b9:f0";
         # eno50np1 was sfpDataDev — now the storage NIC.
         storageMac = "98:f2:b3:d7:58:c1";
         storageDev = "eno50np1";
@@ -94,6 +104,7 @@ in
       lab-2 = mkLabHost {
         n = 2;
         mgmtMac    = "94:18:82:85:00:82";
+        eno1Mac    = "94:18:82:89:83:70";
         storageMac = "14:02:ec:90:67:19";   # ens1f1
         storageDev = "ens1f1";
         labMac     = "14:02:ec:90:67:18";   # ens1f0
@@ -104,6 +115,7 @@ in
       lab-3 = mkLabHost {
         n = 3;
         mgmtMac    = "14:02:EC:37:A1:48";
+        eno1Mac    = "14:02:ec:35:02:a4";
         storageMac = "14:02:ec:44:29:dc";   # eno50
         storageDev = "eno50";
         labMac     = "14:02:ec:44:29:d8";   # eno49
@@ -114,6 +126,7 @@ in
       lab-4 = mkLabHost {
         n = 4;
         mgmtMac    = "94:57:a5:51:20:62";
+        eno1Mac    = "14:02:ec:33:97:a0";
         storageMac = "98:f2:b3:d7:b9:d1";   # eno50np1
         storageDev = "eno50np1";
         labMac     = "98:f2:b3:d7:b9:d0";   # eno49np0

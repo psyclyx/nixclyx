@@ -1,4 +1,4 @@
-{ lib, ... }:
+{ lib, pkgs, ... }:
 {
   psyclyx.nixos = {
     hardware.presets.hpe.dl360-gen9.enable = true;
@@ -19,15 +19,16 @@
 
     network = {
       interfaces = {
-        # No bond. Lab-4 speaks only over its two 10G NICs. The initrd
-        # for netboot has its networking set up by nixpkgs' netboot
-        # module; this list ensures the right SFP+ NIC drivers come
-        # along for the ride.
+        # No bond. The 10G NICs (eno49np0/eno50np1) are declared in
+        # egregore but parked — we don't yet have a working in-tree
+        # driver for them in netboot initrd. The default network is
+        # main (eno1, tg3), so initrd brings up the 1G NIC and PXE +
+        # tang traffic flows over it. Mellanox/Broadcom 10G modules
+        # come from the dl360-gen9 hardware preset for when they're
+        # used in stage-2.
         initrd = {
           enable = true;
           kernelModules = [
-            "i40e"
-            "ixgbe"
             "tg3"
           ];
         };
@@ -35,9 +36,7 @@
 
       topology = {
         enable = true;
-        # Default route via the lab VLAN — CRS326 hardware-routes to
-        # everywhere else. Storage stays on its own policy table.
-        defaultNetwork = "lab";
+        defaultNetwork = "main";
       };
 
       firewall.input.lan.policy = "accept";
@@ -48,17 +47,43 @@
 
   boot.kernel.sysctl."kernel.sched_autogroup_enabled" = 0;
 
-  # Clevis unlocks tank's encryption roots (persist + luns) by fetching
-  # ephemeral key material from iyr's tang server. The .jwe blobs are
-  # safe to keep in the repo: without the matching tang key (kept on
-  # iyr's /var/lib/tang, never persisted here), they're inert. Both
-  # encryption roots share the same passphrase, so the same JWE works
-  # for both.
+  # Clevis unlocks tank/persist in initrd by fetching ephemeral key
+  # material from iyr's tang server. The .jwe is safe to keep in the
+  # repo: without the matching tang key (kept on iyr's /var/lib/tang,
+  # never persisted here), it's inert.
+  #
+  # tank/luns shares the same passphrase but isn't unlocked here —
+  # the initrd clevis module asserts a filesystem mounted from each
+  # listed dataset, and the luns parent only holds zvols. Unlocked
+  # post-boot by the systemd unit below.
   boot.initrd.clevis = {
     enable = true;
     useTang = true;
     devices."tank/persist".secretFile = ./persist.jwe;
-    devices."tank/luns".secretFile = ./persist.jwe;
+  };
+
+  # Post-boot unlock for tank/luns. Same JWE as initrd, materialized
+  # from the nix store rather than copied into /etc so it's only
+  # readable at unit run-time. Ordered before iSCSI so target setup
+  # sees the zvol nodes.
+  systemd.services.zfs-load-key-luns = {
+    description = "Unseal tank/luns via clevis";
+    wantedBy = [ "zfs-import.target" ];
+    after = [ "zfs-import-tank.service" "network-online.target" ];
+    wants = [ "network-online.target" ];
+    before = [ "iscsi-target.service" ];
+    path = [ pkgs.clevis pkgs.zfs pkgs.curl pkgs.jose ];
+    serviceConfig = {
+      Type = "oneshot";
+      RemainAfterExit = true;
+      ExecStart = pkgs.writeShellScript "zfs-load-key-luns" ''
+        set -euo pipefail
+        if [ "$(zfs get -H -o value keystatus tank/luns)" = available ]; then
+          exit 0
+        fi
+        clevis decrypt < ${./persist.jwe} | zfs load-key -L prompt tank/luns
+      '';
+    };
   };
 
   # Lab-4's root is tmpfs (PXE-booted). /persist (on tank, encrypted)
