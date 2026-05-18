@@ -245,7 +245,16 @@
         DHCP = "yes";
         IPv6AcceptRA = true;
       };
-      dhcpV4Config.UseDomains = true;
+      # ClientIdentifier=mac so the v4 cid is just 01:<MAC>. The
+      # default (duid) sends an RFC 4361 client-id derived from the
+      # host's /etc/machine-id-based DUID, which Kea treats as a
+      # different client across cid-format changes — reservations
+      # then silently fall back to pool allocation. MAC-based is
+      # stable and matches how host.mac.<dev> keys Kea reservations.
+      dhcpV4Config = {
+        UseDomains = true;
+        ClientIdentifier = "mac";
+      };
       dhcpV6Config.WithoutRA = "solicit";
     }
     // lib.optionalAttrs (!net.dhcp && net.ipv6AcceptRA) {

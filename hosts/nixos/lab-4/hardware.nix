@@ -68,10 +68,15 @@
   # sees the zvol nodes.
   systemd.services.zfs-load-key-luns = {
     description = "Unseal tank/luns via clevis";
-    wantedBy = [ "zfs-import.target" ];
+    # iSCSI target binds the luns dataset's zvols, so we only need
+    # this to run before it. Don't pull into zfs-import.target /
+    # basic.target — that creates a dependency loop via
+    # preservation.target's bind mounts on /etc/ssh and breaks
+    # SSH host-key persistence on first boot.
+    wantedBy = [ "iscsi-target.service" ];
+    before = [ "iscsi-target.service" ];
     after = [ "zfs-import-tank.service" "network-online.target" ];
     wants = [ "network-online.target" ];
-    before = [ "iscsi-target.service" ];
     path = [ pkgs.clevis pkgs.zfs pkgs.curl pkgs.jose ];
     serviceConfig = {
       Type = "oneshot";
