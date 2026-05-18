@@ -7,7 +7,7 @@
 }:
 let
   eg = config.psyclyx.egregore;
-  me = eg.entities.tleilax;
+  me = eg.entities.${config.networking.hostName};
 in
 {
   imports = [ ./network.nix ];
@@ -84,7 +84,6 @@ in
         };
         zones = {
           enable = true;
-          gatewayHostname = "tleilax";
           siteZone = {
             enable = true;
             networks = [ "vpn" ];

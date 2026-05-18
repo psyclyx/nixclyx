@@ -52,15 +52,18 @@
           # most VLANs onto enp1s0. Declaring main here lets data-driven
           # projections (e.g. overlay shortcuts) target the right unit.
           # iyr also participates on the lab VLAN as an L2-only DHCP
-          # listener — lab is gateway'd by mdf-agg01, but iyr serves
-          # the boot-file-name / next-server options for PXE clients.
+          # listener — lab/storage are gateway'd by mdf-agg01, but iyr
+          # serves the boot-file-name / next-server options for PXE
+          # clients and the storage-VLAN DHCP reservations.
           interfaces = {
-            main.device = "enp1s0.10";
-            lab.device  = "enp1s0.210";
+            main.device    = "enp1s0.10";
+            lab.device     = "enp1s0.210";
+            storage.device = "enp1s0.200";
           };
           addresses = {
-            vpn.ipv4 = "10.157.0.2";
-            lab.ipv4 = "10.0.210.2";
+            vpn.ipv4     = "10.157.0.2";
+            lab.ipv4     = "10.0.210.2";
+            storage.ipv4 = "10.0.200.2";
           };
           sshPort = 17891;
           deployAddress = "iyr.apt.psyclyx.net";

@@ -206,7 +206,14 @@ in {
     enable = lib.mkEnableOption "auto-generate authoritative zones from egregore";
     gatewayHostname = lib.mkOption {
       type = lib.types.str;
-      description = "Hostname of the gateway/DNS server (for NS/A glue records).";
+      default = config.networking.hostName;
+      defaultText = lib.literalExpression "config.networking.hostName";
+      description = ''
+        Hostname of the gateway/DNS server (for NS/A glue records and
+        for filtering egregore networks by `refs.gateway`). Defaults
+        to the running host's hostname — override only when serving
+        zones on behalf of another egregore entity.
+      '';
     };
     extraRecords = lib.mkOption {
       type = lib.types.attrsOf lib.types.lines;

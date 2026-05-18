@@ -2,7 +2,7 @@
 let
   cfg = config.psyclyx.nixos.hosts.semuta.network;
   eg = config.psyclyx.egregore;
-  me = eg.entities.semuta;
+  me = eg.entities.${config.networking.hostName};
 in
 {
   options.psyclyx.nixos.hosts.semuta.network = {

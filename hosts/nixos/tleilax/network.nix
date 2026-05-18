@@ -2,7 +2,7 @@
 let
   cfg = config.psyclyx.nixos.hosts.tleilax.network;
   eg = config.psyclyx.egregore;
-  me = eg.entities.tleilax;
+  me = eg.entities.${config.networking.hostName};
 in
 {
   options.psyclyx.nixos.hosts.tleilax.network = {

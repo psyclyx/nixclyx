@@ -33,19 +33,24 @@ in
   # and main subnets to cover the "for now" eno1 fallback path while
   # the 10G driver story is unresolved.
   services.tang = let
-    labNet  = eg.entities.lab.attrs;
-    mainNet = eg.entities.main.attrs;
+    me = eg.entities.${config.networking.hostName};
+    networks = [ "lab" "main" ];
+    netSubnet = name: let na = eg.entities.${name}.attrs;
+      in "${na.network4}/${toString na.prefixLen}";
+    listenOn = name: "${me.attrs.addresses.${name}.ipv4}:7654";
   in {
     enable = true;
-    listenStream = [ "${eg.entities.iyr.host.addresses.lab.ipv4}:7654" ];
-    ipAddressAllow = [
-      "${labNet.network4}/${toString labNet.prefixLen}"
-      "${mainNet.network4}/${toString mainNet.prefixLen}"
-    ];
+    # Bind on the first network's address — the JWE blobs lab hosts
+    # carry currently embed the lab-VLAN URL. ACL the broader list so
+    # clients reaching us cross-VLAN (via mdf-agg01) still pass.
+    listenStream = [ (listenOn (lib.head networks)) ];
+    ipAddressAllow = map netSubnet networks;
   };
 
-  services.prometheus.exporters.node.listenAddress = eg.entities.iyr.host.addresses.vpn.ipv4;
-  services.prometheus.exporters.smartctl.listenAddress = eg.entities.iyr.host.addresses.vpn.ipv4;
+  services.prometheus.exporters.node.listenAddress =
+    (eg.entities.${config.networking.hostName}).attrs.addresses.vpn.ipv4;
+  services.prometheus.exporters.smartctl.listenAddress =
+    (eg.entities.${config.networking.hostName}).attrs.addresses.vpn.ipv4;
   services.prometheus.exporters.snmp.listenAddress = "127.0.0.1";
   services.prometheus.listenAddress = "127.0.0.1";
 
@@ -76,30 +81,30 @@ in
       # iyr is an L2-only DHCP listener on the switch-routed VLANs
       # (lab/storage — gateway'd by mdf-agg01, not iyr). The gateway
       # projection skips these networks, so we add the VLAN netdevs +
-      # IPs by hand here. The gateway module's `vlan = [...]` list on
-      # the lan-interface network unit only includes networks iyr
-      # gateways, so we also extend it with the enp1s0.<vlan> child
-      # devices below in systemd.network.networks.
-      interfaces = {
-        vlans."enp1s0.210" = { id = 210; parent = "enp1s0"; };
-        networks."enp1s0.210" = {
-          addresses = [ "10.0.210.2/24" ];
-          requiredForOnline = "no";
+      # IPs by hand here, sourcing the addresses from iyr's egregore
+      # entity to avoid duplicating fleet data in the host config.
+      # The gateway module's `vlan = [...]` list on the lan-interface
+      # network unit only includes networks iyr gateways, so we also
+      # extend it with the enp1s0.<vlan> child devices below in
+      # systemd.network.networks.
+      interfaces = let
+        me = eg.entities.${config.networking.hostName};
+        mkListener = netName: let
+          net = eg.entities.${netName}.attrs;
+          addr = me.attrs.addresses.${netName};
+        in {
+          vlans."enp1s0.${toString net.vlan}" = {
+            id = net.vlan;
+            parent = "enp1s0";
+          };
+          networks."enp1s0.${toString net.vlan}" = {
+            addresses = [ "${addr.ipv4}/${toString net.prefixLen}" ];
+            requiredForOnline = "no";
+            mtu = eg.entities.${netName}.network.mtu;
+          };
         };
-        vlans."enp1s0.200" = { id = 200; parent = "enp1s0"; };
-        networks."enp1s0.200" = {
-          # Storage anchor so Kea has a socket on VLAN 200 for the
-          # storage pool's reservations. No host-side service uses this
-          # address — clients route to mdf-agg01 (10.0.200.1) for L3.
-          addresses = [ "10.0.200.2/24" ];
-          requiredForOnline = "no";
-          # MTU 9000 to match the storage VLAN — DHCP packets are tiny,
-          # but bringing the interface up at 1500 would tag every frame
-          # arriving from storage clients as "frame too big" if anything
-          # ever tried to push iSCSI through this listener by accident.
-          mtu = 9000;
-        };
-      };
+      in
+        lib.foldl' lib.recursiveUpdate {} (map mkListener [ "lab" "storage" ]);
 
       gateway = {
         enable = true;
@@ -140,7 +145,6 @@ in
         client.enable = true;
         zones = {
           enable = true;
-          gatewayHostname = "iyr";
           siteZone = {
             enable = true;
             # main first (iyr/sigil), then lab so lab hosts (no main
@@ -237,7 +241,7 @@ in
       };
       openbao-seal-oracle = {
         enable = true;
-        bindAddress = eg.entities.infra.attrs.gateway4;
+        bindAddress = (eg.entities.${config.networking.hostName}).attrs.addresses.infra.ipv4;
         tpm.enable = true;
         seal = {
           type = "pkcs11";
