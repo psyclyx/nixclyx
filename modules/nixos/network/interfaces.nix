@@ -259,8 +259,12 @@
         { Gateway = pr.gateway; Table = pr.table; }
         { Destination = pr.subnet; Table = pr.table; }
       ];
+      # Match by subnet rather than the host's specific /32 so the rule
+      # works regardless of how the address is acquired (static or DHCP).
+      # Any source IP within the network's subnet exits via that
+      # network's gateway.
       routingPolicyRules = [{
-        From = "${ipFromCidr (builtins.head net.addresses)}/32";
+        From = pr.subnet;
         Table = pr.table;
         Priority = pr.priority;
       }];

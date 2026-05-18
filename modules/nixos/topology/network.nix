@@ -46,6 +46,15 @@
     (builtins.filter (x: x != null) (lib.mapAttrsToList mkVlanEntry hostNetworks));
 
   # Generate L3 network entries for all host networks.
+  #
+  # Address-mode contract (see nixclyx/CLAUDE.md):
+  #   - dhcp = true OR ipv4 = null → DHCP=yes on the device. The
+  #     declared ipv4 (if any) is informational — the actual lease comes
+  #     from the Kea reservation keyed by MAC.
+  #   - dhcp = false AND ipv4 set     → static address. Used by hosts
+  #     that are the gateway (via topology/gateway.nix), not via this
+  #     projection. We still honor the field as a fallback for legacy
+  #     entries that haven't been flipped yet.
   mkNetworkEntry = netName: _addr: let
     netEnt = eg.entities.${netName};
     device = me.interfaces.${netName}.device;
@@ -54,28 +63,40 @@
     prefixLen = toString net.prefixLen;
     isDefault = netName == cfg.defaultNetwork;
     mtu = netEnt.network.mtu or 1500;
+    useDhcp = (addr.dhcp or false) || (addr.ipv4 or null) == null;
   in {
     name = device;
     value = {
-      addresses =
-        ["${addr.ipv4}/${prefixLen}"]
-        ++ lib.optional (addr.ipv6 or null != null) "${addr.ipv6}/64";
       ipv6AcceptRA = true;
       requiredForOnline = if isDefault then "routable" else "no";
       # Only emit non-default MTU so existing 1500-byte interfaces keep
       # leaving the kernel default.
       mtu = if mtu != 1500 then mtu else null;
     }
-    // (if isDefault then {
-      gateway = net.gateway4;
-      dns = [net.gateway4];
+    // (if useDhcp then {
+      dhcp = true;
     } else {
-      policyRouting = {
-        table = netEnt.network.vlan;
-        gateway = net.gateway4;
-        subnet = "${net.network4}/${toString net.prefixLen}";
-      };
-    });
+      addresses =
+        ["${addr.ipv4}/${prefixLen}"]
+        ++ lib.optional (addr.ipv6 or null != null) "${addr.ipv6}/64";
+    })
+    // (if isDefault
+        # On the default network, static-mode hosts need gateway + DNS
+        # set explicitly; DHCP-mode hosts get them from option 3/6.
+        then lib.optionalAttrs (!useDhcp) {
+          gateway = net.gateway4;
+          dns = [net.gateway4];
+        }
+        # Non-default networks always get policy routing so reply
+        # traffic exits via the right interface regardless of address
+        # acquisition mode.
+        else {
+          policyRouting = {
+            table = netEnt.network.vlan;
+            gateway = net.gateway4;
+            subnet = "${net.network4}/${toString net.prefixLen}";
+          };
+        });
   };
 
   generatedNetworks = builtins.listToAttrs
