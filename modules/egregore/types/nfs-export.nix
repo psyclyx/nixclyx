@@ -28,8 +28,13 @@ egregorLib.mkType {
     };
     network = lib.mkOption {
       type = lib.types.str;
-      default = "lab";
-      description = "Network entity carrying the NFS traffic.";
+      default = "";
+      description = ''
+        Network entity carrying the NFS traffic. Required for real
+        exports (asserted non-empty below); the empty default exists
+        so consumers serializing the whole entity tree don't trip the
+        option-without-default check on non-nfs-export entities.
+      '';
     };
     consumers = lib.mkOption {
       type = lib.types.listOf lib.types.str;
@@ -83,7 +88,11 @@ egregorLib.mkType {
         message = "nfs-export '${name}' producer '${toString producer}' must be a host entity";
       }
       {
-        assertion = top.entities ? ${n.network} && top.entities.${n.network}.type == "network";
+        assertion = n.network != "";
+        message = "nfs-export '${name}' requires a non-empty network";
+      }
+      {
+        assertion = n.network == "" || (top.entities ? ${n.network} && top.entities.${n.network}.type == "network");
         message = "nfs-export '${name}' network '${n.network}' must be a network entity";
       }
       {
