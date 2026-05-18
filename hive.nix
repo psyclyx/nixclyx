@@ -133,7 +133,9 @@
         "lab"
         "fixed"
       ];
-      targetHost = "10.157.0.14";
+      # WG is currently down on lab-4 — deploy via its main address
+      # until the pubkey-refresh deploy lands.
+      targetHost = "10.0.10.14";
       targetUser = "root";
     };
   };
