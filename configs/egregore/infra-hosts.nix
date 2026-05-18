@@ -82,7 +82,7 @@
         host = {
           site = "apt";
           wireguard = {
-            publicKey = "XKqqjC62uOUhbCn3JPpI0M6WFYqRf8sLpML90JZ1CmE=";
+            publicKey = "2W8xPvT6iHLQuvWVTcZFlyoYMGbJEvldA04yyFgl4ls=";
             allowedNetworks = [];
           };
           interfaces.main.device = "br0";
