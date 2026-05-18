@@ -52,12 +52,14 @@ let
           vpn = {
             ipv4 = "10.157.0.${toString (10 + n)}";
           };
-          # main/storage/lab addresses are reserved via Kea on iyr
-          # (managed-host reservation keyed by MAC). The ipv4/ipv6
-          # entries here are the *expected* lease; the actual lease
-          # arrives via DHCP. See nixclyx/CLAUDE.md → address-mode.
+          # storage/lab addresses go via DHCP — Kea on iyr has per-MAC
+          # reservations and the L3 path is direct via mdf-agg01. The
+          # main interface stays static for now: DHCPDISCOVER broadcast
+          # from lab-host eno1 doesn't reach iyr (suspected drop on
+          # CSS326 → CRS326 → mdf-brk01 path; sigil's DHCP on the same
+          # VLAN works fine because it bypasses CSS326). Revisit when
+          # the broadcast issue is debugged.
           main = {
-            dhcp = true;
             ipv4 = "10.0.10.${toString (10 + n)}";
             ipv6 = "fd9a:e830:4b1e:a::${lib.toHexString (10 + n)}";
           };
