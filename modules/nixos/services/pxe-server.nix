@@ -16,9 +16,17 @@
   description = "TFTP + HTTP for iPXE chainload and per-host netboot bundles";
 
   options = {lib, ...}: {
-    bindAddress = lib.mkOption {
-      type = lib.types.str;
-      description = "IPv4 address the TFTP + HTTP servers bind. Reachable from clients.";
+    bindAddresses = lib.mkOption {
+      type = lib.types.listOf lib.types.str;
+      default = [];
+      description = ''
+        IPv4 addresses to serve PXE on. One TFTP daemon + one nginx
+        listener is bound per address. Each entry should be the PXE
+        server's IP on a subnet whose clients PXE-boot — so reply
+        traffic is sourced from the address the client originally
+        contacted, avoiding multi-homed asymmetric-routing issues
+        with PXE firmware.
+      '';
     };
 
     httpPort = lib.mkOption {
@@ -31,7 +39,8 @@
         lib.types.submodule {
           options = {
             macs = lib.mkOption {
-              type = lib.types.nonEmptyListOf lib.types.str;
+              type = lib.types.listOf lib.types.str;
+              default = [];
               description = ''
                 MACs that should chainload this client's boot bundle.
                 One iPXE script gets emitted per MAC so the host can
@@ -80,14 +89,16 @@
   config = {cfg, lib, pkgs, ...}: let
     macKey = mac: lib.toLower (lib.replaceStrings [":"] ["-"] mac);
 
-    # iPXE script served per-MAC. The chainload protocol: iPXE pulls
-    # this file via HTTP, executes it, and the script tells it which
-    # kernel + initrd to load.
+    # iPXE script served per-MAC. The kernel/initrd URLs use iPXE's
+    # ''${next-server} variable so they target whichever address the
+    # client first reached us at — keeping all of TFTP, HTTP-chain,
+    # and HTTP-fetch on a single subnet. Kea hands out per-network
+    # next-server values via the projection.
     mkIpxeScript = name: client: ''
       #!ipxe
       echo Booting ${name}...
-      kernel http://${cfg.bindAddress}:${toString cfg.httpPort}/boot/${name}/kernel ${client.cmdline}
-      initrd http://${cfg.bindAddress}:${toString cfg.httpPort}/boot/${name}/initrd
+      kernel http://''${next-server}:${toString cfg.httpPort}/boot/${name}/kernel ${client.cmdline}
+      initrd http://''${next-server}:${toString cfg.httpPort}/boot/${name}/initrd
       boot
     '';
 
@@ -110,24 +121,37 @@
         EOF
       '') client.macs) cfg.clients
     ));
-  in lib.mkIf (cfg.clients != {}) {
-    # TFTP: serve the iPXE binaries. atftpd is the standard small TFTP
-    # daemon in nixpkgs.
-    services.atftpd = {
-      enable = true;
-      root = "${bundle}/tftp";
-    };
+  in lib.mkIf (cfg.clients != {} && cfg.bindAddresses != []) {
+    assertions = [{
+      assertion = cfg.bindAddresses != [];
+      message = "pxe-server has clients but no bindAddresses";
+    }];
+
+    # TFTP: one atftpd instance per bind address. atftpd's --bind-address
+    # is single-valued, and a 0.0.0.0 bind on a multi-homed host has
+    # asymmetric-routing problems (the data-socket reply source IP gets
+    # picked by route, not by inbound destination, which PXE firmware
+    # rejects with ICMP unreachable).
+    systemd.services = lib.listToAttrs (map (addr: let
+      key = lib.replaceStrings ["."] ["-"] addr;
+    in lib.nameValuePair "atftpd-${key}" {
+      description = "atftpd TFTP server (${addr})";
+      wantedBy = [ "multi-user.target" ];
+      after = [ "network-online.target" ];
+      wants = [ "network-online.target" ];
+      serviceConfig = {
+        ExecStart = "${pkgs.atftp}/sbin/atftpd --daemon --no-fork --user nobody --group nogroup --bind-address ${addr} ${bundle}/tftp";
+        Restart = "always";
+      };
+    }) cfg.bindAddresses);
 
     # HTTP: nginx serves the per-host directories and the per-MAC iPXE
-    # scripts. Both on the bind address only — no need to expose this
-    # widely.
+    # scripts. Bound on each PXE address explicitly so chain/HTTP traffic
+    # stays on the same subnet as the originating TFTP.
     services.nginx = {
       enable = true;
       virtualHosts."pxe" = {
-        listen = [{
-          addr = cfg.bindAddress;
-          port = cfg.httpPort;
-        }];
+        listen = map (addr: { inherit addr; port = cfg.httpPort; }) cfg.bindAddresses;
         locations."/boot/" = {
           alias = "${bundle}/http/boot/";
           extraConfig = "autoindex off;";

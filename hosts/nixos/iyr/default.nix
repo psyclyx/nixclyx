@@ -66,15 +66,11 @@ in
     };
 
     # PXE-boot infrastructure for the lab. iyr serves the iPXE chainload
-    # binary over TFTP + per-host netboot bundles over HTTP. Clients
-    # currently DHCP-discover on main (lab hosts on eno1 1G fallback);
-    # when the 10G driver story is sorted out and pxeInterface flips
-    # back to "lab", iyr already participates there as an L2-only
-    # listener and this address just needs flipping back.
-    topology.pxe = {
-      serve = true;
-      bindAddress = "10.0.10.1";
-    };
+    # binary over TFTP + per-host netboot bundles over HTTP. The bind
+    # addresses fall out of egregore: one per network where a PXE-mode
+    # host advertises an interface and where iyr has an address (either
+    # as that network's gateway or as an L2-only listener).
+    topology.pxe.serve = true;
 
     network = {
       # iyr is on the lab VLAN as an L2-only DHCP listener. The gateway

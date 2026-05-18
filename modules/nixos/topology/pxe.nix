@@ -17,6 +17,21 @@
   eg = config.psyclyx.egregore;
   enabled = cfg.serve;
 
+  hostname = config.psyclyx.nixos.host;
+  myEnt = eg.entities.${hostname} or null;
+  # Resolved address view folds in gateway-derived addresses, so this
+  # works whether the PXE server is the gateway of the network or just
+  # an L2 listener on it. Attrs live at the entity root (host type
+  # mounts them via mkType.attrs), not under host.attrs.
+  myAddrs = if myEnt == null then {} else myEnt.attrs.addresses or {};
+
+  # Address the PXE server should advertise as next-server to clients
+  # PXE-booting on this network. Null if the PXE server has no IPv4
+  # there — in that case the projection skips the reservation rather
+  # than serving cross-VLAN.
+  nextServerForNetwork = network:
+    (myAddrs.${network} or {}).ipv4 or null;
+
   pxeHosts = lib.filterAttrs (_: e:
     e.type == "host" && (e.host.boot.mode or "local") == "pxe"
   ) eg.entities;
@@ -101,22 +116,24 @@
 
   # Per-network Kea reservations. Each host enumerates the networks it
   # is willing to PXE on (boot.pxeInterfaces); we emit a reservation in
-  # each of those pools, keyed by that interface's MAC + address.
-  # That lets firmware boot order pick any of the host's NICs and still
-  # land on the right pool.
+  # each of those pools, with next-server pointing at the PXE server's
+  # IP *on that same network*. Networks where the PXE server has no
+  # address are skipped — we don't want firmware doing a cross-VLAN
+  # TFTP that depends on iyr's L2-listener trick.
   hostNetReservations = name: hostEnt:
     lib.filter (r: r != null) (map (ifName: let
       mac = hostMacOnInterface hostEnt ifName;
       ip  = hostIpOnInterface hostEnt ifName;
+      nextServer = nextServerForNetwork ifName;
     in
-      if mac == null || ip == null then null
+      if mac == null || ip == null || nextServer == null then null
       else {
         network = ifName;
         reservation = {
           "hw-address" = mac;
           "ip-address" = ip;
           hostname = name;
-          "next-server" = cfg.bindAddress;
+          "next-server" = nextServer;
           "boot-file-name" = "ipxe.efi";
         };
       }
@@ -127,6 +144,10 @@
   poolExtraReservations =
     lib.mapAttrs (_: rs: map (r: r.reservation) rs)
       (lib.groupBy (r: r.network) allReservations);
+
+  # PXE-server bind addresses: every IP we used as next-server above.
+  bindAddresses = lib.unique
+    (map (r: r.reservation."next-server") allReservations);
 in {
   options.psyclyx.nixos.topology.pxe = {
     serve = lib.mkOption {
@@ -136,17 +157,8 @@ in {
         Set to true on the host that should run the PXE server. The
         projection then reads every PXE-mode host and populates
         services.pxe-server.clients with their netboot artifacts and
-        adds matching Kea reservations.
-      '';
-    };
-
-    bindAddress = lib.mkOption {
-      type = lib.types.str;
-      description = ''
-        Address the PXE server binds. Reachable from PXE clients on
-        the lab VLAN. Returned to clients as next-server in their DHCP
-        reservation, so PXE firmware fetches the iPXE binary from here
-        via TFTP, then iPXE fetches the chain script from here via HTTP.
+        adds matching Kea reservations. The set of addresses we bind
+        on falls out of the per-network reservations.
       '';
     };
 
@@ -160,7 +172,7 @@ in {
   config = lib.mkIf enabled {
     psyclyx.nixos.services.pxe-server = lib.mkIf (clients != {}) {
       enable = true;
-      bindAddress = cfg.bindAddress;
+      inherit bindAddresses;
       httpPort = cfg.httpPort;
       inherit clients;
       ipxeBinaries = {
