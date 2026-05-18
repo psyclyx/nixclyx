@@ -63,12 +63,19 @@ in {
         wg = "${pkgs.wireguard-tools}/bin/wg";
         keys = config.psyclyx.nixos.wireguard.autoGenerateKeys;
       in lib.concatMapStringsSep "\n" (keyPath: ''
+        keyDir=$(dirname "${keyPath}")
+        # Ensure the directory is traversable by systemd-network so it
+        # can read the key file (the file has group=systemd-network mode
+        # 0640, but that's useless if the parent dir is root:root 0750).
+        umask 027
+        mkdir -p "$keyDir"
+        chown root:systemd-network "$keyDir"
+        chmod 0750 "$keyDir"
         if [ ! -f "${keyPath}" ] || [ ! -s "${keyPath}" ]; then
           echo "Generating WireGuard key: ${keyPath}"
-          umask 027
-          mkdir -p "$(dirname "${keyPath}")"
           ${wg} genkey > "${keyPath}"
           chown root:systemd-network "${keyPath}"
+          chmod 0640 "${keyPath}"
         fi
       '') keys;
     };

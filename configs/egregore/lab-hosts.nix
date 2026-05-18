@@ -133,7 +133,7 @@ in
         storageDev = "eno50np1";
         labMac     = "98:f2:b3:d7:b9:d0";   # eno49np0
         labDev     = "eno49np0";
-        wgKey = "DpCTkovVZTGzRzjPFJg6ZTnFVN05mugTb94v+UgfclA=";
+        wgKey = "IjRhm1Lw0+nkD/Im+4QYAit3+JtlQ5FnvKShpY7+Tiw=";
         # lab-4 owns the pool — no boot LUN.
       };
     };
