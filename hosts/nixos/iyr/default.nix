@@ -23,9 +23,9 @@ in
   systemd.network.networks."31-enp3s0.${toString eg.conventions.transitVlan}".linkConfig.MTUBytes = 1500;
 
   # gateway.nix's "30-enp1s0" unit only lists VLANs iyr gateways in its
-  # `vlan = [...]`. We need enp1s0.210 attached too (for the L2-only
-  # lab listener); list-merge appends.
-  systemd.network.networks."30-enp1s0".vlan = [ "enp1s0.210" ];
+  # `vlan = [...]`. We need the L2-only listener VLANs (lab, storage)
+  # attached too; list-merge appends.
+  systemd.network.networks."30-enp1s0".vlan = [ "enp1s0.210" "enp1s0.200" ];
 
   # Tang server for clevis-based ZFS unlock on lab hosts. Lab-4's
   # initrd reaches us via the JWE-embedded URL on our lab-VLAN IP;
@@ -73,17 +73,31 @@ in
     topology.pxe.serve = true;
 
     network = {
-      # iyr is on the lab VLAN as an L2-only DHCP listener. The gateway
-      # projection skips lab (refs.gateway = mdf-agg01), so we add the
-      # VLAN netdev + IP by hand here. The gateway module's
-      # `vlan = [...]` list on the lan-interface network unit only
-      # includes networks iyr gateways, so we also need to extend it
-      # with enp1s0.210 (done below in systemd.network.networks).
+      # iyr is an L2-only DHCP listener on the switch-routed VLANs
+      # (lab/storage — gateway'd by mdf-agg01, not iyr). The gateway
+      # projection skips these networks, so we add the VLAN netdevs +
+      # IPs by hand here. The gateway module's `vlan = [...]` list on
+      # the lan-interface network unit only includes networks iyr
+      # gateways, so we also extend it with the enp1s0.<vlan> child
+      # devices below in systemd.network.networks.
       interfaces = {
         vlans."enp1s0.210" = { id = 210; parent = "enp1s0"; };
         networks."enp1s0.210" = {
           addresses = [ "10.0.210.2/24" ];
           requiredForOnline = "no";
+        };
+        vlans."enp1s0.200" = { id = 200; parent = "enp1s0"; };
+        networks."enp1s0.200" = {
+          # Storage anchor so Kea has a socket on VLAN 200 for the
+          # storage pool's reservations. No host-side service uses this
+          # address — clients route to mdf-agg01 (10.0.200.1) for L3.
+          addresses = [ "10.0.200.2/24" ];
+          requiredForOnline = "no";
+          # MTU 9000 to match the storage VLAN — DHCP packets are tiny,
+          # but bringing the interface up at 1500 would tag every frame
+          # arriving from storage clients as "frame too big" if anything
+          # ever tried to push iSCSI through this listener by accident.
+          mtu = 9000;
         };
       };
 
@@ -158,11 +172,12 @@ in
       firewall =
         let
           vlanIface = id: "enp1s0.${builtins.toString id}";
-          # `enp1s0.210` is included even though iyr doesn't gateway lab
-          # (the gateway projection filters it out of dhcpVlans). iyr
-          # is on lab as an L2-only DHCP listener; firewall-wise it's
-          # a regular LAN interface.
-          internal = [ "enp1s0" "enp1s0.210" ] ++ map vlanIface dhcpVlans;
+          # `enp1s0.210` / `enp1s0.200` are included even though iyr
+          # doesn't gateway those VLANs (the gateway projection filters
+          # them out of dhcpVlans). iyr is on lab + storage as an
+          # L2-only DHCP listener; firewall-wise they're regular LAN
+          # interfaces.
+          internal = [ "enp1s0" "enp1s0.210" "enp1s0.200" ] ++ map vlanIface dhcpVlans;
         in
         {
           enable = true;
