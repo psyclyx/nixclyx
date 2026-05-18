@@ -112,7 +112,7 @@ in
           "main"
           "mgmt"
         ];
-        initrdKernelModules = [
+        initrd.kernelModules = [
           "8021q"
           "igc"
         ];

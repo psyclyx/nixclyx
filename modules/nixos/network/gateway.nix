@@ -1,18 +1,74 @@
-# Gateway/router networking.
+# Gateway/router networking — generic NixOS sugar.
 #
-# Serves all egregore networks on a LAN trunk with IPv6 RA and DHCPv6
-# prefix delegation, plus a WAN transit VLAN with upstream DHCP.
-#
-# This is the "serve networks" counterpart to topology/network.nix's
-# "be on networks" — a host enables one or the other, not both.
-#
-# Uses the interfaces module for VLAN netdev creation but generates its
-# own network units (gateway addresses, RA config, transit DHCP) since
-# these are fundamentally different from client-side addressing.
+# Takes flat option data (the networks this host gateways, per-VLAN
+# addresses, RA domains, static routes, etc.) and emits the
+# corresponding networkd config (RA, DHCPv6-PD on each LAN VLAN,
+# upstream DHCP on the WAN transit VLAN). Does NOT read egregore —
+# `modules/nixos/topology/gateway.nix` is the projection that
+# populates this module's options from fleet data.
 {
   path = ["psyclyx" "nixos" "network" "gateway"];
-  description = "Gateway VLAN networking from egregore topology";
-  options = { lib, ... }: {
+  description = "Gateway VLAN networking (RA + DHCPv6-PD per VLAN, WAN transit)";
+  options = { lib, ... }: let
+    netModule = lib.types.submodule {
+      options = {
+        id = lib.mkOption {
+          type = lib.types.int;
+          description = "VLAN id on lanInterface.";
+        };
+        address4 = lib.mkOption {
+          type = lib.types.str;
+          description = "IPv4 address in CIDR notation (the gateway IP).";
+        };
+        address6 = lib.mkOption {
+          type = lib.types.nullOr lib.types.str;
+          default = null;
+          description = "IPv6 address in CIDR notation.";
+        };
+        ulaPrefix = lib.mkOption {
+          type = lib.types.nullOr lib.types.str;
+          default = null;
+          description = "ULA prefix advertised in RA, e.g. fd9a:e830:4b1e:a::/64.";
+        };
+        pdSubnetId = lib.mkOption {
+          type = lib.types.nullOr lib.types.int;
+          default = null;
+          description = "Subnet id for DHCPv6 prefix delegation on this VLAN.";
+        };
+        raDomains = lib.mkOption {
+          type = lib.types.listOf lib.types.str;
+          default = [];
+          description = "Domains advertised via RA option (DNSSL).";
+        };
+        staticRoutes = lib.mkOption {
+          type = lib.types.listOf (lib.types.submodule {
+            options = {
+              destination = lib.mkOption { type = lib.types.str; };
+              gateway = lib.mkOption { type = lib.types.str; };
+            };
+          });
+          default = [];
+          description = ''
+            Static routes to install on this VLAN's network unit. Used
+            for switch-routed sibling VLANs whose next hop sits on this
+            VLAN, so connected clients reach those subnets directly.
+          '';
+        };
+      };
+    };
+
+    initrdNetModule = lib.types.submodule {
+      options = {
+        id = lib.mkOption {
+          type = lib.types.int;
+        };
+        address4 = lib.mkOption {
+          type = lib.types.str;
+          description = "IPv4 address in CIDR notation for initrd reachability.";
+        };
+      };
+    };
+  in {
     lanInterface = lib.mkOption {
       type = lib.types.str;
       description = "Physical LAN trunk interface.";
@@ -20,6 +76,10 @@
     wanInterface = lib.mkOption {
       type = lib.types.str;
       description = "Physical WAN interface.";
+    };
+    transitVlan = lib.mkOption {
+      type = lib.types.int;
+      description = "VLAN id of the WAN transit subinterface on wanInterface.";
     };
     transitDhcpV6 = {
       prefixDelegationHint = lib.mkOption {
@@ -48,175 +108,106 @@
       type = lib.types.nullOr lib.types.str;
       default = null;
     };
-    initrdVlans = lib.mkOption {
-      type = lib.types.listOf lib.types.str;
+    networks = lib.mkOption {
+      type = lib.types.listOf netModule;
       default = [];
-      description = "Egregore network names to bring up in initrd.";
+      description = ''
+        Networks this host gateways. Populated by topology/gateway.nix
+        from egregore data; can also be set directly when no fleet
+        framework is involved.
+      '';
     };
-    initrdKernelModules = lib.mkOption {
-      type = lib.types.listOf lib.types.str;
-      default = ["8021q"];
+    initrd = {
+      enable = lib.mkOption {
+        type = lib.types.bool;
+        default = false;
+        description = "Bring the listed networks up in initrd.";
+      };
+      kernelModules = lib.mkOption {
+        type = lib.types.listOf lib.types.str;
+        default = ["8021q"];
+      };
+      networks = lib.mkOption {
+        type = lib.types.listOf initrdNetModule;
+        default = [];
+        description = "Gateway VLANs to bring up before stage-2.";
+      };
     };
   };
-  config = { cfg, config, lib, ... }: let
-    eg = config.psyclyx.egregore;
-    hostname = config.psyclyx.nixos.host;
 
-    # Networks this host is the gateway for (declared explicitly or via
-    # site-level fallback). VLAN-only — overlays (vpn) are excluded.
-    # Networks routed by other entities (e.g. CRS326 acting as L3 router)
-    # are skipped here; we serve their hosts via static routes instead.
-    networks = lib.filterAttrs
-      (_: e:
-        e.type == "network"
-        && e.network.vlan != null
-        && (e.attrs.gatewayRef or null) == hostname)
-      eg.entities;
-    dhcpVlans = lib.sort builtins.lessThan
-      (lib.mapAttrsToList (_: e: e.network.vlan) networks);
-    vlanNameMap = builtins.listToAttrs (lib.mapAttrsToList (name: e:
-      lib.nameValuePair (toString e.network.vlan) name
-    ) networks);
-
-    # Networks this host directly participates in (egregore-declared
-    # interfaces on the host). Used to skip static-route emission for
-    # subnets we have a connected interface on — the kernel would prefer
-    # the static route's gateway over the connected route's link-scope
-    # source, and replies go out the wrong interface with the wrong src
-    # IP. Caused atftpd → PXE-client replies to land on the lan VLAN
-    # with src=10.0.10.1 instead of src=10.0.210.2 on the lab VLAN.
-    myHost = eg.entities.${hostname}.host or null;
-    myConnectedNetworks =
-      if myHost == null then []
-      else lib.attrNames (myHost.interfaces or {});
-
-    # Switch-routed networks we need static routes to. For each routeros
-    # switch with `routedNetworks`, emit a /24 (or appropriate prefix)
-    # next-hopped at the switch's uplinkNetwork IP. The static route
-    # attaches to whichever of our VLAN units shares that uplink network.
-    # Skip networks this host has a connected interface on — the kernel
-    # will use the connected route directly.
-    switches = lib.filterAttrs (_: e: e.type == "routeros") eg.entities;
-    staticRoutesByVlan = let
-      perSwitch = lib.mapAttrsToList (_swName: sw: let
-        r = sw.routeros;
-        uplinkName =
-          if r.uplinkNetwork != null then r.uplinkNetwork
-          else r.mgmtNetwork;
-        uplinkNet = eg.entities.${uplinkName};
-        nextHopV4 = r.addresses.${uplinkName}.ipv4 or null;
-      in map (netName: {
-        inherit netName;
-        uplinkVlan = uplinkNet.network.vlan;
-        destSubnet = "${eg.entities.${netName}.attrs.network4}/${toString eg.entities.${netName}.attrs.prefixLen}";
-        gateway = nextHopV4;
-      }) sw.attrs.routedNetworks)
-        switches;
-      flat = builtins.filter
-        (r: r.gateway != null && !(builtins.elem r.netName myConnectedNetworks))
-        (lib.flatten perSwitch);
-    in lib.foldl' (acc: r:
-      let vid = toString r.uplinkVlan; in
-      acc // {
-        ${vid} = (acc.${vid} or []) ++ [{ Destination = r.destSubnet; Gateway = r.gateway; }];
-      }
-    ) {} flat;
-
-    transitVlan = eg.conventions.transitVlan;
+  config = { cfg, lib, ... }: let
     vlanIface = id: "${cfg.lanInterface}.${builtins.toString id}";
-    transitIface = "${cfg.wanInterface}.${builtins.toString transitVlan}";
+    transitIface = "${cfg.wanInterface}.${builtins.toString cfg.transitVlan}";
 
-    # Register VLANs via the interfaces module.
-    lanVlans = builtins.listToAttrs (map (id:
-      lib.nameValuePair (vlanIface id) { inherit id; parent = cfg.lanInterface; }
-    ) dhcpVlans);
+    # Register every gateway-served VLAN as a netdev via the interfaces
+    # module so the trunk's `vlan = [...]` list is consistent.
+    lanVlans = builtins.listToAttrs (map (net:
+      lib.nameValuePair (vlanIface net.id) {
+        id = net.id;
+        parent = cfg.lanInterface;
+      }
+    ) cfg.networks);
     transitVlanEntry = {
-      ${transitIface} = { id = transitVlan; parent = cfg.wanInterface; };
+      ${transitIface} = { id = cfg.transitVlan; parent = cfg.wanInterface; };
     };
 
-    # Gateway-specific network units (RA, PD — not expressible via interfaces.networks).
-    mkGatewayNetwork = vlanId: let
-      name = vlanNameMap.${toString vlanId};
-      net = eg.entities.${name};
-      na = net.attrs;
-      siteEntity = if net.network.site != null then eg.entities.${net.network.site} or null else null;
-      siteDomain = if siteEntity != null then siteEntity.site.domain else null;
-      # Routing-only domain (~prefix) for the internal apex: clients
-      # send any *.psyclyx.net query through this gateway's resolver,
-      # which already forwards the apex to the VPN hub. Without this
-      # apartment clients route only *.apt.psyclyx.net here and fall
-      # through to upstream DNS for the bare apex zone.
-      internalDomain = eg.domains.internal or null;
-      raDomains =
-        lib.optional (internalDomain != null && internalDomain != "") "~${internalDomain}"
-        ++ lib.optional (siteDomain != null) siteDomain
-        ++ [ na.zoneName ];
-      extraRoutes = staticRoutesByVlan.${toString vlanId} or [];
-    in lib.nameValuePair "31-${vlanIface vlanId}" ({
-      matchConfig.Name = vlanIface vlanId;
-      address = [
-        "${na.gateway4}/${toString na.prefixLen}"
-        "${na.gateway6}/64"
-      ];
+    mkGatewayNetwork = net: lib.nameValuePair "31-${vlanIface net.id}" ({
+      matchConfig.Name = vlanIface net.id;
+      address =
+        [ net.address4 ]
+        ++ lib.optional (net.address6 != null) net.address6;
       networkConfig = {
         IPv6SendRA = true;
-        DHCPPrefixDelegation = true;
-      };
-      dhcpPrefixDelegationConfig = {
-        SubnetId = net.network.ipv6PdSubnetId;
-        Token = "::1";
+        DHCPPrefixDelegation = net.pdSubnetId != null;
       };
       ipv6SendRAConfig = {
         Managed = true;
         OtherInformation = true;
         DNS = "_link_local";
-        Domains = lib.concatStringsSep " " raDomains;
+        Domains = lib.concatStringsSep " " net.raDomains;
       };
-      ipv6Prefixes = [
-        { Prefix = "${eg.ipv6UlaPrefix}:${net.network.ulaSubnetHex}::/64"; }
-      ];
       linkConfig.RequiredForOnline = "routable";
-    } // lib.optionalAttrs (extraRoutes != []) {
-      routes = extraRoutes;
+    } // lib.optionalAttrs (net.pdSubnetId != null) {
+      dhcpPrefixDelegationConfig = {
+        SubnetId = net.pdSubnetId;
+        Token = "::1";
+      };
+    } // lib.optionalAttrs (net.ulaPrefix != null) {
+      ipv6Prefixes = [ { Prefix = net.ulaPrefix; } ];
+    } // lib.optionalAttrs (net.staticRoutes != []) {
+      routes = map (r: { Destination = r.destination; Gateway = r.gateway; }) net.staticRoutes;
     });
 
-    # Initrd VLAN networking.
-    initrdVlanIds = map (name: eg.entities.${name}.network.vlan) cfg.initrdVlans;
-    mkInitrdVlanNetwork = vlanId: let
-      name = vlanNameMap.${toString vlanId};
-      na = eg.entities.${name}.attrs;
-    in lib.nameValuePair "11-${vlanIface vlanId}" {
-      matchConfig.Name = vlanIface vlanId;
-      address = ["${na.gateway4}/${toString na.prefixLen}"];
+    mkInitrdVlanNetwork = net: lib.nameValuePair "11-${vlanIface net.id}" {
+      matchConfig.Name = vlanIface net.id;
+      address = [ net.address4 ];
       linkConfig.RequiredForOnline = "routable";
     };
   in {
-    # Wire VLANs through the interfaces module.
     psyclyx.nixos.network.interfaces.vlans = lanVlans // transitVlanEntry;
 
-    psyclyx.nixos.boot.initrd-ssh.network = lib.mkIf (cfg.initrdVlans != []) {
-      kernelModules = cfg.initrdKernelModules;
-      netdevs = builtins.listToAttrs (map (id:
-        lib.nameValuePair "11-${vlanIface id}" {
-          netdevConfig = { Name = vlanIface id; Kind = "vlan"; };
-          vlanConfig.Id = id;
+    psyclyx.nixos.boot.initrd-ssh.network = lib.mkIf cfg.initrd.enable {
+      kernelModules = cfg.initrd.kernelModules;
+      netdevs = builtins.listToAttrs (map (net:
+        lib.nameValuePair "11-${vlanIface net.id}" {
+          netdevConfig = { Name = vlanIface net.id; Kind = "vlan"; };
+          vlanConfig.Id = net.id;
         }
-      ) initrdVlanIds);
+      ) cfg.initrd.networks);
       networks =
         {
           "10-${cfg.lanInterface}" = {
             matchConfig.Name = cfg.lanInterface;
             networkConfig.DHCP = "no";
-            vlan = map vlanIface initrdVlanIds;
+            vlan = map (net: vlanIface net.id) cfg.initrd.networks;
             linkConfig.RequiredForOnline = "carrier";
           };
         }
-        // builtins.listToAttrs (map mkInitrdVlanNetwork initrdVlanIds);
+        // builtins.listToAttrs (map mkInitrdVlanNetwork cfg.initrd.networks);
     };
 
     systemd.network.config.dhcpV6Config.DUIDType = "link-layer";
 
-    # LAN + WAN trunk wiring (gateway manages these directly, not via interfaces.networks).
     systemd.network.networks = {
       "30-${cfg.lanInterface}" = {
         matchConfig.Name = cfg.lanInterface;
@@ -228,7 +219,7 @@
         networkConfig = { Domains = ["~."]; DHCP = "no"; };
         address = lib.optional (cfg.lanAddress != null) cfg.lanAddress;
         dns = ["127.0.0.1"];
-        vlan = map vlanIface dhcpVlans;
+        vlan = map (net: vlanIface net.id) cfg.networks;
       };
       "30-${cfg.wanInterface}" = {
         matchConfig.Name = cfg.wanInterface;
@@ -257,6 +248,6 @@
         routes = [{ Destination = "::/0"; Metric = 1024; }];
         linkConfig.RequiredForOnline = "carrier";
       };
-    } // builtins.listToAttrs (map mkGatewayNetwork dhcpVlans);
+    } // builtins.listToAttrs (map mkGatewayNetwork cfg.networks);
   };
 }
