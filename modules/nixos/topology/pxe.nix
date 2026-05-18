@@ -21,22 +21,17 @@
     e.type == "host" && (e.host.boot.mode or "local") == "pxe"
   ) eg.entities;
 
-  # Look up a PXE host's MAC: host.interfaces.<pxeInterface>.device,
-  # then host.mac.<device>.
-  hostPxeMac = name: hostEnt: let
-    h = hostEnt.host;
-    ifName = h.boot.pxeInterface;
-    iface = h.interfaces.${ifName} or null;
+  # MAC for a particular PXE-eligible interface of a host:
+  # host.interfaces.<ifName>.device → host.mac.<device>.
+  hostMacOnInterface = hostEnt: ifName: let
+    iface = hostEnt.host.interfaces.${ifName} or null;
     dev = if iface != null then iface.device else null;
   in
-    if dev != null && (h.mac ? ${dev}) then h.mac.${dev}
+    if dev != null && (hostEnt.host.mac ? ${dev}) then hostEnt.host.mac.${dev}
     else null;
 
-  hostPxeNetwork = hostEnt: hostEnt.host.boot.pxeInterface;
-
-  hostPxeIp = name: hostEnt: let
-    netName = hostPxeNetwork hostEnt;
-    addr = hostEnt.host.addresses.${netName} or null;
+  hostIpOnInterface = hostEnt: ifName: let
+    addr = hostEnt.host.addresses.${ifName} or null;
   in if addr != null then addr.ipv4 else null;
 
   # Custom iPXE with an embedded chain script. After firmware loads
@@ -62,7 +57,9 @@
   # Cross-host eval: each PXE client's netboot artifacts come from its
   # own NixOS config. nodes is colmena-provided.
   mkClient = name: hostEnt: let
-    mac = hostPxeMac name hostEnt;
+    h = hostEnt.host;
+    macs = lib.filter (m: m != null)
+      (map (n: hostMacOnInterface hostEnt n) h.boot.pxeInterfaces);
     nodeCfg = nodes.${name}.config or null;
     hasBuild =
       nodeCfg != null
@@ -70,11 +67,11 @@
       && nodeCfg.system ? build
       && nodeCfg.system.build ? netbootRamdisk;
   in
-    if mac != null && hasBuild
+    if macs != [] && hasBuild
     then {
       inherit name;
       value = {
-        inherit mac;
+        inherit macs;
         kernel = "${nodeCfg.system.build.kernel}/bzImage";
         initrd = "${nodeCfg.system.build.netbootRamdisk}/initrd";
         # init= is the system toplevel's stage-2 init — without it,
@@ -102,33 +99,34 @@
 
   clients = builtins.listToAttrs clientPairs;
 
-  # Per-network Kea reservations. Each PXE host's pxeInterface picks
-  # which DHCP pool to attach the reservation to. Group by network so
-  # we can push one extraReservations list per pool.
-  mkReservation = name: hostEnt: {
-    "hw-address" = hostPxeMac name hostEnt;
-    "ip-address" = hostPxeIp name hostEnt;
-    hostname = name;
-    "next-server" = cfg.bindAddress;
-    "boot-file-name" = "ipxe.efi";
-  };
+  # Per-network Kea reservations. Each host enumerates the networks it
+  # is willing to PXE on (boot.pxeInterfaces); we emit a reservation in
+  # each of those pools, keyed by that interface's MAC + address.
+  # That lets firmware boot order pick any of the host's NICs and still
+  # land on the right pool.
+  hostNetReservations = name: hostEnt:
+    lib.filter (r: r != null) (map (ifName: let
+      mac = hostMacOnInterface hostEnt ifName;
+      ip  = hostIpOnInterface hostEnt ifName;
+    in
+      if mac == null || ip == null then null
+      else {
+        network = ifName;
+        reservation = {
+          "hw-address" = mac;
+          "ip-address" = ip;
+          hostname = name;
+          "next-server" = cfg.bindAddress;
+          "boot-file-name" = "ipxe.efi";
+        };
+      }
+    ) hostEnt.host.boot.pxeInterfaces);
 
-  pxeHostList = lib.attrValues
-    (lib.filterAttrs (n: e:
-      hostPxeMac n e != null && hostPxeIp n e != null
-    ) (lib.mapAttrs (n: e: e) pxeHosts));
+  allReservations = lib.flatten (lib.mapAttrsToList hostNetReservations pxeHosts);
 
-  reservationsByNetwork = lib.groupBy hostPxeNetwork pxeHostList;
-
-  poolExtraReservations = lib.mapAttrs (_netName: hosts:
-    map (e:
-      let
-        # Find the entity name for this host (groupBy lost it).
-        names = lib.attrNames (lib.filterAttrs (_: x: x == e) pxeHosts);
-      in
-      mkReservation (lib.head names) e
-    ) hosts
-  ) reservationsByNetwork;
+  poolExtraReservations =
+    lib.mapAttrs (_: rs: map (r: r.reservation) rs)
+      (lib.groupBy (r: r.network) allReservations);
 in {
   options.psyclyx.nixos.topology.pxe = {
     serve = lib.mkOption {

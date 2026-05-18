@@ -30,9 +30,13 @@
       type = lib.types.attrsOf (
         lib.types.submodule {
           options = {
-            mac = lib.mkOption {
-              type = lib.types.str;
-              description = "PXE client's MAC (any case, colon-separated).";
+            macs = lib.mkOption {
+              type = lib.types.nonEmptyListOf lib.types.str;
+              description = ''
+                MACs that should chainload this client's boot bundle.
+                One iPXE script gets emitted per MAC so the host can
+                PXE-boot from any of its NICs.
+              '';
             };
             kernel = lib.mkOption {
               type = lib.types.path;
@@ -100,10 +104,11 @@
         mkdir -p $out/http/boot/${name}
         ln -s ${client.kernel} $out/http/boot/${name}/kernel
         ln -s ${client.initrd} $out/http/boot/${name}/initrd
-        cat > $out/http/boot/${macKey client.mac}.ipxe <<'EOF'
+      '' + lib.concatMapStringsSep "\n" (mac: ''
+        cat > $out/http/boot/${macKey mac}.ipxe <<'EOF'
         ${mkIpxeScript name client}
         EOF
-      '') cfg.clients
+      '') client.macs) cfg.clients
     ));
   in lib.mkIf (cfg.clients != {}) {
     # TFTP: serve the iPXE binaries. atftpd is the standard small TFTP

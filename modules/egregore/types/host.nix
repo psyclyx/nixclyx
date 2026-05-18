@@ -155,15 +155,17 @@ egregorLib.mkType {
               the fleet's PXE server; this host has no bootloader.
             '';
           };
-          pxeInterface = lib.mkOption {
-            type = lib.types.nullOr lib.types.str;
-            default = null;
+          pxeInterfaces = lib.mkOption {
+            type = lib.types.listOf lib.types.str;
+            default = [];
             description = ''
-              Egregore network name of the interface used for PXE boot.
-              Firmware must have boot order set to use the corresponding
-              NIC. The PXE projection derives the host's PXE MAC from
-              host.interfaces.<pxeInterface>.device → host.mac.<device>.
-              Null for mode = "local".
+              Egregore network names this host is willing to PXE from.
+              The PXE projection emits a per-MAC reservation in each
+              named network's DHCP pool, so firmware boot order can pick
+              any of them and still chainload iPXE. Each entry must name
+              a declared interface; the host's MAC for that NIC comes
+              from host.interfaces.<name>.device → host.mac.<device>.
+              Empty for mode = "local".
             '';
           };
         };
@@ -305,15 +307,16 @@ egregorLib.mkType {
     let
       h = entity.host;
       pxe = h.boot.mode == "pxe";
-      ifName = h.boot.pxeInterface;
+      ifs = h.boot.pxeInterfaces;
+      missing = lib.filter (n: !(h.interfaces ? ${n})) ifs;
     in
     lib.optional (h.site != null) {
       assertion = top.entities ? ${h.site} && top.entities.${h.site}.type == "site";
       message = "host '${name}' references site '${h.site}' which is not a site entity";
     }
     ++ lib.optional pxe {
-      assertion = ifName != null && (h.interfaces ? ${ifName});
-      message = "host '${name}' boot.mode = \"pxe\" requires boot.pxeInterface to name a declared interface";
+      assertion = ifs != [] && missing == [];
+      message = "host '${name}' boot.mode = \"pxe\" requires boot.pxeInterfaces to be a non-empty list of declared interface names (missing: ${lib.concatStringsSep ", " missing})";
     };
 
   verbs =

@@ -65,12 +65,14 @@ let
             ipv6 = "fd9a:e830:4b1e:d2::${lib.toHexString (10 + n)}";
           };
         };
-        # PXE-boot via eno1 on main while the 10G fallback is parked.
-        # The PXE projection uses host.mac.eno1 for the main-pool
-        # reservation; BIOS boot order must select the eno1 NIC.
+        # PXE-eligible on every interface with a DHCP pool (storage is
+        # excluded — it's switch-routed L3 with no DHCP server). The
+        # projection emits a per-MAC reservation in each named pool, so
+        # firmware boot order can pick either eno1 (main) or the 10G
+        # NIC (lab) and the chainload still works.
         boot = {
           mode = "pxe";
-          pxeInterface = "main";
+          pxeInterfaces = [ "main" "lab" ];
         };
         wireguard = {
           publicKey = wgKey;
