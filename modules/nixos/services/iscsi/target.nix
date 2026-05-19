@@ -80,7 +80,10 @@
       ) cfg.targets
     );
 
-    mkPortal = p: { ip_address = p.address; iport = 3260; };
+    # targetcli expects `port`, not `iport`. The two appear in
+    # different parts of LIO's history; nixpkgs' targetcli-fb takes
+    # `port`.
+    mkPortal = p: { ip_address = p.address; port = 3260; };
 
     mkTpg = targetName: target: {
       tag = 1;
