@@ -150,6 +150,21 @@ let
       }) (vmLuns vmName)
     ) myVms
   );
+  # Order each microvm@<vm>.service after its LUNs' format units, so
+  # the guest doesn't try to mount an unformatted block device at
+  # boot. The zvol-provision projection emits zfs-format-<lun>; we
+  # just wire the dependency.
+  microvmServiceDeps = lib.mapAttrs' (
+    vmName: _:
+    let
+      lunNames = builtins.attrNames (vmLuns vmName);
+      formatUnits = map (lun: "zfs-format-${lun}.service") lunNames;
+    in
+    lib.nameValuePair "microvm@${vmName}" {
+      after = formatUnits;
+      requires = formatUnits;
+    }
+  ) myVms;
 in
 {
   options.psyclyx.nixos.topology.vms = {
@@ -199,5 +214,6 @@ in
   config = lib.mkIf enabled {
     inherit assertions;
     microvm.vms = builtins.listToAttrs (lib.mapAttrsToList mkVm myVms);
+    systemd.services = microvmServiceDeps;
   };
 }

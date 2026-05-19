@@ -25,6 +25,7 @@
     ./vms.nix
     ./openbao-fleet.nix
     ./openbao-vm-auth.nix
+    ./zvol-provision.nix
   ];
 
   extraOptions =
