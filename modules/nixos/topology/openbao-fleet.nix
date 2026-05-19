@@ -30,6 +30,7 @@ let
   hostHere = hostEntity != null;
 
   policyEntities = lib.filterAttrs (_: e: e.type == "openbao-policy") eg.entities;
+  pkiRoleEntities = lib.filterAttrs (_: e: e.type == "openbao-pki-role") eg.entities;
   certRoleEntities = lib.filterAttrs (_: e: e.type == "openbao-cert-role") eg.entities;
   kvSecretEntities = lib.filterAttrs (
     _: e: e.type == "kv-secret" && (e.refs.producer or null) == hostname && e.kv-secret.sourceFile != null
@@ -44,6 +45,21 @@ let
       bao policy write ${lib.escapeShellArg p.openbao-policy.name} - <<'EOF'
       ${hcl}
       EOF
+    '';
+
+  mkPkiRoleBlock =
+    _: r:
+    let
+      pr = r.openbao-pki-role;
+    in
+    ''
+      bao write ${lib.escapeShellArg pr.mount}/roles/${lib.escapeShellArg pr.name} \
+        allowed_domains=${lib.escapeShellArg (lib.concatStringsSep "," pr.allowedDomains)} \
+        allow_subdomains=${lib.boolToString pr.allowSubdomains} \
+        allow_ip_sans=${lib.boolToString pr.allowIpSans} \
+        client_flag=${lib.boolToString pr.clientFlag} \
+        server_flag=${lib.boolToString pr.serverFlag} \
+        max_ttl=${lib.escapeShellArg pr.maxTtl}
     '';
 
   mkCertRoleBlock =
@@ -83,6 +99,7 @@ let
 
   configureExtra =
     lib.concatStrings (lib.mapAttrsToList mkPolicyBlock policyEntities)
+    + lib.concatStrings (lib.mapAttrsToList mkPkiRoleBlock pkiRoleEntities)
     + lib.concatStrings (lib.mapAttrsToList mkCertRoleBlock certRoleEntities)
     + lib.concatStrings (lib.mapAttrsToList mkKvSecretBlock kvSecretEntities);
 in
