@@ -71,7 +71,6 @@ let
       ds = lun.attrs.dataset;
       fsType = lun.lun.fsType;
       deviceUnit = zvolDeviceUnit ds;
-      formattedMarker = "/var/lib/zvol-provision/.formatted-${lunName}";
     in
     {
       description = "Format zvol ${ds} as ${fsType}";
@@ -82,13 +81,14 @@ let
       after = [ "zfs-create-${lunName}.service" deviceUnit ];
       requires = [ "zfs-create-${lunName}.service" deviceUnit ];
       bindsTo = [ deviceUnit ];
-      # Idempotent: a marker under /var/lib remembers we've already
-      # mkfs'd this zvol. Avoids re-formatting on every boot.
-      unitConfig.ConditionPathExists = "!${formattedMarker}";
+      # Skip if the device already carries a filesystem of any type.
+      # `blkid -p` exits 0 when it can identify a FS, non-zero
+      # otherwise; we want non-zero (no FS yet) for the unit to
+      # proceed. `!` inverts the exit code.
       serviceConfig = {
         Type = "oneshot";
         RemainAfterExit = true;
-        StateDirectory = "zvol-provision";
+        ExecCondition = "${pkgs.bash}/bin/bash -c '! ${pkgs.util-linux}/bin/blkid -p -o export /dev/zvol/${ds} | ${pkgs.gnugrep}/bin/grep -q ^TYPE='";
       };
       path = [ pkgs.e2fsprogs ];
       script = ''
@@ -96,7 +96,6 @@ let
           ext4) mkfs.ext4 -L ${lib.escapeShellArg lunName} /dev/zvol/${ds} ;;
           *)    echo "unknown fsType ${fsType} for ${ds}" >&2 ; exit 1 ;;
         esac
-        : > ${lib.escapeShellArg formattedMarker}
       '';
     };
 
