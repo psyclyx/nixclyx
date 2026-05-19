@@ -88,6 +88,7 @@ let
     }
   ];
 
+
   mkVm =
     vmName: vm:
     lib.nameValuePair vmName {
@@ -109,6 +110,22 @@ let
             hypervisor = lib.mkDefault cfg.hypervisor;
             volumes = vmVolumes vmName;
             interfaces = mkInterfaces vmName;
+          };
+          # Rename the guest's lone virtio-net interface to the device
+          # name declared in egregore for the lab network (e.g. "net0").
+          # The fleet network projection keys its networkd units by
+          # interface NAME, so without this rename DHCP never fires in
+          # the guest. Matching by Driver=virtio_net is fine here:
+          # microvm guests get a single NIC (one macvtap parented to
+          # the host's lab interface).
+          systemd.network.links = let
+            labIface = (eg.entities.${vmName}.host.interfaces.lab or null);
+            linkName = if labIface == null then null else labIface.device;
+          in lib.optionalAttrs (linkName != null && linkName != "") {
+            "10-${linkName}" = {
+              matchConfig.Driver = "virtio_net";
+              linkConfig.Name = linkName;
+            };
           };
         }
       ];
