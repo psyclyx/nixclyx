@@ -23,6 +23,8 @@
     ./pxe.nix
     ./gateway.nix
     ./vms.nix
+    ./openbao-fleet.nix
+    ./openbao-vm-auth.nix
   ];
 
   extraOptions =

@@ -173,6 +173,56 @@ egregorLib.mkType {
       default = {};
       description = "How the host gets its kernel + initrd at power-on.";
     };
+    openbao = lib.mkOption {
+      type = lib.types.submodule {
+        options.cert = lib.mkOption {
+          type = lib.types.nullOr (
+            lib.types.submodule {
+              options = {
+                role = lib.mkOption {
+                  type = lib.types.str;
+                  description = ''
+                    Name of the openbao-cert-role entity this host
+                    auths under. The host gets a cert with CN equal
+                    to the host's natural lab-network FQDN (or whatever
+                    network the cert role's pkiRole permits), uses it
+                    to auth, and inherits that role's policies.
+                  '';
+                };
+                commonName = lib.mkOption {
+                  type = lib.types.nullOr lib.types.str;
+                  default = null;
+                  description = ''
+                    Override the derived CN. Null = use the host's
+                    `attrs.fqdns.<network>` for whatever network the
+                    cert role expects.
+                  '';
+                };
+                network = lib.mkOption {
+                  type = lib.types.str;
+                  default = "lab";
+                  description = ''
+                    Network whose zone supplies the cert CN when
+                    `commonName` is unset. Read as
+                    `host.attrs.fqdns.<network>`.
+                  '';
+                };
+              };
+            }
+          );
+          default = null;
+          description = ''
+            OpenBao cert-auth binding. When set, this host is wired
+            into the fleet's OpenBao cert auth flow: hypervisor mints
+            a wrapped bootstrap token, guest auths with the resulting
+            cert, gets the policies of the named role.
+          '';
+        };
+      };
+      default = { };
+      description = "OpenBao integration knobs for this host.";
+    };
+
     exporters = lib.mkOption {
       type = lib.types.attrsOf (
         lib.types.submodule {
