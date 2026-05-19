@@ -45,6 +45,17 @@
         default = "services";
         description = "Userpass username.";
       };
+
+      insecureSkipVerify = lib.mkOption {
+        type = lib.types.bool;
+        default = false;
+        description = ''
+          Skip TLS verification of the OpenBao server cert. Use this
+          for self-signed listener certs on a trusted network. The
+          login itself is still TLS-encrypted; we just don't verify
+          the server's identity.
+        '';
+      };
     };
 
   config =
@@ -82,6 +93,8 @@
           # Cap each `bao login` attempt's HTTP timeout (default is 60s).
           # We want fail-fast on connection problems, not a long wait.
           VAULT_CLIENT_TIMEOUT = "5";
+        } // lib.optionalAttrs cfg.insecureSkipVerify {
+          VAULT_SKIP_VERIFY = "true";
         };
 
         path = [

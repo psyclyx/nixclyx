@@ -76,7 +76,11 @@ let
         RemainAfterExit = true;
         TimeoutStartSec = "30s";
       };
-      environment.BAO_ADDR = cfg.vaultAddr;
+      environment = {
+        BAO_ADDR = cfg.vaultAddr;
+      } // lib.optionalAttrs cfg.insecureSkipVerify {
+        VAULT_SKIP_VERIFY = "true";
+      };
       path = [ pkgs.openbao pkgs.jq pkgs.bash pkgs.coreutils ];
       script = ''
         set -euo pipefail
@@ -116,10 +120,22 @@ in
 
     vaultAddr = lib.mkOption {
       type = lib.types.str;
-      default = "http://10.0.25.1:8200";
+      default = "https://10.0.25.1:8200";
       description = ''
         OpenBao endpoint used by both the hypervisor's wrap-token
         minter and the guest's vm-auth. Reachable from lab-VLAN.
+      '';
+    };
+
+    insecureSkipVerify = lib.mkOption {
+      type = lib.types.bool;
+      default = true;
+      description = ''
+        Skip TLS verification when talking to OpenBao. Default true
+        because the fleet OpenBao currently uses a self-signed
+        listener cert (no CA distribution in place yet) and clients
+        all sit on trusted VLANs. Flip to false once a CA is
+        baked / fetched.
       '';
     };
 
@@ -162,6 +178,7 @@ in
       psyclyx.nixos.services.openbao-vm-auth = {
         enable = true;
         vaultAddr = cfg.vaultAddr;
+        insecureSkipVerify = cfg.insecureSkipVerify;
         pki.mount = guestCertRole.openbao-cert-role.pkiMount;
         pki.role = guestCertRole.openbao-cert-role.pkiRole;
         commonName = guestCommonName;

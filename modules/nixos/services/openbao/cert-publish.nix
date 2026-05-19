@@ -31,6 +31,12 @@
         description = "Path to the OpenBao auth token (provisioned by openbao-login).";
       };
 
+      insecureSkipVerify = lib.mkOption {
+        type = lib.types.bool;
+        default = false;
+        description = "Skip TLS verification of the OpenBao server cert.";
+      };
+
       kvMount = lib.mkOption {
         type = lib.types.str;
         default = "kv";
@@ -73,6 +79,7 @@
           postRun = ''
             set -e
             export BAO_ADDR=${lib.escapeShellArg cfg.vaultAddr}
+            ${lib.optionalString cfg.insecureSkipVerify "export VAULT_SKIP_VERIFY=true"}
             if [ ! -f ${lib.escapeShellArg cfg.tokenFile} ]; then
               echo "openbao-cert-publish: no token at ${cfg.tokenFile}, skipping push for ${domain}" >&2
               exit 0

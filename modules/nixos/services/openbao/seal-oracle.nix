@@ -96,6 +96,41 @@
         type = lib.types.bool;
         default = false;
       };
+
+      tls = {
+        enable = lib.mkEnableOption ''
+          TLS on the external listener. The loopback listener stays
+          plain HTTP so the local configure hook can run before any
+          cert exists. Off → both listeners use tls_disable = true.
+        '';
+        certFile = lib.mkOption {
+          type = lib.types.str;
+          default = "/var/lib/openbao-seal/listener-cert.pem";
+          description = "Path to the TLS cert file on the OpenBao host.";
+        };
+        keyFile = lib.mkOption {
+          type = lib.types.str;
+          default = "/var/lib/openbao-seal/listener-key.pem";
+          description = "Path to the TLS key file on the OpenBao host.";
+        };
+        commonName = lib.mkOption {
+          type = lib.types.str;
+          default = "openbao";
+          description = ''
+            CN to put on the self-signed cert generated at first
+            boot. Only used when the cert/key files don't exist
+            yet; rotation/upgrade is a separate concern.
+          '';
+        };
+        subjectAltNames = lib.mkOption {
+          type = lib.types.listOf lib.types.str;
+          default = [ ];
+          description = ''
+            DNS/IP SubjectAltNames for the generated self-signed cert.
+            Format: "DNS:openbao.example.org" or "IP:10.0.25.1".
+          '';
+        };
+      };
     };
 
   config =
@@ -141,13 +176,23 @@
             { PrivateDevices = true; }
         );
 
+      # External listener: TLS-on if cfg.tls.enable, otherwise plain.
+      # Loopback always plain HTTP — the configure script + local
+      # cert-publish run here before any cert exists, and the
+      # loopback path stays cheap.
       mkListeners = addr: port: [
-        {
+        ({
           tcp = {
             address = "${addr}:${toString port}";
-            tls_disable = true;
-          };
-        }
+          } // (
+            if cfg.tls.enable then {
+              tls_cert_file = cfg.tls.certFile;
+              tls_key_file = cfg.tls.keyFile;
+            } else {
+              tls_disable = true;
+            }
+          );
+        })
         {
           tcp = {
             address = "127.0.0.1:${toString port}";
@@ -268,6 +313,7 @@
         }
         // hardening cfg.tpm.enable;
 
+        path = lib.optional cfg.tls.enable pkgs.openssl;
         preStart = ''
           ${
             if hasSecret then
@@ -283,6 +329,25 @@
               ''
           }
           chmod 600 ${runtimeConfig}
+        ''
+        + lib.optionalString cfg.tls.enable ''
+          # Self-signed listener cert at first boot. Subsequent
+          # rotations / PKI-issued replacements are out of scope of
+          # this preStart — the certFile/keyFile values can be
+          # overwritten in-place and the listener picks them up on
+          # SIGHUP (ExecReload).
+          if [ ! -s ${lib.escapeShellArg cfg.tls.certFile} ] \
+             || [ ! -s ${lib.escapeShellArg cfg.tls.keyFile} ]; then
+            umask 077
+            ${pkgs.openssl}/bin/openssl req -x509 -nodes -days 3650 \
+              -newkey ec -pkeyopt ec_paramgen_curve:P-256 \
+              -keyout ${lib.escapeShellArg cfg.tls.keyFile} \
+              -out ${lib.escapeShellArg cfg.tls.certFile} \
+              -subj ${lib.escapeShellArg "/CN=${cfg.tls.commonName}"} \
+              ${lib.optionalString (cfg.tls.subjectAltNames != [ ]) ''
+                -addext ${lib.escapeShellArg "subjectAltName=${lib.concatStringsSep "," cfg.tls.subjectAltNames}"}
+              ''}
+          fi
         '';
       };
 

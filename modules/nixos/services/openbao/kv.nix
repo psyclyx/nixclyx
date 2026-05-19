@@ -18,6 +18,11 @@
         type = lib.types.str;
         description = "Path to file containing the OpenBao token for KV operations.";
       };
+      insecureSkipVerify = lib.mkOption {
+        type = lib.types.bool;
+        default = false;
+        description = "Skip TLS verification of the OpenBao server cert.";
+      };
       secrets = lib.mkOption {
         type = lib.types.attrsOf (
           lib.types.submodule {
@@ -109,7 +114,11 @@
             wants = [ "network-online.target" ];
             wantedBy = [ "multi-user.target" ];
             serviceConfig.Type = "oneshot";
-            environment.HOME = "/tmp";
+            environment = {
+              HOME = "/tmp";
+            } // lib.optionalAttrs cfg.insecureSkipVerify {
+              VAULT_SKIP_VERIFY = "true";
+            };
             path = [
               pkgs.jq
               pkgs.bash

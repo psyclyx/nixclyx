@@ -86,6 +86,19 @@
           thereafter) on first cert mint; not needed for renewal.
         '';
       };
+
+      insecureSkipVerify = lib.mkOption {
+        type = lib.types.bool;
+        default = false;
+        description = ''
+          Skip server-cert verification when talking to OpenBao.
+          Independent of the cert auth method itself (which uses the
+          guest's *client* cert in the TLS handshake) — this only
+          controls whether we verify the OpenBao listener's cert.
+          Useful when the listener has a self-signed cert and the
+          fleet doesn't yet have CA distribution wired.
+        '';
+      };
     };
 
   config =
@@ -111,6 +124,8 @@
           BAO_ADDR = cfg.vaultAddr;
           HOME = "/run/openbao-auth";
           VAULT_CLIENT_TIMEOUT = "5";
+        } // lib.optionalAttrs cfg.insecureSkipVerify {
+          VAULT_SKIP_VERIFY = "true";
         };
 
         serviceConfig = {
