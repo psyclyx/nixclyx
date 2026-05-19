@@ -154,7 +154,11 @@
           echo "no /etc/target/saveconfig.json — nothing to restore"
           exit 0
         fi
-        exec ${pkgs.targetcli-fb}/bin/targetcli restoreconfig /etc/target/saveconfig.json
+        # clear_existing=True so we always converge on the declared
+        # state — restoreconfig otherwise silently no-ops on objects
+        # that already exist from an earlier (possibly stale) restore,
+        # which leaves the kernel out of sync with the nix config.
+        exec ${pkgs.targetcli-fb}/bin/targetcli restoreconfig /etc/target/saveconfig.json clear_existing=True
       '';
       clearScript = pkgs.writeShellScript "lio-target-clear" ''
         exec ${pkgs.targetcli-fb}/bin/targetcli clearconfig confirm=True
