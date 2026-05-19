@@ -138,7 +138,25 @@
 
     environment.etc."target/saveconfig.json".source = saveConfig;
 
-    systemd.services.target = {
+    # Upstream's `targetctl` is a small bash wrapper over targetcli's
+    # `saveconfig` / `restoreconfig` / `clearconfig` subcommands.
+    # nixpkgs' targetcli-fb derivation doesn't install it, so we drive
+    # targetcli directly. Restore is also guarded against the
+    # saveconfig.json not existing yet (first boot before any targets
+    # are defined still triggers the unit via wantedBy=multi-user).
+    systemd.services.target = let
+      restoreScript = pkgs.writeShellScript "lio-target-restore" ''
+        set -eu
+        if [ ! -s /etc/target/saveconfig.json ]; then
+          echo "no /etc/target/saveconfig.json — nothing to restore"
+          exit 0
+        fi
+        exec ${pkgs.targetcli-fb}/bin/targetcli restoreconfig /etc/target/saveconfig.json
+      '';
+      clearScript = pkgs.writeShellScript "lio-target-clear" ''
+        exec ${pkgs.targetcli-fb}/bin/targetcli clearconfig confirm=True
+      '';
+    in {
       description = "LIO iSCSI target restore";
       after = [ "zfs-import.target" "network.target" "sys-kernel-config.mount" ];
       wants = [ "zfs-import.target" "sys-kernel-config.mount" ];
@@ -148,8 +166,8 @@
         Type = "oneshot";
         RemainAfterExit = true;
         ExecStartPre = "${pkgs.kmod}/bin/modprobe -a configfs target_core_mod target_core_iblock iscsi_target_mod";
-        ExecStart = "${pkgs.targetcli-fb}/bin/targetctl restore /etc/target/saveconfig.json";
-        ExecStop = "${pkgs.targetcli-fb}/bin/targetctl clear";
+        ExecStart = restoreScript;
+        ExecStop = clearScript;
       };
     };
 
