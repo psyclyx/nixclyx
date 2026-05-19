@@ -121,33 +121,31 @@ let
     _: r:
     let
       rr = r.openbao-ssh-cert-role;
-      common = ''
-        key_type=ca \
-        ttl=${lib.escapeShellArg rr.ttl} \
-        max_ttl=${lib.escapeShellArg rr.maxTtl} \
-        key_id_format=${lib.escapeShellArg rr.keyIdFormat}
-      '';
-      hostExtra = ''
-        allow_host_certificates=true \
-        allow_user_certificates=false \
-        allowed_domains=${lib.escapeShellArg (lib.concatStringsSep "," rr.allowedDomains)} \
-        allow_subdomains=${lib.boolToString rr.allowSubdomains} \
-      '';
-      userExtra = ''
-        allow_user_certificates=true \
-        allow_host_certificates=false \
-        ${lib.optionalString (rr.allowedUsers != [ ]) ''
-          allowed_users=${lib.escapeShellArg (lib.concatStringsSep "," rr.allowedUsers)} \
-        ''}
-        ${lib.optionalString (rr.defaultUser != null) ''
-          default_user=${lib.escapeShellArg rr.defaultUser} \
-        ''}
-      '';
+      commonArgs = [
+        "key_type=ca"
+        "ttl=${lib.escapeShellArg rr.ttl}"
+        "max_ttl=${lib.escapeShellArg rr.maxTtl}"
+        "key_id_format=${lib.escapeShellArg rr.keyIdFormat}"
+      ];
+      hostArgs = [
+        "allow_host_certificates=true"
+        "allow_user_certificates=false"
+        "allowed_domains=${lib.escapeShellArg (lib.concatStringsSep "," rr.allowedDomains)}"
+        "allow_subdomains=${lib.boolToString rr.allowSubdomains}"
+      ];
+      userArgs = [
+        "allow_user_certificates=true"
+        "allow_host_certificates=false"
+      ]
+      ++ lib.optional (rr.allowedUsers != [ ])
+          "allowed_users=${lib.escapeShellArg (lib.concatStringsSep "," rr.allowedUsers)}"
+      ++ lib.optional (rr.defaultUser != null)
+          "default_user=${lib.escapeShellArg rr.defaultUser}";
+      kindArgs = if rr.kind == "host" then hostArgs else userArgs;
+      allArgs = lib.concatStringsSep " " (kindArgs ++ commonArgs);
     in
     ''
-      bao write ${lib.escapeShellArg rr.mount}/roles/${lib.escapeShellArg rr.role} \
-        ${if rr.kind == "host" then hostExtra else userExtra}\
-        ${common}
+      bao write ${lib.escapeShellArg rr.mount}/roles/${lib.escapeShellArg rr.role} ${allArgs}
     '';
 
   mkKvSecretBlock =
