@@ -22,6 +22,7 @@
     ./nfs.nix
     ./pxe.nix
     ./gateway.nix
+    ./vms.nix
   ];
 
   extraOptions =

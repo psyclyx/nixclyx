@@ -298,6 +298,8 @@ egregorLib.mkType {
       sshPort = h.sshPort;
       deployAddress = h.deployAddress;
       hasTpm = h.hardware.tpm;
+      hypervisor = entity.refs.hypervisor or null;
+      isVm = (entity.refs.hypervisor or null) != null;
       label = builtins.concatStringsSep ", " h.roles;
       resolvedExporters = lib.recursiveUpdate computedExporters h.exporters;
     };
@@ -309,6 +311,7 @@ egregorLib.mkType {
       pxe = h.boot.mode == "pxe";
       ifs = h.boot.pxeInterfaces;
       missing = lib.filter (n: !(h.interfaces ? ${n})) ifs;
+      hv = entity.refs.hypervisor or null;
     in
     lib.optional (h.site != null) {
       assertion = top.entities ? ${h.site} && top.entities.${h.site}.type == "site";
@@ -317,6 +320,16 @@ egregorLib.mkType {
     ++ lib.optional pxe {
       assertion = ifs != [] && missing == [];
       message = "host '${name}' boot.mode = \"pxe\" requires boot.pxeInterfaces to be a non-empty list of declared interface names (missing: ${lib.concatStringsSep ", " missing})";
+    }
+    ++ lib.optional (hv != null) {
+      assertion = top.entities ? ${hv} && top.entities.${hv}.type == "host";
+      message = "host '${name}' refs.hypervisor → '${hv}' must be a host entity";
+    }
+    ++ lib.optional (hv != null) {
+      # microvm guests don't go through the PXE projection; they boot
+      # off an image microvm.nix builds from this NixOS config.
+      assertion = h.boot.mode == "local";
+      message = "host '${name}' is a microvm guest (refs.hypervisor=${hv}) and must keep boot.mode = \"local\"";
     };
 
   verbs =

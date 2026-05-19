@@ -73,6 +73,21 @@ egregorLib.mkType {
       default = 4096;
       description = "Logical block size exposed to initiators.";
     };
+    mountPoint = lib.mkOption {
+      type = lib.types.nullOr lib.types.str;
+      default = null;
+      description = ''
+        Where consumers want this LUN mounted. Null means "expose the
+        block device but don't auto-mount" (initiator mounts manually,
+        or the consumer is a VM treating it as a raw device). Set this
+        when the LUN exists for a specific filesystem path.
+      '';
+    };
+    fsType = lib.mkOption {
+      type = lib.types.str;
+      default = "ext4";
+      description = "Filesystem on the LUN. Used both for initiator-side mount fsType and for microvm.nix volumes.";
+    };
   };
 
   attrs =

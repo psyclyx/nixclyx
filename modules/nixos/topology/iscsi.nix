@@ -68,8 +68,14 @@
   ) producerPortalNetworks);
 
   # Consumer-side: lun entities where this host is in consumers.
+  # Excludes LUNs whose producer is also this host's hypervisor — that's
+  # a co-located VM/host pair, and microvm.nix attaches the zvol
+  # directly via virtio-blk (see topology/vms.nix). The block device
+  # appears in-guest without an iSCSI hop.
+  myHypervisor = (me.refs or {}).hypervisor or null;
   consumedLuns = lib.filterAttrs (_: l:
     builtins.elem hostname l.lun.consumers
+    && (myHypervisor == null || (l.refs.producer or null) != myHypervisor)
   ) allLuns;
 
   mkMount = lunName: lun: let
