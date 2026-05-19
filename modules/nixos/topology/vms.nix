@@ -56,12 +56,18 @@ let
 
   vmVolumes = vmName: lib.mapAttrsToList mkVolume (vmLuns vmName);
 
-  vmMac =
-    vmName:
+  # Resolve a VM's MAC on a given network via the same convention the
+  # DHCP projection uses: interfaces.<net>.device → mac.<device>.
+  vmMacOnNetwork =
+    vmName: network:
     let
       vm = eg.entities.${vmName};
+      iface = vm.host.interfaces.${network} or null;
+      dev = if iface != null && iface.device != "" then iface.device else network;
     in
-    vm.host.mac.lab or null;
+    vm.host.mac.${dev} or null;
+
+  vmMac = vmName: vmMacOnNetwork vmName "lab";
 
   # Host's lab-network device — the NIC the macvtap parents on.
   myLabDev =
@@ -87,6 +93,12 @@ let
     lib.nameValuePair vmName {
       autostart = true;
       restartIfChanged = true;
+      # Guests instantiate their own nixpkgs (with their own
+      # `nixpkgs.config` + overlays from the imported module set).
+      # The default of inheriting the host's externally-supplied pkgs
+      # triggers a NixOS assertion when downstream modules touch
+      # `nixpkgs.config`, which the nixclyx common module does.
+      pkgs = null;
       config = lib.mkMerge [
         (cfg.guests.${vmName} or { })
         {
