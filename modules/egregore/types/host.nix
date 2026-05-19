@@ -175,6 +175,39 @@ egregorLib.mkType {
     };
     openbao = lib.mkOption {
       type = lib.types.submodule {
+        options.ssh = lib.mkOption {
+          type = lib.types.nullOr (
+            lib.types.submodule {
+              options = {
+                role = lib.mkOption {
+                  type = lib.types.str;
+                  description = ''
+                    Name of an openbao-ssh-cert-role entity (kind =
+                    "host") this host's sshd presents a signed cert
+                    from. The cert is requested at boot using the
+                    host's cert-auth token (host.openbao.cert.role)
+                    and the host's FQDN on host.openbao.ssh.network.
+                  '';
+                };
+                network = lib.mkOption {
+                  type = lib.types.str;
+                  default = "lab";
+                  description = ''
+                    Network whose zone supplies the CN/principal in
+                    the SSH host cert. Read as `attrs.fqdns.<network>`.
+                  '';
+                };
+              };
+            }
+          );
+          default = null;
+          description = ''
+            SSH host-cert binding. When set, the guest signs its own
+            host key on boot from the named SSH cert role; clients
+            with the CA's pubkey in known_hosts (@cert-authority)
+            verify without per-host TOFU.
+          '';
+        };
         options.cert = lib.mkOption {
           type = lib.types.nullOr (
             lib.types.submodule {

@@ -32,6 +32,20 @@ let
   policyEntities = lib.filterAttrs (_: e: e.type == "openbao-policy") eg.entities;
   pkiRoleEntities = lib.filterAttrs (_: e: e.type == "openbao-pki-role") eg.entities;
   certRoleEntities = lib.filterAttrs (_: e: e.type == "openbao-cert-role") eg.entities;
+  sshRoleEntities = lib.filterAttrs (_: e: e.type == "openbao-ssh-cert-role") eg.entities;
+
+  # Unique mounts referenced by ssh-cert-role entities. Each mount
+  # owns one CA; we enable + generate the signing key per mount.
+  sshMounts = lib.unique (
+    lib.mapAttrsToList (_: e: e.openbao-ssh-cert-role.mount) sshRoleEntities
+  );
+  # Pick one representative role per mount to read keyType from
+  # (assertion: a mount's CA key type is single-valued).
+  sshMountKeyType = mount:
+    let
+      rs = lib.filter (e: e.openbao-ssh-cert-role.mount == mount) (lib.attrValues sshRoleEntities);
+    in (lib.head rs).openbao-ssh-cert-role.keyType;
+
   kvSecretEntities = lib.filterAttrs (
     _: e: e.type == "kv-secret" && (e.refs.producer or null) == hostname && e.kv-secret.sourceFile != null
   ) eg.entities;
@@ -86,6 +100,56 @@ let
         token_explicit_max_ttl=${toString cr.bootstrapTtl}
     '';
 
+  mkSshMountBlock = mount: ''
+    if ! bao secrets list -format=json | jq -e '."${mount}/"' >/dev/null 2>&1; then
+      bao secrets enable -path=${lib.escapeShellArg mount} ssh
+      bao write ${lib.escapeShellArg mount}/config/ca \
+        generate_signing_key=true \
+        key_type=${lib.escapeShellArg (sshMountKeyType mount)}
+    fi
+    # Publish the CA pubkey to a known KV path so consumers can fetch
+    # without an SSH-engine token. Plain `bao read` field — the
+    # public_key on config/ca is readable with any token holding
+    # `read` on the path (root, in our configure context).
+    SSHCA_PUB=$(bao read -field=public_key ${lib.escapeShellArg mount}/config/ca 2>/dev/null || true)
+    if [ -n "$SSHCA_PUB" ]; then
+      bao kv put kv/ssh/${mount}-ca-pub value="$SSHCA_PUB"
+    fi
+  '';
+
+  mkSshRoleBlock =
+    _: r:
+    let
+      rr = r.openbao-ssh-cert-role;
+      common = ''
+        key_type=ca \
+        ttl=${lib.escapeShellArg rr.ttl} \
+        max_ttl=${lib.escapeShellArg rr.maxTtl} \
+        key_id_format=${lib.escapeShellArg rr.keyIdFormat}
+      '';
+      hostExtra = ''
+        allow_host_certificates=true \
+        allow_user_certificates=false \
+        allowed_domains=${lib.escapeShellArg (lib.concatStringsSep "," rr.allowedDomains)} \
+        allow_subdomains=${lib.boolToString rr.allowSubdomains} \
+      '';
+      userExtra = ''
+        allow_user_certificates=true \
+        allow_host_certificates=false \
+        ${lib.optionalString (rr.allowedUsers != [ ]) ''
+          allowed_users=${lib.escapeShellArg (lib.concatStringsSep "," rr.allowedUsers)} \
+        ''}
+        ${lib.optionalString (rr.defaultUser != null) ''
+          default_user=${lib.escapeShellArg rr.defaultUser} \
+        ''}
+      '';
+    in
+    ''
+      bao write ${lib.escapeShellArg rr.mount}/roles/${lib.escapeShellArg rr.role} \
+        ${if rr.kind == "host" then hostExtra else userExtra}\
+        ${common}
+    '';
+
   mkKvSecretBlock =
     _: s:
     let
@@ -101,6 +165,8 @@ let
     lib.concatStrings (lib.mapAttrsToList mkPolicyBlock policyEntities)
     + lib.concatStrings (lib.mapAttrsToList mkPkiRoleBlock pkiRoleEntities)
     + lib.concatStrings (lib.mapAttrsToList mkCertRoleBlock certRoleEntities)
+    + lib.concatStrings (map mkSshMountBlock sshMounts)
+    + lib.concatStrings (lib.mapAttrsToList mkSshRoleBlock sshRoleEntities)
     + lib.concatStrings (lib.mapAttrsToList mkKvSecretBlock kvSecretEntities);
 in
 {
