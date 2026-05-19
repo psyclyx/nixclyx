@@ -108,7 +108,21 @@
       pkgs,
       ...
     }:
-    lib.mkIf cfg.enable {
+    lib.mkIf cfg.enable (let
+      # Parse "<n><unit>" (e.g. "168h") into seconds at eval time so
+      # the runtime script doesn't have to do shell substring math
+      # on Nix-interpolated values.
+      parseInterval = s:
+        let
+          unit = lib.substring (lib.stringLength s - 1) 1 s;
+          n = lib.toInt (lib.substring 0 (lib.stringLength s - 1) s);
+        in
+        if unit == "h" then n * 3600
+        else if unit == "m" then n * 60
+        else if unit == "s" then n
+        else throw "openbao-vm-auth: renewMargin '${s}' must end in h/m/s";
+      renewMarginSec = parseInterval cfg.renewMargin;
+    in {
       systemd.services.openbao-vm-auth = {
         description = "OpenBao cert lifecycle (${cfg.commonName} → ${cfg.vaultAddr})";
         after = [ "network-online.target" ];
@@ -154,20 +168,12 @@
           KEY=${lib.escapeShellArg cfg.stateDir}/key.pem
           CA=${lib.escapeShellArg cfg.stateDir}/ca.pem
 
-          # Helper: is the existing cert valid and not within the
-          # renewal margin? Returns 0 if we can skip the mint.
+          # `openssl x509 -checkend N` returns 0 iff cert is NOT
+          # expiring within N seconds. renewMarginSec comes from
+          # Nix-evaluated parseInterval at build time.
           cert_fresh() {
             [ -s "$CERT" ] || return 1
-            # `openssl x509 -checkend N` returns 0 iff cert is NOT
-            # expiring within N seconds.
-            local margin_sec
-            case "${cfg.renewMargin}" in
-              *h) margin_sec=$(( ''${cfg.renewMargin%h} * 3600 )) ;;
-              *m) margin_sec=$(( ''${cfg.renewMargin%m} * 60 )) ;;
-              *s) margin_sec=$(( ''${cfg.renewMargin%s} )) ;;
-              *)  margin_sec=604800 ;;
-            esac
-            openssl x509 -checkend "$margin_sec" -noout -in "$CERT" >/dev/null 2>&1
+            openssl x509 -checkend ${toString renewMarginSec} -noout -in "$CERT" >/dev/null 2>&1
           }
 
           # If we don't have a cert yet, bootstrap via the wrap token.
@@ -234,5 +240,5 @@
           echo "authenticated via cert as ${cfg.commonName}"
         '';
       };
-    };
+    });
 }
