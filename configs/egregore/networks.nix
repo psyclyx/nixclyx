@@ -16,14 +16,18 @@
       # routed by mdf-agg01 below.
       guest   = { type = "network"; network = { site = "apt"; vlan = 100; ipv4 = "10.0.100.0/24"; ulaSubnetHex = "64"; ipv6PdSubnetId = 5; }; };
       iot     = { type = "network"; network = { site = "apt"; vlan = 110; ipv4 = "10.0.110.0/24"; ulaSubnetHex = "6e"; ipv6PdSubnetId = 6; }; };
+      # iyr isn't the gateway for storage/lab (mdf-agg01 is) but it
+      # *is* an L2 listener on both VLANs (DHCP + DNS). refs.dns
+      # points the DHCP projection's domain-name-servers option at
+      # iyr's address on each network, not the switch's.
       storage = {
         type = "network";
-        refs.gateway = "mdf-agg01";
+        refs = { gateway = "mdf-agg01"; dns = "iyr"; };
         network = { site = "apt"; vlan = 200; ipv4 = "10.0.200.0/24"; ulaSubnetHex = "c8"; ipv6PdSubnetId = 8; mtu = 9000; };
       };
       lab     = {
         type = "network";
-        refs.gateway = "mdf-agg01";
+        refs = { gateway = "mdf-agg01"; dns = "iyr"; };
         network = { site = "apt"; vlan = 210; ipv4 = "10.0.210.0/24"; ulaSubnetHex = "d2"; ipv6PdSubnetId = 9; };
       };
       mgmt    = { type = "network"; network = { site = "apt"; vlan = 240; ipv4 = "10.0.240.0/24"; ulaSubnetHex = "f0"; ipv6PdSubnetId = 7; }; };

@@ -75,6 +75,22 @@
   in
     lib.concatMapStringsSep ", " (r: "${r.dst}-${r.via}") routes;
 
+  # DNS server pushed to clients on a network: resolves the network's
+  # `refs.dns` host (if set) to that host's address on this same
+  # network. Falls back to the gateway IP (which is right when the
+  # gateway also runs the resolver, but wrong for switch-routed
+  # networks like lab/storage where mdf-agg01 isn't a resolver).
+  dnsServerForNetwork = netName: net: let
+    dnsHostName = net.refs.dns or null;
+    dnsHost = if dnsHostName != null then eg.entities.${dnsHostName} else null;
+    dnsHostAddr = if dnsHost != null
+      then dnsHost.host.addresses.${netName} or null
+      else null;
+  in
+    if dnsHostAddr != null && dnsHostAddr.ipv4 != null
+    then dnsHostAddr.ipv4
+    else net.attrs.gateway4;
+
   mkSubnet4 = _poolName: pool: let
     net = eg.entities.${pool.network};
     na = net.attrs;
@@ -87,7 +103,7 @@
     pools = [{pool = "${pool.ipv4Range.start} - ${pool.ipv4Range.end}";}];
     "option-data" = [
       { name = "routers"; data = na.gateway4; }
-      { name = "domain-name-servers"; data = na.gateway4; }
+      { name = "domain-name-servers"; data = dnsServerForNetwork pool.network net; }
       { name = "domain-name"; data = siteDomain; }
       { name = "domain-search"; data = "${siteDomain}, ${na.zoneName}"; }
     ]

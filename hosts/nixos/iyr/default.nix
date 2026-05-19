@@ -13,6 +13,26 @@ let
     eg.entities;
   sortedNets = lib.sort (a: b: a.network.vlan < b.network.vlan) (lib.attrValues networkEntities);
 
+  # Networks where iyr is named as the resolver via `refs.dns` but
+  # isn't the gateway (i.e. switch-routed VLANs where we still serve
+  # DNS from an L2 listener address).
+  dnsListenerNets =
+    let
+      meName = "iyr";
+      isDnsListener = _: net:
+        net.type == "network"
+        && (net.refs.dns or null) == meName
+        && (net.attrs.gatewayRef or null) != meName;
+    in
+    lib.attrValues (lib.filterAttrs isDnsListener eg.entities);
+
+  iyrLabAddr = name:
+    let
+      ent = eg.entities.iyr;
+      addr = ent.host.addresses.${name} or null;
+    in
+    if addr == null then null else addr.ipv4;
+
   dhcpVlans = lib.sort builtins.lessThan (lib.mapAttrsToList (_: e: e.network.vlan) networkEntities);
 in
 {
@@ -159,6 +179,10 @@ in
             "10.0.0.11"
           ]
           ++ map (e: e.attrs.gateway4) sortedNets
+          # L2-only resolver listeners on switch-routed VLANs where
+          # we're declared as `refs.dns` (lab, storage).
+          ++ lib.filter (a: a != null)
+              (map (e: iyrLabAddr e.attrs.name) dnsListenerNets)
           ++ [ "10.157.0.2" ]
           ++ map (e: e.attrs.gateway6) sortedNets
           ++ [ "::" ];
