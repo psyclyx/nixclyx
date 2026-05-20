@@ -179,8 +179,8 @@ in
         enable = true;
         vaultAddr = cfg.vaultAddr;
         insecureSkipVerify = cfg.insecureSkipVerify;
-        pki.mount = guestCertRole.openbao-cert-role.pkiMount;
-        pki.role = guestCertRole.openbao-cert-role.pkiRole;
+        pki.mount = guestCertRole.attrs.pkiMount;
+        pki.role = guestCertRole.attrs.pkiRoleName;
         commonName = guestCommonName;
         ttl = guestCertRole.openbao-cert-role.leafTtl;
       };

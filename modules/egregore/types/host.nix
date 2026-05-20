@@ -218,7 +218,7 @@ egregorLib.mkType {
                     Name of the openbao-cert-role entity this host
                     auths under. The host gets a cert with CN equal
                     to the host's natural lab-network FQDN (or whatever
-                    network the cert role's pkiRole permits), uses it
+                    network the cert role's PKI role permits), uses it
                     to auth, and inherits that role's policies.
                   '';
                 };

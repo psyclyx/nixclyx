@@ -83,10 +83,10 @@ let
     in
     ''
       # cert auth role: ${cr.name}
-      CA_PEM=$(bao read -field=certificate ${lib.escapeShellArg cr.pkiMount}/cert/ca)
+      CA_PEM=$(bao read -field=certificate ${lib.escapeShellArg r.attrs.pkiMount}/cert/ca)
       bao write auth/cert/certs/${lib.escapeShellArg cr.name} \
         display_name=${lib.escapeShellArg cr.name} \
-        token_policies=${lib.escapeShellArg (lib.concatStringsSep "," cr.policies)} \
+        token_policies=${lib.escapeShellArg (lib.concatStringsSep "," r.attrs.policyNames)} \
         ${lib.optionalString (cr.boundCidrs != [ ]) ''
           token_bound_cidrs=${lib.escapeShellArg (lib.concatStringsSep "," cr.boundCidrs)} \
         ''}\
@@ -95,7 +95,7 @@ let
 
       # paired bootstrap token role: ${r.attrs.tokenRoleName}
       bao write auth/token/roles/${lib.escapeShellArg r.attrs.tokenRoleName} \
-        allowed_policies=${lib.escapeShellArg cr.initPolicy} \
+        allowed_policies=${lib.escapeShellArg r.attrs.initPolicyName} \
         orphan=true \
         token_explicit_max_ttl=${toString cr.bootstrapTtl}
     '';
