@@ -15,6 +15,12 @@
     dhcpV4Config = {
       UseDomains = true;
       UseDNS = true;
+      # Match how Kea keys reservations: per-host reservations on
+      # iyr's DHCP server use `hw-address` (MAC). With the default
+      # DUID-based client-id, Kea fails to match the reservation and
+      # hands out a pool IP — lab-3 ends up at 10.0.210.240 instead
+      # of its reserved 10.0.210.13.
+      ClientIdentifier = "mac";
     };
   };
   boot.initrd.systemd.network.wait-online.enable = true;
@@ -31,6 +37,12 @@
     dhcpV4Config = {
       UseDomains = true;
       UseDNS = true;
+      # Match how Kea keys reservations: per-host reservations on
+      # iyr's DHCP server use `hw-address` (MAC). With the default
+      # DUID-based client-id, Kea fails to match the reservation and
+      # hands out a pool IP — lab-3 ends up at 10.0.210.240 instead
+      # of its reserved 10.0.210.13.
+      ClientIdentifier = "mac";
     };
   };
   networking.useDHCP = false;  # avoid the legacy dhcpcd
