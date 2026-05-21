@@ -1,18 +1,18 @@
 # Lab-loader — the shared PXE payload for every lab host.
 #
-# Builds a kernel + initrd combo (system.build.netbootRamdisk) that
-# the PXE projection serves to lab-1..4 (and any future host with
-# boot.mode = "pxe"). The loader is generic: it knows nothing about
-# specific hosts. At boot it reads `pxe-host` + `pxe-spec-url` from
-# the kernel cmdline, fetches a per-host spec JSON from iyr's
-# pxe-server, executes the spec's mount steps (ZFS-import, clevis-
-# decrypt, ZFS-mount, NFS-mount), then kexecs into the target's
-# /persist/var/nix/profiles/system. No system profile → drops to
-# SSH-reachable bootstrap mode.
+# Builds a kernel + initrd (system.build.netbootRamdisk) that iyr
+# serves to lab-1..4 (and any future PXE host). The loader is generic:
+# it reads `pxe-host` + `pxe-spec-url` from /proc/cmdline, fetches
+# the per-host spec JSON, executes its mount steps (ZFS-import,
+# clevis-decrypt, ZFS-mount, NFS-mount), then kexecs into the
+# target's /persist/var/nix/profiles/system. No system profile →
+# drops to SSH-reachable bootstrap mode.
 #
-# Architectural payoff: when lab-4's hypervisor closure rebuilds,
-# only that closure needs to land on lab-4 — iyr's PXE serves the
-# same lab-loader artifact it served yesterday.
+# The loader has no egregore entity (it's a fleet *artifact*, not a
+# host). That's why this file talks to systemd.network directly in
+# network.nix rather than going through network.topology — there's
+# no fleet entity to project from. Other knobs use psyclyx.nixos.*
+# normally.
 { modulesPath, pkgs, lib, ... }:
 {
   imports = [
@@ -22,103 +22,71 @@
     ./network.nix
   ];
 
-  # netboot.nix and modules.common collide on a few stateful knobs.
-  # The loader is initrd-only and never reaches the bootloader stage,
-  # so the actual values are inert; mkForce just picks one to silence
-  # the merge conflicts.
-  boot.loader.timeout = lib.mkForce 10;
-
-  # The loader is initrd-only — it lives in stage-1 until it kexecs
-  # away. boot.initrd.systemd is essential: we want real units,
-  # ordering, sshd-in-bootstrap-mode, and proper logging in initrd.
-  boot.initrd.systemd.enable = true;
-
-  # ZFS + NFS need to be actually built against the loader's kernel,
-  # not just listed as kernel modules.
-  boot.supportedFilesystems = [ "zfs" "nfs" "nfs4" ];
-
-  # Lab-3's 10G NIC (bnx2x) needs firmware from linux-firmware. With-
-  # out it, the LAB-VLAN interface fails to come up, the chain script
-  # can't reach iyr's spec endpoint, and the loader bails to bootstrap
-  # mode.
-  hardware.enableRedistributableFirmware = true;
-
-  # Modules the spec interpreter may need available at stage-1.
-  boot.initrd.availableKernelModules = [
-    "nfs" "nfsv4"
-  ];
-
-  # Tools the loader script invokes. boot.initrd.systemd.storePaths
-  # is what makes these end up baked into the initrd squashfs.
-  boot.initrd.systemd.storePaths = with pkgs; [
-    bash
-    coreutils
-    curl
-    jq
-    kexec-tools
-    util-linux           # mount, umount
-    zfs
-    nfs-utils
-    clevis
-    jose
-    openssh
-    iproute2
-    iputils              # ping (debug)
-    cryptsetup           # clevis luks (if/when we use luks)
-  ];
-
-  # ZFS needs hostId set in initrd (any 8-hex is fine — the loader
-  # is reading pools created elsewhere, not creating any). Pinned so
-  # the value doesn't churn across rebuilds.
+  networking.hostName = "lab-loader";
+  # Stable hostId: the loader doesn't OWN a pool, just imports one
+  # the target host created with its own hostId.
   networking.hostId = "deadbeef";
 
-  networking.hostName = "lab-loader";
+  psyclyx.nixos = {
+    role = "server";
 
-  # Minimal role; the loader has no real users / display / desktop.
-  psyclyx.nixos.role = "server";
+    # All lab hosts are DL360 Gen9: pulls bnx2x + tg3 drivers into
+    # initrd, P440ar SCSI driver, intel CPU bits.
+    hardware.presets.hpe.dl360-gen9.enable = true;
 
-  # Stage-2 sshd — reachable in the fall-through path when the chain
-  # script bailed without kexec'ing. PermitRootLogin via the same
-  # operator key the bootstrap-mode initrd unit uses.
-  services.openssh.enable = true;
-  services.openssh.settings.PermitRootLogin = lib.mkForce "prohibit-password";
+    # No egregore identity → no zone gets wired for any interface,
+    # so the default-deny would silently drop everything. The loader
+    # is a stateless recovery image on the physical lab subnet only;
+    # firewall off.
+    network.firewall.enable = lib.mkForce false;
+  };
 
-  # The default nixclyx zone firewall has policy=drop on input with no
-  # accept rules for any interface the loader actually uses — silently
-  # blocks SSH and ICMP. Recovery image, no persistent secrets, on the
-  # physical lab subnet only: just turn it off.
-  networking.firewall.enable = lib.mkForce false;
+  # Initrd is where the chain script lives — needs real systemd.
+  boot.initrd.systemd.enable = true;
+  boot.supportedFilesystems = [ "zfs" "nfs" "nfs4" ];
+  boot.initrd.systemd.storePaths = with pkgs; [
+    bash coreutils curl jq kexec-tools util-linux
+    zfs nfs-utils clevis jose openssh iproute2 iputils cryptsetup
+  ];
 
-  # Tag the box obviously in stage-2 too.
-  environment.etc."issue".text = ''
-    lab-loader (stage-2 fall-through — chain did not kexec)
-    -------------------------------------------------------
-    Autologged as root on tty1. Useful commands:
-      ip a                                  network state
-      journalctl -u systemd-networkd        why DHCP isn't running
-      journalctl -u lab-loader-chain        why the chain bailed
-      curl http://10.0.210.2:8089/spec/$(cat /proc/cmdline | grep -oE 'pxe-host=[^ ]+' | cut -d= -f2).json
-  '';
+  # bnx2x firmware is shipped under linux-firmware → redistributable.
+  # Without it the 10G LAB NIC fails to come up, the chain can't reach
+  # iyr's spec endpoint, and we bail to bootstrap-mode every boot.
+  hardware.enableRedistributableFirmware = true;
 
-  # Recovery image: autologin root on console so the operator can
-  # actually do something without SSH. Not a security risk in this
-  # specific role — the loader has no persistent secrets and is only
-  # ever reached on the physical lab subnet.
-  services.getty.autologinUser = "root";
+  # netboot.nix and nixclyx defaults conflict on a few stateful
+  # bootloader knobs that are inert for an initrd-only system.
+  boot.loader.timeout = lib.mkForce 10;
 
-  # iLO virtual serial port on DL360 Gen9 is wired to COM2 = ttyS1.
-  # Send kernel console + a getty there so the box is debuggable
-  # over iLO VSP even when the video console isn't accessible.
+  # iLO VSP on DL360 Gen9 is wired to COM2 = ttyS1. Without
+  # console=ttyS1 the boot log is only on the video console; iLO VSP
+  # is blank.
   boot.kernelParams = [
     "console=tty0"
     "console=ttyS1,115200n8"
   ];
-  systemd.services."serial-getty@ttyS1".enable = true;
-  systemd.services."serial-getty@ttyS1".wantedBy = [ "multi-user.target" ];
+  systemd.services."serial-getty@ttyS1" = {
+    enable = true;
+    wantedBy = [ "multi-user.target" ];
+  };
 
-  # No password set for root, but autologin bypasses that. Make sure
-  # NixOS won't refuse to construct an unprotected root account.
+  # Recovery image: autologin root on tty1 + ttyS1. No security risk
+  # in this role — no persistent secrets in the loader, and it only
+  # appears on the physical lab subnet behind iyr.
+  services.getty.autologinUser = "root";
   users.users.root.hashedPasswordFile = lib.mkForce null;
   users.users.root.hashedPassword = lib.mkForce null;
   users.users.root.password = lib.mkForce null;
+
+  environment.etc."issue".text = ''
+    lab-loader (stage-2 fall-through — chain did not kexec)
+    -------------------------------------------------------
+    Autologged as root on console. Useful commands:
+      ip a                                  network state
+      journalctl -u systemd-networkd        why DHCP isn't running
+      journalctl -b | grep -i bnx2x         10G NIC firmware status
+      curl http://10.0.210.2:8089/spec/$(
+        grep -oE 'pxe-host=[^ ]+' /proc/cmdline | cut -d= -f2
+      ).json
+  '';
 }

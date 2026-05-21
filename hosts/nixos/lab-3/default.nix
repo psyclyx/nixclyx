@@ -1,18 +1,30 @@
 { lib, ... }:
 {
   networking.hostName = "lab-3";
+  psyclyx.nixos = {
+    role = "server";
 
-  # NFS-rooted from lab-4. The module derives the static-IP kernel
-  # cmdline + /nix + /persist mounts from egregore data (lab-3's
-  # main-network address, refs.nixDataset, refs.persistDataset).
-  psyclyx.nixos.filesystems.nfs-root.enable = true;
+    # Egregore projects the lab-3 host entity into networkd:
+    # static main-VLAN address from host.addresses.main, lab/storage
+    # interfaces declared but unused until the 10G driver story is
+    # fixed. defaultNetwork = "main" puts the default route there
+    # AND adds eno1 to initrd.interfaces.
+    network.topology = {
+      enable = true;
+      defaultNetwork = "main";
+    };
+    # Bring the network up in initrd so NFS /nix + /persist mount
+    # before stage-2 needs them.
+    network.interfaces.initrd = {
+      enable = true;
+      kernelModules = [ "tg3" ];  # Broadcom NetXtreme on eno1.
+    };
 
-  # Recovery convenience: no firewall while we're bringing lab-3
-  # online (the default-deny zone has no rules wired for diskless
-  # hosts yet). Re-enable once we have a proper zone story.
-  networking.firewall.enable = lib.mkForce false;
+    # HPE-specific knobs (firmware, drivers).
+    hardware.presets.hpe.dl360-gen9.enable = true;
 
-  services.openssh.enable = true;
-
-  psyclyx.nixos.role = "server";
+    # Diskless: tmpfs root, NFS /nix + /persist derived from
+    # host.refs.{nixDataset,persistDataset} via the storage projection.
+    filesystems.nfs-root.enable = true;
+  };
 }
