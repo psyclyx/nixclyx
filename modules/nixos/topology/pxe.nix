@@ -74,10 +74,14 @@
   # so multi-VLAN setups stay self-consistent.
   specBaseUrl = port: "http://\${next-server}:${toString port}";
 
-  # Two code paths. When `loaderSystem` is set, every PXE host gets
-  # the SAME kernel/initrd (the lab-loader's), differentiated only by
-  # the cmdline pxe-host=<name> and pxe-spec-url=<base>. When not set,
-  # falls back to per-host system.build.netbootRamdisk (legacy).
+  # Two code paths. Precedence: legacy per-host netbootRamdisk wins
+  # when a host has its own build available (= it's in the colmena
+  # hive). Otherwise — and only when loaderSystem is set — every
+  # remaining PXE host gets the lab-loader's shared kernel/initrd,
+  # differentiated by pxe-host= / pxe-spec-url= on the cmdline. This
+  # lets a fleet migrate hosts onto the loader one at a time by
+  # removing them from the hive (or by an explicit per-host opt-out
+  # later).
   mkClient = name: hostEnt: let
     h = hostEnt.host;
     macs = lib.filter (m: m != null)
@@ -88,7 +92,7 @@
       && nodeCfg ? system
       && nodeCfg.system ? build
       && nodeCfg.system.build ? netbootRamdisk;
-    useLoader = cfg.loaderSystem != null;
+    useLoader = cfg.loaderSystem != null && !hasOwnBuild;
     loaderCfg = if useLoader then cfg.loaderSystem else null;
   in
     if macs == [] then null

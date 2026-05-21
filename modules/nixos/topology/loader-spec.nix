@@ -109,16 +109,13 @@ let
         options = [ "nfsvers=4.2" "noatime" ];
       } ];
 
-  # Dedup `zfs-import` and `clevis-decrypt-zfs-key` steps while
-  # preserving the order of first appearance. The mount-bind steps
-  # are unique per-dataset so they don't need dedup.
+  # Dedup steps while preserving order of first appearance. Two
+  # steps are "the same" when their full content matches — so a
+  # zfs-import for tank that appears twice collapses, but two
+  # nfs-mounts to different mount points stay distinct.
   dedupSteps = steps:
     let
-      keyOf = s: builtins.toJSON {
-        inherit (s) op;
-        pool = s.pool or "";
-        dataset = s.dataset or "";
-      };
+      keyOf = s: builtins.toJSON s;
     in
     lib.foldl' (acc: s:
       if builtins.any (a: keyOf a == keyOf s) acc
