@@ -21,6 +21,7 @@
     ./iscsi.nix
     ./nfs.nix
     ./pxe.nix
+    ./storage.nix
     ./gateway.nix
     ./vms.nix
     ./openbao-fleet.nix

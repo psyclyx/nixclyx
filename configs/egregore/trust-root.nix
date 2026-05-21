@@ -42,6 +42,9 @@
       clevis-binding = {
         tangs = [ "iyr-tang" ];
         protectDataset = "tank-persist";
+        # Shared blob between persist and luns — they have the same
+        # passphrase today, so a single JWE unlocks both.
+        secretFile = ../../hosts/nixos/lab-4/persist.jwe;
       };
     };
     tank-clevis-luns = {
@@ -49,6 +52,10 @@
       clevis-binding = {
         tangs = [ "iyr-tang" ];
         protectDataset = "tank-luns";
+        secretFile = ../../hosts/nixos/lab-4/persist.jwe;
+        # iSCSI target binds zvols under tank/luns; it can't start until
+        # the keys are loaded.
+        pullInBy = [ "iscsi-target.service" ];
       };
     };
   };

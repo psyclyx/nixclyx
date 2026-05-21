@@ -1,4 +1,4 @@
-{ lib, pkgs, ... }:
+{ lib, ... }:
 {
   psyclyx.nixos = {
     hardware.presets.hpe.dl360-gen9.enable = true;
@@ -47,49 +47,11 @@
 
   boot.kernel.sysctl."kernel.sched_autogroup_enabled" = 0;
 
-  # Clevis unlocks tank/persist in initrd by fetching ephemeral key
-  # material from iyr's tang server. The .jwe is safe to keep in the
-  # repo: without the matching tang key (kept on iyr's /var/lib/tang,
-  # never persisted here), it's inert.
-  #
-  # tank/luns shares the same passphrase but isn't unlocked here —
-  # the initrd clevis module asserts a filesystem mounted from each
-  # listed dataset, and the luns parent only holds zvols. Unlocked
-  # post-boot by the systemd unit below.
-  boot.initrd.clevis = {
-    enable = true;
-    useTang = true;
-    devices."tank/persist".secretFile = ./persist.jwe;
-  };
-
-  # Post-boot unlock for tank/luns. Same JWE as initrd, materialized
-  # from the nix store rather than copied into /etc so it's only
-  # readable at unit run-time. Ordered before iSCSI so target setup
-  # sees the zvol nodes.
-  systemd.services.zfs-load-key-luns = {
-    description = "Unseal tank/luns via clevis";
-    # iSCSI target binds the luns dataset's zvols, so we only need
-    # this to run before it. Don't pull into zfs-import.target /
-    # basic.target — that creates a dependency loop via
-    # preservation.target's bind mounts on /etc/ssh and breaks
-    # SSH host-key persistence on first boot.
-    wantedBy = [ "iscsi-target.service" ];
-    before = [ "iscsi-target.service" ];
-    after = [ "zfs-import-tank.service" "network-online.target" ];
-    wants = [ "network-online.target" ];
-    path = [ pkgs.clevis pkgs.zfs pkgs.curl pkgs.jose ];
-    serviceConfig = {
-      Type = "oneshot";
-      RemainAfterExit = true;
-      ExecStart = pkgs.writeShellScript "zfs-load-key-luns" ''
-        set -euo pipefail
-        if [ "$(zfs get -H -o value keystatus tank/luns)" = available ]; then
-          exit 0
-        fi
-        clevis decrypt < ${./persist.jwe} | zfs load-key -L prompt tank/luns
-      '';
-    };
-  };
+  # Clevis unlock (initrd + post-boot key-load for tank/luns) is
+  # projected from the clevis-binding entities in trust-root.nix via
+  # topology/storage.nix. The JWE blob lives next door at ./persist.jwe;
+  # the binding entities reference it by relative path so it lands in
+  # the closure without us having to wire it here.
 
   # Lab-4's root is tmpfs (PXE-booted). /persist (on tank, encrypted)
   # is where identity continuity lives — machine-id stays stable across

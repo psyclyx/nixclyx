@@ -38,6 +38,18 @@ egregorLib.mkType {
         at different paths via their own consumption declarations.
       '';
     };
+    neededForBoot = lib.mkOption {
+      type = lib.types.bool;
+      default = false;
+      description = ''
+        Whether this dataset must be mounted before stage-2 (i.e.,
+        available to early-boot users like preservation). True on
+        the producer flips the corresponding fileSystems entry to
+        neededForBoot=true AND causes the projection to unlock the
+        encryption root in initrd (rather than post-boot) when this
+        dataset is under one.
+      '';
+    };
     properties = lib.mkOption {
       type = lib.types.attrsOf lib.types.str;
       default = { };

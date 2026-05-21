@@ -53,6 +53,30 @@ egregorLib.mkType {
         exclusive with protectDataset.
       '';
     };
+    secretFile = lib.mkOption {
+      type = lib.types.nullOr lib.types.path;
+      default = null;
+      description = ''
+        Path to the JWE blob this binding decrypts at unlock time.
+        The blob is safe to keep in the repo: without the matching
+        tang key (held on the tang server, never persisted with the
+        blob), it's inert. Required to wire the projection; null
+        means "binding declared but secret not yet provisioned"
+        (the bootstrap projection will offer to mint one).
+      '';
+    };
+    pullInBy = lib.mkOption {
+      type = lib.types.listOf lib.types.str;
+      default = [ ];
+      description = ''
+        For post-boot bindings (i.e. not unlocked in initrd): systemd
+        units that need this binding's dataset available before they
+        start. The projection wires the generated zfs-load-key unit
+        with `wantedBy` + `before` for each entry, so the listed units
+        block on the unlock. Empty = the unit exists but nothing pulls
+        it in (it'll only run on explicit `systemctl start`).
+      '';
+    };
   };
 
   attrs =

@@ -27,6 +27,11 @@ let
       mountpoint =
         if n == 4 then "/persist"
         else "/srv/nfs/persist/lab-${toString n}";
+      # lab-4's /persist is needed in stage-1 so preservation can
+      # bind /etc/machine-id, /etc/ssh/* before systemd/sshd start.
+      # The other lab-N persists are NFS-exported, not locally mounted
+      # for boot use, so they don't need to be early.
+      neededForBoot = n == 4;
     };
   };
 in
