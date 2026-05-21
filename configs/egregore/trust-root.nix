@@ -30,6 +30,9 @@
       refs.tpmKey = "iyr-tpm-openbao-key";
       openbao-seal-oracle = {
         address = "https://10.0.25.1:8200";
+        # iyr doesn't use preservation/`/persist`; co-locate the
+        # init sentinel with the seal-oracle's existing state dir.
+        initSentinel = "/var/lib/openbao-seal/.initialized";
       };
     };
 

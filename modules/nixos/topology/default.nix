@@ -22,6 +22,7 @@
     ./nfs.nix
     ./pxe.nix
     ./storage.nix
+    ./bootstrap.nix
     ./gateway.nix
     ./vms.nix
     ./openbao-fleet.nix
