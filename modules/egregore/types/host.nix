@@ -168,6 +168,20 @@ egregorLib.mkType {
               Empty for mode = "local".
             '';
           };
+          useLoader = lib.mkOption {
+            type = lib.types.bool;
+            default = false;
+            description = ''
+              When true, the PXE projection serves the shared lab-loader
+              (system.build.netbootRamdisk) for this host instead of the
+              host's own kexec ramdisk. The loader then chains into the
+              real system whose closure lives on tank/nix-shared. Only
+              meaningful for hosts that *also* have their own colmena
+              build (so the projection wouldn't fall back to the loader
+              automatically); without this flag, mkClient prefers the
+              per-host build.
+            '';
+          };
         };
       };
       default = {};

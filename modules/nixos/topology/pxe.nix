@@ -92,7 +92,8 @@
       && nodeCfg ? system
       && nodeCfg.system ? build
       && nodeCfg.system.build ? netbootRamdisk;
-    useLoader = cfg.loaderSystem != null && !hasOwnBuild;
+    useLoader = cfg.loaderSystem != null
+                && (h.boot.useLoader || !hasOwnBuild);
     loaderCfg = if useLoader then cfg.loaderSystem else null;
   in
     if macs == [] then null

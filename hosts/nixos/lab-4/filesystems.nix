@@ -1,13 +1,21 @@
-{ modulesPath, ... }:
+{ ... }:
 {
-  imports = [
-    # Netboot client machinery: tmpfs root, kernel + initrd built into a
-    # netbootRamdisk that the PXE server serves. lab-4 has no persistent
-    # rootfs on disk — the OS comes from PXE every boot. Local SSDs only
-    # carry the tank pool (declared via zfs-pool entities) for runtime
-    # state and VM disks.
-    "${modulesPath}/installer/netboot/netboot.nix"
-  ];
+  # lab-4 is kexec'd in by the lab-loader once the loader has imported
+  # tank, clevis-decrypted tank/persist, and mounted tank/nix-shared
+  # at /mnt-nix + tank/persist/lab-4 at /mnt-persist. After kexec the
+  # initrd here re-imports the pool (kexec resets ZFS state) and our
+  # storage projection wires /nix and /persist from the same datasets.
+  #
+  # Root is tmpfs (no persistent on-disk OS — only tank holds state).
+  fileSystems."/" = {
+    device = "tmpfs";
+    fsType = "tmpfs";
+    options = [ "mode=755" ];
+  };
+
+  # Bootloader: nothing to manage — the loader kexecs us in.
+  boot.loader.grub.enable = false;
+  boot.loader.generic-extlinux-compatible.enable = false;
 
   # disko config + zfs-runtime per-dataset mounts are derived by
   # topology/storage.nix from the zfs-pool / zfs-dataset entities in

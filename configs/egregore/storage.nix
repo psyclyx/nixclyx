@@ -64,7 +64,14 @@ in
     tank-nix-shared = {
       type = "zfs-dataset";
       refs.pool = "tank-pool";
-      zfs-dataset = { path = "tank/nix-shared"; mountpoint = "/srv/nfs/nix"; };
+      zfs-dataset = {
+        path = "tank/nix-shared";
+        # Mountpoint on the producer (lab-4). With lab-4 also using
+        # the lab-loader, /nix lives here too — no overlay-fs squashfs
+        # /nix, one persistent store shared with lab-1..3 over NFS.
+        mountpoint = "/nix";
+        neededForBoot = true;
+      };
     };
     tank-scratch = {
       type = "zfs-dataset";

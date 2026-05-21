@@ -21,6 +21,11 @@ let
       storageDev,
       labDev,
       wgKey,
+      # Defaults to the loader for compute hosts; the storage host
+      # (lab-4) overrides to true only after the lab-4 cutover is in
+      # place. lab-1..3 don't have their own builds, so this is
+      # effectively a no-op for them — but stay explicit.
+      useLoader ? true,
     }:
     {
       type = "host";
@@ -89,6 +94,7 @@ let
         boot = {
           mode = "pxe";
           pxeInterfaces = [ "main" "lab" ];
+          inherit useLoader;
         };
         wireguard = {
           publicKey = wgKey;
