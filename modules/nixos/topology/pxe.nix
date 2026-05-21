@@ -69,21 +69,43 @@
 
   customIpxe = pkgs.ipxe.override { inherit embedScript; };
 
-  # Cross-host eval: each PXE client's netboot artifacts come from its
-  # own NixOS config. nodes is colmena-provided.
+  # Spec-URL base the loader fetches its host spec + JWE blobs from.
+  # Resolved at boot via ''${next-server} (the iPXE-known PXE host IP)
+  # so multi-VLAN setups stay self-consistent.
+  specBaseUrl = port: "http://\${next-server}:${toString port}";
+
+  # Two code paths. When `loaderSystem` is set, every PXE host gets
+  # the SAME kernel/initrd (the lab-loader's), differentiated only by
+  # the cmdline pxe-host=<name> and pxe-spec-url=<base>. When not set,
+  # falls back to per-host system.build.netbootRamdisk (legacy).
   mkClient = name: hostEnt: let
     h = hostEnt.host;
     macs = lib.filter (m: m != null)
       (map (n: hostMacOnInterface hostEnt n) h.boot.pxeInterfaces);
     nodeCfg = nodes.${name}.config or null;
-    hasBuild =
+    hasOwnBuild =
       nodeCfg != null
       && nodeCfg ? system
       && nodeCfg.system ? build
       && nodeCfg.system.build ? netbootRamdisk;
+    useLoader = cfg.loaderSystem != null;
+    loaderCfg = if useLoader then cfg.loaderSystem else null;
   in
-    if macs != [] && hasBuild
-    then {
+    if macs == [] then null
+    else if useLoader then {
+      inherit name;
+      value = {
+        inherit macs;
+        kernel = "${loaderCfg.kernel}/bzImage";
+        initrd = "${loaderCfg.netbootRamdisk}/initrd";
+        cmdline = "init=${loaderCfg.toplevel}/init "
+          + "pxe-host=${name} "
+          + "pxe-spec-url=${specBaseUrl cfg.httpPort} "
+          + "ip=dhcp "
+          + lib.concatStringsSep " " (loaderCfg.kernelParams or []);
+      };
+    }
+    else if hasOwnBuild then {
       inherit name;
       value = {
         inherit macs;
@@ -166,6 +188,29 @@ in {
       type = lib.types.port;
       default = 8089;
       description = "HTTP port the PXE server uses (must match pxe-server.httpPort).";
+    };
+
+    loaderSystem = lib.mkOption {
+      type = lib.types.nullOr (lib.types.submodule {
+        options = {
+          kernel = lib.mkOption { type = lib.types.path; };
+          netbootRamdisk = lib.mkOption { type = lib.types.path; };
+          toplevel = lib.mkOption { type = lib.types.path; };
+          kernelParams = lib.mkOption {
+            type = lib.types.listOf lib.types.str;
+            default = [ ];
+          };
+        };
+      });
+      default = null;
+      description = ''
+        When set, every PXE host is served the same kernel + initrd
+        (the lab-loader's); per-host differentiation is via cmdline
+        (pxe-host, pxe-spec-url). When null, falls back to per-host
+        system.build.netbootRamdisk. Typically set to a record
+        derived from `nodes.lab-loader.config.system.build` (see
+        configs/pxe.nix in the consumer fleet).
+      '';
     };
   };
 

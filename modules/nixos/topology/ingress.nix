@@ -22,7 +22,11 @@
 { config, lib, pkgs, ... }: let
   eg = config.psyclyx.egregore;
   hostname = config.psyclyx.nixos.host;
-  me = eg.entities.${hostname};
+  # `me` is null on hosts that aren't first-class egregore entities
+  # (e.g. lab-loader, an artifact-only host). All usages below sit
+  # inside `mkIf`-guarded sections that are inert on those hosts, so
+  # the null never propagates.
+  me = eg.entities.${hostname} or null;
 
   services = lib.filterAttrs (_: e: e.type == "service") eg.entities;
   httpServices = lib.filterAttrs (_: e: e.service.protocol == "http") services;
