@@ -50,6 +50,10 @@ let
       environment = {
         BAO_ADDR = o.address;
         VAULT_SKIP_VERIFY = "true";  # self-signed listener — flip when CA is in place
+        # bao CLI tries to expand a token-helper config path from $HOME;
+        # without HOME set it bails before even running `status`. Pin to
+        # a known-good dir to keep the CLI quiet.
+        HOME = "/tmp";
       };
       path = [ pkgs.openbao pkgs.jq pkgs.coreutils pkgs.bash ];
       script = ''
