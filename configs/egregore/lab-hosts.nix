@@ -30,7 +30,14 @@ let
         "apartment"
         "fixed"
       ];
-      refs.bmc = "lab-${toString n}-ilo";
+      refs = {
+        bmc = "lab-${toString n}-ilo";
+        # All lab hosts share the same /nix (NFS-exported from lab-4's
+        # tank). Each has its own per-host /persist dataset; lab-4
+        # mounts its locally, the others NFS-mount from lab-4.
+        nixDataset = "tank-nix-shared";
+        persistDataset = "tank-persist-lab-${toString n}";
+      };
       host = {
         site = "apt";
         mac = {
