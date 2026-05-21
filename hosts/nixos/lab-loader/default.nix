@@ -81,12 +81,10 @@
     lab-loader (stage-2 fall-through — chain did not kexec)
     -------------------------------------------------------
     Autologged as root on console. Useful commands:
+      cat /run/lab-loader/chain.log         what the chain script saw
       ip a                                  network state
-      journalctl -u systemd-networkd        why DHCP isn't running
+      journalctl -u systemd-networkd        DHCP / link state
       journalctl -b | grep -i bnx2x         10G NIC firmware status
-      curl http://10.0.210.2:8089/spec/$(
-        grep -oE 'pxe-host=[^ ]+' /proc/cmdline | cut -d= -f2
-      ).json
   '';
 
   system.stateVersion = lib.mkForce "26.05";

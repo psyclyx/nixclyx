@@ -29,7 +29,14 @@ let
   loaderScript = pkgs.writeShellScript "lab-loader-chain" ''
     set -euo pipefail
 
-    log() { echo "lab-loader: $*"; }
+    # Persistent log for post-fall-through debugging. Initrd journal
+    # doesn't reliably merge into stage-2's journal, so journalctl
+    # often returns no entries even when the script ran.
+    mkdir -p /run/lab-loader
+    exec >>/run/lab-loader/chain.log 2>&1
+
+    log() { echo "[$(date +%T)] lab-loader: $*"; }
+    log "chain script entered"
 
     HOST=""
     SPEC_URL=""
@@ -46,10 +53,23 @@ let
     fi
 
     log "host=$HOST  spec=$SPEC_URL/spec/$HOST.json"
-    mkdir -p /run/lab-loader
-    if ! curl -fsS --max-time 30 \
-         "$SPEC_URL/spec/$HOST.json" -o /run/lab-loader/spec.json; then
-      log "failed to fetch spec; bootstrap mode"
+    # Poll instead of relying on network-online.target, which gates
+    # on all configured interfaces and hangs 120s when any one of
+    # them (e.g. eno1 with DHCP broken via the CSS326 path) never
+    # gets an IPv4 lease.
+    fetched=
+    for i in $(seq 1 30); do
+      if curl -fsS --max-time 5 \
+           "$SPEC_URL/spec/$HOST.json" -o /run/lab-loader/spec.json; then
+        log "spec fetched on attempt $i"
+        fetched=yes
+        break
+      fi
+      log "spec fetch failed (attempt $i), retrying in 2s"
+      sleep 2
+    done
+    if [ -z "$fetched" ]; then
+      log "gave up fetching spec; bootstrap mode"
       exit 0
     fi
 
@@ -133,11 +153,8 @@ in
   boot.initrd.systemd.services.lab-loader-chain = {
     description = "lab-loader: fetch spec, mount, kexec target system";
     wantedBy = [ "initrd.target" ];
-    after = [
-      "systemd-networkd-wait-online.service"
-      "network-online.target"
-    ];
-    wants = [ "network-online.target" ];
+    after = [ "systemd-networkd.service" ];
+    wants = [ "systemd-networkd.service" ];
     # Block stage-2 switch-root until chain finishes (otherwise systemd
     # transitions to the netboot squashfs system before we kexec away).
     before = [
