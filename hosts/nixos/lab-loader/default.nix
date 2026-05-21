@@ -33,9 +33,13 @@
   # ordering, sshd-in-bootstrap-mode, and proper logging in initrd.
   boot.initrd.systemd.enable = true;
 
-  # Modules the spec interpreter may need to load.
+  # ZFS + NFS need to be actually built against the loader's kernel,
+  # not just listed as kernel modules.
+  boot.supportedFilesystems = [ "zfs" "nfs" "nfs4" ];
+
+  # Modules the spec interpreter may need available at stage-1.
   boot.initrd.availableKernelModules = [
-    "nfs" "nfsv4" "zfs"
+    "nfs" "nfsv4"
   ];
 
   # Tools the loader script invokes. boot.initrd.systemd.storePaths
