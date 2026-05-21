@@ -116,23 +116,34 @@ let
       exit 0
     fi
 
-    TOP_STORE=$(readlink -f "$PROFILE")
-    TOP_REAL="/mnt-nix''${TOP_STORE#/nix}"
-    if [ ! -d "$TOP_REAL" ]; then
-      log "profile resolved to $TOP_STORE; expected $TOP_REAL — missing"
+    # The profile symlink target is an absolute /nix/store/... path
+    # (because that's how nix builds it on the producer). To OPEN the
+    # files in the loader's namespace we need them via /mnt-nix; for
+    # the `init=` cmdline we want the absolute /nix/... path because
+    # the target system's stage-1 resolves it in *its* /nix.
+    TOP_STORE=$(readlink -f "$PROFILE")     # /nix/store/X-toplevel
+    TOP_LOADER="/mnt-nix''${TOP_STORE#/nix}" # /mnt-nix/store/X-toplevel
+    if [ ! -d "$TOP_LOADER" ]; then
+      log "profile resolved to $TOP_STORE; expected $TOP_LOADER — missing"
       exit 0
     fi
 
+    # kernel + initrd symlinks point at absolute /nix/store/... too;
+    # rewrite via /mnt-nix for the kexec --load call.
+    rewrite() { local link target; link=$1; target=$(readlink "$link"); echo "/mnt-nix''${target#/nix}"; }
+    KERNEL_LOADER=$(rewrite "$TOP_LOADER/kernel")
+    INITRD_LOADER=$(rewrite "$TOP_LOADER/initrd")
+
     KPARAMS=""
-    if [ -r "$TOP_REAL/kernel-params" ]; then
-      KPARAMS=$(cat "$TOP_REAL/kernel-params")
+    if [ -r "$TOP_LOADER/kernel-params" ]; then
+      KPARAMS=$(cat "$TOP_LOADER/kernel-params")
     fi
 
-    log "kexec → $TOP_REAL"
+    log "kexec → $TOP_STORE (kernel=$KERNEL_LOADER, initrd=$INITRD_LOADER)"
     kexec --load \
-      "$TOP_REAL/kernel" \
-      --initrd="$TOP_REAL/initrd" \
-      --append="init=$TOP_REAL/init pxe-host=$HOST $KPARAMS"
+      "$KERNEL_LOADER" \
+      --initrd="$INITRD_LOADER" \
+      --append="init=$TOP_STORE/init pxe-host=$HOST $KPARAMS"
 
     # Best-effort teardown so the new kernel inherits a quiet system.
     umount -R /mnt-nix /mnt-persist 2>/dev/null || true
