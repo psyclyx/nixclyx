@@ -90,9 +90,11 @@ let
           dataset=$(echo "$step" | jq -r .dataset)
           to=$(echo "$step" | jq -r .to)
           log "zfs mount $dataset → $to"
-          zfs mount "$dataset" || true
           mkdir -p "$to"
-          mount --bind "/$dataset" "$to"
+          # mount -t zfs works regardless of the dataset's mountpoint
+          # property (legacy / none / a path) — the loader picks the
+          # mountpoint, not ZFS's own metadata.
+          mount -t zfs "$dataset" "$to"
           ;;
         nfs-mount)
           from=$(echo "$step" | jq -r .from)
