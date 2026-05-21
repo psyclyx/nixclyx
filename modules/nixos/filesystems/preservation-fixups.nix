@@ -8,5 +8,14 @@
     # already on real disk, so there's nothing to commit. Disable the
     # unit whenever preservation is in play.
     systemd.services.systemd-machine-id-commit.enable = false;
+
+    # netboot.nix's register-nix-paths.service loads the store DB
+    # from /nix/store/nix-path-registration on every start. The file
+    # is consumed on first boot and never re-staged, so the unit
+    # fails on every subsequent activation. Skip when the file is
+    # absent — the DB is already loaded, and the other steps
+    # (touch /etc/NIXOS, set system profile) are idempotent.
+    systemd.services.register-nix-paths.unitConfig.ConditionPathExists =
+      "/nix/store/nix-path-registration";
   };
 }
