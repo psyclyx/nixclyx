@@ -81,8 +81,22 @@
   environment.etc."issue".text = ''
     lab-loader (stage-2 fall-through — chain did not kexec)
     -------------------------------------------------------
-    SSH in to debug or install:
-      ssh root@<ip>            (psyc operator key)
-    The initrd chain log lives under journalctl in /run/log/journal.
+    Autologged as root on tty1. Useful commands:
+      ip a                                  network state
+      journalctl -u systemd-networkd        why DHCP isn't running
+      journalctl -u lab-loader-chain        why the chain bailed
+      curl http://10.0.210.2:8089/spec/$(cat /proc/cmdline | grep -oE 'pxe-host=[^ ]+' | cut -d= -f2).json
   '';
+
+  # Recovery image: autologin root on console so the operator can
+  # actually do something without SSH. Not a security risk in this
+  # specific role — the loader has no persistent secrets and is only
+  # ever reached on the physical lab subnet.
+  services.getty.autologinUser = "root";
+
+  # No password set for root, but autologin bypasses that. Make sure
+  # NixOS won't refuse to construct an unprotected root account.
+  users.users.root.hashedPasswordFile = lib.mkForce null;
+  users.users.root.hashedPassword = lib.mkForce null;
+  users.users.root.password = lib.mkForce null;
 }
