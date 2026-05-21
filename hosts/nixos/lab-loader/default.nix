@@ -37,6 +37,12 @@
   # not just listed as kernel modules.
   boot.supportedFilesystems = [ "zfs" "nfs" "nfs4" ];
 
+  # Lab-3's 10G NIC (bnx2x) needs firmware from linux-firmware. With-
+  # out it, the LAB-VLAN interface fails to come up, the chain script
+  # can't reach iyr's spec endpoint, and the loader bails to bootstrap
+  # mode.
+  hardware.enableRedistributableFirmware = true;
+
   # Modules the spec interpreter may need available at stage-1.
   boot.initrd.availableKernelModules = [
     "nfs" "nfsv4"
@@ -76,6 +82,12 @@
   # operator key the bootstrap-mode initrd unit uses.
   services.openssh.enable = true;
   services.openssh.settings.PermitRootLogin = lib.mkForce "prohibit-password";
+
+  # The default nixclyx zone firewall has policy=drop on input with no
+  # accept rules for any interface the loader actually uses — silently
+  # blocks SSH and ICMP. Recovery image, no persistent secrets, on the
+  # physical lab subnet only: just turn it off.
+  networking.firewall.enable = lib.mkForce false;
 
   # Tag the box obviously in stage-2 too.
   environment.etc."issue".text = ''
