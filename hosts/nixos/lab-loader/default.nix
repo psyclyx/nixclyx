@@ -94,6 +94,16 @@
   # ever reached on the physical lab subnet.
   services.getty.autologinUser = "root";
 
+  # iLO virtual serial port on DL360 Gen9 is wired to COM2 = ttyS1.
+  # Send kernel console + a getty there so the box is debuggable
+  # over iLO VSP even when the video console isn't accessible.
+  boot.kernelParams = [
+    "console=tty0"
+    "console=ttyS1,115200n8"
+  ];
+  systemd.services."serial-getty@ttyS1".enable = true;
+  systemd.services."serial-getty@ttyS1".wantedBy = [ "multi-user.target" ];
+
   # No password set for root, but autologin bypasses that. Make sure
   # NixOS won't refuse to construct an unprotected root account.
   users.users.root.hashedPasswordFile = lib.mkForce null;
