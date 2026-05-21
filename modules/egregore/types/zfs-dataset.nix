@@ -44,7 +44,43 @@ egregorLib.mkType {
       description = ''
         Additional ZFS properties (compression, recordsize, atime, …)
         to apply at create-time. The storage projection passes these
-        through to disko / zfs create.
+        through to disko / zfs create. Encryption properties live in
+        the dedicated `encryption` field below — don't duplicate them
+        here.
+      '';
+    };
+    encryption = lib.mkOption {
+      type = lib.types.nullOr (
+        lib.types.submodule {
+          options = {
+            cipher = lib.mkOption {
+              type = lib.types.str;
+              default = "aes-256-gcm";
+            };
+            keyformat = lib.mkOption {
+              type = lib.types.enum [ "passphrase" "raw" "hex" ];
+              default = "passphrase";
+            };
+            keylocation = lib.mkOption {
+              type = lib.types.str;
+              default = "prompt";
+              description = ''
+                Where ZFS reads the key from. "prompt" = interactive;
+                "file:///path" = on-disk key file. Clevis bindings
+                substitute their own pipeline at unlock time and don't
+                care about this value, so "prompt" is the safe default
+                even with a clevis-binding present.
+              '';
+            };
+          };
+        }
+      );
+      default = null;
+      description = ''
+        When non-null, this dataset is an encryption root: ZFS native
+        encryption is enabled with these properties at create-time.
+        Child datasets inherit the key automatically. Multiple
+        encryption roots per pool are allowed and independent.
       '';
     };
   };
@@ -60,6 +96,7 @@ egregorLib.mkType {
       label = d.path;
       poolName = if poolEnt == null then null else poolEnt.zfs-pool.name;
       producer = if poolEnt == null then null else poolEnt.refs.host or null;
+      isEncryptionRoot = d.encryption != null;
     };
 
   assertions =

@@ -4,11 +4,11 @@
 # (vdev shape, member disks) is described as data; the storage
 # projection lifts it into disko on the producer.
 #
-# Encryption is described intrinsically — `encrypted = true` plus an
-# `encryptedRoot` dataset where native ZFS encryption begins. How the
-# key is *delivered* (clevis-tang, passphrase prompt, fido2) is a
-# separate concern: declare a clevis-binding entity referencing this
-# pool to wire up clevis, or leave it for an interactive prompt.
+# Encryption is described per-dataset (see zfs-dataset.encryption), not
+# at the pool level — a single pool can host multiple independent
+# encryption roots. Key delivery (clevis-tang, passphrase prompt,
+# fido2) is a separate concern: declare a clevis-binding entity
+# referencing an encrypted dataset to wire up clevis.
 {
   lib,
   egregorLib,
@@ -28,22 +28,6 @@ egregorLib.mkType {
         Pool name as ZFS sees it (e.g. "tank"). Required for real
         pools (asserted non-empty); empty default exists so non-pool
         entities don't trip the option-without-default check.
-      '';
-    };
-    encrypted = lib.mkOption {
-      type = lib.types.bool;
-      default = false;
-      description = "Whether the pool uses native ZFS encryption.";
-    };
-    encryptedRoot = lib.mkOption {
-      type = lib.types.nullOr lib.types.str;
-      default = null;
-      description = ''
-        Dataset (relative to the pool, e.g. "persist") where the
-        encryption root lives — all child datasets inherit the key.
-        Required when `encrypted = true`. The storage projection emits
-        the corresponding encryption properties on this dataset; key
-        delivery is a separate concern (see clevis-binding).
       '';
     };
     topology = lib.mkOption {
@@ -67,9 +51,6 @@ egregorLib.mkType {
     {
       label = p.name;
       producer = entity.refs.host or null;
-      fullEncryptedRoot =
-        if p.encryptedRoot == null then null
-        else "${p.name}/${p.encryptedRoot}";
     };
 
   assertions =
@@ -90,10 +71,6 @@ egregorLib.mkType {
       {
         assertion = host == null || (top.entities ? ${host} && top.entities.${host}.type == "host");
         message = "zfs-pool '${name}' refs.host '${toString host}' must be a host entity";
-      }
-      {
-        assertion = !p.encrypted || p.encryptedRoot != null;
-        message = "zfs-pool '${name}' is encrypted but has no encryptedRoot";
       }
     ];
 }

@@ -35,12 +35,13 @@ egregorLib.mkType {
         one-of (default; cheapest redundancy). N = all-of for N tangs.
       '';
     };
-    protectPool = lib.mkOption {
+    protectDataset = lib.mkOption {
       type = lib.types.nullOr lib.types.str;
       default = null;
       description = ''
-        zfs-pool entity name whose encryption root is bound by this
-        clevis pin. Mutually exclusive with protectLuksDevice.
+        zfs-dataset entity name whose encryption root is bound by this
+        clevis pin. The dataset must declare encryption (asserted).
+        Mutually exclusive with protectLuksDevice.
       '';
     };
     protectLuksDevice = lib.mkOption {
@@ -49,7 +50,7 @@ egregorLib.mkType {
       description = ''
         Path to a LUKS device (e.g. /dev/disk/by-partlabel/cryptroot)
         on the producer that this clevis pin wraps. Mutually
-        exclusive with protectPool.
+        exclusive with protectDataset.
       '';
     };
   };
@@ -59,18 +60,18 @@ egregorLib.mkType {
     let
       b = entity.clevis-binding;
       target =
-        if b.protectPool != null then "pool:${b.protectPool}"
+        if b.protectDataset != null then "dataset:${b.protectDataset}"
         else if b.protectLuksDevice != null then "luks:${b.protectLuksDevice}"
         else "<unbound>";
-      poolEnt =
-        if b.protectPool == null then null
-        else top.entities.${b.protectPool} or null;
+      datasetEnt =
+        if b.protectDataset == null then null
+        else top.entities.${b.protectDataset} or null;
       tangEnts = map (n: top.entities.${n} or null) b.tangs;
       tangUrls = lib.filter (u: u != null) (map (e: if e == null then null else e.attrs.url or null) tangEnts);
     in
     {
       label = "${toString (builtins.length b.tangs)} tang(s) → ${target}";
-      producer = if poolEnt == null then null else poolEnt.refs.host or null;
+      producer = if datasetEnt == null then null else datasetEnt.attrs.producer or null;
       inherit tangUrls;
     };
 
@@ -78,6 +79,9 @@ egregorLib.mkType {
     name: entity: top:
     let
       b = entity.clevis-binding;
+      datasetEnt =
+        if b.protectDataset == null then null
+        else top.entities.${b.protectDataset} or null;
     in
     [
       {
@@ -86,13 +90,17 @@ egregorLib.mkType {
       }
       {
         assertion =
-          (b.protectPool != null) != (b.protectLuksDevice != null);
-        message = "clevis-binding '${name}' requires exactly one of protectPool / protectLuksDevice";
+          (b.protectDataset != null) != (b.protectLuksDevice != null);
+        message = "clevis-binding '${name}' requires exactly one of protectDataset / protectLuksDevice";
       }
       {
-        assertion = b.protectPool == null
-          || (top.entities ? ${b.protectPool} && top.entities.${b.protectPool}.type == "zfs-pool");
-        message = "clevis-binding '${name}' protectPool '${toString b.protectPool}' must be a zfs-pool entity";
+        assertion = b.protectDataset == null
+          || (top.entities ? ${b.protectDataset} && top.entities.${b.protectDataset}.type == "zfs-dataset");
+        message = "clevis-binding '${name}' protectDataset '${toString b.protectDataset}' must be a zfs-dataset entity";
+      }
+      {
+        assertion = datasetEnt == null || datasetEnt.zfs-dataset.encryption != null;
+        message = "clevis-binding '${name}' protectDataset '${toString b.protectDataset}' must be an encryption root (have encryption set)";
       }
       {
         assertion = b.threshold >= 1 && b.threshold <= builtins.length b.tangs;
