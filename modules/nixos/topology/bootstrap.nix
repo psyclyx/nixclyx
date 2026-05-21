@@ -51,7 +51,7 @@ let
         BAO_ADDR = o.address;
         VAULT_SKIP_VERIFY = "true";  # self-signed listener — flip when CA is in place
       };
-      path = [ pkgs.openbao pkgs.jq pkgs.coreutils ];
+      path = [ pkgs.openbao pkgs.jq pkgs.coreutils pkgs.bash ];
       script = ''
         set -euo pipefail
         mkdir -p $(dirname ${lib.escapeShellArg o.initSentinel})
