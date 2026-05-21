@@ -395,6 +395,10 @@ egregorLib.mkType {
       ifs = h.boot.pxeInterfaces;
       missing = lib.filter (n: !(h.interfaces ? ${n})) ifs;
       hv = entity.refs.hypervisor or null;
+      nixDs = entity.refs.nixDataset or null;
+      persistDs = entity.refs.persistDataset or null;
+      isDatasetRef = target:
+        top.entities ? ${target} && top.entities.${target}.type == "zfs-dataset";
     in
     lib.optional (h.site != null) {
       assertion = top.entities ? ${h.site} && top.entities.${h.site}.type == "site";
@@ -413,6 +417,14 @@ egregorLib.mkType {
       # off an image microvm.nix builds from this NixOS config.
       assertion = h.boot.mode == "local";
       message = "host '${name}' is a microvm guest (refs.hypervisor=${hv}) and must keep boot.mode = \"local\"";
+    }
+    ++ lib.optional (nixDs != null) {
+      assertion = isDatasetRef nixDs;
+      message = "host '${name}' refs.nixDataset → '${nixDs}' must be a zfs-dataset entity";
+    }
+    ++ lib.optional (persistDs != null) {
+      assertion = isDatasetRef persistDs;
+      message = "host '${name}' refs.persistDataset → '${persistDs}' must be a zfs-dataset entity";
     };
 
   verbs =
