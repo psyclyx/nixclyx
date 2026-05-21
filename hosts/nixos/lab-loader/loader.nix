@@ -1,18 +1,23 @@
-# Lab-loader stage-1 unit — the generic spec interpreter.
+# Lab-loader chain — runs in stage-2 as a normal systemd unit.
 #
-# Reads:
-#   - pxe-host=<entityname>        from /proc/cmdline
-#   - pxe-spec-url=<base>          from /proc/cmdline (no trailing /)
+# Reads `pxe-host` + `pxe-spec-url` from /proc/cmdline, fetches the
+# per-host spec JSON from iyr, executes its mount steps (ZFS-import,
+# clevis-decrypt, ZFS-mount, NFS-mount), then kexecs into the
+# target's /persist/var/nix/profiles/system.
 #
-# Fetches <base>/spec/<entityname>.json. Spec shape:
+# If anything fails the unit exits cleanly and the system just stays
+# in stage-2 — which has sshd up via the appliance role, the operator
+# key on root, networkd-managed addresses, and journal access. That's
+# the "bootstrap mode" — no separate code path, no initrd-only state
+# to debug.
 #
+# Spec shape:
 #   {
 #     "name": "lab-4",
 #     "steps": [
 #       { "op": "zfs-import", "pool": "tank" },
 #       { "op": "clevis-decrypt-zfs-key",
-#         "dataset": "tank/persist",
-#         "jweUrl": "<spec-base>/jwe/tank-clevis-persist.jwe" },
+#         "dataset": "tank/persist", "jwePath": "/jwe/tank-clevis-persist.jwe" },
 #       { "op": "zfs-mount-bind",
 #         "dataset": "tank/nix-shared", "to": "/mnt-nix" },
 #       { "op": "zfs-mount-bind",
@@ -20,23 +25,12 @@
 #     ],
 #     "kexecProfile": "/mnt-persist/var/nix/profiles/system"
 #   }
-#
-# For lab-1..3 the steps are NFS mounts pointing at lab-4's exports.
-# No host-specific logic in this script: spec describes "what to
-# mount where," loader executes generically, kexec.
 { pkgs, lib, ... }:
 let
   loaderScript = pkgs.writeShellScript "lab-loader-chain" ''
     set -euo pipefail
 
-    # Persistent log for post-fall-through debugging. Initrd journal
-    # doesn't reliably merge into stage-2's journal, so journalctl
-    # often returns no entries even when the script ran.
-    mkdir -p /run/lab-loader
-    exec >>/run/lab-loader/chain.log 2>&1
-
-    log() { echo "[$(date +%T)] lab-loader: $*"; }
-    log "chain script entered"
+    log() { echo "[$(date +%T)] $*"; }
 
     HOST=""
     SPEC_URL=""
@@ -48,17 +42,18 @@ let
     done
 
     if [ -z "$HOST" ] || [ -z "$SPEC_URL" ]; then
-      log "missing pxe-host/pxe-spec-url on cmdline; dropping to bootstrap"
+      log "no pxe-host or pxe-spec-url on cmdline; staying in stage-2"
       exit 0
     fi
 
     log "host=$HOST  spec=$SPEC_URL/spec/$HOST.json"
-    # Poll instead of relying on network-online.target, which gates
-    # on all configured interfaces and hangs 120s when any one of
-    # them (e.g. eno1 with DHCP broken via the CSS326 path) never
-    # gets an IPv4 lease.
+    mkdir -p /run/lab-loader
+
+    # Brief poll loop: even with network-online.target gating us,
+    # iyr's nginx might briefly not respond on the wrong interface
+    # on a fresh boot. Cheap to retry.
     fetched=
-    for i in $(seq 1 30); do
+    for i in $(seq 1 15); do
       if curl -fsS --max-time 5 \
            "$SPEC_URL/spec/$HOST.json" -o /run/lab-loader/spec.json; then
         log "spec fetched on attempt $i"
@@ -69,7 +64,7 @@ let
       sleep 2
     done
     if [ -z "$fetched" ]; then
-      log "gave up fetching spec; bootstrap mode"
+      log "gave up fetching spec; staying in stage-2"
       exit 0
     fi
 
@@ -86,9 +81,8 @@ let
         clevis-decrypt-zfs-key)
           dataset=$(echo "$step" | jq -r .dataset)
           jwePath=$(echo "$step" | jq -r .jwePath)
-          jweUrl="$SPEC_URL$jwePath"
-          log "clevis-decrypt → zfs load-key $dataset (jwe: $jweUrl)"
-          curl -fsS --max-time 30 "$jweUrl" \
+          log "clevis-decrypt $dataset (jwe: $SPEC_URL$jwePath)"
+          curl -fsS --max-time 30 "$SPEC_URL$jwePath" \
             | clevis decrypt \
             | zfs load-key -L prompt "$dataset"
           ;;
@@ -96,7 +90,7 @@ let
           dataset=$(echo "$step" | jq -r .dataset)
           to=$(echo "$step" | jq -r .to)
           log "zfs mount $dataset → $to"
-          zfs mount "$dataset" || true   # legacy mountpoint → idempotent
+          zfs mount "$dataset" || true
           mkdir -p "$to"
           mount --bind "/$dataset" "$to"
           ;;
@@ -116,17 +110,14 @@ let
 
     PROFILE=$(jq -r .kexecProfile /run/lab-loader/spec.json)
     if [ ! -L "$PROFILE" ] && [ ! -e "$PROFILE" ]; then
-      log "no profile at $PROFILE; bootstrap mode"
+      log "no profile at $PROFILE; staying in stage-2"
       exit 0
     fi
 
-    # The profile's symlink target is an absolute /nix/store/... path.
-    # On the loader, the target's /nix lives at /mnt-nix — rewrite.
     TOP_STORE=$(readlink -f "$PROFILE")
     TOP_REAL="/mnt-nix''${TOP_STORE#/nix}"
-
     if [ ! -d "$TOP_REAL" ]; then
-      log "profile resolved to $TOP_STORE; expected at $TOP_REAL — not there"
+      log "profile resolved to $TOP_STORE; expected $TOP_REAL — missing"
       exit 0
     fi
 
@@ -139,7 +130,7 @@ let
     kexec --load \
       "$TOP_REAL/kernel" \
       --initrd="$TOP_REAL/initrd" \
-      --append="init=$TOP_REAL/init pxe-host=$HOST ip=dhcp $KPARAMS"
+      --append="init=$TOP_REAL/init pxe-host=$HOST $KPARAMS"
 
     # Best-effort teardown so the new kernel inherits a quiet system.
     umount -R /mnt-nix /mnt-persist 2>/dev/null || true
@@ -150,23 +141,21 @@ let
   '';
 in
 {
-  boot.initrd.systemd.services.lab-loader-chain = {
+  systemd.services.lab-loader-chain = {
     description = "lab-loader: fetch spec, mount, kexec target system";
-    wantedBy = [ "initrd.target" ];
-    after = [ "systemd-networkd.service" ];
-    wants = [ "systemd-networkd.service" ];
-    # Block stage-2 switch-root until chain finishes (otherwise systemd
-    # transitions to the netboot squashfs system before we kexec away).
-    before = [
-      "initrd-switch-root.target"
-      "initrd-switch-root.service"
-      "lab-loader-bootstrap-mode.service"
+    wantedBy = [ "multi-user.target" ];
+    after = [ "network-online.target" ];
+    wants = [ "network-online.target" ];
+    path = with pkgs; [
+      bash coreutils curl jq kexec-tools util-linux
+      zfs nfs-utils clevis jose iproute2
     ];
     serviceConfig = {
       Type = "oneshot";
       RemainAfterExit = true;
+      StandardOutput = "journal+console";
+      StandardError = "journal+console";
       ExecStart = "${loaderScript}";
     };
-    unitConfig.DefaultDependencies = false;
   };
 }
