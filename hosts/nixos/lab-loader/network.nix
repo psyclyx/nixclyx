@@ -6,6 +6,8 @@
 # for the steady state.
 { ... }:
 {
+  # Initrd-side networking — what the chain script needs to fetch
+  # the spec and JWE blobs before kexec.
   boot.initrd.systemd.network.enable = true;
   boot.initrd.systemd.network.networks."10-lab-loader" = {
     matchConfig.Name = "en* eth*";
@@ -15,6 +17,21 @@
       UseDNS = true;
     };
   };
-  # Wait-online: we want the spec fetch to actually have a route.
   boot.initrd.systemd.network.wait-online.enable = true;
+
+  # Stage-2 networking — kicks in when initrd falls through to the
+  # netboot squashfs system (chain script bailed without kexec'ing).
+  # Without this, lab-3 lands at a login prompt with no network and
+  # is only debuggable via console.
+  systemd.network.enable = true;
+  networking.useNetworkd = true;
+  systemd.network.networks."10-lab-loader" = {
+    matchConfig.Name = "en* eth*";
+    networkConfig.DHCP = "yes";
+    dhcpV4Config = {
+      UseDomains = true;
+      UseDNS = true;
+    };
+  };
+  networking.useDHCP = false;  # avoid the legacy dhcpcd
 }

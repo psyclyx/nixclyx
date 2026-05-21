@@ -138,9 +138,13 @@ in
       "network-online.target"
     ];
     wants = [ "network-online.target" ];
-    # If the chain script fails or finishes without kexec'ing (= no
-    # profile / no spec / no cmdline), bootstrap-mode takes over.
-    before = [ "lab-loader-bootstrap-mode.service" ];
+    # Block stage-2 switch-root until chain finishes (otherwise systemd
+    # transitions to the netboot squashfs system before we kexec away).
+    before = [
+      "initrd-switch-root.target"
+      "initrd-switch-root.service"
+      "lab-loader-bootstrap-mode.service"
+    ];
     serviceConfig = {
       Type = "oneshot";
       RemainAfterExit = true;

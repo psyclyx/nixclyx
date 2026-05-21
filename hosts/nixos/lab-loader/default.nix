@@ -70,4 +70,19 @@
 
   # Minimal role; the loader has no real users / display / desktop.
   psyclyx.nixos.role = "server";
+
+  # Stage-2 sshd — reachable in the fall-through path when the chain
+  # script bailed without kexec'ing. PermitRootLogin via the same
+  # operator key the bootstrap-mode initrd unit uses.
+  services.openssh.enable = true;
+  services.openssh.settings.PermitRootLogin = lib.mkForce "prohibit-password";
+
+  # Tag the box obviously in stage-2 too.
+  environment.etc."issue".text = ''
+    lab-loader (stage-2 fall-through — chain did not kexec)
+    -------------------------------------------------------
+    SSH in to debug or install:
+      ssh root@<ip>            (psyc operator key)
+    The initrd chain log lives under journalctl in /run/log/journal.
+  '';
 }

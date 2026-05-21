@@ -67,10 +67,16 @@ in
     description = "lab-loader: SSH-reachable bootstrap mode";
     wantedBy = [ "initrd.target" ];
     after = [ "lab-loader-chain.service" ];
-    # Only relevant if chain exited without kexec'ing. The script
-    # itself checks /run/lab-loader/kexec.done as a sentinel — if the
-    # chain succeeded, lab-loader-chain.service kexec'd away and this
-    # unit was preempted along with the rest of initrd.
+    # Hold initrd open — don't let systemd transition to the squashfs
+    # stage-2 while we're providing SSH access for the operator.
+    conflicts = [
+      "initrd-switch-root.target"
+      "initrd-switch-root.service"
+    ];
+    before = [
+      "initrd-switch-root.target"
+      "initrd-switch-root.service"
+    ];
     serviceConfig = {
       Type = "exec";
       ExecStart = "${bootstrapScript}";
