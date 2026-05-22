@@ -223,21 +223,28 @@ let
   # ── NFS exports (producer side) ──────────────────────────────────
 
   # For each of my datasets that has remote consumers, an exports entry
-  # per consumer. Address comes from the consumer's IP on exportNetwork;
-  # we skip consumers without an address there (the projection isn't a
-  # firewall — we don't fake reachability).
+  # per consumer per address they hold. We need every address (not just
+  # the one on exportNetwork) in the ACL because a consumer's *source*
+  # IP at mount time depends on which interface its initrd brought up
+  # first — e.g. lab-3 in initrd only has eno1 (main, 10.0.10.13) up
+  # before the 10G NIC firmware loads. If the export only allowed the
+  # consumer's lab-VLAN address, NFS would reject the mount.
+  consumerAddrs = host:
+    lib.filter (a: a != null)
+      (lib.mapAttrsToList (_: a: a.ipv4 or null)
+        (host.attrs.addresses or { }));
+
   mkExportsForDataset =
     _: d:
     let
       cons = consumersOf d.attrs.name;
     in
-    map (c: {
-      path = d.zfs-dataset.mountpoint;
-      consumer = {
-        address = hostAddrOn c exportNetwork;
-        readOnly = false;
-      };
-    }) (lib.filter (c: hostAddrOn c exportNetwork != null) (lib.attrValues cons));
+    lib.flatten (map (c:
+      map (addr: {
+        path = d.zfs-dataset.mountpoint;
+        consumer = { address = addr; readOnly = false; };
+      }) (consumerAddrs c)
+    ) (lib.attrValues cons));
 
   myDatasetExports = lib.flatten (lib.mapAttrsToList mkExportsForDataset
     (lib.filterAttrs (_: d: d.zfs-dataset.mountpoint != null
