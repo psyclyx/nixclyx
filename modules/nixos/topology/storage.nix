@@ -290,7 +290,11 @@ let
   nfsFileSystems = lib.listToAttrs (map (m:
     lib.nameValuePair m.localMount {
       device = m.remote;
-      fsType = "nfs4";
+      # `nfs` (not `nfs4`) is the canonical fsType these days; the
+      # actual protocol version comes from the nfsvers= option below.
+      # Using "nfs4" yields a kernel `NFS: mount program didn't pass
+      # remote address` error at mount time.
+      fsType = "nfs";
       options = [ "noatime" "nfsvers=4.2" ];
       neededForBoot = m.neededForBoot;
     }
