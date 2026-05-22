@@ -194,23 +194,18 @@ let
       dsEnt = datasets.${b.clevis-binding.protectDataset};
       poolEnt = pools.${dsEnt.refs.pool};
       dsPath = dsEnt.zfs-dataset.path;
-      # Short name = dataset path minus pool prefix, slashes → hyphens.
-      # tank/luns → "luns"; tank/persist/lab-4 → "persist-lab-4".
-      shortPath = stripPoolPrefix poolEnt.zfs-pool.name dsPath;
-      safeName = lib.replaceStrings [ "/" ] [ "-" ] shortPath;
-      pullIn = b.clevis-binding.pullInBy;
+      # Consumers find this unit name via b.attrs.unlockUnitName.
+      unitName = lib.removeSuffix ".service" b.attrs.unlockUnitName;
     in
-    lib.nameValuePair "zfs-load-key-${safeName}" {
+    lib.nameValuePair unitName {
       description = "Unseal ${dsPath} via clevis";
-      wantedBy = pullIn;
-      before = pullIn;
       after = [ "zfs-import-${poolEnt.zfs-pool.name}.service" "network-online.target" ];
       wants = [ "network-online.target" ];
       path = [ pkgs.clevis pkgs.zfs pkgs.curl pkgs.jose ];
       serviceConfig = {
         Type = "oneshot";
         RemainAfterExit = true;
-        ExecStart = pkgs.writeShellScript "zfs-load-key-${safeName}" ''
+        ExecStart = pkgs.writeShellScript unitName ''
           set -euo pipefail
           if [ "$(zfs get -H -o value keystatus ${dsPath})" = available ]; then
             exit 0

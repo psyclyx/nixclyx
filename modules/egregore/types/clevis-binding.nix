@@ -65,18 +65,6 @@ egregorLib.mkType {
         (the bootstrap projection will offer to mint one).
       '';
     };
-    pullInBy = lib.mkOption {
-      type = lib.types.listOf lib.types.str;
-      default = [ ];
-      description = ''
-        For post-boot bindings (i.e. not unlocked in initrd): systemd
-        units that need this binding's dataset available before they
-        start. The projection wires the generated zfs-load-key unit
-        with `wantedBy` + `before` for each entry, so the listed units
-        block on the unlock. Empty = the unit exists but nothing pulls
-        it in (it'll only run on explicit `systemctl start`).
-      '';
-    };
   };
 
   attrs =
@@ -90,12 +78,28 @@ egregorLib.mkType {
       datasetEnt =
         if b.protectDataset == null then null
         else top.entities.${b.protectDataset} or null;
+      poolName =
+        if datasetEnt == null then null
+        else (top.entities.${datasetEnt.refs.pool} or {}).zfs-pool.name or null;
+      # Match storage projection's mkPostBootKeyService naming.
+      shortPath =
+        if datasetEnt == null || poolName == null then null
+        else lib.removePrefix "${poolName}/" datasetEnt.zfs-dataset.path;
+      safeName = if shortPath == null then null
+                 else lib.replaceStrings [ "/" ] [ "-" ] shortPath;
       tangEnts = map (n: top.entities.${n} or null) b.tangs;
       tangUrls = lib.filter (u: u != null) (map (e: if e == null then null else e.attrs.url or null) tangEnts);
     in
     {
       label = "${toString (builtins.length b.tangs)} tang(s) → ${target}";
       producer = if datasetEnt == null then null else datasetEnt.attrs.producer or null;
+      # Name of the systemd unit the storage projection emits for this
+      # binding's post-boot unlock. Other projections that consume the
+      # bound dataset (iSCSI target, application services) add
+      # `after`/`wants` on this without poking at unit-name strings.
+      unlockUnitName =
+        if safeName == null then null
+        else "zfs-load-key-${safeName}.service";
       inherit tangUrls;
     };
 

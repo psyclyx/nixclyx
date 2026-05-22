@@ -31,6 +31,32 @@
     (l.refs.producer or null) == hostname
   ) allLuns;
 
+  # For each produced lun, the dataset its zvol sits in (e.g.
+  # tank/luns/ab-api-state) might be under an encryption root with a
+  # clevis-binding (tank/luns is bound on lab-4). target.service needs
+  # the binding's unlock unit to run first — find them.
+  allBindings = lib.filterAttrs (_: e: e.type == "clevis-binding") eg.entities;
+  allDatasets = lib.filterAttrs (_: e: e.type == "zfs-dataset") eg.entities;
+  datasetByPath = lib.listToAttrs (lib.mapAttrsToList
+    (_: d: lib.nameValuePair d.zfs-dataset.path d) allDatasets);
+  bindingForDatasetPath = path:
+    let
+      hits = lib.filter (b:
+        let bds = allDatasets.${b.clevis-binding.protectDataset or ""} or null;
+        in bds != null
+           && (bds.zfs-dataset.path == path
+               || lib.hasPrefix "${bds.zfs-dataset.path}/" path)
+      ) (lib.attrValues allBindings);
+    in if hits == [] then null else lib.head hits;
+
+  producedLunUnlockUnits = lib.unique (lib.filter (u: u != null) (
+    lib.mapAttrsToList (_: l:
+      let
+        b = bindingForDatasetPath l.attrs.dataset;
+      in if b == null then null else b.attrs.unlockUnitName
+    ) producedLuns
+  ));
+
   mkTarget = lunName: lun: let
     producer = lun.refs.producer;
   in {
@@ -107,6 +133,15 @@ in {
       enable = true;
       portals = producerPortals;
       targets = producerTargets;
+    };
+
+    # target.service can't enumerate zvols whose enclosing encryption
+    # root isn't unlocked. Wire the dependency on the binding's
+    # generated unlock unit — name comes from the binding's attrs so
+    # we never hardcode systemd unit strings down here.
+    systemd.services.target = lib.mkIf (producedLuns != {} && producedLunUnlockUnits != []) {
+      wants = producedLunUnlockUnits;
+      after = producedLunUnlockUnits;
     };
 
     psyclyx.nixos.services.iscsi.initiator = lib.mkIf (consumedLuns != {}) {

@@ -56,10 +56,10 @@
         tangs = [ "iyr-tang" ];
         protectDataset = "tank-luns";
         secretFile = ../../hosts/nixos/lab-4/persist.jwe;
-        # iSCSI target binds zvols under tank/luns; it can't start until
-        # the keys are loaded. NixOS's LIO target unit is named
-        # `target.service` (not iscsi-target.service).
-        pullInBy = [ "target.service" ];
+        # Consumers of bound datasets (e.g. the iSCSI target for luns
+        # under tank/luns) wire their own dependencies on the unlock
+        # unit via clevis-binding.attrs.unlockUnitName — no need to
+        # list consumer unit names here.
       };
     };
   };
