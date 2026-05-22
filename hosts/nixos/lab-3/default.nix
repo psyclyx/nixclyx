@@ -20,6 +20,10 @@
       kernelModules = [ "tg3" ];  # Broadcom NetXtreme on eno1.
     };
 
+    # Accept on lan zone — same convention as lab-4. Without this the
+    # default-drop policy refuses SSH from inside the apartment LAN.
+    network.firewall.input.lan.policy = "accept";
+
     # HPE-specific knobs (firmware, drivers).
     hardware.presets.hpe.dl360-gen9.enable = true;
 
@@ -27,4 +31,5 @@
     # host.refs.{nixDataset,persistDataset} via the storage projection.
     filesystems.nfs-root.enable = true;
   };
+
 }

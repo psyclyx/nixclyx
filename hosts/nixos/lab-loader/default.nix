@@ -31,10 +31,8 @@
     hardware.presets.hpe.dl360-gen9.enable = true;
   };
 
-  # bnx2x and friends — redistributable, gets the 10G NIC online.
-  hardware.enableRedistributableFirmware = true;
-
-  # ZFS + NFS in the loader kernel so chain mounts work.
+  # ZFS + NFS in the loader kernel so chain mounts work. (Firmware,
+  # serial console wiring, etc. come from the DL360 Gen9 preset.)
   boot.supportedFilesystems = [ "zfs" "nfs" "nfs4" ];
 
   # Root's authorized_keys directly: no users.psyc, no home-manager.
@@ -47,17 +45,6 @@
 
   # netboot.nix vs nixclyx defaults clash on an inert bootloader knob.
   boot.loader.timeout = lib.mkForce 10;
-
-  # iLO VSP on DL360 Gen9 = COM2 = ttyS1. Without console=ttyS1 the
-  # boot log + getty are video-only.
-  boot.kernelParams = [
-    "console=tty0"
-    "console=ttyS1,115200n8"
-  ];
-  systemd.services."serial-getty@ttyS1" = {
-    enable = true;
-    wantedBy = [ "multi-user.target" ];
-  };
 
   # Helpful pointer when fall-through happens.
   environment.etc."issue".text = ''
