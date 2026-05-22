@@ -9,7 +9,7 @@
     modules in initrd, bootloader off.
   '';
 
-  config = { lib, ... }: {
+  config = { lib, pkgs, ... }: {
     fileSystems."/" = {
       device = "tmpfs";
       fsType = "tmpfs";
@@ -21,9 +21,13 @@
     boot.loader.generic-extlinux-compatible.enable = lib.mkForce false;
 
     # NFS in initrd so neededForBoot mounts from the storage projection
-    # can fire before stage-2.
+    # can fire before stage-2. Both the kernel modules AND the
+    # mount.nfs userspace helper are required — without nfs-utils in
+    # the initrd store paths, kernel mount() returns `NFS: mount
+    # program didn't pass remote address`.
     boot.initrd.kernelModules = [ "nfs" "nfsv4" ];
     boot.initrd.supportedFilesystems = [ "nfs" "nfs4" ];
+    boot.initrd.systemd.storePaths = [ pkgs.nfs-utils ];
 
     # The /nix and /persist NFS mount entries themselves are derived
     # by topology/storage.nix from host.refs.{nixDataset,persistDataset}.
