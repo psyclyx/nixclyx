@@ -193,15 +193,27 @@ let
   # the guest doesn't try to mount an unformatted block device at
   # boot. The zvol-provision projection emits zfs-format-<lun>; we
   # just wire the dependency.
+  #
+  # Also extend restartTriggers to the runner derivation. Upstream
+  # microvm.nix only triggers restart on `guestConfig.system.build.toplevel`,
+  # which misses host-side changes — share args (e.g. virtiofsd
+  # `--readonly`), volume layout, interface config — all of which live
+  # in the runner. Without this, flipping an nfs-export's `readOnly`
+  # rebuilds the runner, install-microvm-<vm> swings the `current`
+  # symlink, but neither microvm@ nor microvm-virtiofsd@ (which is
+  # partOf microvm@) gets restarted, so the live virtiofsd keeps the
+  # stale args.
   microvmServiceDeps = lib.mapAttrs' (
     vmName: _:
     let
       lunNames = builtins.attrNames (vmLuns vmName);
       formatUnits = map (lun: "zfs-format-${lun}.service") lunNames;
+      runner = config.microvm.vms.${vmName}.config.config.microvm.declaredRunner;
     in
     lib.nameValuePair "microvm@${vmName}" {
       after = formatUnits;
       requires = formatUnits;
+      restartTriggers = [ runner ];
     }
   ) myVms;
 in
