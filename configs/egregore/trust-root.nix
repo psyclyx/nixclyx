@@ -57,8 +57,9 @@
         protectDataset = "tank-luns";
         secretFile = ../../hosts/nixos/lab-4/persist.jwe;
         # iSCSI target binds zvols under tank/luns; it can't start until
-        # the keys are loaded.
-        pullInBy = [ "iscsi-target.service" ];
+        # the keys are loaded. NixOS's LIO target unit is named
+        # `target.service` (not iscsi-target.service).
+        pullInBy = [ "target.service" ];
       };
     };
   };
