@@ -88,6 +88,37 @@ let
     }
   ];
 
+  # nfs-exports we produce that a given VM consumes — these become
+  # virtiofs shares instead of NFS mounts, since the VM can't reach
+  # its own hypervisor through macvtap (the macvtap parent device
+  # filters traffic between host and child interfaces). The skip on
+  # the consumer side lives in topology/nfs.nix.
+  vmNfsExports =
+    vmName:
+    lib.filterAttrs (
+      _: e:
+      e.type == "nfs-export"
+      && (e.refs.producer or null) == hostname
+      && builtins.elem vmName e.nfs-export.consumers
+      && (e.nfs-export.mountAt or null) != null
+    ) eg.entities;
+
+  mkNfsShare = expName: e: {
+    source = e.nfs-export.path;
+    mountPoint = e.nfs-export.mountAt;
+    tag = "nfs-${expName}";
+    proto = "virtiofs";
+    readOnly = e.nfs-export.readOnly;
+  };
+
+  vmShares = vmName: [
+    {
+      source = "/nix/store";
+      mountPoint = "/nix/store";
+      tag = "ro-store";
+      proto = "virtiofs";
+    }
+  ] ++ (lib.mapAttrsToList mkNfsShare (vmNfsExports vmName));
 
   mkVm =
     vmName: vm:
@@ -110,6 +141,14 @@ let
             hypervisor = lib.mkDefault cfg.hypervisor;
             volumes = vmVolumes vmName;
             interfaces = mkInterfaces vmName;
+            # Shares from host:
+            #   - /nix/store: avoids baking the closure into the VM
+            #     image (microvm.nix flips `storeOnDisk` off whenever
+            #     a share's source is /nix/store).
+            #   - nfs-exports the hypervisor produces and this VM
+            #     consumes: handed in directly, avoiding the macvtap
+            #     VM-can't-reach-host limitation.
+            shares = vmShares vmName;
           };
           # Rename the guest's lone virtio-net interface to the device
           # name declared in egregore for the lab network (e.g. "net0").

@@ -37,9 +37,16 @@
   serverExports = lib.mapAttrsToList mkServerExport myExports;
 
   # Consumer-side: exports we mount.
+  #
+  # Excludes exports produced by this consumer's hypervisor — that's a
+  # co-located VM/host pair, and a VM cannot reach its hypervisor
+  # through macvtap. For those, topology/vms.nix attaches the export
+  # path directly as a virtiofs share, no NFS hop.
+  myHypervisor = (me.refs or {}).hypervisor or null;
   myMounts = lib.filterAttrs (_: e:
     e.nfs-export.mountAt != null
     && builtins.elem hostname e.nfs-export.consumers
+    && (myHypervisor == null || (e.refs.producer or null) != myHypervisor)
   ) allExports;
 
   # Producer's IP on the export's network — that's the NFS server address.
