@@ -79,46 +79,14 @@ egregorLib.mkType {
     _name: entity: _top:
     let
       ha = entity.ha-group;
-      defaultServiceMeta = {
-        postgresql = {
-          port = 5432;
-          checkPort = 8008;
-          mode = "tcp";
-          check = "/primary";
-        };
-        redis = {
-          port = 6379;
-          mode = "tcp";
-        };
-        openbao = {
-          port = 8200;
-          check = "/v1/sys/health?standbyok=true";
-          mode = "http";
-        };
-        s3 = {
-          port = 8333;
-          check = "/status";
-          mode = "http";
-        };
-        webdav = {
-          port = 7333;
-          mode = "http";
-        };
-      };
       resolvedServices = lib.mapAttrs (
-        name: svc:
-        let
-          meta = defaultServiceMeta.${name} or { };
-          pick =
-            field: fallback:
-            if svc.${field} != null then svc.${field} else meta.${field} or fallback;
-        in
+        _name: svc:
         {
-          port = pick "port" null;
-          backendPort = pick "backendPort" null;
-          mode = pick "mode" "http";
-          check = pick "check" null;
-          checkPort = pick "checkPort" null;
+          port = svc.port;
+          backendPort = svc.backendPort;
+          mode = if svc.mode != null then svc.mode else "http";
+          check = svc.check;
+          checkPort = svc.checkPort;
           checkSsl = svc.checkSsl;
         }
       ) ha.services;

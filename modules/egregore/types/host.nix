@@ -205,7 +205,6 @@ egregorLib.mkType {
                 };
                 network = lib.mkOption {
                   type = lib.types.str;
-                  default = "lab";
                   description = ''
                     Network whose zone supplies the CN/principal in
                     the SSH host cert. Read as `attrs.fqdns.<network>`.
@@ -247,7 +246,6 @@ egregorLib.mkType {
                 };
                 network = lib.mkOption {
                   type = lib.types.str;
-                  default = "lab";
                   description = ''
                     Network whose zone supplies the cert CN when
                     `commonName` is unset. Read as

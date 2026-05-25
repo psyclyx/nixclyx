@@ -101,7 +101,6 @@
       };
       dataCenter = lib.mkOption {
         type = lib.types.str;
-        default = "lab";
         description = "Volume server datacenter label.";
       };
       rack = lib.mkOption {
