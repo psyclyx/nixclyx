@@ -21,6 +21,15 @@ let
   hostname = config.psyclyx.nixos.host;
   enabled = cfg.enable && hostname != "";
 
+  obo = eg.openbao or { };
+  oboServerEnt = eg.entities.${obo.serverHost or ""} or null;
+  oboServerAddr =
+    if oboServerEnt == null then null
+    else (oboServerEnt.attrs.addresses.${obo.serverNetwork or ""} or {}).ipv4 or null;
+  derivedVaultAddr =
+    if oboServerAddr == null then null
+    else "${obo.scheme}://${oboServerAddr}:${toString obo.port}";
+
   me = eg.entities.${hostname} or null;
 
   # ─── Guest side ───────────────────────────────────────────────
@@ -120,10 +129,16 @@ in
 
     vaultAddr = lib.mkOption {
       type = lib.types.str;
-      default = "https://10.0.25.1:8200";
+      default = if derivedVaultAddr != null then derivedVaultAddr else "";
+      defaultText = lib.literalExpression ''
+        "<scheme>://<addr>:<port>" derived from
+        globals.openbao.{serverHost,serverNetwork,port,scheme}.
+      '';
       description = ''
         OpenBao endpoint used by both the hypervisor's wrap-token
-        minter and the guest's vm-auth. Reachable from lab-VLAN.
+        minter and the guest's vm-auth. Default derived from egregore
+        globals `openbao.*` — the host entity named by `serverHost`,
+        its address on `serverNetwork`, and the configured port.
       '';
     };
 

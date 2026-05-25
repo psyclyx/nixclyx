@@ -20,5 +20,12 @@
     iscsi = {
       baseIqn = "iqn.2026-05.net.psyclyx";
     };
+
+    openbao = {
+      serverHost = "iyr";
+      serverNetwork = "infra";
+      port = 8200;
+      scheme = "https";
+    };
   };
 }

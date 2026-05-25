@@ -73,5 +73,41 @@
       };
       default = {};
     };
+
+    openbao = lib.mkOption {
+      type = lib.types.submodule {
+        options = {
+          serverHost = lib.mkOption {
+            type = lib.types.str;
+            default = "";
+            description = ''
+              Host entity name that runs the fleet OpenBao listener.
+              Projections derive the OpenBao endpoint from this host's
+              address on `serverNetwork` plus `port`.
+            '';
+          };
+          serverNetwork = lib.mkOption {
+            type = lib.types.str;
+            default = "";
+            description = ''
+              Network entity name whose `serverHost` address clients
+              should reach OpenBao on. Read as
+              `host.addresses.<serverNetwork>.ipv4`.
+            '';
+          };
+          port = lib.mkOption {
+            type = lib.types.int;
+            default = 8200;
+            description = "TCP port for the OpenBao listener.";
+          };
+          scheme = lib.mkOption {
+            type = lib.types.enum [ "http" "https" ];
+            default = "https";
+            description = "URL scheme for the OpenBao listener.";
+          };
+        };
+      };
+      default = {};
+    };
   };
 }
