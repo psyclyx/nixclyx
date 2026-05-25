@@ -50,6 +50,47 @@
         default = "";
         description = "Extra bao CLI commands run after transit engine bootstrap. bao/jq in PATH, BAO_TOKEN set. Runs under set -euo pipefail.";
       };
+      authMethods = lib.mkOption {
+        type = lib.types.listOf lib.types.str;
+        default = [ ];
+        example = [ "userpass" "cert" ];
+        description = ''
+          Auth methods to enable on the seal oracle. Each entry is the
+          method name as `bao auth enable` expects it; the configure
+          script checks `bao auth list` first and skips already-enabled
+          methods, so this list is safe to re-apply.
+        '';
+      };
+      kvMounts = lib.mkOption {
+        type = lib.types.listOf lib.types.str;
+        default = [ ];
+        example = [ "kv" ];
+        description = ''
+          Paths at which to mount the KV v2 secrets engine. Idempotent;
+          existing mounts are left in place.
+        '';
+      };
+      userpassUsers = lib.mkOption {
+        type = lib.types.attrsOf (lib.types.submodule {
+          options = {
+            passwordFile = lib.mkOption {
+              type = lib.types.str;
+              description = "Path to a file containing the user's password.";
+            };
+            policies = lib.mkOption {
+              type = lib.types.listOf lib.types.str;
+              default = [ ];
+              description = "Policy names attached to the user.";
+            };
+          };
+        });
+        default = { };
+        description = ''
+          Userpass auth users to create. Requires `userpass` to be
+          listed in `authMethods` (the auth method is enabled before
+          users are written).
+        '';
+      };
       pki = {
         enable = lib.mkEnableOption "PKI secrets engine with root CA";
         commonName = lib.mkOption {
@@ -221,6 +262,24 @@
         api_addr = "http://${addr}:${toString port}";
         seal.${sealType} = sealAttrs;
       };
+
+      authMethodsScript = lib.concatMapStringsSep "\n" (method: ''
+        if ! bao auth list -format=json | jq -e '."${method}/"' >/dev/null 2>&1; then
+          bao auth enable ${lib.escapeShellArg method}
+        fi
+      '') cfg.authMethods;
+
+      kvMountsScript = lib.concatMapStringsSep "\n" (mount: ''
+        if ! bao secrets list -format=json | jq -e '."${mount}/"' >/dev/null 2>&1; then
+          bao secrets enable -path=${lib.escapeShellArg mount} kv-v2
+        fi
+      '') cfg.kvMounts;
+
+      userpassUsersScript = lib.concatStrings (lib.mapAttrsToList (name: u: ''
+        bao write auth/userpass/users/${lib.escapeShellArg name} \
+          password=@${u.passwordFile} \
+          policies=${lib.escapeShellArg (lib.concatStringsSep "," u.policies)}
+      '') cfg.userpassUsers);
 
       pkiScript = lib.optionalString cfg.pki.enable ''
         # -- PKI engine --
@@ -400,6 +459,10 @@
             bao policy write autounseal ${autounsealPolicy}
 
             ${pkiScript}
+
+            ${authMethodsScript}
+            ${kvMountsScript}
+            ${userpassUsersScript}
 
             ${cfg.configure}
 
