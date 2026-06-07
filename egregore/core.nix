@@ -12,9 +12,15 @@
 # instance sees all type modules' options, but only the matching type's
 # attrs/verbs are active (via mkIf).
 #
+# Every entity also gets an automatic attrs.refsIn — the inverse of
+# refs. If `foo.refs.bar = "baz"`, then `baz.attrs.refsIn.bar` contains
+# `"foo"`. Lets target entities answer "who refs me?" without scattering
+# filter queries across type modules.
+#
 { config, lib, ... }:
 let
   inherit (lib) mkOption types;
+  topConfig = config;
 in {
   options = {
     assertions = mkOption {
@@ -108,6 +114,17 @@ in {
 
         # Every entity knows its own name.
         config.attrs.name = name;
+
+        # Inverse-ref index: for each (src, refName) with src.refs.refName
+        # == name, append srcName to attrs.refsIn.refName. Reads only
+        # entities.*.refs (plain user data) — no cycle with attrs setters.
+        config.attrs.refsIn = lib.foldlAttrs (acc: srcName: src:
+          lib.foldlAttrs (acc2: refName: target:
+            if target == name
+            then acc2 // { ${refName} = (acc2.${refName} or []) ++ [srcName]; }
+            else acc2
+          ) acc src.refs
+        ) {} topConfig.entities;
       }));
       default = {};
     };
