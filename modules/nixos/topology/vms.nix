@@ -11,9 +11,9 @@
 #     address (DHCP via Kea on iyr, per the host type's address mode).
 #   - `networking.hostName` from the entity name.
 #
-# Per-VM service config (which angelbeats/auth/etc. units to enable,
-# where to find sops paths, NFS mounts, …) is supplied by the consumer
-# via `psyclyx.nixos.topology.vms.guests.<name>` — a NixOS module that
+# Per-VM service config (which units to enable, where to find sops
+# paths, NFS mounts, …) is supplied by the consumer via
+# `psyclyx.nixos.topology.vms.guests.<name>` — a NixOS module that
 # imports the right module sets and wires the VM. The projection
 # merges its own derived bits in via lib.mkMerge.
 {
@@ -253,8 +253,8 @@ in
       default = { };
       description = ''
         Per-VM NixOS module. Each module is responsible for importing
-        the microvm guest module, any nixclyx/privclyx module sets it
-        needs, and the per-service enable + wire config. The projection
+        the microvm guest module, any module sets it needs, and the
+        per-service enable + wire config. The projection
         merges in `microvm.volumes`/`microvm.interfaces` and
         `networking.hostName` via mkMerge with mkDefault, so the guest
         module can still override anything.

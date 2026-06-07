@@ -38,10 +38,10 @@
       psyclyx.egregore = lib.mkOption {
         type = lib.types.anything;
         description = ''
-          Evaluated egregore entity registry. Default is nixclyx's
-          shipped root spec; consumers wrapping nixclyx (e.g. privclyx)
-          override this with a registry built from a root that imports
-          nixclyx's via egregore's own module-import system.
+          Evaluated egregore entity registry. Default is the shipped
+          root spec; downstream consumers can override this with a
+          registry built from a root that imports the shipped one via
+          egregore's own module-import system.
         '';
       };
     };

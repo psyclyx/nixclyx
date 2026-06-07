@@ -64,7 +64,6 @@ in
     services = {
       seaweedfs.buckets = [
         "backups"
-        "angelbeats"
       ];
       openbao.settings.transitAddress = "http://${eg.entities.infra.attrs.gateway4}:8200";
       openbao-pki.enable = true;
