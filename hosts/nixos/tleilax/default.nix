@@ -108,8 +108,6 @@ in
     role = "server";
 
     services = {
-      tailscale.exitNode = true;
-
       loki.enable = true;
       prometheus.server.enable = true;
 

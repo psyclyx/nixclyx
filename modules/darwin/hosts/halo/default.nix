@@ -16,7 +16,6 @@
         desktop.enable = true;
       };
       users.psyc.enable = true;
-      services.tailscale.enable = true;
     };
 
     homebrew.casks = [
