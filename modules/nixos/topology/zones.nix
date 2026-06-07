@@ -219,7 +219,7 @@ in {
       type = lib.types.attrsOf lib.types.lines;
       default = {};
       description = "Extra records appended to generated forward zones, keyed by egregore network name.";
-      example = { stage = "angelbeats IN CNAME lab-stage-vip"; };
+      example = { stage = "app IN CNAME lab-stage-vip"; };
     };
     extraZones = lib.mkOption {
       type = lib.types.attrsOf lib.types.anything;

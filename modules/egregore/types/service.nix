@@ -185,6 +185,7 @@ egregorLib.mkType {
     invalidIngressHosts = lib.filter
       (h: !(top.entities ? ${h} && top.entities.${h}.type == "host"))
       (builtins.attrValues s.ingress);
+    dnsAuthRef = entity.refs.dnsAuthority or null;
   in [
     {
       assertion = backendCount == 1;
@@ -228,5 +229,9 @@ egregorLib.mkType {
       assertion = invalidIngressHosts == [];
       message = "service '${name}': ingress override targets ${builtins.toJSON invalidIngressHosts} are not host entities";
     }
-  ];
+  ]
+  ++ lib.optional (dnsAuthRef != null) {
+    assertion = top.entities ? ${dnsAuthRef} && top.entities.${dnsAuthRef}.type == "host";
+    message = "service '${name}': refs.dnsAuthority → '${dnsAuthRef}' must be a host entity";
+  };
 }

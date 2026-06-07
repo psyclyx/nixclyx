@@ -79,9 +79,20 @@
   # A host can issue an ACME cert for `domain` via DNS-01 if any zone in
   # its dnsAuthority is `domain` itself or a parent of it (TSIG access
   # to the parent suffices for _acme-challenge.<domain> updates).
+  # Union of a host's intrinsic dnsAuthority and any apex zones
+  # contributed by services that ref this host via refs.dnsAuthority.
+  effectiveDnsAuthority = h: let
+    intrinsic = h.host.dnsAuthority or [];
+    sources = h.attrs.refsIn.dnsAuthority or [];
+    contributed = lib.concatMap (n: let
+      e = eg.entities.${n} or null;
+    in lib.optional (e != null && e.type == "service" && e.attrs.resolvedDomain != null)
+      e.attrs.resolvedDomain) sources;
+  in lib.unique (intrinsic ++ contributed);
+
   hostHasAuthority = hostName: domain: let
     h = eg.entities.${hostName} or null;
-    zones = if h != null && h.type == "host" then h.host.dnsAuthority or [] else [];
+    zones = if h != null && h.type == "host" then effectiveDnsAuthority h else [];
   in builtins.any (z: z == domain || lib.hasSuffix ".${z}" domain) zones;
 
   iCanIssue = domain: hostHasAuthority hostname domain;
@@ -223,7 +234,7 @@
   publicTuples = lib.filter (t: t.audAddress == "public") httpTuples;
 
   authoritativeZoneRecords = let
-    myZones = me.host.dnsAuthority or [];
+    myZones = if me != null then effectiveDnsAuthority me else [];
 
     # Longest-suffix match from this host's dnsAuthority. Returns the
     # most specific zone covering `domain`, or null if none does.
