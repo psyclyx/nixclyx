@@ -28,7 +28,7 @@
       enable = true;
 
       polarity = lib.mkIf cfg.base24Gen (lib.mkDefault "dark");
-      paletteGenerator = lib.mkIf cfg.base24Gen base24-gen-palette-generator;
+      # paletteGenerator = lib.mkIf cfg.base24Gen base24-gen-palette-generator;
 
       image = lib.mkDefault "${nixclyx.assets}/wallpapers/nixos-wallpaper-catppuccin-macchiato.png";
       base16Scheme = lib.mkDefault "${nixclyx.assets}/palettes/nixos-wallpaper-catppuccin-macchiato.yaml";
