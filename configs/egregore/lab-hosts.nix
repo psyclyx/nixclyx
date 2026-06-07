@@ -28,6 +28,14 @@ let
       # has zfs + clevis + the JWE baked in, so it boots straight
       # into stage-2 with no kexec.
       useLoader ? true,
+      # Recovery mode: clear the loader's dataset refs so the
+      # PXE-served spec carries no mount steps. The loader runs
+      # zero steps, finds no kexec profile at /mnt-persist/var/nix/
+      # profiles/system (because /mnt-persist isn't mounted), exits
+      # cleanly, and stage-2 stays up with sshd + the operator key.
+      # Used when the underlying pool needs to be rebuilt out from
+      # under the host. Effective only when useLoader = true.
+      rescueMode ? false,
     }:
     {
       type = "host";
@@ -39,9 +47,11 @@ let
       ];
       refs = {
         bmc = "lab-${toString n}-ilo";
+      } // lib.optionalAttrs (!rescueMode) {
         # All lab hosts share the same /nix (NFS-exported from lab-4's
         # tank). Each has its own per-host /persist dataset; lab-4
-        # mounts its locally, the others NFS-mount from lab-4.
+        # mounts its locally, the others NFS-mount from lab-4. Cleared
+        # under rescueMode so the loader serves an empty spec.
         nixDataset = "tank-nix-shared";
         persistDataset = "tank-persist-lab-${toString n}";
       };
