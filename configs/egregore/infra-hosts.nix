@@ -79,10 +79,14 @@
       sigil = {
         type = "host";
         tags = ["workstation" "desktop" "apartment" "fixed"];
+        # /persist is consumed locally from sigil's own rpool. /nix
+        # is still on bcachefs during the slow ZFS cutover and is
+        # intentionally not declared here.
+        refs.persistDataset = "sigil-persist";
         host = {
           site = "apt";
           wireguard = {
-            publicKey = "2W8xPvT6iHLQuvWVTcZFlyoYMGbJEvldA04yyFgl4ls=";
+            publicKey = "H/zpv+hIETz5HMwIQVAD/MwngrkkhIQxsymuj5UD434=";
             allowedNetworks = [];
           };
           interfaces.main.device = "br0";
