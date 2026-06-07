@@ -52,12 +52,16 @@ let
       wantedBy = [ "multi-user.target" ];
       after = [ "zfs-import.target" ];
       requires = [ "zfs-import.target" ];
-      # Only create if the device doesn't yet exist. systemd skips
-      # the unit cleanly when the condition fails — no error path.
-      unitConfig.ConditionPathExists = "!/dev/zvol/${ds}";
+      # Skip if the dataset already exists. Asking ZFS directly is
+      # the authoritative check; `/dev/zvol/...` symlinks are
+      # populated by udev asynchronously after `zfs-import.target`
+      # completes, so a path-existence guard races udev on a fresh
+      # boot and fires `zfs create` against an already-present
+      # dataset.
       serviceConfig = {
         Type = "oneshot";
         RemainAfterExit = true;
+        ExecCondition = "${pkgs.bash}/bin/bash -c '! ${pkgs.zfs}/bin/zfs list -H -o name ${lib.escapeShellArg ds} >/dev/null 2>&1'";
       };
       path = [ pkgs.zfs ];
       script = ''
