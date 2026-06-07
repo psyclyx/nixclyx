@@ -10,11 +10,36 @@
     pkgs.kicad
   ];
 
+  # home-manager activation runs as a user systemd service with
+  # `RequiresMountsFor=%h`, so it waits until pam_zfs_key has mounted
+  # /home/<user> before doing anything. Without this, system-level HM
+  # activation fires during nixos-rebuild boot — long before login —
+  # and writes its symlinks into the underlay (rpool/ROOT/nixos at
+  # /home/psyc), which impermanence then wipes on the next boot.
+  # See filesystems.nix for the PAM/ZFS contract this depends on.
+  home-manager.startAsUserService = true;
+
+  # The rsync migration brought over real files that HM wants to
+  # manage as /nix/store-pointing symlinks (Firefox's profiles.ini,
+  # mimeapps.list, etc.). Without this, HM activation refuses to
+  # touch any conflicting file and aborts the whole switch — leaving
+  # half-activated state with missing .zshrc / .bashrc / dotfiles.
+  # With backupFileExtension set, HM renames conflicts to
+  # `<file>.hm-backup` and writes its own symlink in their place.
+  # Reviewable after activation: `find /home/psyc -name '*.hm-backup'`.
+  home-manager.backupFileExtension = "hm-backup";
+
   psyclyx.nixos = {
-    filesystems.impermanence = {
+    # ZFS-on-rpool: pools = ["rpool"] makes the zfs module request
+    # encryption credentials in initrd for every encryption root on
+    # the pool (today: rpool/persist and rpool/home/psyc). bcachefs
+    # impermanence is gone — the @blank rollback for / is wired in
+    # filesystems.nix as a stage-1 systemd service.
+    filesystems.zfs = {
       enable = true;
-      device = "UUID=055d9737-c13b-4262-abe6-2ebcb8681307";
-      prune = false;
+      hostId = "8372b94b";
+      pools = ["rpool"];
+      encryption.enable = true;
     };
 
     programs = {
@@ -35,7 +60,6 @@
 
     services = {
       openrgb.enable = true;
-      tailscale.exitNode = true;
       icecream = {
         enable = true;
         schedulerHost = "10.0.25.11"; # lab-1 via WireGuard
@@ -53,6 +77,69 @@
     system = {
       emulation.enable = true;
       swap.swappiness = 5;
+    };
+  };
+
+  # Park nix build trees on the scratchpool (own SSD) instead of
+  # under /tmp. Multi-user Nix routes user invocations through the
+  # daemon, so the daemon's build-dir covers ad-hoc `nix build` from
+  # the shell as well.
+  nix.settings.build-dir = "/build";
+
+  # rpool/home/psyc snapshots: tight, recent-history scratch on the
+  # SSD; longer tiered history on the spinner. Source keeps a 6 h
+  # rolling window of 5-min snapshots (72) plus one of each higher
+  # tier — the tier-marker snapshots only exist so sanoid on the
+  # destination has snapshots tagged hourly/daily/weekly/monthly to
+  # retain. Without those tags, the destination could only retain
+  # frequents.
+  services.sanoid = {
+    enable = true;
+    # frequent snapshots fire on this cadence — sanoid takes at
+    # most one per run, so hourly (the default) would only land one
+    # 5-min snapshot per hour. Need to run every 5 min for the
+    # `frequently = 72` retention to actually fill.
+    interval = "*:0/5";
+
+    datasets."rpool/home/psyc" = {
+      autosnap = true;
+      autoprune = true;
+      frequently = 72;       # 6 h × (60 min / 5 min)
+      frequent_period = 5;
+      hourly = 1;
+      daily = 1;
+      weekly = 1;
+      monthly = 1;
+    };
+
+    # syncoid brings snapshots across; sanoid on the destination
+    # just prunes per these counts. autosnap=false so the spinner
+    # never takes its own snapshots (avoids snapshot divergence
+    # between source and dest that breaks incremental sends).
+    datasets."bulkpool/backups/home-psyc" = {
+      autosnap = false;
+      autoprune = true;
+      frequently = 288;      # 1 day of 5-min snapshots as overlap
+      hourly = 168;          # 1 week
+      daily = 30;            # 1 month
+      weekly = 8;            # 2 months
+      monthly = 12;          # 1 year
+    };
+  };
+
+  # Raw send (-w) keeps the destination encrypted with the same
+  # wrapping key as the source; the backup is never decrypted at
+  # rest on the spinner. Hourly cadence matches the user's
+  # write-frequency expectations for a workstation home dir; if a
+  # delete happens between syncoid runs, sanoid's source-side 5-min
+  # snapshots cover the gap.
+  services.syncoid = {
+    enable = true;
+    interval = "hourly";
+    commands."home-psyc" = {
+      source = "rpool/home/psyc";
+      target = "bulkpool/backups/home-psyc";
+      sendOptions = "w";
     };
   };
 
