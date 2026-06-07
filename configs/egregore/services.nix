@@ -39,17 +39,6 @@
         };
       };
 
-      torrent = {
-        type = "service";
-        tags = ["internal" "homelab"];
-        service = {
-          domain = "torrent.psyclyx.net";
-          backend.host = { address = "172.16.0.2"; port = 8080; };
-          audiences = ["vpn"];
-          label = "Torrents";
-        };
-      };
-
       light = {
         type = "service";
         tags = ["internal" "homelab"];

@@ -42,7 +42,6 @@ in
           mullvad = {
             policy = "drop";
             allowICMP = true;
-            allowedTCPPorts = [ 8080 ]; # qBittorrent web UI
           };
           public = {
             policy = "drop";
