@@ -24,6 +24,7 @@
         alacritty.enable = true;
         claude-code.enable = true;
         emacs.enable = true;
+        pi-coding-agent.enable = true;
         firefox.enable = true;
         ghostty = {
           enable = true;
