@@ -45,6 +45,12 @@
     role = "server";
   };
 
+  # LSI SAS 9207-8i (SAS 2308 chipset) carries tank's disks. Without
+  # mpt3sas in stage-1, zpool import sees no devices and clevis-tang
+  # falls through to the iLO passphrase prompt. Not in the DL360 Gen9
+  # preset because the 9207 is an add-in card, not standard kit.
+  boot.initrd.availableKernelModules = [ "mpt3sas" ];
+
   boot.kernel.sysctl."kernel.sched_autogroup_enabled" = 0;
 
   # Clevis unlock (initrd + post-boot key-load for tank/luns) is

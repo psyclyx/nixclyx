@@ -21,10 +21,12 @@ let
       storageDev,
       labDev,
       wgKey,
-      # Defaults to the loader for compute hosts; the storage host
-      # (lab-4) overrides to true only after the lab-4 cutover is in
-      # place. lab-1..3 don't have their own builds, so this is
-      # effectively a no-op for them — but stay explicit.
+      # Defaults to the loader for compute hosts (lab-1..3), which
+      # NFS-mount /nix from lab-4 and still rely on the loader's
+      # JWE-fetch + clevis-decrypt + NFS-mount stage-2 work. The
+      # storage host (lab-4) overrides to false: its own initrd
+      # has zfs + clevis + the JWE baked in, so it boots straight
+      # into stage-2 with no kexec.
       useLoader ? true,
     }:
     {
@@ -156,7 +158,13 @@ in
         labMac     = "98:f2:b3:d7:b9:d0";   # eno49np0
         labDev     = "eno49np0";
         wgKey = "IjRhm1Lw0+nkD/Im+4QYAit3+JtlQ5FnvKShpY7+Tiw=";
-        # lab-4 owns the pool — no boot LUN.
+        # Storage host: owns tank, /nix and /persist are local. Its
+        # own stage-1 initrd has clevis + zfs + the JWE baked in, so
+        # iyr can serve its kernel + initialRamdisk directly. Held
+        # at useLoader = true mid-cutover until the new closure
+        # (with mpt3sas in initrd) is landed on tank/nix-shared; flip
+        # to false after `colmena apply-local --on lab-4`.
+        useLoader = true;
       };
     };
   };

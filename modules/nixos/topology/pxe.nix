@@ -74,26 +74,29 @@
   # so multi-VLAN setups stay self-consistent.
   specBaseUrl = port: "http://\${next-server}:${toString port}";
 
-  # Two code paths. Precedence: legacy per-host netbootRamdisk wins
-  # when a host has its own build available (= it's in the colmena
-  # hive). Otherwise — and only when loaderSystem is set — every
-  # remaining PXE host gets the lab-loader's shared kernel/initrd,
-  # differentiated by pxe-host= / pxe-spec-url= on the cmdline. This
-  # lets a fleet migrate hosts onto the loader one at a time by
-  # removing them from the hive (or by an explicit per-host opt-out
-  # later).
+  # Two code paths.
+  #
+  # Default ("disk-backed PXE"): the host's own kernel + standard
+  # stage-1 initrd (system.build.{kernel,initialRamdisk}) is served.
+  # Stage-1 mounts /nix and /persist directly — from a local pool or
+  # NFS — and boots straight into stage-2. No kexec, no squashfs of
+  # the system closure baked into the initrd.
+  #
+  # Loader path: the shared lab-loader's kernel + netbootRamdisk
+  # (a squashfs of the loader's closure) is served instead, and the
+  # loader's stage-2 fetches a per-host spec, does ZFS/clevis/NFS
+  # mounts, and kexecs into the target's real system. Used by hosts
+  # that haven't been moved to disk-backed PXE yet — opt in via
+  # host.boot.useLoader. Also used as a fallback when no nodeCfg is
+  # available for a PXE host (eval-without-colmena).
   mkClient = name: hostEnt: let
     h = hostEnt.host;
     macs = lib.filter (m: m != null)
       (map (n: hostMacOnInterface hostEnt n) h.boot.pxeInterfaces);
     nodeCfg = nodes.${name}.config or null;
-    hasOwnBuild =
-      nodeCfg != null
-      && nodeCfg ? system
-      && nodeCfg.system ? build
-      && nodeCfg.system.build ? netbootRamdisk;
+    hasNodeCfg = nodeCfg != null;
     useLoader = cfg.loaderSystem != null
-                && (h.boot.useLoader || !hasOwnBuild);
+                && (h.boot.useLoader || !hasNodeCfg);
     loaderCfg = if useLoader then cfg.loaderSystem else null;
   in
     if macs == [] then null
@@ -110,25 +113,24 @@
           + lib.concatStringsSep " " (loaderCfg.kernelParams or []);
       };
     }
-    else if hasOwnBuild then {
+    else if hasNodeCfg then {
       inherit name;
       value = {
         inherit macs;
         kernel = "${nodeCfg.system.build.kernel}/bzImage";
-        initrd = "${nodeCfg.system.build.netbootRamdisk}/initrd";
-        # init= is the system toplevel's stage-2 init — without it,
-        # stage-1 mounts the squashfs but doesn't know which closure
-        # to switch into ("failed to find nixos closure" then emergency
-        # shell). Matches the cmdline nixpkgs' netboot module emits in
-        # its own iPXE script.
-        #
-        # ip=dhcp bootstraps initrd networking from the kernel directly
-        # (no systemd-networkd dance), which is what clevis-tang needs
-        # to be able to reach the tang server BEFORE the ZFS encryption
-        # key load. Relying on initrd systemd-networkd alone was racy
-        # here: wait-online would time out, the network-online target
-        # would still fire, and the clevis decrypt would then fail with
-        # "Error communicating with server" → emergency mode.
+        # Standard NixOS stage-1 — NOT netbootRamdisk. /nix and
+        # /persist come from the host's own storage (a local ZFS
+        # pool or NFS), so the initrd just needs the kernel modules
+        # and userspace to mount them. No squashfs-of-closure.
+        initrd = "${nodeCfg.system.build.initialRamdisk}/initrd";
+        # ip=dhcp bootstraps initrd networking from the kernel
+        # directly (no systemd-networkd dance), which is what
+        # clevis-tang needs to be able to reach the tang server
+        # BEFORE the ZFS encryption key load. Relying on initrd
+        # systemd-networkd alone was racy here: wait-online would
+        # time out, the network-online target would still fire,
+        # and the clevis decrypt would then fail with "Error
+        # communicating with server" → emergency mode.
         cmdline = "init=${nodeCfg.system.build.toplevel}/init "
           + "ip=dhcp "
           + lib.concatStringsSep " " nodeCfg.boot.kernelParams;

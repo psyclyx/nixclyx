@@ -1,10 +1,10 @@
 { ... }:
 {
-  # lab-4 is kexec'd in by the lab-loader once the loader has imported
-  # tank, clevis-decrypted tank/persist, and mounted tank/nix-shared
-  # at /mnt-nix + tank/persist/lab-4 at /mnt-persist. After kexec the
-  # initrd here re-imports the pool (kexec resets ZFS state) and our
-  # storage projection wires /nix and /persist from the same datasets.
+  # lab-4 PXE-boots its own kernel + initialRamdisk from iyr. Stage-1
+  # brings up eno1 via ip=dhcp, clevis-tang unseals tank/persist, the
+  # pool gets imported, and /nix + /persist mount from
+  # tank/nix-shared + tank/persist/lab-4 (both neededForBoot). No
+  # kexec, no lab-loader bounce.
   #
   # Root is tmpfs (no persistent on-disk OS — only tank holds state).
   fileSystems."/" = {
@@ -13,7 +13,7 @@
     options = [ "mode=755" ];
   };
 
-  # Bootloader: nothing to manage — the loader kexecs us in.
+  # Bootloader: nothing to manage — iyr serves the kernel/initrd.
   boot.loader.grub.enable = false;
   boot.loader.generic-extlinux-compatible.enable = false;
 
