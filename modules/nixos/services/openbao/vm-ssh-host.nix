@@ -54,7 +54,7 @@
       hostFqdn = lib.mkOption {
         type = lib.types.str;
         description = "Hostname put into the signed cert's valid_principals.";
-        example = "ab-api.lab.apt.psyclyx.net";
+        example = "api.lab.example.net";
       };
 
       hostKeyPath = lib.mkOption {

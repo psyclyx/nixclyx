@@ -9,9 +9,9 @@
 #      the resulting service token to /run/openbao-auth/services-token
 #      so downstream `openbao-kv` consumers can fetch secrets.
 #
-# Lives in nixclyx (fleet-agnostic). The privclyx-layer lab-4 config
-# is what mints the wrap tokens; this module on the guest side just
-# expects the token file to be present when no cert exists yet.
+# Fleet-agnostic: the hypervisor-side projection mints the wrap
+# tokens; this guest-side module just expects the token file to be
+# present when no cert exists yet.
 {
   path = [
     "psyclyx"
@@ -56,13 +56,13 @@
       pki.role = lib.mkOption {
         type = lib.types.str;
         description = "PKI role used for both bootstrap and renewal.";
-        example = "angelbeats-vm";
+        example = "service-vm";
       };
 
       commonName = lib.mkOption {
         type = lib.types.str;
         description = "Subject CN requested from PKI. Must match the cert auth method's allowed_common_names_glob.";
-        example = "ab-api.angelbeats.internal";
+        example = "api.service.internal";
       };
 
       ttl = lib.mkOption {

@@ -3,8 +3,7 @@
 # Pure schema: declares the `psyclyx.oidc.*` option tree that consumers
 # read to discover the fleet's OIDC issuer / JWKS / discovery URL.
 # Population is left to whatever projection knows about the fleet's
-# auth service (in psyclyx that's privclyx/modules/nixos/topology/
-# auth-stack.nix; another fleet could populate this differently).
+# auth service.
 {
   path = [ "psyclyx" "oidc" ];
   gate = "always";

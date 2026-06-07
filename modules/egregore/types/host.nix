@@ -118,10 +118,11 @@ egregorLib.mkType {
       type = lib.types.listOf lib.types.str;
       default = [ ];
       description = ''
-        DNS zones this host can update via TSIG/DDNS. Used both for
-        serving authoritative DNS and for ACME DNS-01 challenges. The
-        ingress projection picks an issuer for a given cert by finding
-        a host with the cert's parent zone in dnsAuthority.
+        Intrinsic DNS zones this host can update via TSIG/DDNS — zones
+        the host owns as part of its identity in the fleet. Projections
+        union this with apex zones contributed by services that target
+        this host via `refs.dnsAuthority` (seen here as
+        `entity.attrs.refsIn.dnsAuthority`).
       '';
     };
     publicAcme = lib.mkOption {
@@ -172,14 +173,16 @@ egregorLib.mkType {
             type = lib.types.bool;
             default = false;
             description = ''
-              When true, the PXE projection serves the shared lab-loader
-              (system.build.netbootRamdisk) for this host instead of the
-              host's own kexec ramdisk. The loader then chains into the
-              real system whose closure lives on tank/nix-shared. Only
-              meaningful for hosts that *also* have their own colmena
-              build (so the projection wouldn't fall back to the loader
-              automatically); without this flag, mkClient prefers the
-              per-host build.
+              When true, the PXE projection serves the shared lab-loader's
+              kernel + netbootRamdisk for this host; the loader's stage-2
+              fetches a per-host spec, runs the ZFS/clevis/NFS mount
+              steps, and kexecs into the host's real system. When false,
+              the projection serves the host's own kernel + initialRamdisk
+              and the host's standard stage-1 mounts /nix and /persist
+              directly — no kexec. Keep this true for hosts whose initrd
+              isn't yet wired to do that work on its own (e.g. NFS-root
+              consumers that still rely on the loader to fetch the JWE
+              from HTTP at boot).
             '';
           };
         };
