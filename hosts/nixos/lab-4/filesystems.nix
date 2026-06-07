@@ -27,4 +27,10 @@
     hostId = "6fa90ede";
     arc.maxBytes = 137438953472; # 128 GiB
   };
+
+  # vault holds bulk + archive datasets; the runtime layer's single-
+  # pool option only covers tank (the clevis-tang unsealed boot pool).
+  # NixOS's extraPools brings vault up post-boot via
+  # zfs-import-vault.service.
+  boot.zfs.extraPools = [ "vault" ];
 }
