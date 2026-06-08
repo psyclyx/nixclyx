@@ -16,6 +16,28 @@
       options = [ "mode=755" ];
     };
 
+    # /nix/store can be shared (immutable, content-addressed); /nix/var
+    # cannot. Profiles, gc-roots, the sqlite valid-paths db, and most
+    # critically the nix-daemon socket are per-host mutable state. With
+    # /nix/var on the NFS-shared dataset, every consumer's nix-daemon
+    # binds /nix/var/nix/daemon-socket/socket on the producer's
+    # filesystem and overwrites the producer's listening-socket file;
+    # the producer's daemon keeps its fd but every new client connect
+    # hits a dead socket file and gets ECONNREFUSED. Producer and
+    # consumers thrash each other's daemons on every restart.
+    #
+    # Carve /nix/var out with a tmpfs. Each host gets its own per-boot
+    # daemon socket + profile/gc state. Persistent profile generations
+    # / rollback history are something PXE-everywhere hosts don't have
+    # anyway (no local boot loader), so the tmpfs cost is conceptually
+    # consistent with the tmpfs root.
+    fileSystems."/nix/var" = {
+      device = "tmpfs";
+      fsType = "tmpfs";
+      options = [ "mode=755" ];
+      neededForBoot = true;
+    };
+
     # PXE-booted: iyr serves this host's kernel + initialRamdisk
     # directly, no on-disk boot media.
     boot.loader.grub.enable = lib.mkForce false;
