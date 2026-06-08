@@ -129,19 +129,4 @@ in {
       "fixed"
     ];
   };
-
-  # Shared PXE payload for all lab hosts. Not a deployment target —
-  # the artifact (config.system.build.netbootRamdisk) is what iyr's
-  # PXE serves. allowLocalDeployment + tags kept off so colmena
-  # doesn't try to deploy a real machine.
-  lab-loader = { ... }: {
-    imports = [
-      nixclyx.modules.nixos
-      nixclyx.hosts.nixos.lab-loader
-    ];
-    config.deployment = {
-      tags = [ "artifact" ];
-      targetHost = null;
-    };
-  };
 }
