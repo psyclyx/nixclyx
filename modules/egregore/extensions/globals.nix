@@ -1,7 +1,7 @@
 # Global configuration — cross-cutting values used by type modules
 # and projections. Not entities — context.
-{ lib, ... }: {
-  options = {
+{
+  options = { lib, ... }: {
     conventions = lib.mkOption {
       type = lib.types.submodule {
         options = {

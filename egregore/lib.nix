@@ -93,4 +93,43 @@ in rec {
 
   withVerb = verbName: entities:
     lib.filterAttrs (_: e: e.verbs ? ${verbName}) entities;
+
+  # ── Spec interceptor ────────────────────────────────────────────────
+  #
+  # An interceptor (for the pedestal-style spec system in
+  # `nixclyx/lib/modules.nix`) that turns an `egregoreType` spec field
+  # into an `imports` entry calling `mkType` at module-eval time.
+  #
+  # `egregoreType` is a function of moduleArgs (giving the type body
+  # access to lib, egregorLib, config) returning the mkType-config
+  # attrset minus `topConfig` (which the interceptor injects):
+  #
+  #   {
+  #     egregoreType = { lib, egregorLib, config, ... }: {
+  #       name = "site";
+  #       description = "...";
+  #       options = { domain = lib.mkOption { ... }; ... };
+  #       attrs = name: entity: top: { ... };
+  #     };
+  #   }
+  #
+  # A plain attrset is also accepted for types that don't need lib in
+  # their attrs/verbs/assertions bodies.
+  interceptors.egregoreType = {
+    enter = bundle:
+      if !(bundle.value ? egregoreType) then bundle
+      else
+        let
+          etype = bundle.value.egregoreType;
+          typeModule = moduleArgs:
+            let
+              inherit (moduleArgs) egregorLib config;
+              resolved = if builtins.isFunction etype then etype moduleArgs else etype;
+            in egregorLib.mkType (resolved // { topConfig = config; });
+        in bundle // {
+          value = (builtins.removeAttrs bundle.value ["egregoreType"]) // {
+            imports = (bundle.value.imports or []) ++ [ typeModule ];
+          };
+        };
+  };
 }
