@@ -69,74 +69,37 @@
 
   customIpxe = pkgs.ipxe.override { inherit embedScript; };
 
-  # Spec-URL base the loader fetches its host spec + JWE blobs from.
-  # Resolved at boot via ''${next-server} (the iPXE-known PXE host IP)
-  # so multi-VLAN setups stay self-consistent.
-  specBaseUrl = port: "http://\${next-server}:${toString port}";
-
-  # Two code paths.
-  #
-  # Default ("disk-backed PXE"): the host's own kernel + standard
-  # stage-1 initrd (system.build.{kernel,initialRamdisk}) is served.
-  # Stage-1 mounts /nix and /persist directly — from a local pool or
-  # NFS — and boots straight into stage-2. No kexec, no squashfs of
-  # the system closure baked into the initrd.
-  #
-  # Loader path: the shared lab-loader's kernel + netbootRamdisk
-  # (a squashfs of the loader's closure) is served instead, and the
-  # loader's stage-2 fetches a per-host spec, does ZFS/clevis/NFS
-  # mounts, and kexecs into the target's real system. Used by hosts
-  # that haven't been moved to disk-backed PXE yet — opt in via
-  # host.boot.useLoader. Also used as a fallback when no nodeCfg is
-  # available for a PXE host (eval-without-colmena).
+  # Disk-backed PXE: the host's own kernel + standard stage-1 initrd
+  # (system.build.{kernel,initialRamdisk}) is served. Stage-1 mounts
+  # /nix and /persist directly — from a local pool (lab-4: clevis-tang
+  # → tank) or NFS (lab-1..3: from lab-4's exports) — and boots
+  # straight into stage-2. No kexec, no shared loader image, no
+  # per-host spec served out-of-band.
   mkClient = name: hostEnt: let
     h = hostEnt.host;
     macs = lib.filter (m: m != null)
       (map (n: hostMacOnInterface hostEnt n) h.boot.pxeInterfaces);
     nodeCfg = nodes.${name}.config or null;
-    hasNodeCfg = nodeCfg != null;
-    useLoader = cfg.loaderSystem != null
-                && (h.boot.useLoader || !hasNodeCfg);
-    loaderCfg = if useLoader then cfg.loaderSystem else null;
   in
-    if macs == [] then null
-    else if useLoader then {
-      inherit name;
-      value = {
-        inherit macs;
-        kernel = "${loaderCfg.kernel}/bzImage";
-        initrd = "${loaderCfg.netbootRamdisk}/initrd";
-        cmdline = "init=${loaderCfg.toplevel}/init "
-          + "pxe-host=${name} "
-          + "pxe-spec-url=${specBaseUrl cfg.httpPort} "
-          + "ip=dhcp "
-          + lib.concatStringsSep " " (loaderCfg.kernelParams or []);
-      };
-    }
-    else if hasNodeCfg then {
+    if macs == [] || nodeCfg == null then null
+    else {
       inherit name;
       value = {
         inherit macs;
         kernel = "${nodeCfg.system.build.kernel}/bzImage";
-        # Standard NixOS stage-1 — NOT netbootRamdisk. /nix and
-        # /persist come from the host's own storage (a local ZFS
-        # pool or NFS), so the initrd just needs the kernel modules
-        # and userspace to mount them. No squashfs-of-closure.
+        # Standard NixOS stage-1 — initrd brings up eno1 via the
+        # kernel's ip=dhcp (not initrd systemd-networkd, which raced
+        # against clevis-tang reaching the tang server before ZFS
+        # encryption key load), then either:
+        #   - imports a local pool + clevis-decrypts (lab-4)
+        #   - NFS-mounts /nix and /persist from lab-4 (lab-1..3)
+        # depending on the host's fileSystems config.
         initrd = "${nodeCfg.system.build.initialRamdisk}/initrd";
-        # ip=dhcp bootstraps initrd networking from the kernel
-        # directly (no systemd-networkd dance), which is what
-        # clevis-tang needs to be able to reach the tang server
-        # BEFORE the ZFS encryption key load. Relying on initrd
-        # systemd-networkd alone was racy here: wait-online would
-        # time out, the network-online target would still fire,
-        # and the clevis decrypt would then fail with "Error
-        # communicating with server" → emergency mode.
         cmdline = "init=${nodeCfg.system.build.toplevel}/init "
           + "ip=dhcp "
           + lib.concatStringsSep " " nodeCfg.boot.kernelParams;
       };
-    }
-    else null;
+    };
 
   clientPairs = lib.filter (x: x != null)
     (lib.mapAttrsToList mkClient pxeHosts);
@@ -197,28 +160,6 @@ in {
       description = "HTTP port the PXE server uses (must match pxe-server.httpPort).";
     };
 
-    loaderSystem = lib.mkOption {
-      type = lib.types.nullOr (lib.types.submodule {
-        options = {
-          kernel = lib.mkOption { type = lib.types.path; };
-          netbootRamdisk = lib.mkOption { type = lib.types.path; };
-          toplevel = lib.mkOption { type = lib.types.path; };
-          kernelParams = lib.mkOption {
-            type = lib.types.listOf lib.types.str;
-            default = [ ];
-          };
-        };
-      });
-      default = null;
-      description = ''
-        When set, every PXE host is served the same kernel + initrd
-        (the lab-loader's); per-host differentiation is via cmdline
-        (pxe-host, pxe-spec-url). When null, falls back to per-host
-        system.build.netbootRamdisk. Typically set to a record
-        derived from `nodes.lab-loader.config.system.build` (see
-        configs/pxe.nix in the consumer fleet).
-      '';
-    };
   };
 
   config = lib.mkIf enabled {

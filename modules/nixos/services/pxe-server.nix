@@ -85,24 +85,6 @@
       '';
     };
 
-    hostSpecs = lib.mkOption {
-      type = lib.types.attrsOf lib.types.str;
-      default = { };
-      description = ''
-        Per-host lab-loader spec JSONs. Served at /spec/<name>.json.
-        Populated by topology/loader-spec.nix from egregore data.
-      '';
-    };
-
-    jweBlobs = lib.mkOption {
-      type = lib.types.attrsOf lib.types.path;
-      default = { };
-      description = ''
-        Per-binding JWE blobs. Served at /jwe/<binding-name>.jwe.
-        The loader fetches them keyed by URL from each spec's
-        clevis-decrypt step.
-      '';
-    };
   };
 
   config = {cfg, lib, pkgs, ...}: let
@@ -128,7 +110,7 @@
       ln -s ${cfg.ipxeBinaries.uefi} $out/tftp/ipxe.efi
       ln -s ${cfg.ipxeBinaries.bios} $out/tftp/undionly.kpxe
 
-      mkdir -p $out/http/boot $out/http/spec $out/http/jwe
+      mkdir -p $out/http/boot
     '' + lib.concatStringsSep "\n" (
       lib.mapAttrsToList (name: client: ''
         mkdir -p $out/http/boot/${name}
@@ -139,20 +121,6 @@
         ${mkIpxeScript name client}
         EOF
       '') client.macs) cfg.clients
-    ) + "\n" + lib.concatStringsSep "\n" (
-      # Per-host spec JSONs. Each fileText comes pre-rendered from
-      # the loader-spec projection (or wherever else is feeding
-      # cfg.hostSpecs). The %SPEC_BASE% placeholder is substituted at
-      # bundle-build time with the runtime URL prefix the client uses.
-      lib.mapAttrsToList (name: jsonText: ''
-        cat > $out/http/spec/${name}.json <<'PXESPEC'
-        ${jsonText}
-        PXESPEC
-      '') cfg.hostSpecs
-    ) + "\n" + lib.concatStringsSep "\n" (
-      lib.mapAttrsToList (name: blob: ''
-        ln -s ${blob} $out/http/jwe/${name}.jwe
-      '') cfg.jweBlobs
     ));
   in lib.mkIf (cfg.clients != {} && cfg.bindAddresses != []) {
     assertions = [{
@@ -187,14 +155,6 @@
         listen = map (addr: { inherit addr; port = cfg.httpPort; }) cfg.bindAddresses;
         locations."/boot/" = {
           alias = "${bundle}/http/boot/";
-          extraConfig = "autoindex off;";
-        };
-        locations."/spec/" = {
-          alias = "${bundle}/http/spec/";
-          extraConfig = "autoindex off;";
-        };
-        locations."/jwe/" = {
-          alias = "${bundle}/http/jwe/";
           extraConfig = "autoindex off;";
         };
       };

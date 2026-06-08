@@ -3,8 +3,7 @@
   # lab-4 PXE-boots its own kernel + initialRamdisk from iyr. Stage-1
   # brings up eno1 via ip=dhcp, clevis-tang unseals tank/persist, the
   # pool gets imported, and /nix + /persist mount from
-  # tank/nix-shared + tank/persist/lab-4 (both neededForBoot). No
-  # kexec, no lab-loader bounce.
+  # tank/nix-shared + tank/persist/lab-4 (both neededForBoot).
   #
   # Root is tmpfs (no persistent on-disk OS — only tank holds state).
   fileSystems."/" = {

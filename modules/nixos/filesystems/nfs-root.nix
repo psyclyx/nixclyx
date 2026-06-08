@@ -16,7 +16,8 @@
       options = [ "mode=755" ];
     };
 
-    # Kexec'd in by lab-loader; no bootloader to manage.
+    # PXE-booted: iyr serves this host's kernel + initialRamdisk
+    # directly, no on-disk boot media.
     boot.loader.grub.enable = lib.mkForce false;
     boot.loader.generic-extlinux-compatible.enable = lib.mkForce false;
 

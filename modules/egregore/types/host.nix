@@ -169,22 +169,6 @@ egregorLib.mkType {
               Empty for mode = "local".
             '';
           };
-          useLoader = lib.mkOption {
-            type = lib.types.bool;
-            default = false;
-            description = ''
-              When true, the PXE projection serves the shared lab-loader's
-              kernel + netbootRamdisk for this host; the loader's stage-2
-              fetches a per-host spec, runs the ZFS/clevis/NFS mount
-              steps, and kexecs into the host's real system. When false,
-              the projection serves the host's own kernel + initialRamdisk
-              and the host's standard stage-1 mounts /nix and /persist
-              directly — no kexec. Keep this true for hosts whose initrd
-              isn't yet wired to do that work on its own (e.g. NFS-root
-              consumers that still rely on the loader to fetch the JWE
-              from HTTP at boot).
-            '';
-          };
         };
       };
       default = {};

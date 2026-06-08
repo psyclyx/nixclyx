@@ -23,7 +23,6 @@
     ./pxe.nix
     ./storage.nix
     ./bootstrap.nix
-    ./loader-spec.nix
     ./gateway.nix
     ./vms.nix
     ./openbao-fleet.nix

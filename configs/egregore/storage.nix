@@ -88,9 +88,9 @@ in
       refs.pool = "tank-pool";
       zfs-dataset = {
         path = "tank/nix-shared";
-        # Mountpoint on the producer (lab-4). With lab-4 also using
-        # the lab-loader, /nix lives here too — no overlay-fs squashfs
-        # /nix, one persistent store shared with lab-1..3 over NFS.
+        # Mountpoint on the producer (lab-4). lab-4 mounts it locally;
+        # lab-1..3 NFS-mount the same dataset — one persistent store
+        # shared across the lab.
         mountpoint = "/nix";
         neededForBoot = true;
       };
