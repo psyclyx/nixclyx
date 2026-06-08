@@ -38,6 +38,27 @@
       "mount.nfs4" = "${pkgs.nfs-utils}/bin/mount.nfs4";
     };
 
+    # In stage-1, systemd-networkd's built-in /run/systemd/network/
+    # 71-default.network catches any interface without a more-specific
+    # match — and the storage/lab NICs we don't ship per-device
+    # configs for in initrd fall through to it. That fallback's DHCP
+    # client-id is DUID-derived from /etc/machine-id; the initrd
+    # generates a random machine-id every boot (the real one lives on
+    # /persist, which we haven't mounted yet — chicken/egg), so the
+    # DUID rotates and Kea can't reuse the per-MAC reservation. The
+    # NIC gets a pool IP, which isn't in lab-4's NFS export ACL, and
+    # mount.nfs gets "access denied". Override with a higher-priority
+    # match that pins client-id to MAC — matching how host.mac.<dev>
+    # keys the reservation.
+    boot.initrd.systemd.network.networks."70-dhcp-mac" = {
+      matchConfig.Name = "en* eth*";
+      networkConfig.DHCP = "yes";
+      dhcpV4Config = {
+        ClientIdentifier = "mac";
+        UseDomains = true;
+      };
+    };
+
     # The /nix and /persist NFS mount entries themselves are derived
     # by topology/storage.nix from host.refs.{nixDataset,persistDataset}.
     psyclyx.nixos.topology.storage.enable = true;
