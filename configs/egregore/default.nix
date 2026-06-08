@@ -6,24 +6,7 @@ let
   mods = import ../../modules/egregore;
   lib = import <nixpkgs/lib>;
   fs = import ../../lib/fs.nix;
-
-  # Compile config specs into egregore modules, same pattern as NixOS.
-  mkEgregoreModule = spec: moduleArgs @ { config, lib, ... }: let
-    eval = x:
-      if builtins.isFunction x
-      then x moduleArgs
-      else x;
-    gate = spec.gate or "always";
-  in {
-    imports = spec.imports or [];
-    options = eval (spec.options or {});
-    config = let
-      body = eval (spec.config or null);
-    in
-      if body == null then {}
-      else if gate == "always" then body
-      else body;
-  };
+  libModules = import ../../lib/modules.nix;
 
   configSpecs = map builtins.import (fs.collectModules ./.);
 
@@ -34,9 +17,10 @@ let
     imports =
       mods.types
       ++ mods.extensions
-      ++ map mkEgregoreModule configSpecs;
+      ++ map libModules.mkModule configSpecs;
   };
 in {
-  inherit lib mkEgregoreModule root;
+  inherit lib root;
+  inherit (libModules) mkModule;
   egregoreLib = ../../egregore;
 }
