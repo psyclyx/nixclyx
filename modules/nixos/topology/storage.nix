@@ -24,6 +24,7 @@
 {
   config,
   lib,
+  nodes ? { },
   pkgs,
   ...
 }:
@@ -302,6 +303,29 @@ let
 
   amProducer = myPools != { };
   amConsumer = remoteConsumerMounts != [ ];
+
+  # NFS /nix consumers' toplevels: pull each remote consumer's
+  # `system.build.toplevel` into my system closure so that
+  # `colmena apply --on <me>` ships their store paths to my Nix
+  # store automatically. Without this, lab-1..3 boot finding
+  # `init=/nix/store/<X>/init` on cmdline, NFS-mount /nix from me,
+  # and `X` isn't there yet — first-boot fails until an operator
+  # manually `nix copy`s. Scoped to datasets I produce whose
+  # mountpoint is `/nix` (since the consumer's toplevel lives in
+  # the nix store, not in /persist).
+  nixConsumerToplevels = let
+    myNixDatasets = lib.filterAttrs
+      (_: d: d.zfs-dataset.mountpoint == "/nix")
+      myDatasets;
+    consumerNames = lib.unique (lib.concatMap
+      (d: lib.attrNames (consumersOf d.attrs.name))
+      (lib.attrValues myNixDatasets));
+    nodeToplevel = name:
+      let nodeCfg = nodes.${name}.config or null;
+      in if nodeCfg == null then null
+         else nodeCfg.system.build.toplevel;
+  in
+    lib.filter (p: p != null) (map nodeToplevel consumerNames);
 in
 {
   options.psyclyx.nixos.topology.storage = {
@@ -332,6 +356,7 @@ in
       };
       systemd.services = postBootKeyServices;
       psyclyx.nixos.services.nfs-server.exports = myExports;
+      system.extraDependencies = nixConsumerToplevels;
     })
 
     # Consumer side: NFS root for /nix and /persist.
