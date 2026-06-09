@@ -87,8 +87,8 @@
   nix.settings.build-dir = "/build";
 
   # rpool/home/psyc snapshots: tight, recent-history scratch on the
-  # SSD; longer tiered history on the spinner. Source keeps a 6 h
-  # rolling window of 5-min snapshots (72) plus one of each higher
+  # SSD; longer tiered history on the spinner. Source keeps a 1 h
+  # rolling window of 5-min snapshots (12) plus one of each higher
   # tier — the tier-marker snapshots only exist so sanoid on the
   # destination has snapshots tagged hourly/daily/weekly/monthly to
   # retain. Without those tags, the destination could only retain
@@ -104,7 +104,7 @@
     datasets."rpool/home/psyc" = {
       autosnap = true;
       autoprune = true;
-      frequently = 72;       # 6 h × (60 min / 5 min)
+      frequently = 12;       # 1 h × (60 min / 5 min)
       frequent_period = 5;
       hourly = 1;
       daily = 1;
