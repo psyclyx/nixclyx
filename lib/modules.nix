@@ -50,10 +50,18 @@ let
   # NixOS module. Options/config may be functions of `moduleArgs`; the
   # builder evaluates them at module-eval time.
 
+  # Resolve a possibly-function spec field, substituting `default` for
+  # both "the field was null" and "the function returned null" (a
+  # function wrapper introduced by an earlier interceptor may have
+  # propagated a null input as a null result).
   evalOr = default: x: moduleArgs:
-    if x == null then default
-    else if isFunction x then x moduleArgs
-    else x;
+    let
+      raw =
+        if x == null then null
+        else if isFunction x then x moduleArgs
+        else x;
+    in
+      if raw == null then default else raw;
 
   defaultBuilder = value: moduleArgs: {
     imports = value.imports or [];
@@ -289,7 +297,22 @@ let
 
   # Compile a single spec into a module function. Drop-in replacement
   # for the previous mkModule.
-  mkModule = spec: moduleArgs:
+  #
+  # The outer function signature destructures the standard module args
+  # so NixOS's evalModules can introspect via `functionArgs` and know
+  # to pass them. A bare `moduleArgs: ...` returns empty `functionArgs`,
+  # which causes NixOS to pass nothing — breaking specs whose options
+  # or config functions take `pkgs` (etc.). The `@` alias keeps the
+  # full passed attrset available for forwarding to interceptor-wrapped
+  # functions.
+  mkModule = spec: {
+    config ? null,
+    lib ? null,
+    pkgs ? null,
+    options ? null,
+    nixclyx ? null,
+    ...
+  } @ moduleArgs:
     let bundle = runOne { inherit spec; };
     in defaultBuilder bundle.value moduleArgs;
 
