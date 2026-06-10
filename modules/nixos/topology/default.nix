@@ -26,9 +26,11 @@
     ./gateway.nix
     ./vms.nix
     ./consul.nix
+    ./dhcp-ddns.nix
     ./distributed-builds.nix
     ./nomad.nix
     ./openbao-cluster.nix
+    ./openbao-endpoint.nix
     ./openbao-fleet.nix
     ./openbao-vm-auth.nix
     ./openbao-vm-ssh-host.nix
