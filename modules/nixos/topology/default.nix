@@ -25,11 +25,17 @@
     ./bootstrap.nix
     ./gateway.nix
     ./vms.nix
+    ./consul.nix
     ./distributed-builds.nix
+    ./nomad.nix
+    ./openbao-cluster.nix
     ./openbao-fleet.nix
     ./openbao-vm-auth.nix
     ./openbao-vm-ssh-host.nix
     ./openssh.nix
+    ./patroni.nix
+    ./redis-sentinel.nix
+    ./seaweedfs.nix
     ./zvol-provision.nix
   ];
 

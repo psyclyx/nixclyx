@@ -9,14 +9,28 @@
   options =
     { lib, ... }:
     {
-      clusterNodes = lib.mkOption {
-        type = lib.types.listOf lib.types.str;
-        description = "Hostnames of all nodes in the Patroni cluster.";
-      };
-      dataNetwork = lib.mkOption {
+      dataAddress = lib.mkOption {
         type = lib.types.str;
-        default = "data";
-        description = "Topology network name for data traffic.";
+        default = "";
+        description = "IPv4 patroni binds postgres + raft to.";
+      };
+      clientAddress = lib.mkOption {
+        type = lib.types.str;
+        default = "";
+        description = "IPv4 the client/HAProxy network side reaches us on (used only in pg_hba).";
+      };
+      otherMemberAddresses = lib.mkOption {
+        type = lib.types.listOf lib.types.str;
+        default = [];
+        description = "IPv4 of OTHER cluster members on the data network (raft partners).";
+      };
+      pgHbaSubnets = lib.mkOption {
+        type = lib.types.listOf lib.types.str;
+        default = [];
+        description = ''
+          CIDR subnets included in pg_hba (typically the data + client
+          network CIDRs). Format: \"10.0.25.0/24\".
+        '';
       };
       scope = lib.mkOption {
         type = lib.types.str;
@@ -52,11 +66,6 @@
         type = lib.types.nullOr lib.types.str;
         default = null;
         description = "Path to file containing the replication user password.";
-      };
-      clientNetwork = lib.mkOption {
-        type = lib.types.str;
-        default = "infra";
-        description = "Topology network for client/HAProxy connections (pg_hba, listen).";
       };
       ssl = {
         enable = lib.mkOption {
@@ -95,33 +104,19 @@
       ...
     }:
     let
-      eg = config.psyclyx.egregore;
       hostname = config.psyclyx.nixos.host;
+      dataAddr = cfg.dataAddress;
 
-      dataAddr = eg.entities.${hostname}.host.addresses.${cfg.dataNetwork}.ipv4;
-      clientAddr = eg.entities.${hostname}.host.addresses.${cfg.clientNetwork}.ipv4;
+      pgHba =
+        [
+          "local all all trust"
+          "host all all 127.0.0.1/32 md5"
+          "host replication ${cfg.replicationUser} 127.0.0.1/32 md5"
+        ]
+        ++ map (cidr: "host all all ${cidr} md5") cfg.pgHbaSubnets
+        ++ map (cidr: "host replication ${cfg.replicationUser} ${cidr} md5") cfg.pgHbaSubnets;
 
-      memberAddr = name: eg.entities.${name}.host.addresses.${cfg.dataNetwork}.ipv4;
-
-      dataNetPrefix = eg.entities.${cfg.dataNetwork}.attrs.prefix;
-      dataNetPrefixLen = eg.entities.${cfg.dataNetwork}.attrs.prefixLen;
-      clientNetPrefix = eg.entities.${cfg.clientNetwork}.attrs.prefix;
-      clientNetPrefixLen = eg.entities.${cfg.clientNetwork}.attrs.prefixLen;
-
-      pgHba = [
-        "local all all trust"
-        "host all all 127.0.0.1/32 md5"
-        "host all all ${dataNetPrefix}.0/${toString dataNetPrefixLen} md5"
-        "host all all ${clientNetPrefix}.0/${toString clientNetPrefixLen} md5"
-        "host replication ${cfg.replicationUser} 127.0.0.1/32 md5"
-        "host replication ${cfg.replicationUser} ${dataNetPrefix}.0/${toString dataNetPrefixLen} md5"
-      ];
-
-      otherNodes = builtins.filter (name: name != hostname) cfg.clusterNodes;
-
-      raftPartner = map (name:
-        "${memberAddr name}:${toString cfg.raftPort}"
-      ) otherNodes;
+      raftPartner = map (addr: "${addr}:${toString cfg.raftPort}") cfg.otherMemberAddresses;
     in
     {
       services.patroni = {
@@ -131,7 +126,7 @@
         inherit (cfg) scope;
         name = hostname;
         nodeIp = dataAddr;
-        otherNodesIps = map memberAddr otherNodes;
+        otherNodesIps = cfg.otherMemberAddresses;
         restApiPort = cfg.restApiPort;
         softwareWatchdog = false;
 
@@ -182,7 +177,7 @@
 
           # nixpkgs sets listen from nodeIp; add localhost for local psql
           postgresql = {
-            listen = lib.mkForce "${dataAddr},${clientAddr},127.0.0.1:${toString cfg.port}";
+            listen = lib.mkForce "${dataAddr},${cfg.clientAddress},127.0.0.1:${toString cfg.port}";
             authentication = {
               replication = {
                 username = cfg.replicationUser;

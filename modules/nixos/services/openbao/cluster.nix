@@ -9,13 +9,18 @@
   options =
     { lib, ... }:
     {
-      clusterNodes = lib.mkOption {
-        type = lib.types.listOf lib.types.str;
-        description = "Hostnames of all nodes in the OpenBao cluster.";
-      };
-      dataNetwork = lib.mkOption {
+      bindAddress = lib.mkOption {
         type = lib.types.str;
-        default = "infra";
+        default = "";
+        description = ''
+          IPv4 the openbao listener + cluster addr bind to. Typically
+          set by `topology/openbao-cluster.nix`.
+        '';
+      };
+      retryJoinAddresses = lib.mkOption {
+        type = lib.types.listOf lib.types.str;
+        default = [];
+        description = "IPv4 of OTHER cluster members (raft retry_join targets).";
       };
       apiPort = lib.mkOption {
         type = lib.types.port;
@@ -208,17 +213,12 @@
         }
       ];
 
-      eg = config.psyclyx.egregore;
       hostname = config.psyclyx.nixos.host;
+      bindAddr = cfg.bindAddress;
 
-      bindAddr = eg.entities.${hostname}.host.addresses.${cfg.dataNetwork}.ipv4;
-      otherNodes = builtins.filter (n: n != hostname) cfg.clusterNodes;
-
-      retryJoin = map (node: {
-        leader_api_addr = "http://${
-          eg.entities.${node}.host.addresses.${cfg.dataNetwork}.ipv4
-        }:${toString cfg.apiPort}";
-      }) otherNodes;
+      retryJoin = map (addr: {
+        leader_api_addr = "http://${addr}:${toString cfg.apiPort}";
+      }) cfg.retryJoinAddresses;
 
       configData = {
         ui = cfg.settings.ui;

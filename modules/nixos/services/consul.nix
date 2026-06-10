@@ -9,14 +9,23 @@
   options =
     { lib, ... }:
     {
-      clusterNodes = lib.mkOption {
-        type = lib.types.listOf lib.types.str;
-        description = "Hostnames of all Consul server nodes.";
-      };
-      dataNetwork = lib.mkOption {
+      bindAddress = lib.mkOption {
         type = lib.types.str;
-        default = "infra";
-        description = "Topology network for cluster and client traffic.";
+        default = "";
+        description = ''
+          IPv4 the agent binds to (serf RPC, server port). A topology
+          projection (see `topology/consul.nix`) typically sets this
+          from fleet data.
+        '';
+      };
+      retryJoinAddresses = lib.mkOption {
+        type = lib.types.listOf lib.types.str;
+        default = [];
+        description = ''
+          IPv4 addresses of the OTHER cluster members (self excluded);
+          fed to consul's retry_join list. Bootstrap_expect is derived
+          from this list's length + 1.
+        '';
       };
       datacenter = lib.mkOption {
         type = lib.types.str;
@@ -63,13 +72,7 @@
       ...
     }:
     let
-      eg = config.psyclyx.egregore;
       hostname = config.psyclyx.nixos.host;
-
-      bindAddr = eg.entities.${hostname}.host.addresses.${cfg.dataNetwork}.ipv4;
-      otherNodes = builtins.filter (n: n != hostname) cfg.clusterNodes;
-      retryJoinAddrs = map (n: eg.entities.${n}.host.addresses.${cfg.dataNetwork}.ipv4) otherNodes;
-
       hasEncrypt = cfg.encryptionKeyFile != null;
       hasAgentToken = cfg.agentTokenFile != null;
 
@@ -78,13 +81,13 @@
         node_name = hostname;
         datacenter = cfg.datacenter;
         data_dir = cfg.dataDir;
-        bootstrap_expect = builtins.length cfg.clusterNodes;
+        bootstrap_expect = (builtins.length cfg.retryJoinAddresses) + 1;
 
-        bind_addr = bindAddr;
-        advertise_addr = bindAddr;
+        bind_addr = cfg.bindAddress;
+        advertise_addr = cfg.bindAddress;
         client_addr = "127.0.0.1";
 
-        retry_join = retryJoinAddrs;
+        retry_join = cfg.retryJoinAddresses;
 
         ports = {
           http = cfg.httpPort;

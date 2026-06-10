@@ -14,14 +14,26 @@
         default = "shared";
         description = "Redis server instance name (used for systemd units, user/group).";
       };
-      clusterNodes = lib.mkOption {
-        type = lib.types.listOf lib.types.str;
-        description = "Hostnames of all nodes in the Redis Sentinel cluster.";
-      };
-      dataNetwork = lib.mkOption {
+      bindAddress = lib.mkOption {
         type = lib.types.str;
-        default = "data";
-        description = "Topology network name for data traffic.";
+        default = "";
+        description = ''
+          IPv4 redis + sentinel bind to. Typically set by
+          `topology/redis-sentinel.nix` from fleet data.
+        '';
+      };
+      masterAddress = lib.mkOption {
+        type = lib.types.str;
+        default = "";
+        description = ''
+          IPv4 of the elected master node — sentinel's monitor target
+          and the replicaof source on non-master nodes.
+        '';
+      };
+      isMaster = lib.mkOption {
+        type = lib.types.bool;
+        default = false;
+        description = "Whether this node is the current master (skip replicaof).";
       };
       redisPort = lib.mkOption {
         type = lib.types.port;
@@ -66,18 +78,9 @@
       ...
     }:
     let
-      eg = config.psyclyx.egregore;
-      hostname = config.psyclyx.nixos.host;
-
-      bindAddr = eg.entities.${hostname}.host.addresses.${cfg.dataNetwork}.ipv4;
-
-      leader = builtins.head (builtins.sort builtins.lessThan cfg.clusterNodes);
-      isMaster = hostname == leader;
-
-      masterAddr = eg.entities.${leader}.host.addresses.${cfg.dataNetwork}.ipv4;
-
-      allAddrs = map (name: eg.entities.${name}.host.addresses.${cfg.dataNetwork}.ipv4) cfg.clusterNodes;
-
+      bindAddr = cfg.bindAddress;
+      masterAddr = cfg.masterAddress;
+      isMaster = cfg.isMaster;
       sn = cfg.serverName;
       sentinelDir = "/var/lib/redis-sentinel";
       sentinelConf = "${sentinelDir}/sentinel.conf";

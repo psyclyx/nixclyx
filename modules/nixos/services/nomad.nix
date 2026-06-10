@@ -9,14 +9,26 @@
   options =
     { lib, ... }:
     {
-      clusterNodes = lib.mkOption {
-        type = lib.types.listOf lib.types.str;
-        description = "Hostnames of all Nomad server nodes.";
-      };
-      dataNetwork = lib.mkOption {
+      bindAddress = lib.mkOption {
         type = lib.types.str;
-        default = "infra";
-        description = "Topology network for cluster traffic.";
+        default = "";
+        description = ''
+          IPv4 the agent binds to (server + client). Typically set by
+          a topology projection (see `topology/nomad.nix`).
+        '';
+      };
+      retryJoinAddresses = lib.mkOption {
+        type = lib.types.listOf lib.types.str;
+        default = [];
+        description = "IPv4 addresses of OTHER cluster members (self excluded).";
+      };
+      clientInterface = lib.mkOption {
+        type = lib.types.str;
+        default = "";
+        description = ''
+          Network interface device name nomad's client uses to discover
+          its own address. Typically set by the topology projection.
+        '';
       };
       datacenter = lib.mkOption {
         type = lib.types.str;
@@ -82,13 +94,6 @@
       ...
     }:
     let
-      eg = config.psyclyx.egregore;
-      hostname = config.psyclyx.nixos.host;
-
-      bindAddr = eg.entities.${hostname}.host.addresses.${cfg.dataNetwork}.ipv4;
-      otherNodes = builtins.filter (n: n != hostname) cfg.clusterNodes;
-      retryJoinAddrs = map (n: eg.entities.${n}.host.addresses.${cfg.dataNetwork}.ipv4) otherNodes;
-
       hasEncrypt = cfg.encryptionKeyFile != null;
       hasConsulToken = cfg.consul.tokenFile != null;
       hasVaultToken = cfg.vault.tokenFile != null;
@@ -96,16 +101,16 @@
       configData = {
         datacenter = cfg.datacenter;
         data_dir = cfg.dataDir;
-        bind_addr = bindAddr;
+        bind_addr = cfg.bindAddress;
 
         addresses = {
-          http = "${bindAddr} 127.0.0.1";
+          http = "${cfg.bindAddress} 127.0.0.1";
         };
 
         advertise = {
-          http = bindAddr;
-          rpc = bindAddr;
-          serf = bindAddr;
+          http = cfg.bindAddress;
+          rpc = cfg.bindAddress;
+          serf = cfg.bindAddress;
         };
 
         ports = {
@@ -116,8 +121,8 @@
 
         server = {
           enabled = true;
-          bootstrap_expect = builtins.length cfg.clusterNodes;
-          server_join.retry_join = retryJoinAddrs;
+          bootstrap_expect = (builtins.length cfg.retryJoinAddresses) + 1;
+          server_join.retry_join = cfg.retryJoinAddresses;
         } // lib.optionalAttrs hasEncrypt {
           encrypt = "__NOMAD_GOSSIP_KEY__";
         };
@@ -125,7 +130,7 @@
         client = {
           enabled = true;
           node_pool = cfg.nodePool;
-          network_interface = eg.entities.${hostname}.host.interfaces.${cfg.dataNetwork}.device;
+          network_interface = cfg.clientInterface;
         };
 
         consul = {

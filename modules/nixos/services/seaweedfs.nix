@@ -2,18 +2,36 @@
   path = ["psyclyx" "nixos" "services" "seaweedfs"];
   description = "SeaweedFS distributed storage cluster";
   options = {lib, ...}: {
-    clusterNodes = lib.mkOption {
-      type = lib.types.listOf lib.types.str;
-      description = "Hostnames of all nodes running volume+filer.";
+    isMaster = lib.mkOption {
+      type = lib.types.bool;
+      default = false;
+      description = ''
+        Whether this host runs the master. Topology projection sets
+        from `cfg.masterNodes` membership.
+      '';
     };
-    masterNodes = lib.mkOption {
-      type = lib.types.listOf lib.types.str;
-      description = "Hostnames of nodes running the master (odd count for Raft).";
+    isFirstMaster = lib.mkOption {
+      type = lib.types.bool;
+      default = false;
+      description = ''
+        Whether this host is the lexically-first master (gets the
+        seed-the-cluster bootstrap activation).
+      '';
     };
-    dataNetwork = lib.mkOption {
+    dataAddress = lib.mkOption {
       type = lib.types.str;
-      default = "data";
-      description = "Topology network name for intra-cluster traffic.";
+      default = "";
+      description = "IPv4 the volume + filer + master bind to.";
+    };
+    metricsAddress = lib.mkOption {
+      type = lib.types.str;
+      default = "";
+      description = "IPv4 the prometheus exporter binds to.";
+    };
+    masterAddresses = lib.mkOption {
+      type = lib.types.listOf lib.types.str;
+      default = [];
+      description = "IPv4s of all master nodes (master.port appended for peer URLs).";
     };
     volumeBasePath = lib.mkOption {
       type = lib.types.str;
@@ -114,11 +132,6 @@
       default = 9327;
       description = "Base metrics port (master=9327, volume=9328, filer=9329, s3=9330).";
     };
-    metricsNetwork = lib.mkOption {
-      type = lib.types.str;
-      default = "infra";
-      description = "Topology network for metrics endpoints.";
-    };
   };
 
   config = {
@@ -129,19 +142,14 @@
     ...
   }: let
     bcachefsEnabled = config.psyclyx.nixos.filesystems.bcachefs.enable;
-    eg = config.psyclyx.egregore;
     hostname = config.psyclyx.nixos.host;
 
-    dataAddr = eg.entities.${hostname}.host.addresses.${cfg.dataNetwork}.ipv4;
-    metricsAddr = eg.entities.${hostname}.host.addresses.${cfg.metricsNetwork}.ipv4;
-
-    isMaster = builtins.elem hostname cfg.masterNodes;
-    isFirstMaster = isMaster && hostname == builtins.head (builtins.sort builtins.lessThan cfg.masterNodes);
-
-    masterAddrs = map (name: eg.entities.${name}.host.addresses.${cfg.dataNetwork}.ipv4) cfg.masterNodes;
-
+    dataAddr = cfg.dataAddress;
+    metricsAddr = cfg.metricsAddress;
+    isMaster = cfg.isMaster;
+    isFirstMaster = cfg.isFirstMaster;
     masterPeers = lib.concatStringsSep "," (
-      map (addr: "${addr}:${toString cfg.master.port}") masterAddrs
+      map (addr: "${addr}:${toString cfg.master.port}") cfg.masterAddresses
     );
 
     masterGrpcPort = cfg.master.port + 10000;
