@@ -1,7 +1,6 @@
 # Egregore → openbao raft cluster addressing projection.
 {config, lib, ...}: {
   options.psyclyx.nixos.derived.openbao-cluster = {
-    enable = lib.mkEnableOption "project egregore cluster topology onto openbao";
     dataNetwork = lib.mkOption {
       type = lib.types.str;
       default = "infra";
@@ -14,7 +13,7 @@
     };
   };
 
-  config = lib.mkIf config.psyclyx.nixos.derived.openbao-cluster.enable (let
+  config = lib.mkIf (config.psyclyx.nixos.derived.openbao-cluster.clusterNodes != []) (let
     cfg = config.psyclyx.nixos.derived.openbao-cluster;
     eg = config.psyclyx.egregore;
     hostname = config.psyclyx.nixos.host;

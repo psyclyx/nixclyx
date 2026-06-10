@@ -1,7 +1,6 @@
 # Egregore → patroni cluster addressing projection.
 {config, lib, ...}: {
   options.psyclyx.nixos.derived.patroni = {
-    enable = lib.mkEnableOption "project egregore cluster topology onto patroni";
     dataNetwork = lib.mkOption {
       type = lib.types.str;
       default = "data";
@@ -19,7 +18,7 @@
     };
   };
 
-  config = lib.mkIf config.psyclyx.nixos.derived.patroni.enable (let
+  config = lib.mkIf (config.psyclyx.nixos.derived.patroni.clusterNodes != []) (let
     cfg = config.psyclyx.nixos.derived.patroni;
     eg = config.psyclyx.egregore;
     hostname = config.psyclyx.nixos.host;

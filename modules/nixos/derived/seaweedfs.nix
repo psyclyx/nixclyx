@@ -1,7 +1,6 @@
 # Egregore → seaweedfs cluster addressing projection.
 {config, lib, ...}: {
   options.psyclyx.nixos.derived.seaweedfs = {
-    enable = lib.mkEnableOption "project egregore cluster topology onto seaweedfs";
     dataNetwork = lib.mkOption {
       type = lib.types.str;
       default = "data";
@@ -19,7 +18,7 @@
     };
   };
 
-  config = lib.mkIf config.psyclyx.nixos.derived.seaweedfs.enable (let
+  config = lib.mkIf (config.psyclyx.nixos.derived.seaweedfs.masterNodes != []) (let
     cfg = config.psyclyx.nixos.derived.seaweedfs;
     eg = config.psyclyx.egregore;
     hostname = config.psyclyx.nixos.host;

@@ -1,7 +1,6 @@
 # Egregore → nomad cluster addressing projection.
 {config, lib, ...}: {
   options.psyclyx.nixos.derived.nomad = {
-    enable = lib.mkEnableOption "project egregore cluster topology onto nomad";
     dataNetwork = lib.mkOption {
       type = lib.types.str;
       default = "infra";
@@ -14,7 +13,7 @@
     };
   };
 
-  config = lib.mkIf config.psyclyx.nixos.derived.nomad.enable (let
+  config = lib.mkIf (config.psyclyx.nixos.derived.nomad.clusterNodes != []) (let
     cfg = config.psyclyx.nixos.derived.nomad;
     eg = config.psyclyx.egregore;
     hostname = config.psyclyx.nixos.host;

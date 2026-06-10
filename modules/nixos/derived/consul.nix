@@ -1,7 +1,10 @@
 # Egregore → consul cluster addressing projection.
+#
+# Active whenever `clusterNodes` is non-empty. ha-services.nix
+# populates it from HA-group membership; hosts may also set it
+# directly.
 {config, lib, ...}: {
   options.psyclyx.nixos.derived.consul = {
-    enable = lib.mkEnableOption "project egregore cluster topology onto consul";
     dataNetwork = lib.mkOption {
       type = lib.types.str;
       default = "infra";
@@ -14,7 +17,7 @@
     };
   };
 
-  config = lib.mkIf config.psyclyx.nixos.derived.consul.enable (let
+  config = lib.mkIf (config.psyclyx.nixos.derived.consul.clusterNodes != []) (let
     cfg = config.psyclyx.nixos.derived.consul;
     eg = config.psyclyx.egregore;
     hostname = config.psyclyx.nixos.host;

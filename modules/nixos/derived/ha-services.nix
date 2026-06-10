@@ -1,10 +1,10 @@
-# HA Group → topology service projection.
+# HA-group → cluster projection inputs.
 #
-# For each ha-group this host is a member of, enables the matching
-# topology projection (patroni, redis-sentinel, openbao-cluster,
-# seaweedfs) and feeds it the group's network + members. The
-# topology projection in turn resolves addresses from egregore and
-# sets the generic service module's options.
+# For each ha-group this host is a member of, populates the matching
+# derived/* projection's `dataNetwork` + `clusterNodes` (and the
+# generic seaweedfs module's s3/webdav enables). Each derived/*
+# projection then activates implicitly because its `clusterNodes` is
+# non-empty.
 { config, lib, ... }:
 let
   eg = config.psyclyx.egregore;
@@ -27,7 +27,6 @@ in
   config = lib.mkIf (myGroups != { }) {
     psyclyx.nixos.derived = {
       patroni = lib.mkIf (hasService "postgresql") {
-        enable = true;
         dataNetwork = networkFor "postgresql";
         clusterNodes = clusterNodesFor "postgresql";
       };
@@ -37,25 +36,22 @@ in
           redisNodes = lib.take 3 (clusterNodesFor "redis");
         in
         lib.mkIf (hasService "redis" && builtins.elem hostname redisNodes) {
-          enable = true;
           dataNetwork = networkFor "redis";
           clusterNodes = redisNodes;
         };
 
       openbao-cluster = lib.mkIf (hasService "openbao") {
-        enable = true;
         clusterNodes = clusterNodesFor "openbao";
       };
 
       seaweedfs = lib.mkIf (hasService "s3" || hasService "webdav") {
-        enable = true;
         dataNetwork = networkFor "s3";
         masterNodes = lib.take 3 (clusterNodesFor "s3");
       };
     };
 
-    # Service-side toggles (s3/webdav enables, not cluster topology) still
-    # need to be set on the generic modules.
+    # Service-side toggles (s3/webdav enables) still need to be set on the
+    # generic module — those are per-feature flags, not cluster shape.
     psyclyx.nixos.services.seaweedfs = lib.mkIf (hasService "s3" || hasService "webdav") {
       enable = true;
       s3.enable = hasService "s3";
