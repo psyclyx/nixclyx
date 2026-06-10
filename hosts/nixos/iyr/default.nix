@@ -47,25 +47,8 @@ in
   # attached too; list-merge appends.
   systemd.network.networks."30-enp1s0".vlan = [ "enp1s0.210" "enp1s0.200" ];
 
-  # Tang server for clevis-based ZFS unlock on lab hosts. Lab-4's
-  # initrd reaches us via the JWE-embedded URL on our lab-VLAN IP;
-  # clients on main route there via mdf-agg01. ACL allows both lab
-  # and main subnets to cover the "for now" eno1 fallback path while
-  # the 10G driver story is unresolved.
-  services.tang = let
-    me = eg.entities.${config.networking.hostName};
-    networks = [ "lab" "main" ];
-    netSubnet = name: let na = eg.entities.${name}.attrs;
-      in "${na.network4}/${toString na.prefixLen}";
-    listenOn = name: "${me.attrs.addresses.${name}.ipv4}:7654";
-  in {
-    enable = true;
-    # Bind on the first network's address — the JWE blobs lab hosts
-    # carry currently embed the lab-VLAN URL. ACL the broader list so
-    # clients reaching us cross-VLAN (via mdf-agg01) still pass.
-    listenStream = [ (listenOn (lib.head networks)) ];
-    ipAddressAllow = map netSubnet networks;
-  };
+  # Tang server config (bind + ACL) comes from derived/tang.nix, driven
+  # by the iyr-tang egregore entity (configs/egregore/trust-root.nix).
 
   # node + smartctl exporter listen addresses come from
   # derived/monitoring.nix (driven by the host entity's exporters

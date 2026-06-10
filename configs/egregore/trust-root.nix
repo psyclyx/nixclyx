@@ -12,9 +12,11 @@
       tang-server = {
         port = 7654;
         # Lab hosts reach tang via iyr's lab-VLAN address (the JWE
-        # blobs they carry embed that URL). The actual iyr service
-        # additionally ACLs the main subnet for cross-VLAN clients.
+        # blobs they carry embed that URL). aclNetworks adds the main
+        # subnet so cross-VLAN clients (eno1 "for now" fallback path)
+        # still pass.
         network = "lab";
+        aclNetworks = [ "main" ];
       };
     };
 

@@ -29,6 +29,17 @@
           this network to build the URL.
         '';
       };
+      aclNetworks = lib.mkOption {
+        type = lib.types.listOf lib.types.str;
+        default = [];
+        description = ''
+          Extra network entity names whose subnets are added to the
+          tang server's ACL (in addition to `network`). For setups
+          where clients reach the server cross-VLAN — e.g. a "for
+          now" fallback path on a different VLAN than the canonical
+          one. Empty (default) means ACL covers only `network`.
+        '';
+      };
     };
 
     attrs =

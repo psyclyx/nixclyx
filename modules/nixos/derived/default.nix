@@ -38,6 +38,7 @@
     ./patroni.nix
     ./redis-sentinel.nix
     ./seaweedfs.nix
+    ./tang.nix
     ./zvol-provision.nix
   ];
 
