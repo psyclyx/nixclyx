@@ -2,38 +2,15 @@
 let
   eg = config.psyclyx.egregore;
 
-  # VLAN-keyed iteration. Only networks for which iyr is the gateway —
-  # switch-routed networks (storage, lab) live downstream of the CRS326
-  # and don't get a VLAN interface here. Overlays (vpn) excluded.
-  networkEntities = lib.filterAttrs
-    (_: e:
-      e.type == "network"
-      && e.network.vlan != null
-      && (e.attrs.gatewayRef or null) == "iyr")
-    eg.entities;
-  sortedNets = lib.sort (a: b: a.network.vlan < b.network.vlan) (lib.attrValues networkEntities);
-
-  # Networks where iyr is named as the resolver via `refs.dns` but
-  # isn't the gateway (i.e. switch-routed VLANs where we still serve
-  # DNS from an L2 listener address).
-  dnsListenerNets =
-    let
-      meName = "iyr";
-      isDnsListener = _: net:
-        net.type == "network"
-        && (net.refs.dns or null) == meName
-        && (net.attrs.gatewayRef or null) != meName;
-    in
-    lib.attrValues (lib.filterAttrs isDnsListener eg.entities);
-
-  iyrLabAddr = name:
-    let
-      ent = eg.entities.iyr;
-      addr = ent.host.addresses.${name} or null;
-    in
-    if addr == null then null else addr.ipv4;
-
-  dhcpVlans = lib.sort builtins.lessThan (lib.mapAttrsToList (_: e: e.network.vlan) networkEntities);
+  # VLAN IDs iyr is the gateway for — used to enumerate iyr's
+  # internal-zone interfaces in the firewall config below.
+  dhcpVlans = lib.sort builtins.lessThan (
+    lib.mapAttrsToList (_: e: e.network.vlan) (
+      lib.filterAttrs (_: e:
+        e.type == "network"
+        && e.network.vlan != null
+        && (e.attrs.gatewayRef or null) == "iyr"
+      ) eg.entities));
 in
 {
   imports = [ ./dhcp.nix ];
@@ -157,17 +134,10 @@ in
         };
         resolver = {
           enable = true;
-          interfaces = [
-            "10.0.0.11"
-          ]
-          ++ map (e: e.attrs.gateway4) sortedNets
-          # L2-only resolver listeners on switch-routed VLANs where
-          # we're declared as `refs.dns` (lab, storage).
-          ++ lib.filter (a: a != null)
-              (map (e: iyrLabAddr e.attrs.name) dnsListenerNets)
-          ++ [ "10.157.0.2" ]
-          ++ map (e: e.attrs.gateway6) sortedNets
-          ++ [ "::" ];
+          # Listen list (gateway addresses + L2 listener addresses +
+          # vpn + ::) comes from derived/dns-resolver.nix. Adding the
+          # untagged trunk IP here because it's not modeled in egregore.
+          interfaces = [ "10.0.0.11" ];
           accessControl = [
             "10.0.0.0/8 allow"
             "${eg.ipv6UlaPrefix}::/48 allow"
@@ -175,7 +145,7 @@ in
             "::1/128 allow"
           ];
           # Cross-site forwarding auto-derived from egregore site refs.dns
-          # by topology/dns-forwarding.nix.
+          # by derived/dns-forwarding.nix.
         };
       };
 

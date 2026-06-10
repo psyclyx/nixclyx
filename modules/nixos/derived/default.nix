@@ -28,6 +28,7 @@
     ./consul.nix
     ./dhcp-ddns.nix
     ./distributed-builds.nix
+    ./dns-resolver.nix
     ./nomad.nix
     ./openbao-cluster.nix
     ./openbao-endpoint.nix
