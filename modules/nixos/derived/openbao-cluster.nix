@@ -1,6 +1,6 @@
 # Egregore → openbao raft cluster addressing projection.
 {config, lib, ...}: {
-  options.psyclyx.nixos.topology.openbao-cluster = {
+  options.psyclyx.nixos.derived.openbao-cluster = {
     enable = lib.mkEnableOption "project egregore cluster topology onto openbao";
     dataNetwork = lib.mkOption {
       type = lib.types.str;
@@ -14,8 +14,8 @@
     };
   };
 
-  config = lib.mkIf config.psyclyx.nixos.topology.openbao-cluster.enable (let
-    cfg = config.psyclyx.nixos.topology.openbao-cluster;
+  config = lib.mkIf config.psyclyx.nixos.derived.openbao-cluster.enable (let
+    cfg = config.psyclyx.nixos.derived.openbao-cluster;
     eg = config.psyclyx.egregore;
     hostname = config.psyclyx.nixos.host;
     addrOf = n: lib.attrByPath ["entities" n "host" "addresses" cfg.dataNetwork "ipv4"] "" eg;

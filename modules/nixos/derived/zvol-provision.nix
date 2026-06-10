@@ -17,7 +17,7 @@
 # device units in turn, so the whole graph composes cleanly.
 { config, lib, pkgs, ... }:
 let
-  cfg = config.psyclyx.nixos.topology.zvol-provision;
+  cfg = config.psyclyx.nixos.derived.zvol-provision;
   eg = config.psyclyx.egregore;
   hostname = config.psyclyx.nixos.host;
   enabled = cfg.enable && hostname != "";
@@ -112,7 +112,7 @@ let
   ) myLuns;
 in
 {
-  options.psyclyx.nixos.topology.zvol-provision = {
+  options.psyclyx.nixos.derived.zvol-provision = {
     enable = lib.mkEnableOption ''
       project this host's `lun` entities into per-zvol create +
       mkfs systemd units. The unit graph uses systemd's own

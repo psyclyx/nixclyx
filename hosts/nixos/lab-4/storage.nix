@@ -2,9 +2,9 @@
 {
   psyclyx.nixos = {
     # NFS shares + iSCSI targets/initiators projected from egregore data.
-    topology.nfs.enable = true;
-    topology.iscsi.enable = true;
-    topology.storage.enable = true;
+    derived.nfs.enable = true;
+    derived.iscsi.enable = true;
+    derived.storage.enable = true;
 
     # OpenBao moved to iyr — iyr's seal-oracle module is extended with
     # userpass auth + KV, so it doubles as the fleet OpenBao. lab-4

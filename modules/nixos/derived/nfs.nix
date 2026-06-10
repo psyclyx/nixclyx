@@ -9,7 +9,7 @@
 # Strictly a projection — no upstream service config beyond what's
 # exposed by services.nfs-server and the kernel NFS client.
 {config, lib, ...}: let
-  cfg = config.psyclyx.nixos.topology.nfs;
+  cfg = config.psyclyx.nixos.derived.nfs;
   eg = config.psyclyx.egregore;
   hostname = config.psyclyx.nixos.host;
   me = eg.entities.${hostname} or null;
@@ -65,7 +65,7 @@
 
   consumerFileSystems = lib.mapAttrs' mkConsumerMount myMounts;
 in {
-  options.psyclyx.nixos.topology.nfs = {
+  options.psyclyx.nixos.derived.nfs = {
     enable = lib.mkEnableOption "project nfs-export entities into server config and consumer mounts";
   };
 

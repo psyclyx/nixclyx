@@ -10,7 +10,7 @@
   ...
 }:
 let
-  cfg = config.psyclyx.nixos.topology.openbao-vm-ssh-host;
+  cfg = config.psyclyx.nixos.derived.openbao-vm-ssh-host;
   eg = config.psyclyx.egregore;
   hostname = config.psyclyx.nixos.host;
   enabled = cfg.enable && hostname != "";
@@ -29,7 +29,7 @@ let
   guestEnabled = myBinding != null && roleEntity != null && fqdn != null;
 in
 {
-  options.psyclyx.nixos.topology.openbao-vm-ssh-host = {
+  options.psyclyx.nixos.derived.openbao-vm-ssh-host = {
     enable = lib.mkEnableOption ''
       project host.openbao.ssh bindings into per-guest
       openbao-vm-ssh-host services.

@@ -29,7 +29,7 @@
   ...
 }:
 let
-  cfg = config.psyclyx.nixos.topology.storage;
+  cfg = config.psyclyx.nixos.derived.storage;
   eg = config.psyclyx.egregore;
   hostname = config.psyclyx.nixos.host;
   enabled = cfg.enable && hostname != "";
@@ -328,7 +328,7 @@ let
     lib.filter (p: p != null) (map nodeToplevel consumerNames);
 in
 {
-  options.psyclyx.nixos.topology.storage = {
+  options.psyclyx.nixos.derived.storage = {
     enable = lib.mkEnableOption ''
       project zfs-pool / zfs-dataset / clevis-binding entities into
       disko, zfs-runtime mounts, initrd clevis (or post-boot

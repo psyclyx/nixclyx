@@ -1,6 +1,6 @@
 # Open-iSCSI initiator for runtime LUN attachments.
 #
-# Wraps nixpkgs' `services.openiscsi`. The `psyclyx.nixos.topology.iscsi`
+# Wraps nixpkgs' `services.openiscsi`. The `psyclyx.nixos.derived.iscsi`
 # projection populates `mounts` from `lun` entities whose `consumers`
 # include this host.
 #

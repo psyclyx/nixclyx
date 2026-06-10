@@ -7,9 +7,9 @@
 #
 # IQNs compose from globals.iscsi.baseIqn + producer + lun name. Portal
 # addresses come from the producer's address on the lun's network. All
-# of this is derived — hosts only opt in via psyclyx.nixos.topology.iscsi.enable.
+# of this is derived — hosts only opt in via psyclyx.nixos.derived.iscsi.enable.
 {config, lib, ...}: let
-  cfg = config.psyclyx.nixos.topology.iscsi;
+  cfg = config.psyclyx.nixos.derived.iscsi;
   eg = config.psyclyx.egregore;
   hostname = config.psyclyx.nixos.host;
   me = eg.entities.${hostname} or null;
@@ -124,7 +124,7 @@
   consumerMounts = builtins.listToAttrs
     (lib.mapAttrsToList mkMount consumedLuns);
 in {
-  options.psyclyx.nixos.topology.iscsi = {
+  options.psyclyx.nixos.derived.iscsi = {
     enable = lib.mkEnableOption "project lun entities into SCST target / iSCSI initiator config";
   };
 

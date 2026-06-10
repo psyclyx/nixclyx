@@ -1,6 +1,6 @@
 # Egregore → consul cluster addressing projection.
 {config, lib, ...}: {
-  options.psyclyx.nixos.topology.consul = {
+  options.psyclyx.nixos.derived.consul = {
     enable = lib.mkEnableOption "project egregore cluster topology onto consul";
     dataNetwork = lib.mkOption {
       type = lib.types.str;
@@ -14,8 +14,8 @@
     };
   };
 
-  config = lib.mkIf config.psyclyx.nixos.topology.consul.enable (let
-    cfg = config.psyclyx.nixos.topology.consul;
+  config = lib.mkIf config.psyclyx.nixos.derived.consul.enable (let
+    cfg = config.psyclyx.nixos.derived.consul;
     eg = config.psyclyx.egregore;
     hostname = config.psyclyx.nixos.host;
     addrOf = n: lib.attrByPath ["entities" n "host" "addresses" cfg.dataNetwork "ipv4"] "" eg;

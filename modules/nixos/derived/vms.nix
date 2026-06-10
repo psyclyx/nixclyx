@@ -13,7 +13,7 @@
 #
 # Per-VM service config (which units to enable, where to find sops
 # paths, NFS mounts, …) is supplied by the consumer via
-# `psyclyx.nixos.topology.vms.guests.<name>` — a NixOS module that
+# `psyclyx.nixos.derived.vms.guests.<name>` — a NixOS module that
 # imports the right module sets and wires the VM. The projection
 # merges its own derived bits in via lib.mkMerge.
 {
@@ -22,7 +22,7 @@
   ...
 }:
 let
-  cfg = config.psyclyx.nixos.topology.vms;
+  cfg = config.psyclyx.nixos.derived.vms;
   eg = config.psyclyx.egregore;
   hostname = config.psyclyx.nixos.host;
   me = eg.entities.${hostname} or null;
@@ -218,7 +218,7 @@ let
   ) myVms;
 in
 {
-  options.psyclyx.nixos.topology.vms = {
+  options.psyclyx.nixos.derived.vms = {
     enable = lib.mkEnableOption ''
       project hosts with refs.hypervisor = me into microvm.vms.<name>.
       Requires `microvm.host.enable = true` (handled by lab-4 / any

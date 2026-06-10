@@ -168,7 +168,7 @@ let
     + lib.concatStrings (lib.mapAttrsToList mkKvSecretBlock kvSecretEntities);
 in
 {
-  options.psyclyx.nixos.topology.openbao-fleet = {
+  options.psyclyx.nixos.derived.openbao-fleet = {
     enable = lib.mkEnableOption ''
       project openbao-policy, openbao-cert-role, and kv-secret
       entities into the local openbao-seal-oracle's configure hook.
@@ -176,7 +176,7 @@ in
     '';
   };
 
-  config = lib.mkIf (enabled && config.psyclyx.nixos.topology.openbao-fleet.enable && hostHere) {
+  config = lib.mkIf (enabled && config.psyclyx.nixos.derived.openbao-fleet.enable && hostHere) {
     psyclyx.nixos.services.openbao-seal-oracle.configure = lib.mkAfter configureExtra;
   };
 }

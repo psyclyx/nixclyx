@@ -21,7 +21,7 @@
   ...
 }:
 let
-  cfg = config.psyclyx.nixos.topology.bootstrap;
+  cfg = config.psyclyx.nixos.derived.bootstrap;
   eg = config.psyclyx.egregore;
   hostname = config.psyclyx.nixos.host;
   enabled = cfg.enable && hostname != "";
@@ -97,7 +97,7 @@ let
   oracleServices = lib.mapAttrs' mkOpenbaoInitService oracles;
 in
 {
-  options.psyclyx.nixos.topology.bootstrap = {
+  options.psyclyx.nixos.derived.bootstrap = {
     enable = lib.mkEnableOption ''
       project first-boot bootstrap entities (openbao-seal-oracle init,
       future: tpm-key provision, clevis-binding first-time bind) into

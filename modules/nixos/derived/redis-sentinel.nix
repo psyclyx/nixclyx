@@ -1,6 +1,6 @@
 # Egregore → redis-sentinel cluster addressing projection.
 {config, lib, ...}: {
-  options.psyclyx.nixos.topology.redis-sentinel = {
+  options.psyclyx.nixos.derived.redis-sentinel = {
     enable = lib.mkEnableOption "project egregore cluster topology onto redis-sentinel";
     dataNetwork = lib.mkOption {
       type = lib.types.str;
@@ -14,8 +14,8 @@
     };
   };
 
-  config = lib.mkIf config.psyclyx.nixos.topology.redis-sentinel.enable (let
-    cfg = config.psyclyx.nixos.topology.redis-sentinel;
+  config = lib.mkIf config.psyclyx.nixos.derived.redis-sentinel.enable (let
+    cfg = config.psyclyx.nixos.derived.redis-sentinel;
     eg = config.psyclyx.egregore;
     hostname = config.psyclyx.nixos.host;
     addrOf = n: lib.attrByPath ["entities" n "host" "addresses" cfg.dataNetwork "ipv4"] "" eg;

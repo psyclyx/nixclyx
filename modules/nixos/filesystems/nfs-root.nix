@@ -83,6 +83,6 @@
 
     # The /nix and /persist NFS mount entries themselves are derived
     # by topology/storage.nix from host.refs.{nixDataset,persistDataset}.
-    psyclyx.nixos.topology.storage.enable = true;
+    psyclyx.nixos.derived.storage.enable = true;
   };
 }

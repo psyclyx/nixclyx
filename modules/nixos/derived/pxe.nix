@@ -13,7 +13,7 @@
 # Hosts with boot.mode = "local" are ignored. Hosts with mode = "pxe"
 # but no MAC declared on their pxeInterface device are skipped.
 {config, lib, nodes ? {}, pkgs, ...}: let
-  cfg = config.psyclyx.nixos.topology.pxe;
+  cfg = config.psyclyx.nixos.derived.pxe;
   eg = config.psyclyx.egregore;
   enabled = cfg.serve;
 
@@ -141,7 +141,7 @@
   bindAddresses = lib.unique
     (map (r: r.reservation."next-server") allReservations);
 in {
-  options.psyclyx.nixos.topology.pxe = {
+  options.psyclyx.nixos.derived.pxe = {
     serve = lib.mkOption {
       type = lib.types.bool;
       default = false;

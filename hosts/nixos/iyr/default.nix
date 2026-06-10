@@ -95,7 +95,7 @@ in
     # addresses fall out of egregore: one per network where a PXE-mode
     # host advertises an interface and where iyr has an address (either
     # as that network's gateway or as an L2-only listener).
-    topology.pxe.serve = true;
+    derived.pxe.serve = true;
 
     network = {
       # iyr is an L2-only DHCP listener on the switch-routed VLANs

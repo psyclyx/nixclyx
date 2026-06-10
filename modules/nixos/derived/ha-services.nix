@@ -25,7 +25,7 @@ let
 in
 {
   config = lib.mkIf (myGroups != { }) {
-    psyclyx.nixos.topology = {
+    psyclyx.nixos.derived = {
       patroni = lib.mkIf (hasService "postgresql") {
         enable = true;
         dataNetwork = networkFor "postgresql";

@@ -16,7 +16,7 @@
   ...
 }:
 let
-  cfg = config.psyclyx.nixos.topology.openbao-vm-auth;
+  cfg = config.psyclyx.nixos.derived.openbao-vm-auth;
   eg = config.psyclyx.egregore;
   hostname = config.psyclyx.nixos.host;
   enabled = cfg.enable && hostname != "";
@@ -121,7 +121,7 @@ let
   hypervisorEnabled = cfg.enable && myGuestsWithCert != { };
 in
 {
-  options.psyclyx.nixos.topology.openbao-vm-auth = {
+  options.psyclyx.nixos.derived.openbao-vm-auth = {
     enable = lib.mkEnableOption ''
       project host.openbao.cert bindings into hypervisor-side
       wrap-token minters and guest-side openbao-vm-auth services.

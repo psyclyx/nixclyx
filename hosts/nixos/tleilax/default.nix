@@ -38,7 +38,7 @@ in
   };
   psyclyx.nixos.filesystems.zfs.encryption.enable = false;
 
-  psyclyx.nixos.topology.storage.enable = true;
+  psyclyx.nixos.derived.storage.enable = true;
 
   psyclyx.nixos = {
     hardware.presets.hpe.dl20-gen10.enable = true;
