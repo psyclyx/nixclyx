@@ -67,10 +67,9 @@ in
     ipAddressAllow = map netSubnet networks;
   };
 
-  services.prometheus.exporters.node.listenAddress =
-    (eg.entities.${config.networking.hostName}).attrs.addresses.vpn.ipv4;
-  services.prometheus.exporters.smartctl.listenAddress =
-    (eg.entities.${config.networking.hostName}).attrs.addresses.vpn.ipv4;
+  # node + smartctl exporter listen addresses come from
+  # derived/monitoring.nix (driven by the host entity's exporters
+  # declaration). snmp is iyr-specific and stays local.
   services.prometheus.exporters.snmp.listenAddress = "127.0.0.1";
   services.prometheus.listenAddress = "127.0.0.1";
 

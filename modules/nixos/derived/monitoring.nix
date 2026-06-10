@@ -50,6 +50,20 @@ let
     job_name = svcName;
     static_configs = [ { targets = [ "localhost:${toString svc.port}" ]; } ];
   }) hubExporters;
+
+  # For each exporter declared on THIS host, set its listenAddress to
+  # the host's IPv4 on the exporter's first network (typically the
+  # vpn overlay, so prom only scrapes over WG). Skips exporters whose
+  # network isn't in the host's addresses map (e.g. exporters with
+  # networks=["infra"] on a host without infra).
+  myName = config.psyclyx.nixos.host;
+  meEntity = eg.entities.${myName} or null;
+  myExporters = if meEntity == null then {} else meEntity.attrs.resolvedExporters or {};
+  exporterListenAddrs = lib.mapAttrs (_: svc:
+    let net = builtins.head svc.networks;
+        addr = (meEntity.attrs.addresses.${net} or {}).ipv4 or null;
+    in addr
+  ) myExporters;
 in
 {
   config = lib.mkMerge [
@@ -63,5 +77,10 @@ in
     (lib.mkIf config.psyclyx.nixos.services.prometheus.server.enable {
       psyclyx.nixos.services.prometheus.server.extraScrapeConfigs = hubExtraScrapeConfigs;
     })
+    {
+      services.prometheus.exporters = lib.mapAttrs (_: addr: {
+        listenAddress = lib.mkDefault addr;
+      }) (lib.filterAttrs (_: addr: addr != null) exporterListenAddrs);
+    }
   ];
 }
