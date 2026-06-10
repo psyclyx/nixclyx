@@ -209,6 +209,12 @@
     systemd.network.config.dhcpV6Config.DUIDType = "link-layer";
 
     systemd.network.networks = {
+      # The vlan list on this unit is contributed by network/interfaces.nix
+      # (via vlansOnParent on cfg.lanInterface) — our VLAN children are
+      # registered there via psyclyx.nixos.network.interfaces.vlans below.
+      # Any non-gateway listener VLANs on the same parent (e.g. an L2-only
+      # DHCP listener) also flow through the same path and join the same
+      # list automatically.
       "30-${cfg.lanInterface}" = {
         matchConfig.Name = cfg.lanInterface;
         linkConfig = {
@@ -219,7 +225,6 @@
         networkConfig = { Domains = ["~."]; DHCP = "no"; };
         address = lib.optional (cfg.lanAddress != null) cfg.lanAddress;
         dns = ["127.0.0.1"];
-        vlan = map (net: vlanIface net.id) cfg.networks;
       };
       "30-${cfg.wanInterface}" = {
         matchConfig.Name = cfg.wanInterface;

@@ -279,7 +279,23 @@
       }];
     })) cfg.networks;
 
-    allNetworks = bondSlaveUnits // bondRootUnits // networkUnits;
+    # Parent network units for raw-NIC parents that carry VLAN children
+    # (the bond case is already handled by bondRootUnits). Emits ONLY the
+    # vlan list + a carrier-online dep; other modules (gateway, host-
+    # specific configs) merge their address/dns/route contributions into
+    # the same "30-<parent>" unit via NixOS module merging.
+    rawParents = lib.unique (
+      builtins.filter
+        (p: !(cfg.bonds ? ${p}) && p != "")
+        (lib.mapAttrsToList (_: v: v.parent) cfg.vlans)
+    );
+    rawParentUnits = builtins.listToAttrs (map (parent: lib.nameValuePair "30-${parent}" {
+      matchConfig.Name = parent;
+      linkConfig.RequiredForOnline = "carrier";
+      vlan = vlansOnParent parent;
+    }) rawParents);
+
+    allNetworks = bondSlaveUnits // bondRootUnits // rawParentUnits // networkUnits;
 
     # --- Initrd ---
 

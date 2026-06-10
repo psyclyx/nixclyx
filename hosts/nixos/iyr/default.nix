@@ -19,10 +19,10 @@ in
 
   systemd.network.networks."31-enp3s0.${toString eg.conventions.transitVlan}".linkConfig.MTUBytes = 1500;
 
-  # gateway.nix's "30-enp1s0" unit only lists VLANs iyr gateways in its
-  # `vlan = [...]`. We need the L2-only listener VLANs (lab, storage)
-  # attached too; list-merge appends.
-  systemd.network.networks."30-enp1s0".vlan = [ "enp1s0.210" "enp1s0.200" ];
+  # L2-only listener VLANs (lab, storage) on enp1s0 come from
+  # derived/l2-listeners.nix; parent-unit VLAN aggregation is done by
+  # network/interfaces.nix so gateway + listener children all hang off
+  # the same enp1s0 unit automatically.
 
   # Tang server config (bind + ACL) comes from derived/tang.nix, driven
   # by the iyr-tang egregore entity (configs/egregore/trust-root.nix).
@@ -57,34 +57,6 @@ in
     derived.pxe.serve = true;
 
     network = {
-      # iyr is an L2-only DHCP listener on the switch-routed VLANs
-      # (lab/storage — gateway'd by mdf-agg01, not iyr). The gateway
-      # projection skips these networks, so we add the VLAN netdevs +
-      # IPs by hand here, sourcing the addresses from iyr's egregore
-      # entity to avoid duplicating fleet data in the host config.
-      # The gateway module's `vlan = [...]` list on the lan-interface
-      # network unit only includes networks iyr gateways, so we also
-      # extend it with the enp1s0.<vlan> child devices below in
-      # systemd.network.networks.
-      interfaces = let
-        me = eg.entities.${config.networking.hostName};
-        mkListener = netName: let
-          net = eg.entities.${netName}.attrs;
-          addr = me.attrs.addresses.${netName};
-        in {
-          vlans."enp1s0.${toString net.vlan}" = {
-            id = net.vlan;
-            parent = "enp1s0";
-          };
-          networks."enp1s0.${toString net.vlan}" = {
-            addresses = [ "${addr.ipv4}/${toString net.prefixLen}" ];
-            requiredForOnline = "no";
-            mtu = eg.entities.${netName}.network.mtu;
-          };
-        };
-      in
-        lib.foldl' lib.recursiveUpdate {} (map mkListener [ "lab" "storage" ]);
-
       gateway = {
         enable = true;
         lanInterface = "enp1s0";

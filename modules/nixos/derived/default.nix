@@ -29,6 +29,7 @@
     ./dhcp-ddns.nix
     ./distributed-builds.nix
     ./dns-resolver.nix
+    ./l2-listeners.nix
     ./nomad.nix
     ./openbao-cluster.nix
     ./openbao-endpoint.nix
