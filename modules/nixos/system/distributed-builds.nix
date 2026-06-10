@@ -4,7 +4,21 @@
   gate = {config, ...}:
     builtins.elem config.psyclyx.nixos.host
     ["lab-1" "lab-2" "lab-3" "lab-4" "sigil" "iyr"];
+  options = {lib, ...}: {
+    infraZone = lib.mkOption {
+      type = lib.types.str;
+      default = "";
+      description = ''
+        DNS zone (e.g. infra.apt.psyclyx.net) the builders' SSH
+        hostnames hang off. A topology projection (see
+        `topology/distributed-builds.nix`) sets this from egregore.
+        Empty default keeps the generic module evaluable in setups
+        with no fleet data.
+      '';
+    };
+  };
   config = {
+    cfg,
     config,
     lib,
     pkgs,
@@ -12,9 +26,7 @@
     ...
   }: let
     host = config.psyclyx.nixos.host;
-    eg = config.psyclyx.egregore;
-    
-    infraZone = eg.entities.infra.attrs.zoneName;
+    infraZone = cfg.infraZone;
 
     builders = {
       lab-1 = {sshHost = "lab-1.${infraZone}"; maxJobs = 54; speedFactor = 7;};

@@ -25,9 +25,11 @@
     ./bootstrap.nix
     ./gateway.nix
     ./vms.nix
+    ./distributed-builds.nix
     ./openbao-fleet.nix
     ./openbao-vm-auth.nix
     ./openbao-vm-ssh-host.nix
+    ./openssh.nix
     ./zvol-provision.nix
   ];
 

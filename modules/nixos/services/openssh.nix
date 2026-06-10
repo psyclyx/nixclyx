@@ -2,6 +2,15 @@
   path = ["psyclyx" "nixos" "services" "openssh"];
   description = "Enable OpenSSH.";
   options = {lib, ...}: {
+    port = lib.mkOption {
+      type = lib.types.port;
+      default = 22;
+      description = ''
+        TCP port sshd listens on. Topology projections may set this
+        from fleet data (see `topology/openssh.nix`); generic-tier
+        consumers can leave the default.
+      '';
+    };
     agentAuth = {
       enable = lib.mkOption {
         type = lib.types.bool;
@@ -26,13 +35,7 @@
     nixclyx,
     ...
   }: {
-    psyclyx.nixos.network.ports.ssh = let
-      eg = config.psyclyx.egregore;
-      hostName = config.networking.hostName;
-      thisHost = eg.entities.${hostName} or null;
-    in [
-      (if thisHost != null then thisHost.host.sshPort else 22)
-    ];
+    psyclyx.nixos.network.ports.ssh = [ cfg.port ];
 
     security.pam.sshAgentAuth.enable = lib.mkIf cfg.agentAuth.enable cfg.agentAuth.enable;
 
