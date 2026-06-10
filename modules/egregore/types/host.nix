@@ -129,6 +129,20 @@
           Wildcards always require DNS-01 and ignore this.
         '';
       };
+      publicNames = lib.mkOption {
+        type = lib.types.listOf lib.types.str;
+        default = [];
+        description = ''
+          Label names this host is reachable as in the public-domain
+          zone (`globals.domains.public`), each mapping to an A/AAAA
+          record pointing at the host's public address. e.g.
+          `publicNames = ["tleilax" "vpn"]` registers
+          `tleilax.psyclyx.xyz` + `vpn.psyclyx.xyz`.
+
+          Records are emitted by the public-names projection on the
+          host that owns the public zone (via `dnsAuthority`).
+        '';
+      };
       hardware = lib.mkOption {
         type = lib.types.submodule {
           options.tpm = lib.mkOption {

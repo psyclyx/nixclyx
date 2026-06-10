@@ -38,6 +38,7 @@
     ./openbao-vm-ssh-host.nix
     ./openssh.nix
     ./patroni.nix
+    ./public-names.nix
     ./redis-sentinel.nix
     ./seaweedfs.nix
     ./tang.nix

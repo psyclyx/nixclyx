@@ -23,6 +23,10 @@
           };
           dnsAuthority = ["psyclyx.net" "psyclyx.xyz" "psyclyx.link"];
           publicAcme = true;
+          # `tleilax.psyclyx.xyz` + `vpn.psyclyx.xyz` — both point at
+          # the public IP. vpn is the WG-hub endpoint; tleilax is the
+          # host's own public name.
+          publicNames = [ "tleilax" "vpn" ];
           sshPort = 17891;
           deployAddress = "199.255.18.171";
           roles = ["server" "vpn-hub"];
