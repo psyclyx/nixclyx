@@ -128,10 +128,18 @@
       json = builtins.toJSON projection;
       mgmtIp = sw.addresses.mgmt.ipv4;
 
-      # Sodola auth: cookie = md5(username + password).
-      cookie = "${sw.username}=${builtins.hashString "md5" "${sw.username}${sw.password}"}";
+      # Sodola auth: cookie = md5(username + password). The cookie is
+      # only honored after a fresh login.cgi POST establishes a session
+      # — useful to know post-reboot, when the session cache is empty
+      # and the bare cookie comes back as a redirect to login.cgi.
+      cookieValue = builtins.hashString "md5" "${sw.username}${sw.password}";
+      cookie = "${sw.username}=${cookieValue}";
       curlAuth = ''-b "${cookie}" -e "http://${mgmtIp}/"'';
-      pullCmd = ''curl -sf --connect-timeout 5 ${curlAuth} \
+      loginCmd = ''curl -sf --connect-timeout 5 \
+    -e "http://${mgmtIp}/" \
+    -d "username=${sw.username}&password=${sw.password}&Response=${cookieValue}" \
+    "http://${mgmtIp}/login.cgi" > /dev/null'';
+      pullCmd = ''${loginCmd} && curl -sf --connect-timeout 5 ${curlAuth} \
     "http://${mgmtIp}/config_back.cgi?cmd=conf_backup"'';
     in {
       config-json = {
@@ -173,6 +181,9 @@ EGREGORE_EOF
           sodola-config generate <<'EGREGORE_EOF' > "$tmpfile"
 ${json}
 EGREGORE_EOF
+
+          echo "Logging in to ${mgmtIp}..." >&2
+          ${loginCmd}
 
           echo "Uploading to ${mgmtIp}..." >&2
           curl -sf --connect-timeout 5 ${curlAuth} \

@@ -368,7 +368,7 @@ ${json}
 EGREGORE_EOF'';
       };
       deploy = {
-        description = "Deploy config to switch (upload + reset-configuration). Args are passed as extra SSH/SCP options (e.g. -J iyr).";
+        description = "Deploy config to switch (upload + reset-configuration). DESTRUCTIVE — switch reboots and reapplies. Prefer `apply` for incremental changes. Args are passed as extra SSH/SCP options (e.g. -J iyr).";
         impl = ''
           echo "Generating ${rscName}..." >&2
           tmpfile=$(mktemp --suffix=.rsc)
@@ -387,6 +387,33 @@ EGREGORE_EOF
             "/system/reset-configuration no-defaults=yes run-after-reset=${rscName}"
 
           echo "Deploy complete. Switch will reboot and apply ${rscName}." >&2'';
+      };
+      apply = {
+        description = "Incremental apply via /export terse diff. Non-destructive: pulls current state, computes diff against desired, pushes only changed items. Diffs only the sections that safely tolerate live add/remove (/interface vlan, /ip address, /interface bridge vlan). Use --dry-run to preview. Extra ssh args pass through as `-- -J jumphost`.";
+        impl = ''
+          dry_run=""
+          while [[ $# -gt 0 && "$1" != "--" ]]; do
+            case "$1" in
+              --dry-run|-n) dry_run="--dry-run"; shift ;;
+              *) echo "unknown arg: $1" >&2; exit 1 ;;
+            esac
+          done
+          [[ "$1" == "--" ]] && shift
+
+          ssh_args=""
+          if [[ $# -gt 0 ]]; then
+            ssh_args="--ssh-args"
+            for a in "$@"; do ssh_args="$ssh_args $a"; done
+          fi
+
+          session_id=$(date +%s)-$$
+          echo "Applying to ${mgmtIp} (session $session_id)..." >&2
+          routeros-config apply $dry_run \
+            --session-id "$session_id" \
+            "admin@${mgmtIp}" $ssh_args <<'EGREGORE_EOF'
+${json}
+EGREGORE_EOF
+        '';
       };
     };
   };
