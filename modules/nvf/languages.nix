@@ -14,9 +14,10 @@
         clang.enable = true;
         haskell = {
           enable = true;
-          # nvf now requires opting in to haskell-tools.nvim when the
-          # languages.enableDAP umbrella flag is on — it owns adapter
-          # registration + launch-config discovery for Haskell.
+          # haskell-tools.nvim takes over LSP + DAP setup for Haskell;
+          # nvf asserts when both it and the generic lsp.enable are
+          # on, so opt out of the generic one here.
+          lsp.enable = false;
           extensions.haskell-tools.enable = true;
         };
         html.enable = true;
