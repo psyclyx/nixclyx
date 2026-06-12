@@ -12,7 +12,13 @@
         bash.enable = true;
         clojure.enable = true;
         clang.enable = true;
-        haskell.enable = true;
+        haskell = {
+          enable = true;
+          # nvf now requires opting in to haskell-tools.nvim when the
+          # languages.enableDAP umbrella flag is on — it owns adapter
+          # registration + launch-config discovery for Haskell.
+          extensions.haskell-tools.enable = true;
+        };
         html.enable = true;
         java.enable = true;
         json.enable = true;
