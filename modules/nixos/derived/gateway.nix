@@ -1,18 +1,17 @@
 # Egregore → gateway projection.
 #
-# Reads `config.psyclyx.egregore` for networks where the current host
-# is the gateway and populates the generic `psyclyx.nixos.network.gateway.*`
-# module's `networks`, static-route, and initrd-VLAN data. The generic
-# module handles the actual networkd emission; the only thing fleet-aware
-# here is the egregore lookup.
+# Reads `host.gateway` + the network-graph data from egregore and
+# emits the full `psyclyx.nixos.network.gateway.*` config. Gateway is
+# enabled when the host's egregore entity sets host.gateway.lanInterface.
 {config, lib, ...}: let
-  cfg = config.psyclyx.nixos.network.gateway;
   eg = config.psyclyx.egregore;
   hostname = config.psyclyx.nixos.host;
+  myHost = lib.attrByPath ["entities" hostname "host"] null eg;
+  gw = if myHost == null then {} else (myHost.gateway or {});
+  enabled = (gw.lanInterface or null) != null;
 
   # Networks this host is the gateway for. VLAN-backed only; overlay
-  # networks (vpn) excluded. Switch-routed networks live downstream and
-  # are reached via static routes hung off our VLAN units.
+  # networks (vpn) excluded.
   gatewayedNetworks = lib.filterAttrs
     (_: e:
       e.type == "network"
@@ -22,16 +21,17 @@
   gatewayedVlans = lib.sort builtins.lessThan
     (lib.mapAttrsToList (_: e: e.network.vlan) gatewayedNetworks);
 
-  # Connected networks (host has a declared interface). Used to skip
-  # static routes for subnets already on a directly-connected VLAN.
-  myHost = eg.entities.${hostname}.host or null;
+  # Connected networks (host declares an interface).
   myConnectedNetworks =
     if myHost == null then []
     else lib.attrNames (myHost.interfaces or {});
 
-  # Switch-routed networks: per routeros entity, every routedNetwork
-  # gets a static route via the switch's uplinkNetwork address.
+  # Switch-routed networks → static routes via switch uplink address.
+  # Computes IPv4 + IPv6 entries; networkd's [Route] is family-agnostic
+  # so both go into the same per-VLAN list and end up on the same
+  # network unit (the one carrying the uplink).
   switches = lib.filterAttrs (_: e: e.type == "routeros") eg.entities;
+  ulaPrefix = eg.ipv6UlaPrefix or "";
   staticRoutesByVlan = let
     perSwitch = lib.mapAttrsToList (_swName: sw: let
       r = sw.routeros;
@@ -40,12 +40,26 @@
         else r.mgmtNetwork;
       uplinkNet = eg.entities.${uplinkName};
       nextHopV4 = r.addresses.${uplinkName}.ipv4 or null;
-    in map (netName: {
-      inherit netName;
-      uplinkVlan = uplinkNet.network.vlan;
-      destSubnet = "${eg.entities.${netName}.attrs.network4}/${toString eg.entities.${netName}.attrs.prefixLen}";
-      gateway = nextHopV4;
-    }) sw.attrs.routedNetworks)
+      nextHopV6 = r.addresses.${uplinkName}.ipv6 or null;
+      mkRoute = netName: family: dest: gw: {
+        inherit netName family;
+        uplinkVlan = uplinkNet.network.vlan;
+        destSubnet = dest;
+        gateway = gw;
+      };
+      routedFor = netName: let
+        netEnt = eg.entities.${netName};
+        v4dest = "${netEnt.attrs.network4}/${toString netEnt.attrs.prefixLen}";
+        ulaHex = netEnt.network.ulaSubnetHex or "";
+        v6dest =
+          if ulaPrefix != "" && ulaHex != ""
+          then "${ulaPrefix}:${ulaHex}::/64"
+          else null;
+      in
+        lib.optional (nextHopV4 != null) (mkRoute netName "ipv4" v4dest nextHopV4)
+        ++ lib.optional (nextHopV6 != null && v6dest != null)
+            (mkRoute netName "ipv6" v6dest nextHopV6);
+    in lib.concatMap routedFor sw.attrs.routedNetworks)
       switches;
     flat = builtins.filter
       (r: r.gateway != null && !(builtins.elem r.netName myConnectedNetworks))
@@ -83,44 +97,57 @@
   };
 
   projectedNetworks = map mkGatewayNet gatewayedVlans;
+
+  # Initrd VLANs: resolve egregore network names to vlan id + the
+  # host's gateway address on that network.
   projectedInitrdNetworks = map (name: let
     net = eg.entities.${name};
     na = net.attrs;
   in {
     id = net.network.vlan;
     address4 = "${na.gateway4}/${toString na.prefixLen}";
-  }) cfg.initrdVlans;
-in {
-  options.psyclyx.nixos.network.gateway = {
-    transitVlanFromGlobals = lib.mkOption {
-      type = lib.types.bool;
-      default = true;
-      description = ''
-        Derive transitVlan from egregore globals (`conventions.transitVlan`)
-        rather than requiring the host to set it explicitly.
-      '';
-    };
-    initrdVlans = lib.mkOption {
-      type = lib.types.listOf lib.types.str;
-      default = [];
-      description = ''
-        Egregore network names whose gateway addresses should come up
-        in initrd. The projection resolves these to VLAN ids + the
-        host's gateway address on each and passes them to
-        `gateway.initrd.networks`.
-      '';
-    };
-  };
+  }) gw.initrdVlans or [];
 
-  config = lib.mkIf cfg.enable {
-    psyclyx.nixos.network.gateway = {
-      networks = projectedNetworks;
-      transitVlan = lib.mkIf cfg.transitVlanFromGlobals
-        (lib.mkDefault eg.conventions.transitVlan);
-      initrd = {
-        enable = lib.mkDefault (cfg.initrdVlans != []);
-        networks = projectedInitrdNetworks;
+  # MACs from host.mac, looked up by interface device name.
+  macFor = ifaceDev:
+    if myHost == null then null
+    else myHost.mac.${ifaceDev} or null;
+  cakeQos = gw.cakeQos or null;
+  cakeRates =
+    if cakeQos == null
+    then { download = { min = 0; base = 0; max = 0; }; upload = { min = 0; base = 0; max = 0; }; }
+    else cakeQos;
+  transitVlan = eg.conventions.transitVlan;
+in {
+  config = lib.mkIf enabled (lib.mkMerge [
+    {
+      psyclyx.nixos.network.gateway = {
+        enable = true;
+        lanInterface = gw.lanInterface;
+        wanInterface = gw.wanInterface;
+        lanAddress = gw.lanAddress;
+        lanMac = macFor gw.lanInterface;
+        wanMac = macFor gw.wanInterface;
+        networks = projectedNetworks;
+        transitVlan = lib.mkDefault transitVlan;
+        transitDhcpV6 = {
+          duidRawData = gw.transitDhcpV6.duidRawData or null;
+          iaid = gw.transitDhcpV6.iaid or 250;
+          prefixDelegationHint = gw.transitDhcpV6.prefixDelegationHint or "::/60";
+        };
+        initrd = {
+          enable = lib.mkDefault ((gw.initrdVlans or []) != []);
+          kernelModules = gw.initrdKernelModules or [ "8021q" ];
+          networks = projectedInitrdNetworks;
+        };
       };
-    };
-  };
+    }
+    (lib.mkIf (cakeQos != null) {
+      psyclyx.nixos.network.cake-qos = {
+        enable = true;
+        interface = "${gw.wanInterface}.${toString transitVlan}";
+        inherit (cakeRates) download upload;
+      };
+    })
+  ]);
 }

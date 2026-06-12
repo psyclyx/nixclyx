@@ -1,16 +1,6 @@
 { lib, config, ... }:
 let
   eg = config.psyclyx.egregore;
-
-  # VLAN IDs iyr is the gateway for — used to enumerate iyr's
-  # internal-zone interfaces in the firewall config below.
-  dhcpVlans = lib.sort builtins.lessThan (
-    lib.mapAttrsToList (_: e: e.network.vlan) (
-      lib.filterAttrs (_: e:
-        e.type == "network"
-        && e.network.vlan != null
-        && (e.attrs.gatewayRef or null) == "iyr"
-      ) eg.entities));
 in
 {
   imports = [ ./dhcp.nix ];
@@ -57,38 +47,9 @@ in
     derived.pxe.serve = true;
 
     network = {
-      gateway = {
-        enable = true;
-        lanInterface = "enp1s0";
-        wanInterface = "enp3s0";
-        lanAddress = "10.0.0.11/24";
-        lanMac = "c8:ff:bf:06:2c:4e";
-        wanMac = "c8:ff:bf:06:2c:4d";
-        initrdVlans = [
-          "main"
-          "mgmt"
-        ];
-        initrd.kernelModules = [
-          "8021q"
-          "igc"
-        ];
-        transitDhcpV6.duidRawData = "e7:13:f8:92:37:c5:be:76";
-      };
-
-      cake-qos = {
-        enable = true;
-        interface = "enp3s0.${toString eg.conventions.transitVlan}";
-        download = {
-          min = 1400000;
-          base = 2000000;
-          max = 2280000;
-        };
-        upload = {
-          min = 700000;
-          base = 1400000;
-          max = 2280000;
-        };
-      };
+      # Gateway config (lanInterface/wanInterface/MACs/initrdVlans/
+      # DHCPv6 DUID/CAKE QoS rates) comes from iyr's host.gateway in
+      # egregore via derived/gateway.nix.
 
       dhcp-ddns.enable = true;
 
@@ -100,7 +61,9 @@ in
             enable = true;
             # main first (iyr/sigil), then lab so lab hosts (no main
             # address since they live behind the L3 switch) still land
-            # at <host>.apt.psyclyx.net via their lab-VLAN IP.
+            # at <host>.apt.psyclyx.net via their lab-VLAN IP. Storage
+            # stays out of the site apex (it's iSCSI-only, no off-rack
+            # clients should resolve a host to its storage IP).
             networks = [ "main" "lab" ];
           };
         };
@@ -121,62 +84,12 @@ in
         };
       };
 
-      firewall =
-        let
-          vlanIface = id: "enp1s0.${builtins.toString id}";
-          # `enp1s0.210` / `enp1s0.200` are included even though iyr
-          # doesn't gateway those VLANs (the gateway projection filters
-          # them out of dhcpVlans). iyr is on lab + storage as an
-          # L2-only DHCP listener; firewall-wise they're regular LAN
-          # interfaces.
-          internal = [ "enp1s0" "enp1s0.210" "enp1s0.200" ] ++ map vlanIface dhcpVlans;
-        in
-        {
-          enable = true;
-          zones = {
-            lan.interfaces = internal;
-            wg.interfaces = [ "wg0" ];
-            wan.interfaces = [ "enp3s0.${toString eg.conventions.transitVlan}" ];
-          };
-          input = {
-            lan.policy = "accept";
-            wg.policy = "accept";
-            wan = {
-              policy = "drop";
-              allowICMP = true;
-              allowedTCPPorts = config.psyclyx.nixos.network.ports.ssh.tcp;
-              rules = [
-                {
-                  "udp sport" = 67;
-                  "udp dport" = 68;
-                  comment = "DHCPv4 client";
-                }
-                {
-                  "udp dport" = 546;
-                  comment = "DHCPv6 client";
-                }
-              ];
-            };
-          };
-          forward = [
-            { from = "lan"; to = "wan"; }
-            { from = "lan"; to = "lan"; }
-            { from = "wg";  to = "lan"; }
-            { from = "wg";  to = "wan"; }
-            { from = "lan"; to = "wg"; }
-          ];
-          masquerade = [
-            { from = "lan"; to = "wan"; }
-            # WG-routed traffic to apt VLANs needs source NAT: hub-side
-            # peers (tleilax et al.) can't be reached symmetrically by lab
-            # hosts replying directly via their own WG tunnel — the WG
-            # cryptokey check at the hub drops sources outside the peer's
-            # AllowedIPs. Masquerading at iyr makes apt-side traffic look
-            # like it originated locally, so replies stay on apt-LAN and
-            # come back through iyr.
-            { from = "wg"; to = "lan"; }
-          ];
-        };
+      # Firewall (zones, input, forward, masquerade) is fully derived:
+      # - Zone→interface from `network.zone` + `host.interfaces` (derived/firewall-policy.nix)
+      # - Zone extras + input + masquerade from iyr's `host.firewall` (derived/firewall-host.nix)
+      # - Forward rules from `globals.policy` (derived/firewall-policy.nix)
+      # Nothing host-side beyond the enable flag.
+      firewall.enable = true;
     };
 
     role = "server";

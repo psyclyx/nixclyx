@@ -2,7 +2,8 @@
 {
   psyclyx.nixos = {
     # NFS shares + iSCSI targets/initiators projected from egregore data.
-    derived.nfs.enable = true;
+    # NFS projection is data-driven (no enable toggle); iscsi/storage
+    # still gate on these.
     derived.iscsi.enable = true;
     derived.storage.enable = true;
 

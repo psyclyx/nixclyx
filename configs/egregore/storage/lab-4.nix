@@ -167,6 +167,20 @@ in
       };
     };
 
+    # General-purpose NAS share — bulk capacity on the HDD pool for
+    # off-rack clients (sigil today, others later). Inherits the
+    # pool's 1M recordsize + zstd + special-vdev metadata routing,
+    # which suits large mixed media reasonably well. Mounted under
+    # /srv/nfs/nas on lab-4 for the krb5i NFS export.
+    vault-nas = {
+      type = "zfs-dataset";
+      refs.pool = "vault-pool";
+      zfs-dataset = {
+        path = "vault/nas";
+        mountpoint = "/srv/nfs/nas";
+      };
+    };
+
     # Archive parent — canmount=off, just a structural container.
     vault-archive = {
       type = "zfs-dataset";

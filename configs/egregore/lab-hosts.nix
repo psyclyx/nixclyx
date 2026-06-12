@@ -99,6 +99,19 @@ let
           "lab"
         ];
         deployAddress = "10.0.10.${toString (10 + n)}";
+        # NFS principals (nfs/<fqdn>) use the lab host's lab-VLAN
+        # FQDN so off-rack clients mount via lab (eno49np0, 10G), not
+        # storage (eno50np1, 10G — reserved exclusively for iSCSI to
+        # keep that bandwidth unconteted). mdf-agg01's L3 hw offload
+        # routes main↔lab at line rate. For lab hosts that don't gain
+        # a Kerberos role this is a harmless setting.
+        kerberos.fqdnNetwork = "lab";
+
+        # Lab hosts trust the lab fabric (eno49np0): hypervisor↔
+        # storage-host data path lives here. Storage VLAN stays at
+        # the projection default (drop) to keep iSCSI traffic
+        # rack-local.
+        firewall.input.lab-transit = "accept";
       };
     };
 in

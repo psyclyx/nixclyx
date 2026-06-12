@@ -66,6 +66,18 @@
           the overlay has no site-local shortcut anywhere.
         '';
       };
+      zone = lib.mkOption {
+        type = lib.types.str;
+        default = "";
+        description = ''
+          Policy zone this network belongs to (matches a zone entity's
+          name). Gateway projections read `globals.policy.<src>.<dst>`
+          keyed by zone, not network — multiple networks can share
+          policy by joining the same zone. Empty = no zone assignment;
+          forwards to/from this network must be enumerated explicitly
+          by something else (or are implicit-drop).
+        '';
+      };
     };
 
     attrs = name: entity: top: let
@@ -103,6 +115,7 @@
         then "VLAN ${toString net.vlan} (${net.ipv4})"
         else "(${net.ipv4})";
       site = net.site;
+      zone = net.zone;
       inherit dnsRef gatewayRef;
       # DNS PTR reverse zone components.
       ip6Reverse = lib.optionalString (net.ulaSubnetHex != "")

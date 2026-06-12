@@ -24,10 +24,24 @@
         type = lib.types.str;
         default = "";
         description = ''
-          Network entity carrying the NFS traffic. Required for real
-          exports (asserted non-empty below); the empty default exists
-          so consumers serializing the whole entity tree don't trip the
+          Network entity the export server binds on and consumers
+          mount via. Drives the producer's listen address + the
+          mount-target FQDN. Required for real exports (asserted
+          non-empty below); the empty default exists so consumers
+          serializing the whole entity tree don't trip the
           option-without-default check on non-nfs-export entities.
+        '';
+      };
+      consumerNetwork = lib.mkOption {
+        type = lib.types.nullOr lib.types.str;
+        default = null;
+        description = ''
+          Network entity to look up consumer source addresses for the
+          server's export ACL. Default = `network`, used when the
+          consumer connects from the same VLAN it mounts via. Override
+          when the consumer's L3-routed source IP lives on a different
+          network (e.g. sigil mounts via storage VLAN for the 10G
+          path but its source IP is on main).
         '';
       };
       consumers = lib.mkOption {
@@ -54,6 +68,42 @@
         default = [ "noatime" "nodiratime" ];
         description = "Mount options on the consumer side.";
       };
+      sec = lib.mkOption {
+        type = lib.types.enum [ "sys" "krb5" "krb5i" "krb5p" ];
+        default = "sys";
+        description = ''
+          NFSv4 sec= class. `sys` = traditional UID/GID, no Kerberos.
+          `krb5` = Kerberos auth only. `krb5i` = auth + integrity (MAC
+          on every RPC). `krb5p` = auth + integrity + privacy
+          (encryption). Used by both server (export sec= clause) and
+          client (mount -o sec=).
+        '';
+      };
+      listenNetwork = lib.mkOption {
+        type = lib.types.nullOr lib.types.str;
+        default = null;
+        description = ''
+          Network entity whose producer address this export binds to.
+          Null = bind to the network field's producer address (the
+          default behavior). Set distinctly when an export should
+          listen on a different L3 interface than the transport network
+          would suggest — e.g. a krb5i export reaching off-rack clients
+          via BGP-advertised /32 instead of the storage-VLAN L2 IP.
+        '';
+      };
+      advertiseAs = lib.mkOption {
+        type = lib.types.enum [ "vlan-svi" "bgp32" "wg" ];
+        default = "vlan-svi";
+        description = ''
+          How clients reach the export's listen address. `vlan-svi` =
+          regular VLAN SVI routing on the producer's network gateway
+          (default; assumes clients are on the same broadcast domain or
+          a routed path exists). `bgp32` = producer advertises the
+          listen address as a /32 over BGP; mdf-agg01 (or wherever the
+          BGP peer is) federates the route. `wg` = reached over the WG
+          overlay; no L3 advertisement needed.
+        '';
+      };
     };
 
     attrs =
@@ -64,6 +114,8 @@
       {
         label = "${entity.refs.producer or "<?>"}:${n.path} → ${toString (builtins.length n.consumers)} client(s)";
         producer = entity.refs.producer or null;
+        listenNetwork = if n.listenNetwork != null then n.listenNetwork else n.network;
+        inherit (n) sec advertiseAs;
       };
 
     assertions =

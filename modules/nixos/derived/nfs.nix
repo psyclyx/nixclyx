@@ -9,11 +9,9 @@
 # Strictly a projection — no upstream service config beyond what's
 # exposed by services.nfs-server and the kernel NFS client.
 {config, lib, ...}: let
-  cfg = config.psyclyx.nixos.derived.nfs;
   eg = config.psyclyx.egregore;
   hostname = config.psyclyx.nixos.host;
   me = eg.entities.${hostname} or null;
-  enabled = cfg.enable && me != null;
 
   allExports = lib.filterAttrs (_: e: e.type == "nfs-export") eg.entities;
 
@@ -22,19 +20,41 @@
     (e.refs.producer or null) == hostname
   ) allExports;
 
-  # Look up a consumer host's IP on the export's network.
+  # Look up a consumer host's source IP for the export ACL. Defaults
+  # to the export's `network`; overridden via `consumerNetwork` when
+  # the consumer's L3-routed source lives on a different VLAN than the
+  # one the server binds on.
+  consumerAclNetwork = e:
+    if (e.nfs-export.consumerNetwork or null) != null
+    then e.nfs-export.consumerNetwork
+    else e.nfs-export.network;
   consumerIp = consumer: network:
     eg.entities.${consumer}.host.addresses.${network}.ipv4;
+
+  # Default per-client options. Append sec= when the export demands
+  # Kerberos so each client line carries it (exports(5) supports
+  # per-client sec).
+  baseClientOpts = [ "sync" "no_subtree_check" "no_root_squash" ];
 
   mkServerExport = _expName: e: {
     path = e.nfs-export.path;
     clients = map (c: {
-      address = consumerIp c e.nfs-export.network;
+      address = consumerIp c (consumerAclNetwork e);
       readOnly = e.nfs-export.readOnly;
+      options = baseClientOpts
+        ++ lib.optional (e.nfs-export.sec != "sys") "sec=${e.nfs-export.sec}";
     }) e.nfs-export.consumers;
   };
 
   serverExports = lib.mapAttrsToList mkServerExport myExports;
+
+  # Does this host participate in any Kerberos-secured NFS, either as
+  # producer or consumer? Drives gssproxy enablement.
+  needsKrb = builtins.any (e:
+    (e.nfs-export.sec or "sys") != "sys"
+    && ((e.refs.producer or null) == hostname
+        || builtins.elem hostname e.nfs-export.consumers)
+  ) (lib.attrValues allExports);
 
   # Consumer-side: exports we mount.
   #
@@ -49,32 +69,54 @@
     && (myHypervisor == null || (e.refs.producer or null) != myHypervisor)
   ) allExports;
 
-  # Producer's IP on the export's network — that's the NFS server address.
-  producerIp = e:
-    eg.entities.${e.refs.producer}.host.addresses.${e.nfs-export.network}.ipv4;
+  # Producer's address on the export's network. krb5 mounts use the
+  # FQDN so the client requests the matching `nfs/<fqdn>` service
+  # ticket; sec=sys mounts use the IP to avoid a DNS dependency at
+  # mount time.
+  producerEndpoint = e: let
+    producer = eg.entities.${e.refs.producer};
+    net = e.nfs-export.network;
+  in
+    if e.nfs-export.sec != "sys"
+    then producer.attrs.fqdns.${net} or producer.host.addresses.${net}.ipv4
+    else producer.host.addresses.${net}.ipv4;
 
   mkConsumerMount = _expName: e: {
     name = e.nfs-export.mountAt;
     value = {
-      device = "${producerIp e}:${e.nfs-export.path}";
+      device = "${producerEndpoint e}:${e.nfs-export.path}";
       fsType = "nfs";
       options = [ "_netdev" "nofail" "x-systemd.device-timeout=30s" ]
+        ++ lib.optional (e.nfs-export.sec != "sys") "sec=${e.nfs-export.sec}"
         ++ e.nfs-export.options;
     };
   };
 
   consumerFileSystems = lib.mapAttrs' mkConsumerMount myMounts;
 in {
-  options.psyclyx.nixos.derived.nfs = {
-    enable = lib.mkEnableOption "project nfs-export entities into server config and consumer mounts";
-  };
+  config = lib.mkIf (me != null) (lib.mkMerge [
+    {
+      psyclyx.nixos.services.nfs-server = lib.mkIf (myExports != {}) {
+        enable = true;
+        exports = serverExports;
+      };
 
-  config = lib.mkIf enabled {
-    psyclyx.nixos.services.nfs-server = lib.mkIf (myExports != {}) {
-      enable = true;
-      exports = serverExports;
-    };
-
-    fileSystems = lib.mkIf (myMounts != {}) consumerFileSystems;
-  };
+      fileSystems = lib.mkIf (myMounts != {}) consumerFileSystems;
+    }
+    # Kerberos NFS: nixpkgs's nfs module auto-enables rpc-gssd /
+    # rpc-svcgssd via systemd ConditionPathExists=/etc/krb5.keytab, so
+    # we don't need to flip any services.* option here. rpcbind is
+    # required even for NFSv4-only because nfs-mountd registers via
+    # portmap on the server side.
+    #
+    # NFSv4 idmap domain MUST match on client + server, otherwise
+    # principal@REALM → UID mapping falls back to Nobody-User and
+    # permission denied ensues. Derived from globals.kerberos.realm
+    # (lowercased dotted form).
+    (lib.mkIf needsKrb {
+      services.rpcbind.enable = true;
+      services.nfs.idmapd.settings.General.Domain =
+        lib.toLower (eg.kerberos.realm or "");
+    })
+  ]);
 }

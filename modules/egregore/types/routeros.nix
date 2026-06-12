@@ -65,6 +65,51 @@
           Supported on CRS3xx (Marvell Prestera) running RouterOS 7.6+.
         '';
       };
+      ipv6Forward = lib.mkOption {
+        type = lib.types.nullOr lib.types.bool;
+        default = null;
+        description = ''
+          Software-level IPv6 forwarding. RouterOS defaults this to
+          `no`, so even with l3-hw-offloading=yes + ipv6-hw=yes,
+          IPv6 packets between VLANs go nowhere until this is on.
+          Null leaves the device's current value; true emits
+          `/ipv6 settings set forward=yes`.
+        '';
+      };
+      l3HwSettings = lib.mkOption {
+        type = lib.types.submodule {
+          options = {
+            ipv6Hw = lib.mkOption {
+              type = lib.types.nullOr lib.types.bool;
+              default = null;
+              description = ''
+                Offload IPv6 routing to the switch chip. Off by default
+                on CRS3xx even when l3HwOffload is on (the IPv6 path was
+                added in RouterOS 7.6 and is a separate toggle). IPv4
+                and IPv6 share the same hardware table; enabling adds
+                no memory overhead until v6 routes appear.
+              '';
+            };
+            icmpReplyOnError = lib.mkOption {
+              type = lib.types.nullOr lib.types.bool;
+              default = null;
+              description = ''
+                Have the switch reply with ICMP errors (TTL exceeded,
+                destination unreachable) for hardware-routed packets.
+                Off means errors silently drop, which is fast but bad
+                for traceroute and path-MTU discovery.
+              '';
+            };
+          };
+        };
+        default = {};
+        description = ''
+          Per-chip L3 hardware offload knobs. Maps to
+          `/interface ethernet switch l3hw-settings set ...`. The
+          per-switch `l3HwOffload` flag is what gates the feature;
+          these are additional sub-knobs.
+        '';
+      };
       routedNetworks = lib.mkOption {
         type = lib.types.listOf lib.types.str;
         default = [];
@@ -218,6 +263,14 @@
           snmp = { enabled = true; };
         };
 
+        l3hw_settings =
+          lib.optionalAttrs (sw.l3HwSettings.ipv6Hw != null) {
+            ipv6_hw = sw.l3HwSettings.ipv6Hw;
+          }
+          // lib.optionalAttrs (sw.l3HwSettings.icmpReplyOnError != null) {
+            icmp_reply_on_error = sw.l3HwSettings.icmpReplyOnError;
+          };
+
         interfaces = map (pname: {
           name    = pname;
           enabled = true;
@@ -274,6 +327,21 @@
           interface = "vlan${toString net.network.vlan}";
           network   = net.attrs.network4;
         }) addressedNetworks;
+
+        # IPv6 addresses follow the same shape, emitted only for
+        # networks where an ipv6 entry is set. Prefix is /64 (the
+        # network's ULA + per-VLAN subnet via ulaSubnetHex).
+        ipv6_addresses = lib.flip lib.concatMap addressedNetworks (netName: let
+          net = top.entities.${netName};
+          v6 = sw.addresses.${netName}.ipv6 or null;
+        in lib.optional (v6 != null) {
+          address   = "${v6}/64";
+          interface = "vlan${toString net.network.vlan}";
+        });
+
+        ipv6_settings = lib.optionalAttrs (sw.ipv6Forward != null) {
+          forwarding = sw.ipv6Forward;
+        };
 
         routes = [{
           # Non-L3 switches keep the default route declared-but-disabled

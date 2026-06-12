@@ -13,12 +13,24 @@
   meAttrs = lib.attrByPath ["entities" hostname "attrs"] {} eg;
   addrMap = meAttrs.addresses or {};
 
-  v4s = lib.filter (a: a != null)
+  # Exclude any address the authoritative DNS already binds on this
+  # host — knot and unbound can't both listen on the same address:53.
+  authoritativeBound =
+    config.psyclyx.nixos.network.dns.authoritative.interfaces or [];
+  isBound = a: builtins.elem a authoritativeBound;
+
+  v4s = lib.filter (a: a != null && !(isBound a))
     (lib.mapAttrsToList (_: a: a.ipv4 or null) addrMap);
-  v6s = lib.filter (a: a != null)
+  v6s = lib.filter (a: a != null && !(isBound a))
     (lib.mapAttrsToList (_: a: a.ipv6 or null) addrMap);
+
+  # Wildcard IPv6 (::) was historically added so fe80 link-locals
+  # work pre-config. Skip it when authoritative DNS binds any IPv6
+  # — both can't claim port 53.
+  authoritativeHasV6 = builtins.any (a: lib.hasInfix ":" a) authoritativeBound;
 in {
   config = lib.mkIf config.psyclyx.nixos.network.dns.resolver.enable {
-    psyclyx.nixos.network.dns.resolver.interfaces = v4s ++ v6s ++ [ "::" ];
+    psyclyx.nixos.network.dns.resolver.interfaces =
+      v4s ++ v6s ++ lib.optional (!authoritativeHasV6) "::";
   };
 }

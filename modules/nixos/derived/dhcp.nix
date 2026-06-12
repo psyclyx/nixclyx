@@ -15,18 +15,27 @@
       (builtins.attrNames (lib.filterAttrs (_: e:
         e.host.mac != {}
         && e.host.interfaces ? ${network}
+        && e.host.addresses ? ${network}
         && !((e.host.boot.mode or "local") == "pxe"
              && builtins.elem network (e.host.boot.pxeInterfaces or []))
       ) hosts));
 
-  # MAC address for a host's physical interface on a network.
-  # For bond VLAN devices (e.g. bond0.25), use the bond's MAC (eno1).
+  # MAC address for a host's interface on a network. VLAN sub-ifaces
+  # (e.g. enp1s0.10 or bond0.25) inherit the parent's MAC, so we strip
+  # the dotted VLAN suffix and look up the base device.
   hostMacForNetwork = hostname: network: let
     h = eg.entities.${hostname}.host;
     physDev = h.interfaces.${network}.device;
+    parentDev = let
+      parts = lib.splitString "." physDev;
+    in
+      if builtins.length parts > 1
+      then builtins.head parts
+      else physDev;
   in
     if h.mac ? ${physDev} then h.mac.${physDev}
-    else h.mac.eno1;  # bond VLANs inherit the bond MAC
+    else if h.mac ? ${parentDev} then h.mac.${parentDev}
+    else h.mac.eno1 or null;  # last-resort lab-bond fallback
 
   # Classless static routes (DHCP option 121, RFC 3442) for networks
   # routed by something other than the pool's gateway. If a switch in

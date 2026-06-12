@@ -74,6 +74,104 @@
       default = {};
     };
 
+    zones = lib.mkOption {
+      type = lib.types.attrsOf (lib.types.submodule {
+        options.label = lib.mkOption {
+          type = lib.types.nullOr lib.types.str;
+          default = null;
+          description = "Human-readable description (links/diagrams).";
+        };
+      });
+      default = {};
+      description = ''
+        Zone declarations. A zone groups networks that share
+        forward-policy treatment. Networks join zones via
+        `network.zone`; forward policy is keyed by zone in
+        `globals.policy`. Zones live in globals (not the entity
+        registry) to avoid name collisions with networks/hosts of
+        the same conceptual name (e.g. `storage` is both a network
+        and a zone).
+      '';
+    };
+
+    policy = lib.mkOption {
+      type = lib.types.attrsOf (lib.types.attrsOf (lib.types.enum [
+        "accept" "drop" "reject"
+      ]));
+      default = {};
+      description = ''
+        Symmetric forward-policy matrix keyed by zone. Read as
+        `policy.<src-zone>.<dst-zone>` → action. Default for any
+        unspecified pair is implicit drop (gateway projections only
+        emit accept/reject rules; the chain's default policy is drop).
+
+        Networks join zones via `network.zone`. Multiple networks in
+        the same zone share identical policy — that's the whole point
+        of the abstraction.
+
+        Gateway projections (iyr nftables, mdf-agg01 ACL generator)
+        read the slice relevant to each gateway and emit rules from
+        this one source of truth.
+      '';
+    };
+
+    kerberos = lib.mkOption {
+      type = lib.types.submodule {
+        options = {
+          realm = lib.mkOption {
+            type = lib.types.str;
+            default = "";
+            description = ''
+              Kerberos realm name. Empty disables the projection;
+              non-empty enables it and propagates to all hosts'
+              krb5.conf via derived/kerberos.nix.
+            '';
+          };
+          primary = lib.mkOption {
+            type = lib.types.nullOr lib.types.str;
+            default = null;
+            description = ''
+              Host entity name running the primary KDC. The projection
+              enables psyclyx.nixos.services.kerberos-kdc on this host
+              with role = "primary".
+            '';
+          };
+          secondaries = lib.mkOption {
+            type = lib.types.listOf lib.types.str;
+            default = [];
+            description = ''
+              Host entity names running secondary KDCs (kprop
+              replicas). The projection enables kerberos-kdc on these
+              hosts with role = "secondary".
+            '';
+          };
+          kdcNetwork = lib.mkOption {
+            type = lib.types.str;
+            default = "vpn";
+            description = ''
+              Network entity name whose addresses are advertised in
+              krb5.conf's KDC list. vpn is the safe choice — all hosts
+              with VPN connectivity can reach the KDCs symmetrically.
+            '';
+          };
+          domainRealmMappings = lib.mkOption {
+            type = lib.types.attrsOf lib.types.str;
+            default = {};
+            description = ''
+              DNS domain → realm mappings injected into clients'
+              krb5.conf. Empty default; populate when you want
+              automatic principal-realm inference based on hostname.
+            '';
+          };
+        };
+      };
+      default = {};
+      description = ''
+        Fleet Kerberos config. Projected into KDC + client modules by
+        derived/kerberos.nix. Disabled when realm = "".
+      '';
+    };
+
     openbao = lib.mkOption {
       type = lib.types.submodule {
         options = {

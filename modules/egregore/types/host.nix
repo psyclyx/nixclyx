@@ -263,6 +263,259 @@
         description = "OpenBao integration knobs for this host.";
       };
 
+      gateway = lib.mkOption {
+        type = lib.types.submodule {
+          options = {
+            lanInterface = lib.mkOption {
+              type = lib.types.nullOr lib.types.str;
+              default = null;
+              description = ''
+                Physical LAN trunk interface. Setting this enables the
+                gateway projection on this host. Null = not a gateway.
+              '';
+            };
+            wanInterface = lib.mkOption {
+              type = lib.types.nullOr lib.types.str;
+              default = null;
+              description = "Physical WAN-side interface (trunk parent for transitVlan).";
+            };
+            lanAddress = lib.mkOption {
+              type = lib.types.nullOr lib.types.str;
+              default = null;
+              description = ''
+                Static address on the untagged LAN trunk parent. Used
+                for legacy/setup-VLAN-1 subnets that aren't modeled as
+                network entities.
+              '';
+            };
+            initrdVlans = lib.mkOption {
+              type = lib.types.listOf lib.types.str;
+              default = [];
+              description = ''
+                Network entity names whose gateway addresses come up
+                in initrd (for early SSH unlock, etc.).
+              '';
+            };
+            initrdKernelModules = lib.mkOption {
+              type = lib.types.listOf lib.types.str;
+              default = [ "8021q" ];
+              description = "Kernel modules pulled into initrd for early VLAN bringup.";
+            };
+            transitDhcpV6 = lib.mkOption {
+              type = lib.types.submodule {
+                options = {
+                  duidRawData = lib.mkOption {
+                    type = lib.types.nullOr lib.types.str;
+                    default = null;
+                    description = "DHCPv6 client DUID (raw colon-separated hex bytes).";
+                  };
+                  iaid = lib.mkOption {
+                    type = lib.types.int;
+                    default = 250;
+                  };
+                  prefixDelegationHint = lib.mkOption {
+                    type = lib.types.str;
+                    default = "::/60";
+                  };
+                };
+              };
+              default = {};
+            };
+            cakeQos = lib.mkOption {
+              type = lib.types.nullOr (lib.types.submodule {
+                options = let
+                  mkRate = desc: lib.mkOption {
+                    type = lib.types.submodule {
+                      options = {
+                        min = lib.mkOption { type = lib.types.int; description = "${desc} min rate (Kbps)."; };
+                        base = lib.mkOption { type = lib.types.int; description = "${desc} base rate (Kbps)."; };
+                        max = lib.mkOption { type = lib.types.int; description = "${desc} max rate (Kbps)."; };
+                      };
+                    };
+                  };
+                in {
+                  download = mkRate "Download";
+                  upload = mkRate "Upload";
+                };
+              });
+              default = null;
+              description = ''
+                CAKE traffic shaping on the WAN transit interface
+                (autoderived as wanInterface.transitVlan). Null = no
+                shaping. Bandwidth rates in Kbps.
+              '';
+            };
+          };
+        };
+        default = {};
+        description = ''
+          Gateway/router declaration. Materialized by derived/gateway.nix
+          into psyclyx.nixos.network.gateway.*. Setting lanInterface
+          enables the projection; leaving it null is the default.
+        '';
+      };
+
+      firewall = lib.mkOption {
+        type = lib.types.submodule {
+          options = {
+            zones = lib.mkOption {
+              type = lib.types.attrsOf (lib.types.submodule {
+                options.extraInterfaces = lib.mkOption {
+                  type = lib.types.listOf lib.types.str;
+                  default = [];
+                  description = ''
+                    Extra device names to assign to this zone, beyond
+                    whatever the projection derives from network.zone +
+                    host.interfaces. For interfaces that don't map to a
+                    network entity — the untagged trunk parent, a WAN
+                    VLAN sub-iface, tleilax's mullvad veth, etc.
+                  '';
+                };
+              });
+              default = {};
+            };
+            input = lib.mkOption {
+              type = lib.types.attrsOf (lib.types.either
+                (lib.types.enum [ "accept" "drop" "reject" ])
+                (lib.types.submodule {
+                  options = {
+                    policy = lib.mkOption {
+                      type = lib.types.enum [ "accept" "drop" ];
+                      default = "drop";
+                    };
+                    allowICMP = lib.mkOption { type = lib.types.bool; default = true; };
+                    allowedTCPPorts = lib.mkOption { type = lib.types.listOf lib.types.int; default = []; };
+                    allowedUDPPorts = lib.mkOption { type = lib.types.listOf lib.types.int; default = []; };
+                    rules = lib.mkOption { type = lib.types.listOf lib.types.attrs; default = []; };
+                  };
+                }));
+              default = {};
+              description = ''
+                Per-zone input policy. Each entry is either a bare
+                accept/drop/reject (shorthand for `{ policy = ...; }`)
+                or a full submodule with port lists and rules.
+                Projections to the NixOS firewall normalize both forms.
+              '';
+            };
+            masquerade = lib.mkOption {
+              type = lib.types.listOf (lib.types.submodule {
+                options = {
+                  from = lib.mkOption { type = lib.types.str; };
+                  to = lib.mkOption { type = lib.types.str; };
+                };
+              });
+              default = [];
+              description = ''
+                Zone-to-zone NAT masquerade rules. Empty list = host
+                is not a NAT gateway. Materialized into
+                psyclyx.nixos.network.firewall.masquerade by the host
+                firewall projection.
+              '';
+            };
+          };
+        };
+        default = {};
+        description = ''
+          Host-specific firewall declarations. Materialized by
+          derived/firewall-host.nix into the
+          psyclyx.nixos.network.firewall.* options. Per-host firewall
+          configuration lives in the host's egregore entity, not in
+          its NixOS module.
+        '';
+      };
+
+      kerberos = lib.mkOption {
+        type = lib.types.submodule {
+          options = {
+            enable = lib.mkOption {
+              type = lib.types.bool;
+              default = false;
+              description = ''
+                Force-include this host in the Kerberos principal
+                registry (`host/<fqdn>@REALM`). For most hosts the
+                projection auto-includes when the host is a consumer
+                of an nfs-export with sec != "sys"; flip this to opt
+                in for non-NFS uses (kadmin, GSSAPI ssh, etc.) or to
+                pre-provision identity ahead of services that need it.
+              '';
+            };
+            fqdnNetwork = lib.mkOption {
+              type = lib.types.str;
+              default = "vpn";
+              description = ''
+                Network entity whose FQDN is used in the principal
+                (`host/<host.attrs.fqdns.<network>>@REALM`). vpn is
+                the default since every host has a VPN address with a
+                stable name.
+              '';
+            };
+          };
+        };
+        default = { };
+        description = ''
+          Kerberos identity config. The KDC projection (derived/
+          kerberos.nix) reads this together with nfs-export data to
+          build the realm's principal list.
+        '';
+      };
+
+      bgp = lib.mkOption {
+        type = lib.types.nullOr (lib.types.submodule {
+          options = {
+            asn = lib.mkOption {
+              type = lib.types.int;
+              description = "Local BGP ASN for this host.";
+            };
+            peer = lib.mkOption {
+              type = lib.types.str;
+              description = ''
+                Entity name of the BGP peer (typically a routeros or
+                routing-capable host entity). Projections derive the
+                peer address from this entity's relevant network.
+              '';
+            };
+            peerAsn = lib.mkOption {
+              type = lib.types.int;
+              description = "Peer's BGP ASN.";
+            };
+            uplinkInterface = lib.mkOption {
+              type = lib.types.str;
+              description = ''
+                Interface name on this host carrying the BGP session
+                (matches a key in `host.interfaces`). Typically the
+                routed transit uplink. The projection emits FRR/bird
+                config tied to this interface.
+              '';
+            };
+            uplinkAddress = lib.mkOption {
+              type = lib.types.nullOr lib.types.str;
+              default = null;
+              description = ''
+                IPv4 address on the uplink interface (CIDR notation).
+                Null = BGP-unnumbered (IPv6 link-local discovery).
+              '';
+            };
+            peerUplinkAddress = lib.mkOption {
+              type = lib.types.nullOr lib.types.str;
+              default = null;
+              description = ''
+                Peer's IPv4 address on the shared /30 (no CIDR). Null
+                when using BGP-unnumbered.
+              '';
+            };
+          };
+        });
+        default = null;
+        description = ''
+          BGP speaker config. When set, derived/bgp.nix emits FRR (or
+          equivalent) config for this host to peer with the named
+          neighbor over `uplinkInterface`. Announced prefixes come from
+          per-host attrs the projection computes (own transit prefix +
+          VM /32s when this host hosts microvms with declared
+          addresses).
+        '';
+      };
+
       exporters = lib.mkOption {
         type = lib.types.attrsOf (
           lib.types.submodule {

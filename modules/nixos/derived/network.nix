@@ -64,6 +64,17 @@
     isDefault = netName == cfg.defaultNetwork;
     mtu = netEnt.network.mtu or 1500;
     useDhcp = (addr.dhcp or false) || (addr.ipv4 or null) == null;
+    # Even when DHCP is requested, inject any declared addresses
+    # statically. networkd allows both — the kernel ends up with the
+    # static address PLUS whatever DHCP/SLAAC hands out, which is the
+    # only practical way to get a stable declared IPv6 today (DHCPv6
+    # in Kea isn't doing per-host reservations like DHCPv4 does, so
+    # clients otherwise land on a SLAAC EUI-64 address). Duplicate
+    # IPv4 (declared == DHCP-assigned, matching the Kea reservation)
+    # is a no-op for networkd; it's the same address.
+    staticAddresses =
+      lib.optional (addr.ipv4 or null != null) "${addr.ipv4}/${prefixLen}"
+      ++ lib.optional (addr.ipv6 or null != null) "${addr.ipv6}/64";
   in {
     name = device;
     value = {
@@ -72,14 +83,11 @@
       # Only emit non-default MTU so existing 1500-byte interfaces keep
       # leaving the kernel default.
       mtu = if mtu != 1500 then mtu else null;
+      addresses = staticAddresses;
     }
-    // (if useDhcp then {
+    // lib.optionalAttrs useDhcp {
       dhcp = true;
-    } else {
-      addresses =
-        ["${addr.ipv4}/${prefixLen}"]
-        ++ lib.optional (addr.ipv6 or null != null) "${addr.ipv6}/64";
-    })
+    }
     // (if isDefault
         # On the default network, static-mode hosts need gateway + DNS
         # set explicitly; DHCP-mode hosts get them from option 3/6.
@@ -102,9 +110,6 @@
   generatedNetworks = builtins.listToAttrs
     (lib.mapAttrsToList mkNetworkEntry hostNetworks);
 
-  # All interface device names for firewall.
-  allDevices = lib.mapAttrsToList (_: _addr: me.interfaces.${_}.device) hostNetworks;
-
   # Default network's interface for initrd.
   defaultDevice =
     if hostNetworks ? ${cfg.defaultNetwork}
@@ -126,6 +131,10 @@ in {
       initrd.interfaces = lib.optional (defaultDevice != null) defaultDevice;
     };
 
-    psyclyx.nixos.network.firewall.zones.lan.interfaces = allDevices ++ ["wg0"];
+    # Firewall zone derivation lives in derived/firewall-policy.nix
+    # (driven by network.zone + host.interfaces). Old behavior here
+    # dumped every device into "lan", which broke as soon as we
+    # introduced multiple zones — leftover lab-host devices on
+    # storage/lab-transit ended up double-listed.
   };
 }

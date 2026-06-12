@@ -14,8 +14,19 @@
   # to networks where gwName is the gateway. A host without that role
   # for a given network has no business being authoritative for it.
   networks = lib.filterAttrs (_: e: e.type == "network") eg.entities;
+  # Networks this host serves DNS for. Prefer the explicit dnsRef
+  # (refs.dns or site fallback) so an L2-only DHCP/DNS listener like
+  # iyr serves storage/lab zones it isn't the gateway for; fall back
+  # to gatewayRef when dnsRef isn't set so the existing
+  # gateway-as-DNS case keeps working.
   vlanNetworks = lib.filterAttrs (
-    _: e: e.network.vlan != null && (e.attrs.gatewayRef or null) == gwName
+    _: e:
+      e.network.vlan != null
+      && (
+        (e.attrs.dnsRef or null) == gwName
+        || ((e.attrs.dnsRef or null) == null
+            && (e.attrs.gatewayRef or null) == gwName)
+      )
   ) networks;
 
   dhcpVlans = lib.sort builtins.lessThan
@@ -25,11 +36,18 @@
     lib.nameValuePair (toString e.network.vlan) name
   ) vlanNetworks);
 
-  # Hosts with MAC + interface on a network.
+  # Hosts with MAC + interface + declared address on a network.
+  # Gateway-derived addresses don't count: the gateway gets its own
+  # PTR via gwLastOctet/gwName below, so requiring a declared address
+  # excludes the gateway from the PTR-server list it would otherwise
+  # double up.
   managedHostsOnNetwork = network:
     lib.sort builtins.lessThan
       (builtins.attrNames (lib.filterAttrs (_: e:
-        e.type == "host" && e.host.mac != {} && e.host.interfaces ? ${network}
+        e.type == "host"
+        && e.host.mac != {}
+        && e.host.interfaces ? ${network}
+        && e.host.addresses ? ${network}
       ) eg.entities));
 
   # Nibble-reverse for IPv6 PTR.
@@ -55,10 +73,13 @@
     name = vlanNameMap.${toString vlanId};
     net = eg.entities.${name}.attrs;
     servers = managedHostsOnNetwork name;
-    serverRecords = lib.concatMapStringsSep "\n" (hostname:
-      "${hostname} IN A ${eg.entities.${hostname}.host.addresses.${name}.ipv4}\n" +
-      "${hostname} IN AAAA ${eg.entities.${hostname}.host.addresses.${name}.ipv6}"
-    ) servers;
+    serverRecords = lib.concatMapStringsSep "\n" (hostname: let
+      addr = eg.entities.${hostname}.host.addresses.${name};
+      v4Line = "${hostname} IN A ${addr.ipv4}";
+      v6Line = lib.optionalString
+        ((addr.ipv6 or null) != null)
+        "\n${hostname} IN AAAA ${addr.ipv6}";
+    in v4Line + v6Line) servers;
     vipRecords = vipRecordsForNetwork name;
   in {
     name = net.zoneName;
@@ -115,7 +136,12 @@
     net = eg.entities.${name};
     na = net.attrs;
     reverseZone = "${na.ip6Reverse}.${ulaReverseBase}.ip6.arpa";
-    servers = managedHostsOnNetwork name;
+    # Only hosts with an IPv6 declared on this network — iyr's
+    # storage entry is v4-only, for instance, so it's an A-record-
+    # only listener.
+    servers = lib.filter
+      (h: (eg.entities.${h}.host.addresses.${name}.ipv6 or null) != null)
+      (managedHostsOnNetwork name);
     hostPartReverseNibbles = addr: let
       parts = lib.splitString "::" addr;
       hostHex = builtins.elemAt parts 1;

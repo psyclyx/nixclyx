@@ -52,17 +52,95 @@
               "10.0.200.0/24" "10.0.210.0/24" "10.0.240.0/24"
             ];
           };
-          # iyr is the apt site gateway; the gateway projection wires
-          # most VLANs onto enp1s0. Declaring main here lets data-driven
-          # projections (e.g. overlay shortcuts) target the right unit.
-          # iyr also participates on the lab VLAN as an L2-only DHCP
-          # listener — lab/storage are gateway'd by mdf-agg01, but iyr
-          # serves the boot-file-name / next-server options for PXE
-          # clients and the storage-VLAN DHCP reservations.
+          # iyr is the apt site gateway for main/infra/guest/iot/mgmt
+          # and an L2-only DHCP/DNS listener on storage/lab (mdf-agg01
+          # is their L3 gateway). Declaring the full interface set
+          # lets data-driven projections (overlay shortcuts, firewall
+          # zones) target the right units without per-host scaffolding.
           interfaces = {
             main.device    = "enp1s0.10";
-            lab.device     = "enp1s0.210";
+            infra.device   = "enp1s0.25";
+            guest.device   = "enp1s0.100";
+            iot.device     = "enp1s0.110";
             storage.device = "enp1s0.200";
+            lab.device     = "enp1s0.210";
+            mgmt.device    = "enp1s0.240";
+            vpn.device     = "wg0";
+          };
+          mac = {
+            enp1s0 = "c8:ff:bf:06:2c:4e";   # LAN trunk parent
+            enp3s0 = "c8:ff:bf:06:2c:4d";   # WAN
+          };
+          gateway = {
+            lanInterface = "enp1s0";
+            wanInterface = "enp3s0";
+            lanAddress = "10.0.0.11/24";    # untagged trunk (legacy setup VLAN 1)
+            initrdVlans = [ "main" "mgmt" ];
+            initrdKernelModules = [ "8021q" "igc" ];
+            transitDhcpV6.duidRawData = "e7:13:f8:92:37:c5:be:76";
+            # Xfinity apartment uplink — symmetric 2.2 Gbps provisioned.
+            # Min kept lower for graceful autorate degradation; max
+            # gives small headroom past nominal.
+            cakeQos = {
+              download = { min = 1400000; base = 2200000; max = 2280000; };
+              upload   = { min = 1400000; base = 2200000; max = 2280000; };
+            };
+          };
+          firewall = {
+            # enp1s0 (untagged trunk parent) shares trust with main →
+            # join the lan zone. enp3s0.250 is the WAN VLAN sub-iface
+            # (transit isn't modeled as a network entity since it
+            # has no internal subnet).
+            zones = {
+              lan.extraInterfaces  = [ "enp1s0" ];
+              wan.extraInterfaces  = [ "enp3s0.250" ];
+            };
+            input = {
+              # Internal zones: trusted.
+              lan = "accept";
+              infra = "accept";
+              storage = "accept";
+              lab-transit = "accept";
+              mgmt = "accept";
+              wg = "accept";
+              # Guests + IoT: permissive at iyr (they go through this
+              # gateway anyway). Override here, not in NixOS module.
+              guest = "accept";
+              iot = "accept";
+              # WAN: drop + specific allows. The TCP port comes from
+              # the SSH service port; hardcoded here pending a port
+              # registry projection.
+              wan = {
+                policy = "drop";
+                allowICMP = true;
+                allowedTCPPorts = [ 17891 ];   # ssh
+                rules = [
+                  {
+                    "udp sport" = 67;
+                    "udp dport" = 68;
+                    comment = "DHCPv4 client";
+                  }
+                  {
+                    "udp dport" = 546;
+                    comment = "DHCPv6 client";
+                  }
+                ];
+              };
+            };
+            masquerade = [
+              # Apt-LAN zones egressing to WAN.
+              { from = "lan"; to = "wan"; }
+              { from = "infra"; to = "wan"; }
+              { from = "guest"; to = "wan"; }
+              { from = "iot"; to = "wan"; }
+              # WG-routed traffic to apt zones needs source NAT.
+              # WG cryptokey check at the hub drops sources outside
+              # the peer's AllowedIPs; masquerading at iyr makes
+              # apt-side traffic look locally-originated so replies
+              # come back through iyr.
+              { from = "wg"; to = "lan"; }
+              { from = "wg"; to = "infra"; }
+            ];
           };
           addresses = {
             vpn.ipv4     = "10.157.0.2";
@@ -96,8 +174,17 @@
           interfaces.main.device = "br0";
           addresses = {
             vpn.ipv4 = "10.157.0.3";
-            main.dhcp = true;
+            # DHCP-acquired but stable via Kea reservation (sigil's MAC
+            # currently isn't modeled in egregore; the address is what
+            # the lease has consistently handed out).
+            main = {
+              dhcp = true;
+              ipv4 = "10.0.10.100";
+            };
           };
+          # NFS to lab-4 over main VLAN: principal must match the
+          # FQDN sigil resolves lab-4 to (sigil.main.apt.psyclyx.net).
+          kerberos.fqdnNetwork = "main";
           roles = ["workstation"];
           deployAddress = "sigil.apt.psyclyx.net";
           hardware.tpm = true;

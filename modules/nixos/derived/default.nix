@@ -29,6 +29,9 @@
     ./dhcp-ddns.nix
     ./distributed-builds.nix
     ./dns-resolver.nix
+    ./firewall-host.nix
+    ./firewall-policy.nix
+    ./kerberos.nix
     ./l2-listeners.nix
     ./nginx-static.nix
     ./nomad.nix
