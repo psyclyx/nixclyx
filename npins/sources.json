@@ -247,9 +247,9 @@
       },
       "branch": "server-decoration",
       "submodules": false,
-      "revision": "6bfd96e6e7a6afd20f053a7ca56a90757b263369",
-      "url": "https://github.com/psyclyx/river/archive/6bfd96e6e7a6afd20f053a7ca56a90757b263369.tar.gz",
-      "hash": "sha256-04+mwkVsGvSTI7065466oSn6C2chyZcME5bS8PMSQO0="
+      "revision": "141147c527c1b6671e94ceb6f96d2640347a9258",
+      "url": "https://github.com/psyclyx/river/archive/141147c527c1b6671e94ceb6f96d2640347a9258.tar.gz",
+      "hash": "sha256-cxq92dd9iVukoFqNtUromqhER1Gsgiv/RhISh5WxoLI="
     },
     "robotnix": {
       "type": "Git",
