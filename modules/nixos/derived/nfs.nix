@@ -93,6 +93,27 @@
   };
 
   consumerFileSystems = lib.mapAttrs' mkConsumerMount myMounts;
+
+  # krb5 mounts use the producer FQDN as the device (so rpc.gssd
+  # requests the matching nfs/<fqdn> service ticket). The site zones
+  # publish both an A and an AAAA for that FQDN, and an off-rack
+  # consumer that prefers IPv6 would route over the inter-VLAN v6 path
+  # — which black-holes at the app layer — and the mount stalls. The
+  # export ACL keys on the consumer's routable IPv4 source anyway, so
+  # IPv4 is the only authorized path. Pin the FQDN to the producer's
+  # IPv4 on the export network via /etc/hosts (files before dns) so
+  # the kernel always picks v4 while gssd still sees the right name.
+  krbMountHostPins = lib.listToAttrs (lib.concatLists (lib.mapAttrsToList
+    (_: e:
+      let
+        producer = eg.entities.${e.refs.producer};
+        net = e.nfs-export.network;
+        fqdn = producer.attrs.fqdns.${net} or null;
+        ipv4 = producer.host.addresses.${net}.ipv4 or null;
+      in
+      lib.optional (e.nfs-export.sec != "sys" && fqdn != null && ipv4 != null)
+        (lib.nameValuePair ipv4 [ fqdn ]))
+    myMounts));
 in {
   config = lib.mkIf (me != null) (lib.mkMerge [
     {
@@ -102,6 +123,10 @@ in {
       };
 
       fileSystems = lib.mkIf (myMounts != {}) consumerFileSystems;
+
+      # Force krb5 NFS mounts onto the producer's export-network IPv4
+      # (see krbMountHostPins above).
+      networking.hosts = lib.mkIf (krbMountHostPins != {}) krbMountHostPins;
     }
     # Kerberos NFS: nixpkgs's nfs module auto-enables rpc-gssd /
     # rpc-svcgssd via systemd ConditionPathExists=/etc/krb5.keytab, so

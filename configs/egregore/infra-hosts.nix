@@ -168,7 +168,7 @@
         host = {
           site = "apt";
           wireguard = {
-            publicKey = "H/zpv+hIETz5HMwIQVAD/MwngrkkhIQxsymuj5UD434=";
+            publicKey = "XKqqjC62uOUhbCn3JPpI0M6WFYqRf8sLpML90JZ1CmE=";
             allowedNetworks = [];
           };
           interfaces.main.device = "br0";

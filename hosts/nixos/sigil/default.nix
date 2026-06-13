@@ -151,6 +151,17 @@
       directories = [
         "/var/lib/nixos"
         "/var/lib/systemd"
+        # WireGuard private key, generated once by wireguard-keygen and
+        # persisted so it survives the @blank rollback — otherwise the
+        # key regenerates every boot and diverges from the pubkey
+        # pinned in egregore (sigil.host.wireguard.publicKey), so the
+        # hub never recognises the peer and wg0 stays down. Mode/group
+        # match what wireguard-keygen sets (root:systemd-network 0750).
+        {
+          directory = "/etc/secrets/wireguard";
+          mode = "0750";
+          group = "systemd-network";
+        }
       ];
       files = [
         {file = "/etc/machine-id"; inInitrd = true;}
@@ -159,6 +170,16 @@
         # boot, and sshd then refuses to load it.
         {file = "/etc/ssh/ssh_host_ed25519_key"; mode = "0600";}
         "/etc/ssh/ssh_host_ed25519_key.pub"
+        # krb5 host keytab for the lab-4 NAS krb5i mount. The tleilax
+        # KDC mints host/sigil.main.apt.psyclyx.net (it auto-provisions
+        # a principal for every krb NFS consumer) and the keytab is
+        # pulled out-of-band into /etc/krb5.keytab. Persist it so it
+        # survives the @blank root rollback — without this, rpc-gssd's
+        # ConditionPathExists=/etc/krb5.keytab is unmet every boot and
+        # the mount fails. The key is stable (KDC re-exports with
+        # `ktadd -norandkey`); if the KDC DB is ever rebuilt, re-pull
+        # and overwrite /persist/etc/krb5.keytab.
+        {file = "/etc/krb5.keytab"; mode = "0600";}
       ];
     };
   };
