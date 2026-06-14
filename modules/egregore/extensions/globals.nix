@@ -163,6 +163,22 @@
               automatic principal-realm inference based on hostname.
             '';
           };
+          userPrincipals = lib.mkOption {
+            type = lib.types.listOf lib.types.str;
+            default = [];
+            description = ''
+              Bare usernames to provision as human user principals
+              (`<user>@<realm>`) in the KDC. Unlike host/nfs principals
+              these aren't derived from any entity — a human accessing a
+              krb5* NFS mount under their own uid needs a per-user
+              principal (MIT krb5 maps the single-component principal
+              `user@REALM` to the local account `user`). The KDC mints
+              each with a random key and pushes its keytab to OpenBao
+              like any other principal; the consuming host pulls that
+              keytab and runs an auto-kinit (see the kerberos
+              user-ticket module).
+            '';
+          };
         };
       };
       default = {};

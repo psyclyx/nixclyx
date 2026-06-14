@@ -43,6 +43,12 @@
         "psyclyx.net" = "PSYCLYX.NET";
         ".psyclyx.net" = "PSYCLYX.NET";
       };
+      # Human principal for browsing the krb5i lab-4 NAS mount as
+      # `psyc` (uid 1000) on sigil — root uses the machine keytab, but
+      # an unprivileged uid needs its own ticket. The KDC mints
+      # psyc@PSYCLYX.NET + pushes the keytab to OpenBao; sigil pulls it
+      # and auto-kinits (see hosts/nixos/sigil + kerberos user-ticket).
+      userPrincipals = [ "psyc" ];
     };
 
     # Policy zones. A zone groups networks that share forward-policy

@@ -72,6 +72,15 @@
         keepAlive = "10m";
         extraEnv.OLLAMA_FLASH_ATTENTION = "0"; # gemma4 FA crashes on Ampere (RTX 3090)
       };
+
+      # Keep psyc's TGT fresh so browsing the krb5i /mnt/nas export
+      # works under our own uid (root already works via the machine
+      # keytab). Keytab pulled out-of-band from OpenBao like the host
+      # keytab below, into a persisted root-only file.
+      kerberos-user-ticket = {
+        enable = true;
+        users.psyc.keytab = "/etc/krb5-psyc.keytab";
+      };
     };
 
     system = {
@@ -180,6 +189,13 @@
         # `ktadd -norandkey`); if the KDC DB is ever rebuilt, re-pull
         # and overwrite /persist/etc/krb5.keytab.
         {file = "/etc/krb5.keytab"; mode = "0600";}
+        # psyc@PSYCLYX.NET user keytab for the krb5i NAS mount under
+        # our own uid — the KDC mints psyc (globals.kerberos
+        # .userPrincipals) and pushes its keytab to OpenBao; pulled
+        # out-of-band here like the host keytab and consumed by the
+        # kerberos-user-ticket auto-kinit service. Persist so it
+        # survives the @blank rollback. Re-pull if the KDC DB is rebuilt.
+        {file = "/etc/krb5-psyc.keytab"; mode = "0600";}
       ];
     };
   };

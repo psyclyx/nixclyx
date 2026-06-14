@@ -81,7 +81,11 @@ let
       if fqdn == null then null else "nfs/${fqdn}@${realm}"
     ) authedExports);
 
-  allPrincipals = lib.unique (hostPrincipals ++ nfsPrincipals);
+  # Human user principals (`<user>@REALM`). Not entity-derived — a
+  # person accessing a krb5* NFS mount under their own uid needs one.
+  userPrincipals = map (u: "${u}@${realm}") (kerb.userPrincipals or []);
+
+  allPrincipals = lib.unique (hostPrincipals ++ nfsPrincipals ++ userPrincipals);
 
   # Secondary peer hostnames the primary should kprop to. We use the
   # KDC-network FQDN so kpropd hostname checks line up.
