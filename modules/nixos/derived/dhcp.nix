@@ -154,7 +154,13 @@
     ];
     ddns-qualifying-suffix = "${na.zoneName}.";
     reservations = let
-      servers = managedHostsOnNetwork pool.network;
+      # Only hosts that actually have a v6 address on this network get a
+      # v6 reservation; a v4-only L2 anchor (e.g. iyr on a routed lab/
+      # storage VLAN) would otherwise emit `"ip-addresses": [null]`,
+      # which kea >=3.0.3 rejects as a syntax error.
+      servers = lib.filter
+        (name: (eg.entities.${name}.host.addresses.${pool.network}.ipv6 or null) != null)
+        (managedHostsOnNetwork pool.network);
     in map (name: {
       "hw-address" = hostMacForNetwork name pool.network;
       "ip-addresses" = [eg.entities.${name}.host.addresses.${pool.network}.ipv6];
