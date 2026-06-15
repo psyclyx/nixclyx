@@ -234,9 +234,9 @@
       },
       "branch": "main",
       "submodules": false,
-      "revision": "4d8cf1f58b279b83a7d878bcbef816d1cddf4e01",
-      "url": "https://github.com/psyclyx/psyclight/archive/4d8cf1f58b279b83a7d878bcbef816d1cddf4e01.tar.gz",
-      "hash": "sha256-s7Rt4qtYtZ5XAoC69kHkJde9V/ebTmYXukcVufixE+w="
+      "revision": "bcadce62c1a551c3d195569968ae5dd4aef26fc7",
+      "url": "https://github.com/psyclyx/psyclight/archive/bcadce62c1a551c3d195569968ae5dd4aef26fc7.tar.gz",
+      "hash": "sha256-x5ryjvhVa9gC7IC8FzjBQ6c2IHA0ipKNn+0r5S4U1dE="
     },
     "river": {
       "type": "Git",
