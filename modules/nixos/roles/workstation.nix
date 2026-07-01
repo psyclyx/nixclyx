@@ -4,11 +4,33 @@
   config = {
     lib,
     pkgs,
+    config,
     nixclyx,
     ...
-  }: {
+  }: let
+    # pkgs.linux_zen tracks the newest zen release (currently 7.1.x), but
+    # zfs_2_4 caps at kernel 7.0 and marks its module broken above that.
+    # Rebuild the zen kernel from the newest zen tag ZFS still supports so
+    # ZFS hosts keep the zen patchset instead of dropping to stock.
+    linuxPackages_zen_zfs = pkgs.linuxPackagesFor (pkgs.linux_zen.override {
+      argsOverride = rec {
+        version = "7.0.14";
+        modDirVersion = "${version}-zen1";
+        src = pkgs.fetchFromGitHub {
+          owner = "zen-kernel";
+          repo = "zen-kernel";
+          rev = "v${version}-zen1";
+          sha256 = "1fcxrizyhichfwp2541113zij663j0nnizg2lfk0kfky59mlmcal";
+        };
+      };
+    });
+  in {
     boot = {
-      kernelPackages = lib.mkDefault pkgs.linuxPackages_zen;
+      kernelPackages = lib.mkDefault (
+        if config.boot.zfs.enabled
+        then linuxPackages_zen_zfs
+        else pkgs.linuxPackages_zen
+      );
     };
 
     environment.systemPackages =
