@@ -144,6 +144,12 @@
 
           # HTTPS-only mode
           "dom.security.https_only_mode" = true;
+
+          # Explicitly keep resistFingerprinting off: RFP clamps timer
+          # precision and randomizes canvas readback, which breaks JS
+          # timers and HTML5 canvas rendering. Pinned so the profile
+          # can't drift it back on.
+          "privacy.resistFingerprinting" = false;
         };
       };
     };
