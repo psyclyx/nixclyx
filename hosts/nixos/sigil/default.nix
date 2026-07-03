@@ -193,8 +193,8 @@
   };
 
   stylix = {
-    image = "${nixclyx.assets}/wallpapers/4x-ppmm-mami.jpg";
-    base16Scheme = "${nixclyx.assets}/palettes/4x-ppmm-mami.yaml";
+    image = "${nixclyx.assets}/wallpapers/4x-ppmm-city-night.jpg";
+    base16Scheme = "${nixclyx.assets}/palettes/4x-ppmm-city-night.yaml";
     polarity = "dark";
   };
 }
