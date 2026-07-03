@@ -65,14 +65,6 @@
         schedulerHost = "10.0.25.11"; # lab-1 via WireGuard
         noRemote = true;
       };
-      ollama = {
-        enable = true;
-        host = "0.0.0.0";
-        acceleration = "cuda";
-        keepAlive = "10m";
-        extraEnv.OLLAMA_FLASH_ATTENTION = "0"; # gemma4 FA crashes on Ampere (RTX 3090)
-      };
-
       # Keep psyc's TGT fresh so browsing the krb5i /mnt/nas export
       # works under our own uid (root already works via the machine
       # keytab). Keytab pulled out-of-band from OpenBao like the host
