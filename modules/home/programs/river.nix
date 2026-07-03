@@ -16,23 +16,6 @@
     shoal-dmenu = "${lib.getExe config.programs.shoal.package} --dmenu";
     swaylock = lib.getExe config.programs.swaylock.package;
     wayland-logout = lib.getExe pkgs.wayland-logout;
-    wlr-randr = "${pkgs.wlr-randr}/bin/wlr-randr";
-
-    # Script that resolves monitor identifiers to connectors at runtime
-    apply-layout = pkgs.writeShellScript "apply-monitor-layout" ''
-      set -euo pipefail
-      json=$(${wlr-randr} --json)
-      resolve() {
-        local ident="$1"
-        echo "$json" | ${pkgs.jq}/bin/jq -r --arg id "$ident" \
-          '.[] | select(.description | startswith($id)) | .name' | head -1
-      }
-      ${lib.concatStringsSep "\n" (lib.mapAttrsToList (_: m: let
-        pos = "--pos ${toString m.position.x},${toString m.position.y}";
-        mode = lib.optionalString (m.mode != null) " --mode ${toString m.mode.width}x${toString m.mode.height}";
-        scale = lib.optionalString (m.scale != 1.0) " --scale ${toString m.scale}";
-      in ''conn=$(resolve ${lib.escapeShellArg m.identifier}) && [ -n "$conn" ] && ${wlr-randr} --output "$conn" ${pos}${mode}${scale}'') (lib.filterAttrs (_: m: m.enable) monitors))}
-    '';
 
     power-menu = pkgs.writeShellScriptBin "river-power-menu" ''
       options="Lock\nLogout\nSuspend\nReboot\nShutdown"
@@ -66,6 +49,9 @@
       programs = {
         alacritty.enable = lib.mkDefault true;
         tidepool.enable = lib.mkDefault true;
+        # kanshi applies the declared monitor layout and reapplies it on
+        # hotplug. Only meaningful when monitors are declared.
+        kanshi.enable = lib.mkDefault (monitors != {});
       };
       services.mako.enable = lib.mkDefault true;
     };
@@ -90,23 +76,15 @@
       executable = true;
     };
 
-    systemd.user.services.wlr-randr = lib.mkIf (monitors != {}) {
-      Unit = {
-        Description = "Apply monitor layout via wlr-randr";
-        PartOf = ["graphical-session.target"];
-      };
-      Service = {
-        Type = "oneshot";
-        ExecStart = apply-layout;
-        RemainAfterExit = true;
-      };
-      Install.WantedBy = ["graphical-session.target"];
-    };
-
     systemd.user.services.swaybg = {
       Unit = {
         Description = "Wallpaper (swaybg)";
-        After = ["graphical-session.target"];
+        # Order after kanshi so the wallpaper is drawn against the final
+        # monitor layout (position/mode/scale) rather than the default
+        # output geometry, which made it paint too early. The kanshi unit
+        # only exists when monitors are declared; a plain After= on an
+        # unloaded unit is a no-op, so this is safe either way.
+        After = ["graphical-session.target" "kanshi.service"];
         PartOf = ["graphical-session.target"];
       };
       Service = {
