@@ -41,6 +41,9 @@
         pkgs.vlc
         pkgs.psyclyx.ilo
 
+        # Editors (no HM/NixOS module upstream, so ship the package)
+        pkgs.zed-editor
+
         # Graphics / creative
         pkgs.blender
         pkgs.inkscape
