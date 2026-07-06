@@ -23,10 +23,14 @@
         # lab.
         network = "lab";
         # Sigil has no lab-VLAN address. Its source IP for traffic to
-        # 10.0.210.0/24 stays on main (10.0.10.100) — its only
-        # routable interface — so the export ACL keys on main.
+        # 10.0.210.0/24 stays on main — its only routable interface — so
+        # the export ACL keys on main. Sigil's main address is
+        # DHCP-dynamic (no pinned reservation), so match the whole main
+        # /24 rather than a single host IP; sec=krb5i still gates the
+        # mount, so the broadened IP ACL doesn't weaken auth.
         consumerNetwork = "main";
         consumers = [ "sigil" ];
+        consumerSubnet = true;
         sec = "krb5i";
         mountAt = "/mnt/nas";
         readOnly = false;

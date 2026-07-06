@@ -31,6 +31,16 @@
   consumerIp = consumer: network:
     eg.entities.${consumer}.host.addresses.${network}.ipv4;
 
+  # Server-side ACL client-match addresses for an export. Normally one
+  # /32 per consumer (their source IP on the ACL network); when
+  # `consumerSubnet` is set, a single entry for the whole ACL-network
+  # subnet (for DHCP-dynamic consumers — krb5* still gates the mount).
+  aclAddresses = e:
+    let net = consumerAclNetwork e; in
+    if e.nfs-export.consumerSubnet or false
+    then [ eg.entities.${net}.network.ipv4 ]
+    else map (c: consumerIp c net) e.nfs-export.consumers;
+
   # Default per-client options. Append sec= when the export demands
   # Kerberos so each client line carries it (exports(5) supports
   # per-client sec).
@@ -38,12 +48,12 @@
 
   mkServerExport = _expName: e: {
     path = e.nfs-export.path;
-    clients = map (c: {
-      address = consumerIp c (consumerAclNetwork e);
+    clients = map (addr: {
+      address = addr;
       readOnly = e.nfs-export.readOnly;
       options = baseClientOpts
         ++ lib.optional (e.nfs-export.sec != "sys") "sec=${e.nfs-export.sec}";
-    }) e.nfs-export.consumers;
+    }) (aclAddresses e);
   };
 
   serverExports = lib.mapAttrsToList mkServerExport myExports;

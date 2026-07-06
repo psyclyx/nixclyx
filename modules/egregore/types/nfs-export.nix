@@ -49,6 +49,19 @@
         default = [ ];
         description = "Host entity names allowed to mount this export.";
       };
+      consumerSubnet = lib.mkOption {
+        type = lib.types.bool;
+        default = false;
+        description = ''
+          When true, the server-side export ACL matches the whole
+          `consumerNetwork` IPv4 subnet (a single CIDR client) instead
+          of each consumer's individual address. Use for consumers on a
+          DHCP-dynamic network whose exact source IP isn't pinned — the
+          `sec=krb5*` class still gates who may actually mount, so the
+          broadened IP ACL doesn't weaken auth. `consumers` is still
+          used for the client-side mount projection.
+        '';
+      };
       readOnly = lib.mkOption {
         type = lib.types.bool;
         default = false;
