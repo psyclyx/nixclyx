@@ -71,6 +71,7 @@ def generate(config):
     vlan_ifaces = config.get("vlan_interfaces", [])
     addresses = config.get("addresses", [])
     addresses6 = config.get("ipv6_addresses", [])
+    nd6 = config.get("ipv6_nd", [])
     routes = config.get("routes", [])
     routes6 = config.get("ipv6_routes", [])
 
@@ -467,6 +468,25 @@ def generate(config):
             lines.append(" ".join(parts))
         lines.append("")
 
+    # ── IPv6 ND (per-interface RA overrides) ───────────────────
+    # RouterOS defaults to advertising every SVI with a global v6
+    # address as an IPv6 default router (ra-lifetime>0). On interfaces
+    # where the switch is transit-only (it has its own gateway there),
+    # that makes hosts blackhole internet v6 through it. A per-interface
+    # entry with ra-lifetime=none keeps SLAAC prefix advertisement but
+    # stops the switch claiming to be a default router.
+    if nd6:
+        lines.append("# ── IPv6 ND ──")
+        lines.append("/ipv6 nd")
+        for n in nd6:
+            parts = [f"add interface={n['interface']}"]
+            if n.get("ra_lifetime") is not None:
+                parts.append(f"ra-lifetime={n['ra_lifetime']}")
+            if n.get("comment"):
+                parts.append(f'comment="{n["comment"]}"')
+            lines.append(" ".join(parts))
+        lines.append("")
+
     # ── IPv6 routes ────────────────────────────────────────────
     if routes6:
         lines.append("# ── IPv6 routes ──")
@@ -605,6 +625,9 @@ _IDENTITY = {
     "/interface vlan": ("name",),
     "/ip address": ("address",),
     "/ipv6 address": ("address",),
+    # ND overrides are one-per-interface; the default `interface=all`
+    # row is a RouterOS default and never appears in /export.
+    "/ipv6 nd": ("interface",),
     "/interface bridge vlan": ("vlan-ids",),
     # Switch chip identity is by name. We emit `set [find name=<n>] ...`
     # rather than `add`; handled specially in diff_state.
@@ -623,6 +646,7 @@ _COMPARE_FIELDS = {
     "/interface vlan": ("interface", "name", "vlan-id", "mtu", "comment"),
     "/ip address": ("address", "interface", "network", "comment"),
     "/ipv6 address": ("address", "interface", "advertise", "no-dad", "comment"),
+    "/ipv6 nd": ("interface", "ra-lifetime", "comment"),
     "/interface bridge vlan": ("bridge", "vlan-ids", "tagged", "untagged"),
     "/interface ethernet switch": ("name", "l3-hw-offloading", "qos-hw-offloading"),
     "/interface ethernet switch l3hw-settings": (
@@ -667,6 +691,19 @@ _DEFAULT_VALUES = {
 }
 
 
+def _canon_field(section, key, val):
+    """Canonicalize a field value so the spec form and the `/export
+    terse` form compare equal. RouterOS omits the default /64 prefix on
+    `/ipv6 address` export (`.../64` → bare address), so strip it from
+    the spec side — otherwise every SVI address diffs as changed and the
+    apply churns (remove + re-add) all of them."""
+    if val is None:
+        return None
+    if section == "/ipv6 address" and key == "address" and val.endswith("/64"):
+        return val[:-len("/64")]
+    return val
+
+
 def _normalize_entry(section, entry):
     """Project an entry down to comparable fields, normalize list values.
 
@@ -683,7 +720,7 @@ def _normalize_entry(section, entry):
             v = defaults[f]
         if f in ("tagged", "untagged") and v is not None:
             v = _normalize_list(v)
-        out[f] = v
+        out[f] = _canon_field(section, f, v)
     return out
 
 
@@ -700,7 +737,7 @@ def _index_section(section, entries):
     for action, params in entries:
         if action not in valid_actions:
             continue
-        ident = tuple(params.get(k) for k in keys)
+        ident = tuple(_canon_field(section, k, params.get(k)) for k in keys)
         if any(v is None for v in ident):
             continue
         out[ident] = _normalize_entry(section, params)
@@ -718,6 +755,7 @@ def _desired_diffable(config):
         "/interface vlan": [],
         "/ip address": [],
         "/ipv6 address": [],
+        "/ipv6 nd": [],
         "/interface bridge vlan": [],
         "/interface ethernet switch": [],
         "/interface ethernet switch l3hw-settings": [],
@@ -803,6 +841,14 @@ def _desired_diffable(config):
             params["comment"] = a["comment"]
         sections["/ipv6 address"].append(("add", params))
 
+    for n in config.get("ipv6_nd", []):
+        params = {"interface": n["interface"]}
+        if n.get("ra_lifetime") is not None:
+            params["ra-lifetime"] = n["ra_lifetime"]
+        if n.get("comment"):
+            params["comment"] = n["comment"]
+        sections["/ipv6 nd"].append(("add", params))
+
     for bv in bridge.get("vlans", []):
         params = {
             "bridge": bridge_name,
@@ -826,20 +872,28 @@ def _format_find(section, ident):
     return "[find " + " ".join(parts) + "]"
 
 
+def _fmt_val(v):
+    """Render an rsc `key=value` value token. Quote when the value is
+    empty or contains whitespace (e.g. `comment="a b"`); leave bare
+    tokens like `ra-lifetime=none` unquoted."""
+    s = "" if v is None else str(v)
+    if s == "" or any(c.isspace() for c in s):
+        return f'"{s}"'
+    return s
+
+
 def _format_add(params):
-    return "add " + " ".join(f"{k}={v}" for k, v in params.items())
+    return "add " + " ".join(f"{k}={_fmt_val(v)}" for k, v in params.items())
 
 
 def _format_set(section, ident, changed):
     if section in _SINGLETON:
         # No selector — settings are chip-rooted singletons.
         return "set " + " ".join(
-            f"{k}={v}" if v else f"{k}=\"\""
-            for k, v in changed.items()
+            f"{k}={_fmt_val(v)}" for k, v in changed.items()
         )
     return f"set {_format_find(section, ident)} " + " ".join(
-        f"{k}={v}" if v else f"{k}=\"\""
-        for k, v in changed.items()
+        f"{k}={_fmt_val(v)}" for k, v in changed.items()
     )
 
 

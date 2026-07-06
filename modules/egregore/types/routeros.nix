@@ -343,6 +343,24 @@
           forwarding = sw.ipv6Forward;
         };
 
+        # On the uplink network the switch is transit-only — its own
+        # default route exits via that VLAN, so it must NOT advertise
+        # itself as an IPv6 default router there. Otherwise hosts on that
+        # VLAN (which already have their real gateway) pick the switch up
+        # as an equal-cost default and blackhole internet v6 through it,
+        # since the switch has no v6 default of its own. Only relevant
+        # when the switch actually holds a v6 address on the uplink SVI.
+        # (No comment emitted: RouterOS `/ipv6 nd` accepts `comment=` but
+        # never stores/exports it, so a comment would make the incremental
+        # apply perpetually think it's out of sync. The rationale lives
+        # here in source, which is where operators read it.)
+        ipv6_nd = lib.optional
+          ((sw.addresses.${uplinkName}.ipv6 or null) != null)
+          {
+            interface = "vlan${toString uplinkNet.network.vlan}";
+            ra_lifetime = "none";
+          };
+
         routes = [{
           # Non-L3 switches keep the default route declared-but-disabled
           # (matches prior behavior — a placeholder operators enable by
