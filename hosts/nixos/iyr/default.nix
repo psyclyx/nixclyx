@@ -9,6 +9,42 @@ in
 
   systemd.network.networks."31-enp3s0.${toString eg.conventions.transitVlan}".linkConfig.MTUBytes = 1500;
 
+  # WAN2 (VLAN 251) — a second uplink brought in on idf-dist01 sfp4 and
+  # trunked to iyr tagged alongside WAN1 (250) via mdf-brk01 port5. For
+  # now this is validation-only: iyr pulls a DHCP lease and can source
+  # pings out enp3s0.251 (e.g. `ping -I enp3s0.251 1.1.1.1`), but all of
+  # its DHCP routes live in a dedicated table (251) reached only by an
+  # oif policy rule, so they never touch the main default route (WAN1)
+  # and no client/LAN traffic is ever routed here. Firewall posture is
+  # the shared `wan` zone (enp3s0.251 is added there in the iyr host
+  # entity): input drop + ICMP + DHCP-client only.
+  #
+  # The VLAN netdev + enp3s0 parent-list wiring come from the interfaces
+  # module; only the L3/DHCP unit is hand-written (the generic module's
+  # dhcp path installs into the main table, which we specifically don't
+  # want here).
+  psyclyx.nixos.network.interfaces.vlans."enp3s0.251" = { id = 251; parent = "enp3s0"; };
+  systemd.network.networks."31-enp3s0.251" = {
+    matchConfig.Name = "enp3s0.251";
+    networkConfig.DHCP = "ipv4";
+    dhcpV4Config = {
+      RouteTable = 251;
+      UseDNS = false;
+      UseNTP = false;
+      UseHostname = false;
+      ClientIdentifier = "mac";
+    };
+    routingPolicyRules = [{
+      OutgoingInterface = "enp3s0.251";
+      Table = 251;
+      Priority = 251;
+    }];
+    linkConfig = {
+      MTUBytes = 1500;
+      RequiredForOnline = "no";
+    };
+  };
+
   # L2-only listener VLANs (lab, storage) on enp1s0 come from
   # derived/l2-listeners.nix; parent-unit VLAN aggregation is done by
   # network/interfaces.nix so gateway + listener children all hang off

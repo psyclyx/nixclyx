@@ -88,12 +88,14 @@
           };
           firewall = {
             # enp1s0 (untagged trunk parent) shares trust with main →
-            # join the lan zone. enp3s0.250 is the WAN VLAN sub-iface
-            # (transit isn't modeled as a network entity since it
-            # has no internal subnet).
+            # join the lan zone. enp3s0.250/.251 are the WAN VLAN
+            # sub-ifaces (transit isn't modeled as a network entity
+            # since it has no internal subnet). .251 is a second,
+            # validation-only uplink — see hosts/nixos/iyr/default.nix;
+            # it shares the WAN drop+ICMP+DHCP-client posture.
             zones = {
               lan.extraInterfaces  = [ "enp1s0" ];
-              wan.extraInterfaces  = [ "enp3s0.250" ];
+              wan.extraInterfaces  = [ "enp3s0.250" "enp3s0.251" ];
             };
             input = {
               # Internal zones: trusted.

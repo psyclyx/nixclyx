@@ -13,7 +13,12 @@ let
   # offload); access ports come online as lab hosts get NICs wired
   # per env in phase 3 of the rework.
   internal = [10 25 100 110 200 210 220 221 222 223 240];
-  all      = internal ++ [250];
+  # WAN transit VLANs — L2-only, not modeled as network entities (they
+  # have no internal subnet). 250 is the primary Xfinity uplink; 251 is
+  # a second uplink brought in on idf-dist01 sfp4. Both ride every `all`
+  # trunk and land tagged on iyr's enp3s0 (via mdf-brk01 port5).
+  wan      = [250 251];
+  all      = internal ++ wan;
 in {
   gate = "always";
   config = {
@@ -172,7 +177,7 @@ in {
             port2 = {};
             port3 = {};
             port4 = {};
-            port5 = { vlans = [250]; meta = { peer = "iyr"; description = "iyr WAN (enp3s0, transit VLAN)"; }; };
+            port5 = { vlans = wan; meta = { peer = "iyr"; description = "iyr WAN (enp3s0, transit VLANs 250/251)"; }; };
             port6 = { vlans = internal; meta = { peer = "iyr"; description = "iyr LAN (enp1s0, all internal VLANs)"; }; };
             port7 = {};
             port8 = {};
@@ -194,7 +199,7 @@ in {
             "sfp-sfpplus1" = { vlans = all; meta.peer = "mdf-agg01"; };
             "sfp-sfpplus2" = { vlan = 250; meta.description = "modem (WAN)"; };
             "sfp-sfpplus3" = { vlans = all; meta.peer = "idf-poe01"; };
-            "sfp-sfpplus4" = { vlan = 10; meta.description = "fireplace drop"; };
+            "sfp-sfpplus4" = { vlan = 251; meta.description = "WAN2 (modem, transit VLAN)"; };
           };
         };
       };
