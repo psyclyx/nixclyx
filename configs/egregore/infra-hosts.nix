@@ -176,9 +176,16 @@
           interfaces.main.device = "br0";
           addresses = {
             vpn.ipv4 = "10.157.0.3";
-            # DHCP-acquired but stable via Kea reservation (sigil's MAC
-            # currently isn't modeled in egregore; the address is what
-            # the lease has consistently handed out).
+            # DHCP-acquired and genuinely dynamic — sigil's MAC isn't
+            # modeled in egregore, so there's NO Kea reservation; the
+            # lease just used to land on .100 as the first pool address
+            # and has since drifted. DNS is handled by DDNS: on lease,
+            # Kea registers sigil.main.<zone> → the live address, so
+            # sigil deliberately gets no static apex A (zones.nix
+            # pickAddr skips DHCP-mode addresses). The ipv4 below is a
+            # non-authoritative hint retained only for site-local
+            # underlay routing (overlay.nix) and may be stale — pin the
+            # MAC + a reservation if a stable value is ever needed here.
             main = {
               dhcp = true;
               ipv4 = "10.0.10.100";

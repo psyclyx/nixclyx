@@ -188,12 +188,22 @@
     ) eg.entities;
 
     # Pick the first network in the preference list for which this host
-    # has a non-null IPv4 in its resolved addresses (host.attrs.addresses
-    # already folds in gateway-derived entries).
+    # has a non-null, *stable* IPv4 in its resolved addresses
+    # (host.attrs.addresses already folds in gateway-derived entries).
+    # A DHCP-assigned address only counts as stable when the host has a
+    # modeled MAC — that's what earns it a Kea reservation (same signal
+    # managedHostsOnNetwork uses), so the declared IPv4 is the address
+    # it actually gets. A DHCP host with no modeled MAC (e.g. sigil) has
+    # no reservation and no stable address to publish in the static
+    # apex; it's reachable via its per-VLAN DDNS name instead
+    # (sigil.main.<site>). Static (dhcp=false) addresses always count.
     pickAddr = h: let
       candidates = h.attrs.addresses or {};
+      hasMac = (h.host.mac or {}) != {};
       hit = lib.findFirst
-        (n: candidates ? ${n} && (candidates.${n}.ipv4 or null) != null)
+        (n: candidates ? ${n}
+          && (candidates.${n}.ipv4 or null) != null
+          && (!(candidates.${n}.dhcp or false) || hasMac))
         null
         siteZoneCfg.networks;
     in if hit == null then null else candidates.${hit};
