@@ -5,6 +5,7 @@ in
     imports =
       [
         (import sources.nvf).homeManagerModules.default
+        (import sources.pi-nix {}).homeManagerModules.default
         "${sources.sops-nix}/modules/home-manager/sops.nix"
         "${sources.shoal}/nix/hm-module.nix"
         "${sources.tidepool}/nix/hm-module.nix"

@@ -212,6 +212,19 @@
       "url": "https://github.com/notashelf/nvf/archive/5bd50f1b71686715737537fd363281b0b0123085.tar.gz",
       "hash": "sha256-kw1sJ6WONc6lin/L81sB90fEtR9kxj/HN6RO++92vSI="
     },
+    "pi-nix": {
+      "type": "Git",
+      "repository": {
+        "type": "GitHub",
+        "owner": "psyclyx",
+        "repo": "pi-nix"
+      },
+      "branch": "main",
+      "submodules": false,
+      "revision": "a88d36113d12767c572f144ae24292544bb93c5e",
+      "url": "https://github.com/psyclyx/pi-nix/archive/a88d36113d12767c572f144ae24292544bb93c5e.tar.gz",
+      "hash": "sha256-sl12Ti8xpHPcdqdEQyHlhb0bYMH5QGcqMwGH4+6LBgM="
+    },
     "preservation": {
       "type": "Git",
       "repository": {
