@@ -29,6 +29,7 @@
     {
       programs.nvf = {
         enable = true;
+        defaultEditor = true;
 
         settings = {
           imports = [ nixclyx.modules.nvf ];
