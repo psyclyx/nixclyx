@@ -18,9 +18,9 @@
     # Systemd escaping: "/" -> "-", literal "-" -> "\\x2d".
     # Reverse: protect literal hyphens, convert separators, restore hyphens.
     unescapeDevicePath = escaped: let
-      protected = builtins.replaceStrings ["\\x2d"] ["\x00"] escaped;
+      protected = builtins.replaceStrings ["\\x2d"] ["x00"] escaped;
       withSlashes = builtins.replaceStrings ["-"] ["/"] protected;
-      restored = builtins.replaceStrings ["\x00"] ["-"] withSlashes;
+      restored = builtins.replaceStrings ["x00"] ["-"] withSlashes;
     in
       "/" + restored;
 

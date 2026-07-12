@@ -13,16 +13,14 @@
       ssh = {
         enable = true;
         enableDefaultConfig = false;
-        matchBlocks."*" =
+        settings."*" =
           {
-            addKeysToAgent = "yes";
-            compression = false;
-            extraOptions = {
-              "UpdateHostKeys" = "no";
-              "Ciphers" = "aes128-gcm@openssh.com,aes256-gcm@openssh.com,chacha20-poly1305@openssh.com";
-            };
+            AddKeysToAgent = "yes";
+            Compression = false;
+            UpdateHostKeys = "no";
+            Ciphers = "aes128-gcm@openssh.com,aes256-gcm@openssh.com,chacha20-poly1305@openssh.com";
           }
-          // lib.optionalAttrs isDarwin {"useKeychain" = "yes";};
+          // lib.optionalAttrs isDarwin {UseKeychain = "yes";};
       };
     };
 

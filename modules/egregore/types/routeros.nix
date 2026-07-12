@@ -381,7 +381,8 @@
       };
       generate-config = {
         description = "Generate complete RouterOS .rsc configuration.";
-        impl = ''routeros-config generate <<'EGREGORE_EOF'
+        impl = ''
+routeros-config generate <<'EGREGORE_EOF'
 ${json}
 EGREGORE_EOF'';
       };

@@ -135,11 +135,13 @@
       cookieValue = builtins.hashString "md5" "${sw.username}${sw.password}";
       cookie = "${sw.username}=${cookieValue}";
       curlAuth = ''-b "${cookie}" -e "http://${mgmtIp}/"'';
-      loginCmd = ''curl -sf --connect-timeout 5 \
+      loginCmd = ''
+curl -sf --connect-timeout 5 \
     -e "http://${mgmtIp}/" \
     -d "username=${sw.username}&password=${sw.password}&Response=${cookieValue}" \
     "http://${mgmtIp}/login.cgi" > /dev/null'';
-      pullCmd = ''${loginCmd} && curl -sf --connect-timeout 5 ${curlAuth} \
+      pullCmd = ''
+${loginCmd} && curl -sf --connect-timeout 5 ${curlAuth} \
     "http://${mgmtIp}/config_back.cgi?cmd=conf_backup"'';
     in {
       config-json = {
@@ -149,7 +151,8 @@
       };
       generate-config = {
         description = "Generate Sodola binary backup (hex-encoded).";
-        impl = ''sodola-config generate --hex <<'EGREGORE_EOF'
+        impl = ''
+sodola-config generate --hex <<'EGREGORE_EOF'
 ${json}
 EGREGORE_EOF'';
       };

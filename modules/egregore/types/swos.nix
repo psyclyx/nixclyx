@@ -173,7 +173,8 @@
 
       # SwOS uses HTTP digest auth.
       curlAuth = ''--digest -u "${sw.username}:${sw.password}"'';
-      pullCmd = ''curl -sf --connect-timeout 5 ${curlAuth} \
+      pullCmd = ''
+curl -sf --connect-timeout 5 ${curlAuth} \
     "http://${mgmtIp}/backup.swb"'';
     in {
       config-json = {
@@ -183,7 +184,8 @@
       };
       generate-config = {
         description = "Generate SwOS .swb backup.";
-        impl = ''swos-config generate <<'EGREGORE_EOF'
+        impl = ''
+swos-config generate <<'EGREGORE_EOF'
 ${json}
 EGREGORE_EOF'';
       };

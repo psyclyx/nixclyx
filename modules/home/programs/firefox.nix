@@ -60,6 +60,9 @@
 
     programs.firefox = {
       enable = true;
+      # Pin explicitly: profilePath above hardcodes the legacy location, and
+      # the kagi-token activation script depends on it matching.
+      configPath = ".mozilla/firefox";
       nativeMessagingHosts = [pkgs.tridactyl-native];
 
       policies = {
