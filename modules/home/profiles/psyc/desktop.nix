@@ -16,7 +16,7 @@
 
       # LLM coding agents
       pkgs.llm-agents.opencode
-      pkgs.llm-agents.gemini-cli
+      pkgs.llm-agents.codex
     ];
 
     psyclyx.home = {
