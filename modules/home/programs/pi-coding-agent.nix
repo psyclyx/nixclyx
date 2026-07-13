@@ -42,9 +42,6 @@
           };
 
           pi.packages.registry = {
-            # superpowers telemetry is covered by pi.telemetry.enable (off) via
-            # the generic CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC opt-out.
-            superpowers.enable = true;
             pi-ask-user.enable = true;
             plan.enable = true;
             add-dir.enable = true;
