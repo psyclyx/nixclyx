@@ -7,7 +7,7 @@ let
   clj-nix = loadFlake sources.clj-nix;
   llm-agents = loadFlake sources."llm-agents.nix";
 in
-  final: prev: ((llm-agents.overlays.default final prev)
+  final: prev: ((llm-agents.overlays.shared-nixpkgs final prev)
     // {
       psyclyx = import ./packages {pkgs = prev;};
       shoal = final.psyclyx.shoal;
@@ -22,6 +22,18 @@ in
             python-etcd = pyPrev.python-etcd.overridePythonAttrs {doCheck = false;};
           })
         ];
+      # cpplint's own test suite asserts empty stderr, but a newer Python
+      # emits a codecs.open() DeprecationWarning there — broken upstream,
+      # unrelated to our config.
+      cpplint = prev.cpplint.overrideAttrs {
+        doCheck = false;
+        doInstallCheck = false;
+      };
+      # glasgow pins importlib-resources~=6.5.2 but nixpkgs now ships 7.1.0 —
+      # upstream constraint is stale, unrelated to our config.
+      glasgow = prev.glasgow.overridePythonAttrs (old: {
+        pythonRelaxDeps = (old.pythonRelaxDeps or []) ++ ["importlib_resources"];
+      });
       # __multf3 (128-bit float multiply) missing on aarch64 — the Makefile
       # calls ld directly (bypassing the CC wrapper), so buildInputs alone
       # won't add libgcc_s to the rpath.  Patch the .so after build instead.
