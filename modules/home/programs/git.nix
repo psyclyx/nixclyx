@@ -4,10 +4,12 @@
   config = {
     config,
     lib,
+    pkgs,
     ...
   }: let
     info = config.psyclyx.home.info;
   in {
+    home.packages = [pkgs.josh];
     programs = {
       git = {
         enable = true;
