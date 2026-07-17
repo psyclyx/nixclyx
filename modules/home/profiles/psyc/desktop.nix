@@ -17,6 +17,7 @@
       # LLM coding agents
       pkgs.llm-agents.opencode
       pkgs.llm-agents.codex
+      pkgs.llm-agents.kimi-code
     ];
 
     psyclyx.home = {
