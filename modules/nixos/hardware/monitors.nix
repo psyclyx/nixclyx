@@ -38,6 +38,16 @@
             type = types.bool;
             default = true;
           };
+          colorProfile = mkOption {
+            type = types.nullOr types.path;
+            default = null;
+            description = ''
+              Display ICC profile to load for this monitor (calibrated SDR),
+              applied via set-output-icc over the psyclyx_color_management_v1
+              protocol. Keyed to the monitor identity, so it follows the panel
+              across connectors.
+            '';
+          };
           position = mkOption {
             type = types.submodule {
               options = {

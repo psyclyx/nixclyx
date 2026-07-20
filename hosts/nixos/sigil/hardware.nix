@@ -18,6 +18,10 @@
             width = 3840;
             height = 2560;
           };
+          # Calibrated SDR profile (ArgyllCMS). Loaded on session start via
+          # set-output-icc. NOTE: measured on DP-2 in Feb; re-measure with the
+          # i1 in the panel's SDR mode once loading is confirmed.
+          colorProfile = ./gawfolk.icc;
         };
 
         benq = {
