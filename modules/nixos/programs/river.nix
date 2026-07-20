@@ -2,6 +2,13 @@
   path = ["psyclyx" "nixos" "programs" "river"];
   description = "River wayland compositor with UWSM session management";
   config = {pkgs, lib, ...}: {
+    # Use the wlroots Vulkan renderer. Only it advertises
+    # renderer.features.output_color_transform (the GLES2/Pixman renderers
+    # hardcode it false), which the per-output ICC/color pipeline
+    # (psyclyx_color_management_v1) requires. wlroots still labels the Vulkan
+    # renderer experimental, so revisit if the session proves unstable.
+    environment.variables.WLR_RENDERER = "vulkan";
+
     environment.systemPackages = [
       pkgs.psyclyx.river
       pkgs.dbus
