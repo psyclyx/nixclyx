@@ -3,6 +3,7 @@ let
   packages = builtins.mapAttrs (_: x: pkgs.callPackage x {}) {
     print256colors = ./print256colors.nix;
     river = ./river;
+    set-output-icc = ./set-output-icc;
     spork = ./spork.nix;
     tidepool = ./tidepool;
     "base24-gen" = ./base24-gen;
