@@ -98,6 +98,18 @@
       esac
     '';
 
+    power-menu = pkgs.writeShellScriptBin "tidepool-power-menu" ''
+      options="Lock\nLogout\nSuspend\nReboot\nShutdown"
+      chosen=$(echo -e "$options" | ${fuzzel-dmenu} --prompt "Power: ")
+      case $chosen in
+        "Lock") ${lib.getExe config.programs.swaylock.package} ;;
+        "Logout") ${lib.getExe pkgs.wayland-logout} ;;
+        "Suspend") systemctl suspend ;;
+        "Shutdown") systemctl poweroff ;;
+        "Reboot") systemctl reboot ;;
+      esac
+    '';
+
   in {
     home.packages = [
       pkgs.grim
@@ -107,6 +119,7 @@
       pkgs.playerctl
       screenshot-menu
       sign-clipboard
+      power-menu
     ];
 
     psyclyx.home.programs.shoal.enable = lib.mkDefault true;
@@ -191,6 +204,7 @@
         "super+p" = ''(actions/spawn "${rofi-rbw}")'';
         "super+s" = ''(actions/spawn "${lib.getExe screenshot-menu}")'';
         "super+shift+s" = ''(actions/spawn "${lib.getExe sign-clipboard}")'';
+        "super+shift+e" = ''(actions/spawn "${lib.getExe power-menu}")'';
       };
       pointerBindings = {
         "super+left" = "actions/pointer-move-float";

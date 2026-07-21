@@ -41,7 +41,10 @@
         dmenu.exit-immediately-if-empty = true;
         key-bindings = {
           cancel = "Escape Control+c";
-          delete-line = "Control+u";
+          # Don't bind delete-line to Control+u: fuzzel 1.14 already binds
+          # delete-line-backward there by default (which clears the input the
+          # same way), and a second mapping is a fatal config conflict that
+          # aborts fuzzel entirely, so no menu opens.
           delete-prev-word = "Control+w";
         };
       };

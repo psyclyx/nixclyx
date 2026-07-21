@@ -13,21 +13,6 @@
     ...
   }: let
     monitors = config.psyclyx.home.hardware.monitors;
-    fuzzel = lib.getExe config.programs.fuzzel.package;
-    swaylock = lib.getExe config.programs.swaylock.package;
-    wayland-logout = lib.getExe pkgs.wayland-logout;
-
-    power-menu = pkgs.writeShellScriptBin "river-power-menu" ''
-      options="Lock\nLogout\nSuspend\nReboot\nShutdown"
-      chosen=$(echo -e "$options" | ${fuzzel} --dmenu --prompt "Power: ")
-      case $chosen in
-        "Lock") ${swaylock} ;;
-        "Logout") ${wayland-logout} ;;
-        "Suspend") systemctl suspend ;;
-        "Shutdown") systemctl poweroff ;;
-        "Reboot") systemctl reboot ;;
-      esac
-    '';
 
     # Monitors with a declared ICC profile get a set-output-icc user service
     # that loads the profile (calibrated SDR) over psyclyx_color_management_v1
@@ -76,7 +61,6 @@
         pkgs.brightnessctl
         pkgs.pulseaudio
         pkgs.wayland-logout
-        power-menu
       ]
       ++ lib.optional (colorProfileMonitors != {}) pkgs.psyclyx.set-output-icc;
 
@@ -84,9 +68,6 @@
       programs = {
         alacritty.enable = lib.mkDefault true;
         tidepool.enable = lib.mkDefault true;
-        # fuzzel is the launcher/dmenu (used by the power menu here and the
-        # sway menus).
-        fuzzel.enable = lib.mkDefault true;
         # kanshi applies the declared monitor layout and reapplies it on
         # hotplug. Only meaningful when monitors are declared.
         kanshi.enable = lib.mkDefault (monitors != {});
