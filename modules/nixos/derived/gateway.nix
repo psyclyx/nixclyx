@@ -135,6 +135,7 @@ in {
           iaid = gw.transitDhcpV6.iaid or 250;
           prefixDelegationHint = gw.transitDhcpV6.prefixDelegationHint or "::/60";
         };
+        transitDhcpV4.useRoutes = gw.transitDhcpV4.useRoutes or true;
         initrd = {
           enable = lib.mkDefault ((gw.initrdVlans or []) != []);
           kernelModules = gw.initrdKernelModules or [ "8021q" ];

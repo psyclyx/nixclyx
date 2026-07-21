@@ -321,6 +321,26 @@
               };
               default = {};
             };
+            transitDhcpV4 = lib.mkOption {
+              type = lib.types.submodule {
+                options = {
+                  useRoutes = lib.mkOption {
+                    type = lib.types.bool;
+                    default = true;
+                    description = ''
+                      Honor DHCP classless static routes (option 121) on
+                      the WAN uplink. Set false for ISPs (e.g. Comcast,
+                      whose option-121 list omits a default) where option
+                      121 suppresses the option-3 gateway per RFC 3442 and
+                      leaves the host with no default route — with it off,
+                      networkd installs the option-3 gateway as the
+                      default instead.
+                    '';
+                  };
+                };
+              };
+              default = {};
+            };
             cakeQos = lib.mkOption {
               type = lib.types.nullOr (lib.types.submodule {
                 options = let

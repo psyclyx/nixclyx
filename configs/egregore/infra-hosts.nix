@@ -78,6 +78,13 @@
             initrdVlans = [ "main" "mgmt" ];
             initrdKernelModules = [ "8021q" "igc" ];
             transitDhcpV6.duidRawData = "e7:13:f8:92:37:c5:be:76";
+            # Comcast/Xfinity DHCP sends option-121 classless static
+            # routes with no 0.0.0.0/0, which (per RFC 3442) suppresses
+            # the option-3 gateway and leaves enp3s0.250 with no default
+            # route. Ignore option 121 so networkd installs the gateway
+            # as the main-table default — this is the always-on IPv4
+            # fallback the Google Fiber failover falls back to.
+            transitDhcpV4.useRoutes = false;
             # Xfinity apartment uplink — symmetric 2.2 Gbps provisioned.
             # Min kept lower for graceful autorate degradation; max
             # gives small headroom past nominal.
@@ -90,9 +97,10 @@
             # enp1s0 (untagged trunk parent) shares trust with main →
             # join the lan zone. enp3s0.250/.251 are the WAN VLAN
             # sub-ifaces (transit isn't modeled as a network entity
-            # since it has no internal subnet). .251 is a second,
-            # validation-only uplink — see hosts/nixos/iyr/default.nix;
-            # it shares the WAN drop+ICMP+DHCP-client posture.
+            # since it has no internal subnet). .250 is Xfinity (IPv6 +
+            # IPv4 fallback), .251 is Google Fiber (the primary IPv4
+            # uplink) — see hosts/nixos/iyr/default.nix; both share the
+            # WAN drop+ICMP+DHCP-client posture.
             zones = {
               lan.extraInterfaces  = [ "enp1s0" ];
               wan.extraInterfaces  = [ "enp3s0.250" "enp3s0.251" ];

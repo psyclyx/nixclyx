@@ -14,9 +14,11 @@ let
   # per env in phase 3 of the rework.
   internal = [10 25 100 110 200 210 220 221 222 223 240];
   # WAN transit VLANs — L2-only, not modeled as network entities (they
-  # have no internal subnet). 250 is the primary Xfinity uplink; 251 is
-  # a second uplink brought in on idf-dist01 sfp4. Both ride every `all`
-  # trunk and land tagged on iyr's enp3s0 (via mdf-brk01 port5).
+  # have no internal subnet). 251 is Google Fiber (the primary IPv4
+  # uplink), 250 is Xfinity (IPv6 + the IPv4 fallback); both land on
+  # idf-dist01 (sfp4/sfp2). Both ride every `all` trunk and land tagged
+  # on iyr's enp3s0 (via mdf-brk01 port5). Failover lives on iyr — see
+  # hosts/nixos/iyr and modules/nixos/network/wan-failover.nix.
   wan      = [250 251];
   all      = internal ++ wan;
 in {
@@ -197,9 +199,9 @@ in {
           ports = {
             ether1         = {};
             "sfp-sfpplus1" = { vlans = all; meta.peer = "mdf-agg01"; };
-            "sfp-sfpplus2" = { vlan = 250; meta.description = "modem (WAN)"; };
+            "sfp-sfpplus2" = { vlan = 250; meta.description = "Xfinity modem (WAN, IPv6 + IPv4 fallback)"; };
             "sfp-sfpplus3" = { vlans = all; meta.peer = "idf-poe01"; };
-            "sfp-sfpplus4" = { vlan = 251; meta.description = "WAN2 (modem, transit VLAN)"; };
+            "sfp-sfpplus4" = { vlan = 251; meta.description = "Google Fiber ONT (primary IPv4 WAN)"; };
           };
         };
       };

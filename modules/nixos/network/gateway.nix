@@ -95,6 +95,17 @@
         default = null;
       };
     };
+    transitDhcpV4 = {
+      useRoutes = lib.mkOption {
+        type = lib.types.bool;
+        default = true;
+        description = ''
+          Honor DHCP option-121 classless static routes on the WAN
+          transit. Set false for ISPs whose option-121 omits a default
+          (e.g. Comcast) so the option-3 gateway becomes the default.
+        '';
+      };
+    };
     lanAddress = lib.mkOption {
       type = lib.types.nullOr lib.types.str;
       default = null;
@@ -239,7 +250,13 @@
       "31-${transitIface}" = {
         matchConfig.Name = transitIface;
         networkConfig = { DHCP = "yes"; IPv6AcceptRA = true; };
-        dhcpV4Config = { UseRoutes = true; ClientIdentifier = "duid"; };
+        # UseGateway forces the option-3 router as the default even when
+        # UseRoutes is off (needed for Comcast — see transitDhcpV4.useRoutes).
+        dhcpV4Config = {
+          UseRoutes = cfg.transitDhcpV4.useRoutes;
+          UseGateway = true;
+          ClientIdentifier = "duid";
+        };
         dhcpV6Config = {
           PrefixDelegationHint = cfg.transitDhcpV6.prefixDelegationHint;
           WithoutRA = "solicit";
