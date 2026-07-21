@@ -23,6 +23,14 @@
     wl-paste = lib.getExe' pkgs.wl-clipboard "wl-paste";
     ssh-keygen = "${pkgs.openssh}/bin/ssh-keygen";
 
+    # tidepool's actions/spawn is a direct fork of the tidepool process, so
+    # anything it launches lands in the tidepool.service cgroup (logs
+    # attributed to tidepool, killed on tidepool restart). Route GUI apps
+    # through `uwsm app --` so they get their own app-*.scope under app.slice.
+    # One-shot utilities (pactl/playerctl) stay bare — no point scoping them.
+    appSpawn = cmd:
+      ''(actions/spawn "uwsm" "app" "--" ${lib.concatMapStringsSep " " (a: ''"${a}"'') cmd})'';
+
     sign-clipboard = pkgs.writeShellScriptBin "tidepool-sign-clipboard" ''
       set -euo pipefail
 
@@ -137,7 +145,7 @@
         sortedMonitors;
 
       keybindings = {
-        "super+Return" = ''(actions/spawn "uwsm" "app" "--" "xdg-terminal-exec")'';
+        "super+Return" = appSpawn ["xdg-terminal-exec"];
         "super+d" = ''(actions/spawn "fuzzel")'';
         "super+shift+q" = "actions/close-focused";
         # Directional focus
@@ -201,10 +209,10 @@
         "XF86AudioPrev" = ''(actions/spawn "playerctl" "previous")'';
         "XF86AudioStop" = ''(actions/spawn "playerctl" "stop")'';
         # Launchers
-        "super+p" = ''(actions/spawn "${rofi-rbw}")'';
-        "super+s" = ''(actions/spawn "${lib.getExe screenshot-menu}")'';
-        "super+shift+s" = ''(actions/spawn "${lib.getExe sign-clipboard}")'';
-        "super+shift+e" = ''(actions/spawn "${lib.getExe power-menu}")'';
+        "super+p" = appSpawn [rofi-rbw];
+        "super+s" = appSpawn [(lib.getExe screenshot-menu)];
+        "super+shift+s" = appSpawn [(lib.getExe sign-clipboard)];
+        "super+shift+e" = appSpawn [(lib.getExe power-menu)];
       };
       pointerBindings = {
         "super+left" = "actions/pointer-move-float";
