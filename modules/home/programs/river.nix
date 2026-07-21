@@ -42,11 +42,21 @@
               Description = "Load ICC color profile for ${m.identifier}";
               After = ["graphical-session.target" "kanshi.service"];
               PartOf = ["graphical-session.target"];
+              # If applying fails (e.g. the monitor is off/absent, or the
+              # compositor rejects it), retry a few times then give up rather
+              # than restart-looping forever.
+              StartLimitIntervalSec = 60;
+              StartLimitBurst = 3;
             };
             Service = {
               ExecStart = "${lib.getExe pkgs.psyclyx.set-output-icc} ${lib.escapeShellArg m.identifier} ${m.colorProfile}";
               Restart = "on-failure";
-              RestartSec = 2;
+              RestartSec = 5;
+              # set-output-icc exits 2 for failures that won't resolve this
+              # session (no protocol, output absent, control denied, bad
+              # profile) — never retry those. Transient failures (exit 1, e.g.
+              # Wayland not up yet) still restart, bounded by StartLimitBurst.
+              RestartPreventExitStatus = 2;
             };
             Install.WantedBy = ["graphical-session.target"];
           }

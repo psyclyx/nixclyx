@@ -18,9 +18,9 @@
             width = 3840;
             height = 2560;
           };
-          # Calibrated SDR profile (ArgyllCMS). Loaded on session start via
-          # set-output-icc. NOTE: measured on DP-2 in Feb; re-measure with the
-          # i1 in the panel's SDR mode once loading is confirmed.
+          # ArgyllCMS shaper+matrix profile (dispread + colprof, native panel),
+          # loaded on session start via set-output-icc. Re-measure with the i1
+          # after any panel OSD change (mode/brightness invalidate it).
           colorProfile = ./gawfolk.icc;
         };
 
@@ -31,6 +31,7 @@
             height = 2560;
           };
           position.x = 3840;
+          colorProfile = ./benq.icc;
         };
 
         dell = {
@@ -40,6 +41,7 @@
             height = 2160;
           };
           position.x = 7680;
+          colorProfile = ./dell.icc;
         };
       };
     };

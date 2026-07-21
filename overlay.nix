@@ -34,6 +34,17 @@ in
       glasgow = prev.glasgow.overridePythonAttrs (old: {
         pythonRelaxDeps = (old.pythonRelaxDeps or []) ++ ["importlib_resources"];
       });
+      # wlroots' ICC output color transform (render/color_lcms2.c) builds the
+      # lcms2 transform as INTENT_RELATIVE_COLORIMETRIC with no flags — i.e. no
+      # black point compensation — so display shadows below the panel's black
+      # floor clip to black instead of being scaled in. Enable BPC so shadow
+      # detail is preserved. Used by the psyclyx_color_management_v1 ICC path in
+      # the river fork.
+      wlroots_0_20 = prev.wlroots_0_20.overrideAttrs (old: {
+        # lib.unique guards against this overlay being applied more than once
+        # (which would append the patch twice and fail as already-applied).
+        patches = prev.lib.unique ((old.patches or []) ++ [./patches/wlroots-icc-bpc.patch]);
+      });
       # __multf3 (128-bit float multiply) missing on aarch64 — the Makefile
       # calls ld directly (bypassing the CC wrapper), so buildInputs alone
       # won't add libgcc_s to the rpath.  Patch the .so after build instead.
