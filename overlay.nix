@@ -7,7 +7,17 @@ let
   clj-nix = loadFlake sources.clj-nix;
   llm-agents = loadFlake sources."llm-agents.nix";
 in
-  final: prev: ((llm-agents.overlays.shared-nixpkgs final prev)
+  final: prev:
+  let
+    # Minimal asciidoc: still wires xsltproc + docbook so `a2x` emits man
+    # pages, but drops the full PDF toolchain (dblatex → inkscape). Used
+    # to slim the Clevis/Tang/LUKS NBDE stack below — those packages only
+    # ship man pages, yet nixpkgs feeds them `asciidoc-full` (and aliases
+    # `asciidoc` to it), forcing a source build of inkscape on every
+    # headless host that unlocks via Tang (iyr, the lab NBDE clients).
+    asciidocManpage = prev.asciidoc.override { enableStandardFeatures = false; };
+  in
+    ((llm-agents.overlays.shared-nixpkgs final prev)
     // {
       psyclyx = import ./packages {pkgs = prev;};
       shoal = final.psyclyx.shoal;
@@ -56,6 +66,13 @@ in
                      $out/libexec/pam_ssh_agent_auth.so
           '';
         });
+      # Slim the NBDE stack off the inkscape-pulling PDF toolchain (see
+      # asciidocManpage above). tang + clevis take `asciidoc-full`;
+      # luksmeta takes `asciidoc` (which nixpkgs aliases to the -full
+      # build). All three only generate man pages.
+      tang = prev.tang.override { asciidoc-full = asciidocManpage; };
+      clevis = prev.clevis.override { asciidoc-full = asciidocManpage; };
+      luksmeta = prev.luksmeta.override { asciidoc = asciidocManpage; };
       rofi-rbw = prev.rofi-rbw.overrideAttrs {
         src = prev.fetchFromGitHub {
           owner = "psyclyx";
