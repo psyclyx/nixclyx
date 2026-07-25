@@ -1,10 +1,12 @@
 # OpenBao cert-auth for microvm guests.
 #
 # Two concerns in one unit:
-#   1. **Bootstrap** — on first boot (or when the cert is gone /
-#      near-expiry), unwrap a one-time wrap token shared in by the
-#      hypervisor, mint a client cert via the configured PKI role,
-#      and store it in the VM's persistent state directory.
+#   1. **Bootstrap** — when the cert is missing or already expired
+#      (cert-auth renewal is impossible once it lapses), unwrap a
+#      one-time wrap token shared in by the hypervisor, mint a client
+#      cert via the configured PKI role, and store it in the VM's
+#      persistent state directory. A still-valid, near-expiry cert
+#      renews itself via cert auth instead (falling back to bootstrap).
 #   2. **Login** — auth to OpenBao with the persisted cert and write
 #      the resulting service token to /run/openbao-auth/services-token
 #      so downstream `openbao-kv` consumers can fetch secrets.
@@ -81,9 +83,12 @@
         type = lib.types.str;
         default = "/run/openbao-init/wrap-token";
         description = ''
-          File holding the one-time wrap token the hypervisor placed
-          here via virtiofs share. Consumed (and the file ignored
-          thereafter) on first cert mint; not needed for renewal.
+          File holding the short-TTL wrap token the hypervisor placed
+          here via virtiofs share. Consumed on cert mint — both the
+          first bootstrap and any later re-bootstrap after the cert has
+          expired. Not used on the normal cert-auth renewal path. The
+          hypervisor re-mints this on every guest (re)start so it is
+          fresh whenever a bootstrap is actually needed.
         '';
       };
 
@@ -167,6 +172,7 @@
           CERT=${lib.escapeShellArg cfg.stateDir}/cert.pem
           KEY=${lib.escapeShellArg cfg.stateDir}/key.pem
           CA=${lib.escapeShellArg cfg.stateDir}/ca.pem
+          WRAP_TOKEN_FILE=${lib.escapeShellArg cfg.wrapTokenFile}
 
           # `openssl x509 -checkend N` returns 0 iff cert is NOT
           # expiring within N seconds. renewMarginSec comes from
@@ -176,57 +182,71 @@
             openssl x509 -checkend ${toString renewMarginSec} -noout -in "$CERT" >/dev/null 2>&1
           }
 
-          # If we don't have a cert yet, bootstrap via the wrap token.
-          if [ ! -s "$CERT" ]; then
-            if [ ! -s ${lib.escapeShellArg cfg.wrapTokenFile} ]; then
-              echo "no cert and no wrap token at ${cfg.wrapTokenFile} — cannot bootstrap"
-              exit 1
-            fi
+          # Cert exists and has not yet passed its notAfter. A cert that
+          # fails this can no longer authenticate, so it cannot be
+          # renewed via cert auth — it must be re-bootstrapped.
+          cert_valid() {
+            [ -s "$CERT" ] || return 1
+            openssl x509 -checkend 0 -noout -in "$CERT" >/dev/null 2>&1
+          }
 
-            echo "bootstrapping cert via wrap token"
-            WRAP=$(cat ${lib.escapeShellArg cfg.wrapTokenFile})
-
-            UNWRAPPED=$(BAO_TOKEN="$WRAP" bao unwrap -format=json)
-            BOOTSTRAP_TOKEN=$(echo "$UNWRAPPED" | jq -r '.auth.client_token')
-
-            # Mint cert. PKI returns cert, private key, CA chain.
-            ISSUE=$(BAO_TOKEN="$BOOTSTRAP_TOKEN" \
+          # Issue a leaf cert using $1 as the OpenBao token and install
+          # it atomically. PKI returns cert, private key, CA chain.
+          mint_cert() {
+            local issue
+            issue=$(BAO_TOKEN="$1" \
               bao write -format=json \
                 ${lib.escapeShellArg cfg.pki.mount}/issue/${lib.escapeShellArg cfg.pki.role} \
                 common_name=${lib.escapeShellArg cfg.commonName} \
                 ttl=${lib.escapeShellArg cfg.ttl})
-
-            echo "$ISSUE" | jq -r '.data.certificate'   > "$CERT".new
-            echo "$ISSUE" | jq -r '.data.private_key'   > "$KEY".new
-            echo "$ISSUE" | jq -r '.data.issuing_ca'    > "$CA".new
+            echo "$issue" | jq -r '.data.certificate' > "$CERT".new
+            echo "$issue" | jq -r '.data.private_key' > "$KEY".new
+            echo "$issue" | jq -r '.data.issuing_ca'  > "$CA".new
             chmod 0400 "$CERT".new "$KEY".new "$CA".new
             mv "$CERT".new "$CERT"
             mv "$KEY".new  "$KEY"
             mv "$CA".new   "$CA"
+          }
 
+          # First-boot / recovery path: unwrap the one-time token the
+          # hypervisor shared in and mint a cert with it. Needs a
+          # *fresh* wrap token (short TTL) — the hypervisor re-mints one
+          # every time the guest (re)starts, so a reboot/redeploy heals
+          # an expired cert without operator intervention.
+          bootstrap_cert() {
+            if [ ! -s "$WRAP_TOKEN_FILE" ]; then
+              echo "no wrap token at $WRAP_TOKEN_FILE — cannot bootstrap (will retry)"
+              return 1
+            fi
+            echo "bootstrapping cert via wrap token"
+            local unwrapped
+            unwrapped=$(BAO_TOKEN="$(cat "$WRAP_TOKEN_FILE")" bao unwrap -format=json)
+            mint_cert "$(echo "$unwrapped" | jq -r '.auth.client_token')"
             echo "cert minted for ${cfg.commonName}"
+          }
+
+          # Renew using the still-valid cert to authenticate. Returns
+          # nonzero on failure so the caller can fall back to bootstrap.
+          renew_cert() {
+            local login
+            login=$(bao login -method=cert -format=json \
+              -client-cert="$CERT" -client-key="$KEY" -ca-cert="$CA") || return 1
+            mint_cert "$(echo "$login" | jq -r '.auth.client_token')"
+            echo "cert renewed for ${cfg.commonName}"
+          }
+
+          # No cert, or an expired one, can't cert-auth — re-bootstrap
+          # via a fresh wrap token. Only a still-valid but near-expiry
+          # cert takes the cert-auth renewal path, with a bootstrap
+          # fallback if that fails (e.g. after a revocation).
+          if ! cert_valid; then
+            bootstrap_cert
           elif ! cert_fresh; then
             echo "cert near expiry — renewing via cert auth"
-            # Use the existing cert to auth, then mint a new one.
-            LOGIN=$(bao login -method=cert -format=json \
-              -client-cert="$CERT" -client-key="$KEY" -ca-cert="$CA")
-            RENEW_TOKEN=$(echo "$LOGIN" | jq -r '.auth.client_token')
-
-            ISSUE=$(BAO_TOKEN="$RENEW_TOKEN" \
-              bao write -format=json \
-                ${lib.escapeShellArg cfg.pki.mount}/issue/${lib.escapeShellArg cfg.pki.role} \
-                common_name=${lib.escapeShellArg cfg.commonName} \
-                ttl=${lib.escapeShellArg cfg.ttl})
-
-            echo "$ISSUE" | jq -r '.data.certificate' > "$CERT".new
-            echo "$ISSUE" | jq -r '.data.private_key' > "$KEY".new
-            echo "$ISSUE" | jq -r '.data.issuing_ca'  > "$CA".new
-            chmod 0400 "$CERT".new "$KEY".new "$CA".new
-            mv "$CERT".new "$CERT"
-            mv "$KEY".new  "$KEY"
-            mv "$CA".new   "$CA"
-
-            echo "cert renewed for ${cfg.commonName}"
+            renew_cert || {
+              echo "cert-auth renewal failed — falling back to wrap-token bootstrap"
+              bootstrap_cert
+            }
           fi
 
           # Always log in with the (now-valid) cert and write a fresh

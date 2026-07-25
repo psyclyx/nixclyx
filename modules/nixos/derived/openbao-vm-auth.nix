@@ -75,14 +75,18 @@ let
       description = "Mint OpenBao bootstrap wrap token for ${vmName}";
       after = [ "openbao-login.service" ];
       wants = [ "openbao-login.service" ];
-      wantedBy = [ "microvms.target" ];
-      before = [
-        "microvms.target"
-        "microvm@${vmName}.service"
-      ];
+      # Bind to the guest unit rather than microvms.target so the token
+      # is re-minted on *every* (re)start of this VM — a plain
+      # `systemctl restart microvm@${vmName}` (e.g. a colmena switch)
+      # doesn't re-reach microvms.target. A guest whose persisted cert
+      # has expired can then always find a *fresh* short-TTL wrap token
+      # to re-bootstrap with. RemainAfterExit is off (so it re-runs) and
+      # partOf ties its lifecycle to the guest's.
+      wantedBy = [ "microvm@${vmName}.service" ];
+      partOf = [ "microvm@${vmName}.service" ];
+      before = [ "microvm@${vmName}.service" ];
       serviceConfig = {
         Type = "oneshot";
-        RemainAfterExit = true;
         TimeoutStartSec = "30s";
       };
       environment = {
