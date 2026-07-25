@@ -114,6 +114,46 @@ in
     tank-persist-lab-3 = mkLabPersistDataset 3;
     tank-persist-lab-4 = mkLabPersistDataset 4;
 
+    # lab-4's persistent OS root, replacing the former tmpfs `/`. Lives
+    # under a per-host namespace tank/host/<name>/… — the dataset is
+    # lab-4's root, and only happens to sit on tank (lab-4's own pool).
+    # Only lab-4 has an on-disk root (lab-1..3 are stateless netboot);
+    # the namespace leaves room for other per-host datasets under
+    # tank/host/lab-4 later. The two parents are plain structural
+    # containers (canmount=off); the leaf `.../root` is the
+    # encryptionroot, created with the SAME passphrase as tank/persist so
+    # the shared persist.jwe blob unlocks it too (no new tang secret).
+    # neededForBoot → stage-1 clevis-unseals and mounts it before
+    # switch_root.
+    tank-host = {
+      type = "zfs-dataset";
+      refs.pool = "tank-pool";
+      zfs-dataset = {
+        path = "tank/host";
+        mountpoint = null;
+        properties.canmount = "off";
+      };
+    };
+    tank-host-lab-4 = {
+      type = "zfs-dataset";
+      refs.pool = "tank-pool";
+      zfs-dataset = {
+        path = "tank/host/lab-4";
+        mountpoint = null;
+        properties.canmount = "off";
+      };
+    };
+    tank-host-lab-4-root = {
+      type = "zfs-dataset";
+      refs.pool = "tank-pool";
+      zfs-dataset = {
+        path = "tank/host/lab-4/root";
+        mountpoint = "/";
+        neededForBoot = true;
+        encryption = { keyformat = "passphrase"; keylocation = "prompt"; };
+      };
+    };
+
     # Encrypted parent for VM disk zvols. canmount=off because nothing
     # should ever mount this dataset itself; the children (declared as
     # `lun` entities) live under it.

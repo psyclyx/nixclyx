@@ -8,13 +8,13 @@
     # tmpfs root + ramdisk-supplied kernel.
     boot.systemd.loader.enable = lib.mkForce false;
 
-    # ZFS in initrd so /persist (encrypted root tank/persist/lab-4) is
-    # available BEFORE stage-2 — preservation needs /persist mounted
-    # to bind machine-id, SSH host keys, etc. before systemd and sshd
-    # read them. Clevis (below) unseals the key against iyr's tang
-    # server, so no console interaction is needed in the normal case;
-    # if tang is unreachable the upstream zfs initrd falls through to
-    # a passphrase prompt at the iLO console.
+    # ZFS in initrd so the encrypted root (tank/root/lab-4) and
+    # /persist are available BEFORE switch_root — the OS root itself
+    # lives on tank now, so stage-1 must unseal + mount it. Clevis
+    # (below) unseals the key against iyr's tang server, so no console
+    # interaction is needed in the normal case; if tang is unreachable
+    # the upstream zfs initrd falls through to a passphrase prompt at
+    # the iLO console.
     filesystems.zfs.encryption.enable = true;
 
     network = {
@@ -51,6 +51,15 @@
   # preset because the 9207 is an add-in card, not standard kit.
   boot.initrd.availableKernelModules = [ "mpt3sas" ];
 
+  # Remote recovery: sshd in the netboot initrd (port 8022), so a wedged
+  # stage-1 (missing closure, unmountable root, tang unreachable) can be
+  # fixed over SSH instead of at the iLO. Layer 1 for now — a fresh
+  # ephemeral host key each boot; connect with `accept-new`. OpenBao
+  # ssh-host-cert signing (layer 2) gets flipped on via
+  # `.signing` once the AppRole + clevis JWE are bootstrapped and we can
+  # test the cert path on a booting host.
+  psyclyx.nixos.boot.initrd-ssh-netboot.enable = true;
+
   boot.kernel.sysctl."kernel.sched_autogroup_enabled" = 0;
 
   # Clevis unlock (initrd + post-boot key-load for tank/luns) is
@@ -59,27 +68,10 @@
   # the binding entities reference it by relative path so it lands in
   # the closure without us having to wire it here.
 
-  # Lab-4's root is tmpfs (PXE-booted). /persist (on tank, encrypted)
-  # is where identity continuity lives — machine-id stays stable across
-  # reboots, SSH host keys persist so known_hosts entries don't churn,
-  # and NixOS's own state (e.g. /var/lib/nixos) survives.
-  #
-  # Note: this is independent of ZFS's hostid (networking.hostId, baked
-  # into /etc/hostid at activation). ZFS pool ownership is fine without
-  # /persist — preservation is only for the systemd-side identity bits.
-  preservation = {
-    enable = true;
-    preserveAt."/persist" = {
-      directories = [
-        "/var/lib/nixos"
-        "/var/lib/systemd"
-        "/var/log/journal"
-      ];
-      files = [
-        { file = "/etc/machine-id"; inInitrd = true; }
-        { file = "/etc/ssh/ssh_host_ed25519_key"; mode = "0600"; }
-        "/etc/ssh/ssh_host_ed25519_key.pub"
-      ];
-    };
-  };
+  # Lab-4's root is a persistent ZFS dataset (tank/host/lab-4/root), so
+  # identity continuity — machine-id, SSH host keys, /var/lib/nixos —
+  # lives on the real root and survives reboots without preservation.
+  # /persist (tank/persist/lab-4) stays mounted for explicit runtime
+  # state (e.g. the future scheduler's placement table) but no longer
+  # backs the OS identity bits.
 }

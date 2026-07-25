@@ -1,16 +1,16 @@
 { ... }:
 {
   # lab-4 PXE-boots its own kernel + initialRamdisk from iyr. Stage-1
-  # brings up eno1 via ip=dhcp, clevis-tang unseals tank/persist, the
-  # pool gets imported, and /nix + /persist mount from
-  # tank/nix-shared + tank/persist/lab-4 (both neededForBoot).
+  # brings up eno1 via ip=dhcp, clevis-tang unseals the encryptionroots,
+  # the pool gets imported, and `/` + /nix + /persist mount from
+  # tank/host/lab-4/root + tank/nix-shared + tank/persist/lab-4 (all
+  # neededForBoot) before switch_root.
   #
-  # Root is tmpfs (no persistent on-disk OS — only tank holds state).
-  fileSystems."/" = {
-    device = "tmpfs";
-    fsType = "tmpfs";
-    options = [ "mode=755" ];
-  };
+  # Root is a persistent ZFS dataset (tank/host/lab-4/root), declared as a
+  # zfs-dataset entity and projected into fileSystems."/" by
+  # topology/storage.nix — unlike lab-1..3, which stay stateless
+  # netboot with a tmpfs root. No preservation module: state lives on
+  # the real root and persists across reboots natively.
 
   # Bootloader: nothing to manage — iyr serves the kernel/initrd.
   boot.loader.grub.enable = false;

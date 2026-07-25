@@ -64,5 +64,18 @@
         # list consumer unit names here.
       };
     };
+    # Third encryptionroot on tank: lab-4's persistent OS root
+    # (tank/host/lab-4/root). Same shared passphrase/blob as persist +
+    # luns. Because that dataset is neededForBoot, the storage projection
+    # classifies this as an initrd binding and unseals it in stage-1
+    # before mounting `/`.
+    tank-clevis-root = {
+      type = "clevis-binding";
+      clevis-binding = {
+        tangs = [ "iyr-tang" ];
+        protectDataset = "tank-host-lab-4-root";
+        secretFile = ../../hosts/nixos/lab-4/persist.jwe;
+      };
+    };
   };
 }

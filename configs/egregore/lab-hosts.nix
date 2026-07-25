@@ -162,7 +162,12 @@ in
         storageDev = "eno50np1";
         labMac     = "98:f2:b3:d7:b9:d0";   # eno49np0
         labDev     = "eno49np0";
-        wgKey = "IjRhm1Lw0+nkD/Im+4QYAit3+JtlQ5FnvKShpY7+Tiw=";
+        # Repinned 2026-07-25: lab-4's WG key used to regenerate every
+        # boot (tmpfs root, never persisted) so it perpetually drifted
+        # from this pin. Since lab-4's root moved to tank/host/lab-4/root
+        # the key persists at /etc/secrets/wireguard/private.key, so this
+        # value is now stable.
+        wgKey = "rpMw7tIHvEog9bWn8PueMdtG/OrJmz+VogXGgYTMpxU=";
       };
     };
   };
