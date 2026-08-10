@@ -1,13 +1,11 @@
 {pkgs}:
 let
+  # Internal producers (river, set-output-icc, tidepool, base24-gen, shoal)
+  # are provided by their own overlays now; only nixclyx's own packages live
+  # here. Producers are aliased back under pkgs.psyclyx.* in ../overlay.nix.
   packages = builtins.mapAttrs (_: x: pkgs.callPackage x {}) {
     print256colors = ./print256colors.nix;
-    river = ./river;
-    set-output-icc = ./set-output-icc;
     spork = ./spork.nix;
-    tidepool = ./tidepool;
-    "base24-gen" = ./base24-gen;
-    shoal = ./shoal;
     ilo4-console = ./ilo4-console.nix;
     nvf = ./nvf.nix;
     ssacli = ./ssacli.nix;
@@ -24,9 +22,8 @@ in
     janet-lsp = pkgs.callPackage ./janet-lsp.nix {
       inherit (packages) spork;
     };
-    regenerate-palettes = pkgs.callPackage ./regenerate-palettes.nix {
-      inherit (packages) base24-gen;
-    };
+    # base24-gen comes from its producer overlay (in pkgs), resolved by callPackage.
+    regenerate-palettes = pkgs.callPackage ./regenerate-palettes.nix { };
     egregore = pkgs.callPackage ./egregore.nix {
       inherit (packages) sodola-config swos-config routeros-config;
     };

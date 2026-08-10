@@ -19,8 +19,15 @@ in
   in
     ((llm-agents.overlays.shared-nixpkgs final prev)
     // {
-      psyclyx = import ./packages {pkgs = prev;};
-      shoal = final.psyclyx.shoal;
+      psyclyx =
+        (import ./packages {pkgs = prev;})
+        // {
+          # Internal producers now come from their own overlays (composed
+          # ahead of this one in ./overlays.nix), aliased under psyclyx so the
+          # existing pkgs.psyclyx.* module references keep working.
+          inherit (prev) river shoal tidepool set-output-icc;
+          "base24-gen" = prev."base24-gen";
+        };
       colmena = colmena.packages.${prev.stdenv.hostPlatform.system};
       astal = astal.packages.${prev.stdenv.hostPlatform.system};
       clj-nix = clj-nix.packages.${prev.stdenv.hostPlatform.system};
@@ -44,17 +51,9 @@ in
       glasgow = prev.glasgow.overridePythonAttrs (old: {
         pythonRelaxDeps = (old.pythonRelaxDeps or []) ++ ["importlib_resources"];
       });
-      # wlroots' ICC output color transform (render/color_lcms2.c) builds the
-      # lcms2 transform as INTENT_RELATIVE_COLORIMETRIC with no flags — i.e. no
-      # black point compensation — so display shadows below the panel's black
-      # floor clip to black instead of being scaled in. Enable BPC so shadow
-      # detail is preserved. Used by the psyclyx_color_management_v1 ICC path in
-      # the river fork.
-      wlroots_0_20 = prev.wlroots_0_20.overrideAttrs (old: {
-        # lib.unique guards against this overlay being applied more than once
-        # (which would append the patch twice and fail as already-applied).
-        patches = prev.lib.unique ((old.patches or []) ++ [./patches/wlroots-icc-bpc.patch]);
-      });
+      # (river's wlroots_0_20 ICC black-point-compensation patch now travels
+      # with river itself — see app/river/overlay.nix — so it is applied via
+      # the river producer overlay composed ahead of this one.)
       # __multf3 (128-bit float multiply) missing on aarch64 — the Makefile
       # calls ld directly (bypassing the CC wrapper), so buildInputs alone
       # won't add libgcc_s to the rpath.  Patch the .so after build instead.

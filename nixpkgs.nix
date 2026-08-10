@@ -1,6 +1,6 @@
 {
   nixpkgs ? (import ./npins).nixpkgs,
-  overlays ? [(import ./overlay.nix)],
+  overlays ? [(import ./overlays.nix {})],
 }:
 import nixpkgs {
   inherit overlays;

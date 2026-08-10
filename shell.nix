@@ -1,7 +1,7 @@
 let
   sources = import ./npins;
   pkgs = import sources.nixpkgs {
-    overlays = [(import ./overlay.nix)];
+    overlays = [(import ./overlays.nix {})];
     config = {
       allowUnfree = true;
       nvidia.acceptLicense = true;

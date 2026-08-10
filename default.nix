@@ -1,9 +1,20 @@
+{
+  # nixpkgs used to build hosts. Standalone: nixclyx's own pin. The monorepo
+  # superproject passes the shared lib/nixpkgs.
+  nixpkgs ? (import ./npins).nixpkgs,
+  # Sibling sources for the internal producers (river/shoal/tidepool/
+  # base24-gen/emacs/pi-nix). Default {} => use nixclyx's own npins pins
+  # (standalone). The monorepo superproject overrides these with the sibling
+  # checkouts, so BOTH the producer overlays and the home-manager module
+  # imports track the monorepo versions.
+  internalSources ? { },
+}:
 let
   # Phase 1: Core — standalone values with no module dependencies.
-  sources = import ./npins;
+  sources = (import ./npins) // internalSources;
   loadFlake = import ./loadFlake.nix;
   lib = import ./lib;
-  overlay = import ./overlay.nix;
+  overlay = import ./overlays.nix { inherit sources; };
   packages = import ./packages;
 
   core = {
@@ -25,7 +36,7 @@ let
   };
 
   # Phase 3: Consumers — depend on modules.
-  evalConfig = import (sources.nixpkgs + "/nixos/lib/eval-config.nix");
+  evalConfig = import (nixpkgs + "/nixos/lib/eval-config.nix");
 
   hostEntries = builtins.readDir ./hosts/nixos;
   hostNames =
@@ -65,7 +76,7 @@ let
 
   mkDroidHost = name:
     nixOnDroidLib.nixOnDroidConfiguration {
-      pkgs = import sources.nixpkgs {system = "aarch64-linux";};
+      pkgs = import nixpkgs {system = "aarch64-linux";};
       home-manager-path = sources.home-manager.outPath;
       modules = [
         modules.nix-on-droid
