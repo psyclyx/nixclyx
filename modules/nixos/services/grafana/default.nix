@@ -95,7 +95,6 @@
         "bcachefs.json" = import ./dashboards/bcachefs.nix dsl;
         "zfs.json" = import ./dashboards/zfs.nix dsl;
         "etcd.json" = import ./dashboards/etcd.nix dsl;
-        "patroni.json" = import ./dashboards/patroni.nix dsl;
         "haproxy.json" = import ./dashboards/haproxy.nix dsl;
       };
       dashboardDir = pkgs.linkFarm "grafana-dashboards" (

@@ -26,11 +26,6 @@ in
 {
   config = lib.mkIf (myGroups != { }) {
     psyclyx.nixos.derived = {
-      patroni = lib.mkIf (hasService "postgresql") {
-        dataNetwork = networkFor "postgresql";
-        clusterNodes = clusterNodesFor "postgresql";
-      };
-
       redis-sentinel =
         let
           redisNodes = lib.take 3 (clusterNodesFor "redis");

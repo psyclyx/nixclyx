@@ -25,7 +25,6 @@
     ./bootstrap.nix
     ./gateway.nix
     ./vms.nix
-    ./consul.nix
     ./dhcp-ddns.nix
     ./distributed-builds.nix
     ./dns-resolver.nix
@@ -34,14 +33,12 @@
     ./kerberos.nix
     ./l2-listeners.nix
     ./nginx-static.nix
-    ./nomad.nix
     ./openbao-cluster.nix
     ./openbao-endpoint.nix
     ./openbao-fleet.nix
     ./openbao-vm-auth.nix
     ./openbao-vm-ssh-host.nix
     ./openssh.nix
-    ./patroni.nix
     ./public-names.nix
     ./redis-sentinel.nix
     ./seaweedfs.nix

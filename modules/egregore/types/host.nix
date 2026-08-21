@@ -612,10 +612,6 @@
               port = 9187;
               networks = [ "infra" ];
             };
-            patroni = {
-              port = 8008;
-              networks = [ "infra" ];
-            };
           })
           // (lib.optionalAttrs (hasService "redis") {
             redis = {
