@@ -20,6 +20,13 @@ let
   # on iyr's enp3s0 (via mdf-brk01 port5). Failover lives on iyr — see
   # hosts/nixos/iyr and modules/nixos/network/wan-failover.nix.
   wan      = [250 251];
+  # LAN core transit (VLAN 252): the point-to-point iyr↔mdf-agg01 link for
+  # the router-on-a-stick migration — the switch will L3-route inter-VLAN in
+  # hardware and hand north-south to iyr for NAT over this VLAN. Carried only
+  # on the iyr→mdf-brk01→mdf-agg01 path (iyr LAN port, the media-converter
+  # uplink, and the CRS326 uplink); nothing else needs it. L3 endpoints +
+  # the `core-transit` network entity land with the gateway migration.
+  core     = [252];
   all      = internal ++ wan;
 in {
   gate = "always";
@@ -115,7 +122,7 @@ in {
             "sfp-sfpplus21" = {};
             "sfp-sfpplus22" = {};
             "sfp-sfpplus23" = {};
-            "sfp-sfpplus24" = { vlans = all; meta.peer = "mdf-brk01"; };
+            "sfp-sfpplus24" = { vlans = all ++ core; meta.peer = "mdf-brk01"; };
           };
         };
       };
@@ -180,10 +187,10 @@ in {
             port3 = {};
             port4 = {};
             port5 = { vlans = wan; meta = { peer = "iyr"; description = "iyr WAN (enp3s0, transit VLANs 250/251)"; }; };
-            port6 = { vlans = internal; meta = { peer = "iyr"; description = "iyr LAN (enp1s0, all internal VLANs)"; }; };
+            port6 = { vlans = internal ++ core; meta = { peer = "iyr"; description = "iyr LAN (enp1s0, internal VLANs + core transit 252)"; }; };
             port7 = {};
             port8 = {};
-            port9 = { vlans = all; meta = { peer = "mdf-agg01"; description = "uplink to CRS326 sfp-sfpplus24"; }; };
+            port9 = { vlans = all ++ core; meta = { peer = "mdf-agg01"; description = "uplink to CRS326 sfp-sfpplus24 (+ core transit 252)"; }; };
           };
         };
       };
