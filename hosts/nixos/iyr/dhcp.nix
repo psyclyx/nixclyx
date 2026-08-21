@@ -14,8 +14,6 @@
       # projection (PXE boot-file).
       lab     = { network = "lab";     ipv4Range = { start = "10.0.210.240"; end = "10.0.210.254"; }; };
       storage = { network = "storage"; ipv4Range = { start = "10.0.200.240"; end = "10.0.200.254"; }; };
-      guest = { network = "guest"; ipv4Range = { start = "10.0.100.10";  end = "10.0.100.249"; }; };
-      iot   = { network = "iot";   ipv4Range = { start = "10.0.110.10";  end = "10.0.110.249"; }; };
       mgmt  = {
         network = "mgmt";
         ipv4Range = { start = "10.0.240.100"; end = "10.0.240.199"; };

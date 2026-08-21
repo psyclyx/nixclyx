@@ -20,14 +20,6 @@
         type = "network";
         network = { site = "apt"; vlan = 25; ipv4 = "10.0.25.0/24"; ulaSubnetHex = "19"; ipv6PdSubnetId = 1; zone = "infra"; };
       };
-      guest = {
-        type = "network";
-        network = { site = "apt"; vlan = 100; ipv4 = "10.0.100.0/24"; ulaSubnetHex = "64"; ipv6PdSubnetId = 5; zone = "guest"; };
-      };
-      iot = {
-        type = "network";
-        network = { site = "apt"; vlan = 110; ipv4 = "10.0.110.0/24"; ulaSubnetHex = "6e"; ipv6PdSubnetId = 6; zone = "iot"; };
-      };
       # iyr isn't the gateway for storage/lab/cluster-* (mdf-agg01 is)
       # but it *is* an L2 listener on storage + lab (DHCP + DNS).
       # refs.dns points the DHCP projection's domain-name-servers option

@@ -59,8 +59,6 @@
     zones = {
       lan.label = "Apartment LAN — workstations, sigil, trusted humans.";
       infra.label = "Apt infra services — control plane, VIPs.";
-      guest.label = "Guest WiFi — internet-only, no LAN access.";
-      iot.label = "IoT devices — isolated, limited internet.";
       mgmt.label = "Out-of-band management — iLO/IPMI/BMC.";
       storage.label = "Rack-internal storage fabric — unauthenticated NFS/iSCSI.";
       lab-transit.label = "Hypervisor↔mdf-agg01 routed transit; BGP backbone.";
@@ -164,14 +162,6 @@
         wg = "accept";
         infra = "accept";
         cluster-orch = "accept";
-      };
-
-      # Guest / IoT: internet-only.
-      guest = {
-        wan = "accept";
-      };
-      iot = {
-        wan = "accept";
       };
 
       # mgmt: out-of-band. Reachable from lan/wg only; no outbound.

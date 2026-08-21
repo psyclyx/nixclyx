@@ -12,7 +12,7 @@ let
   # per-trunk VLAN-list bookkeeping. Routed at mdf-agg01 (L3 HW
   # offload); access ports come online as lab hosts get NICs wired
   # per env in phase 3 of the rework.
-  internal = [10 25 100 110 200 210 220 221 222 223 240];
+  internal = [10 25 200 210 220 221 222 223 240];
   # WAN transit VLANs — L2-only, not modeled as network entities (they
   # have no internal subnet). 251 is Google Fiber (the primary IPv4
   # uplink), 250 is Xfinity (IPv6 + the IPv4 fallback); both land on
