@@ -75,6 +75,9 @@
   }: {
     services.unbound = {
       enable = true;
+      # Local unix control socket so `unbound-control stats` works (cache
+      # hit/miss, memory) — enables remote-control on this socket only.
+      localControlSocketPath = "/run/unbound/unbound.ctl";
       settings = {
         server =
           {
@@ -87,11 +90,30 @@
               ++ cfg.accessControl;
             do-not-query-localhost = false;
 
-            # Refresh popular cache entries before they expire
+            # Threading: inter-VLAN routing is hardware-offloaded onto the
+            # switch (mdf-agg01); this mini-PC only does NAT/DNS/DHCP, so its
+            # cores are free for the resolver. Use all four, with cache slabs
+            # a power-of-two >= num-threads to cut lock contention.
+            num-threads = 4;
+            so-reuseport = true;
+            msg-cache-slabs = 4;
+            rrset-cache-slabs = 4;
+            infra-cache-slabs = 4;
+            key-cache-slabs = 4;
+
+            # Caches: trivial against this host's RAM, far better hit rate
+            # than unbound's 4 MB defaults. rrset ~2x msg is the usual ratio.
+            msg-cache-size = "64m";
+            rrset-cache-size = "128m";
+
+            # Refresh popular cache entries before they expire (incl. DNSKEY).
             prefetch = true;
-            # Serve stale records while fetching fresh ones in the background
+            prefetch-key = true;
+            # Serve stale records while fetching fresh ones in the background;
+            # answer from stale within 1.8s if the refresh is slow (RFC 8767).
             serve-expired = true;
             serve-expired-ttl = 86400;
+            serve-expired-client-timeout = 1800;
           }
           // lib.optionalAttrs (cfg.localZones != {}) {
             local-zone = lib.mapAttrsToList (name: type: ''"${name}." ${type}'') cfg.localZones;
