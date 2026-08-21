@@ -135,6 +135,13 @@ let
         (cfg.guests.${vmName} or { })
         {
           networking.hostName = lib.mkDefault vmName;
+          # Every guest mounts the host's /nix/store read-only over virtiofs
+          # (see vmShares' ro-store). Store gc/optimise inside the guest is
+          # therefore pointless and would target the wrong, read-only store —
+          # force both off, overriding the common nix defaults a guest pulls
+          # in via system.nix.enable.
+          nix.gc.automatic = lib.mkForce false;
+          nix.optimise.automatic = lib.mkForce false;
           microvm = {
             mem = lib.mkDefault cfg.defaults.memMiB;
             vcpu = lib.mkDefault cfg.defaults.vcpu;

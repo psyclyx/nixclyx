@@ -31,15 +31,17 @@
         trusted-users = ["@builders"];
       };
 
+      # Weekly, not daily — early Monday, staggered so gc finishes before
+      # optimise starts. microvms force both off (see derived/vms.nix).
       gc = {
         automatic = true;
-        dates = ["05:00"];
+        dates = ["Mon *-*-* 05:00:00"];
         options = "--delete-older-than 7d";
       };
 
       optimise = {
         automatic = true;
-        dates = ["06:00"];
+        dates = ["Mon *-*-* 06:00:00"];
       };
     };
   };
