@@ -55,6 +55,152 @@ def _comma_list(items):
     return ",".join(items)
 
 
+# ── Field schema ─────────────────────────────────────────────────────
+#
+# One declarative table per record section drives what used to be three
+# hand-written, must-stay-in-lockstep encodings of every field: the full
+# emitter (generate), the spec→diff projection (_desired_diffable), and
+# the diff comparison metadata (_IDENTITY / _COMPARE_FIELDS). Add a field
+# once, here, and it flows to all three.
+#
+#   omit:  "req"    always emit (identity / mandatory)
+#          "none"   skip when the python value is None (0 / "" still emit)
+#          "falsy"  skip when the python value is falsy
+#   kind:  "raw"    value verbatim
+#          "int"    str(value)
+#          "bool"   True→yes  False→no
+#          "flag"   emit `key=yes` when truthy, else skip entirely
+#          "qstr"   always double-quoted (comments)
+#          "list"   comma-joined
+#   diffable=False  emitted by generate() but ignored by the diff (e.g.
+#                   RouterOS never exports it, so comparing churns).
+
+
+class Field:
+    __slots__ = ("py", "ros", "kind", "omit", "diffable")
+
+    def __init__(self, py, ros=None, kind="raw", omit="none", diffable=True):
+        self.py = py
+        self.ros = ros if ros is not None else py.replace("_", "-")
+        self.kind = kind
+        self.omit = omit
+        self.diffable = diffable
+
+    def _skip(self, v):
+        if self.kind == "flag":
+            return not v
+        if self.omit == "req":
+            return False
+        if self.omit == "falsy":
+            return not v
+        return v is None
+
+    def render(self, entry):
+        """py-keyed entry → `ros-key=value` rsc token, or None to skip."""
+        v = entry.get(self.py)
+        if self._skip(v):
+            return None
+        if self.kind == "flag":
+            return f"{self.ros}=yes"
+        if self.kind == "bool":
+            return f"{self.ros}={'yes' if v else 'no'}"
+        if self.kind == "qstr":
+            return f'{self.ros}="{v}"'
+        if self.kind == "list":
+            return f"{self.ros}={_comma_list(v)}"
+        return f"{self.ros}={v}"
+
+    def diff_value(self, entry):
+        """py-keyed entry → canonical string for the diff params dict
+        (ros-keyed, unquoted — the diff formatter re-quotes), or None."""
+        v = entry.get(self.py)
+        if self._skip(v):
+            return None
+        if self.kind == "bool":
+            return "yes" if v else "no"
+        if self.kind == "flag":
+            return "yes"
+        if self.kind == "list":
+            return _comma_list(v)
+        return str(v)
+
+
+F = Field
+
+# Record sections: config-key → (rsc section header, comment, identity
+# tuple (None = not diffed), field list). Order of fields is the emit
+# order and must match `/export` field order for a clean diff.
+_ROUTE_FIELDS = [
+    F("disabled", kind="flag"),
+    F("dst", "dst-address", omit="req"), F("gateway", omit="req"),
+    F("distance", kind="int"), F("routing_table", "routing-table", omit="falsy"),
+    F("scope", kind="int"), F("target_scope", "target-scope", kind="int"),
+    F("pref_src", "pref-src", omit="falsy"),
+    F("comment", kind="qstr", omit="falsy"),
+]
+
+RECORD_SECTIONS = [
+    ("vlan_interfaces", "/interface vlan", "# ── VLAN interfaces ──",
+     ("name",), [
+        F("interface", omit="req"), F("name", omit="req"),
+        F("vlan_id", "vlan-id", kind="int", omit="req"),
+        F("mtu", kind="int"), F("comment", kind="qstr", omit="falsy")]),
+    ("addresses", "/ip address", "# ── IP addresses ──",
+     ("address",), [
+        F("address", omit="req"), F("interface", omit="req"),
+        F("network", omit="falsy"), F("comment", kind="qstr", omit="falsy")]),
+    ("routes", "/ip route", "# ── Routes ──", None, _ROUTE_FIELDS),
+    ("ipv6_addresses", "/ipv6 address", "# ── IPv6 addresses ──",
+     ("address",), [
+        F("address", omit="req"), F("interface", omit="req"),
+        F("advertise", kind="bool"),
+        F("eui64", "eui-64", kind="bool", diffable=False),
+        F("no_dad", "no-dad", kind="bool"),
+        F("comment", kind="qstr", omit="falsy")]),
+    ("ipv6_nd", "/ipv6 nd", "# ── IPv6 ND ──",
+     ("interface",), [
+        F("interface", omit="req"), F("ra_lifetime", "ra-lifetime"),
+        F("comment", kind="qstr", omit="falsy")]),
+    ("ipv6_routes", "/ipv6 route", "# ── IPv6 routes ──", None, _ROUTE_FIELDS),
+]
+
+_SECTION_BY_PATH = {path: (fields, ident) for _, path, _, ident, fields
+                    in RECORD_SECTIONS}
+
+
+def _emit_add(fields, entry):
+    """Render one `add …` line from a py-keyed entry and its schema."""
+    parts = ["add"]
+    for f in fields:
+        tok = f.render(entry)
+        if tok is not None:
+            parts.append(tok)
+    return " ".join(parts)
+
+
+def _emit_record_section(lines, header, comment, fields, entries):
+    if not entries:
+        return
+    lines.append(comment)
+    lines.append(header)
+    for e in entries:
+        lines.append(_emit_add(fields, e))
+    lines.append("")
+
+
+def _diff_params(fields, entry):
+    """py-keyed entry + schema → the ros-keyed params dict the diff
+    machinery compares (skips non-diffable and omitted fields)."""
+    out = {}
+    for f in fields:
+        if not f.diffable:
+            continue
+        v = f.diff_value(entry)
+        if v is not None:
+            out[f.ros] = v
+    return out
+
+
 # ── Generator ────────────────────────────────────────────────────────
 
 
@@ -317,21 +463,9 @@ def generate(config):
             lines.append("")
 
     # ── VLAN interfaces ─────────────────────────────────────────
-    if vlan_ifaces:
-        lines.append("# ── VLAN interfaces ──")
-        lines.append("/interface vlan")
-        for vi in vlan_ifaces:
-            parts = [
-                f"add interface={vi['interface']}",
-                f"name={vi['name']}",
-                f"vlan-id={vi['vlan_id']}",
-            ]
-            if vi.get("mtu") is not None:
-                parts.append(f"mtu={vi['mtu']}")
-            if vi.get("comment"):
-                parts.append(f'comment="{vi["comment"]}"')
-            lines.append(" ".join(parts))
-        lines.append("")
+    _emit_record_section(
+        lines, "/interface vlan", "# ── VLAN interfaces ──",
+        _SECTION_BY_PATH["/interface vlan"][0], vlan_ifaces)
 
     # ── L3 hardware offloading ─────────────────────────────────
     # Two distinct knobs land here:
@@ -407,66 +541,19 @@ def generate(config):
         lines.append("")
 
     # ── IP addresses ────────────────────────────────────────────
-    if addresses:
-        lines.append("# ── IP addresses ──")
-        lines.append("/ip address")
-        for a in addresses:
-            parts = [f"add address={a['address']}"]
-            parts.append(f"interface={a['interface']}")
-            if a.get("network"):
-                parts.append(f"network={a['network']}")
-            if a.get("comment"):
-                parts.append(f'comment="{a["comment"]}"')
-            lines.append(" ".join(parts))
-        lines.append("")
+    _emit_record_section(
+        lines, "/ip address", "# ── IP addresses ──",
+        _SECTION_BY_PATH["/ip address"][0], addresses)
 
     # ── Routes ──────────────────────────────────────────────────
-    if routes:
-        lines.append("# ── Routes ──")
-        lines.append("/ip route")
-        for r in routes:
-            parts = []
-            if r.get("disabled"):
-                parts.append("add disabled=yes")
-            else:
-                parts.append("add")
-            parts.append(f"dst-address={r['dst']}")
-            parts.append(f"gateway={r['gateway']}")
-            if r.get("distance") is not None:
-                parts.append(f"distance={r['distance']}")
-            if r.get("routing_table"):
-                parts.append(f"routing-table={r['routing_table']}")
-            if r.get("scope") is not None:
-                parts.append(f"scope={r['scope']}")
-            if r.get("target_scope") is not None:
-                parts.append(f"target-scope={r['target_scope']}")
-            if r.get("pref_src"):
-                parts.append(f"pref-src={r['pref_src']}")
-            if r.get("comment"):
-                parts.append(f'comment="{r["comment"]}"')
-            lines.append(" ".join(parts))
-        lines.append("")
+    _emit_record_section(
+        lines, "/ip route", "# ── Routes ──",
+        _SECTION_BY_PATH["/ip route"][0], routes)
 
     # ── IPv6 addresses ─────────────────────────────────────────
-    if addresses6:
-        lines.append("# ── IPv6 addresses ──")
-        lines.append("/ipv6 address")
-        for a in addresses6:
-            parts = [f"add address={a['address']}"]
-            parts.append(f"interface={a['interface']}")
-            if a.get("advertise") is not None:
-                val = "yes" if a["advertise"] else "no"
-                parts.append(f"advertise={val}")
-            if a.get("eui64") is not None:
-                val = "yes" if a["eui64"] else "no"
-                parts.append(f"eui-64={val}")
-            if a.get("no_dad") is not None:
-                val = "yes" if a["no_dad"] else "no"
-                parts.append(f"no-dad={val}")
-            if a.get("comment"):
-                parts.append(f'comment="{a["comment"]}"')
-            lines.append(" ".join(parts))
-        lines.append("")
+    _emit_record_section(
+        lines, "/ipv6 address", "# ── IPv6 addresses ──",
+        _SECTION_BY_PATH["/ipv6 address"][0], addresses6)
 
     # ── IPv6 ND (per-interface RA overrides) ───────────────────
     # RouterOS defaults to advertising every SVI with a global v6
@@ -475,44 +562,14 @@ def generate(config):
     # that makes hosts blackhole internet v6 through it. A per-interface
     # entry with ra-lifetime=none keeps SLAAC prefix advertisement but
     # stops the switch claiming to be a default router.
-    if nd6:
-        lines.append("# ── IPv6 ND ──")
-        lines.append("/ipv6 nd")
-        for n in nd6:
-            parts = [f"add interface={n['interface']}"]
-            if n.get("ra_lifetime") is not None:
-                parts.append(f"ra-lifetime={n['ra_lifetime']}")
-            if n.get("comment"):
-                parts.append(f'comment="{n["comment"]}"')
-            lines.append(" ".join(parts))
-        lines.append("")
+    _emit_record_section(
+        lines, "/ipv6 nd", "# ── IPv6 ND ──",
+        _SECTION_BY_PATH["/ipv6 nd"][0], nd6)
 
     # ── IPv6 routes ────────────────────────────────────────────
-    if routes6:
-        lines.append("# ── IPv6 routes ──")
-        lines.append("/ipv6 route")
-        for r in routes6:
-            parts = []
-            if r.get("disabled"):
-                parts.append("add disabled=yes")
-            else:
-                parts.append("add")
-            parts.append(f"dst-address={r['dst']}")
-            parts.append(f"gateway={r['gateway']}")
-            if r.get("distance") is not None:
-                parts.append(f"distance={r['distance']}")
-            if r.get("routing_table"):
-                parts.append(f"routing-table={r['routing_table']}")
-            if r.get("scope") is not None:
-                parts.append(f"scope={r['scope']}")
-            if r.get("target_scope") is not None:
-                parts.append(f"target-scope={r['target_scope']}")
-            if r.get("pref_src"):
-                parts.append(f"pref-src={r['pref_src']}")
-            if r.get("comment"):
-                parts.append(f'comment="{r["comment"]}"')
-            lines.append(" ".join(parts))
-        lines.append("")
+    _emit_record_section(
+        lines, "/ipv6 route", "# ── IPv6 routes ──",
+        _SECTION_BY_PATH["/ipv6 route"][0], routes6)
 
     # ── Disable unused ports ────────────────────────────────────
     if disabled_ports:
@@ -620,34 +677,36 @@ def parse_export(text):
     return sections
 
 
-# Per-section identity field: how an entry is uniquely keyed for diffing.
-_IDENTITY = {
-    "/interface vlan": ("name",),
-    "/ip address": ("address",),
-    "/ipv6 address": ("address",),
-    # ND overrides are one-per-interface; the default `interface=all`
-    # row is a RouterOS default and never appears in /export.
-    "/ipv6 nd": ("interface",),
-    "/interface bridge vlan": ("vlan-ids",),
-    # Switch chip identity is by name. We emit `set [find name=<n>] ...`
-    # rather than `add`; handled specially in diff_state.
-    "/interface ethernet switch": ("name",),
-    # l3hw-settings is a singleton — there's no identity column, just
-    # one row of settings per switch chip. We use a sentinel key so the
-    # diff machinery has something to look at; rendering ignores it.
-    "/interface ethernet switch l3hw-settings": ("_singleton",),
-    # /ipv6 settings is also a singleton row.
-    "/ipv6 settings": ("_singleton",),
-}
+# Bridge VLAN table — structural in generate() (nested in the bridge
+# block), but diffed here, so its schema lives alongside the diff.
+_BRIDGE_VLAN_FIELDS = [
+    F("bridge", omit="req"), F("vlan_ids", "vlan-ids", omit="req"),
+    F("tagged", kind="list", omit="falsy"),
+    F("untagged", kind="list", omit="falsy"),
+]
 
-# Section-specific comparable fields (what we treat as the entry's content).
-# Other fields are ignored.
-_COMPARE_FIELDS = {
-    "/interface vlan": ("interface", "name", "vlan-id", "mtu", "comment"),
-    "/ip address": ("address", "interface", "network", "comment"),
-    "/ipv6 address": ("address", "interface", "advertise", "no-dad", "comment"),
-    "/ipv6 nd": ("interface", "ra-lifetime", "comment"),
-    "/interface bridge vlan": ("bridge", "vlan-ids", "tagged", "untagged"),
+# Per-section identity + comparable fields for diffing. Record sections
+# derive straight from the schema (identity is None → generate-only, not
+# diffed, e.g. routes). Switch-chip / singleton rows are hardware-rooted
+# `set [find …]` sections handled specially in diff_state.
+_IDENTITY = {}
+_COMPARE_FIELDS = {}
+for _key, _path, _c, _ident, _fields in RECORD_SECTIONS:
+    if _ident is None:
+        continue
+    _IDENTITY[_path] = _ident
+    _COMPARE_FIELDS[_path] = tuple(f.ros for f in _fields if f.diffable)
+
+_IDENTITY["/interface bridge vlan"] = ("vlan-ids",)
+_COMPARE_FIELDS["/interface bridge vlan"] = tuple(
+    f.ros for f in _BRIDGE_VLAN_FIELDS if f.diffable)
+
+_IDENTITY.update({
+    "/interface ethernet switch": ("name",),
+    "/interface ethernet switch l3hw-settings": ("_singleton",),
+    "/ipv6 settings": ("_singleton",),
+})
+_COMPARE_FIELDS.update({
     "/interface ethernet switch": ("name", "l3-hw-offloading", "qos-hw-offloading"),
     "/interface ethernet switch l3hw-settings": (
         "_singleton", "ipv6-hw", "icmp-reply-on-error",
@@ -655,7 +714,7 @@ _COMPARE_FIELDS = {
     "/ipv6 settings": (
         "_singleton", "forward", "accept-redirects", "accept-source-route",
     ),
-}
+})
 
 # Sections that are configured via `set [find ...]` against existing
 # entries (the hardware row already exists; we can't `add` or `remove`
@@ -751,16 +810,7 @@ def _desired_diffable(config):
     bridge_name = bridge.get("name", "bridge1")
     system = config.get("system", {})
 
-    sections = {
-        "/interface vlan": [],
-        "/ip address": [],
-        "/ipv6 address": [],
-        "/ipv6 nd": [],
-        "/interface bridge vlan": [],
-        "/interface ethernet switch": [],
-        "/interface ethernet switch l3hw-settings": [],
-        "/ipv6 settings": [],
-    }
+    sections = {path: [] for path in _IDENTITY}
 
     # Switch chip — l3-hw-offloading lives here. CRS3xx has a Marvell
     # "switch1" plus auxiliary chips; the L3 setting goes on the
@@ -805,62 +855,18 @@ def _desired_diffable(config):
             )
         sections["/ipv6 settings"].append(("set", params))
 
-    for vi in config.get("vlan_interfaces", []):
-        params = {
-            "interface": vi["interface"],
-            "name": vi["name"],
-            "vlan-id": str(vi["vlan_id"]),
-        }
-        if vi.get("mtu") is not None:
-            params["mtu"] = str(vi["mtu"])
-        if vi.get("comment"):
-            params["comment"] = vi["comment"]
-        sections["/interface vlan"].append(("add", params))
-
-    for a in config.get("addresses", []):
-        params = {
-            "address": a["address"],
-            "interface": a["interface"],
-        }
-        if a.get("network"):
-            params["network"] = a["network"]
-        if a.get("comment"):
-            params["comment"] = a["comment"]
-        sections["/ip address"].append(("add", params))
-
-    for a in config.get("ipv6_addresses", []):
-        params = {
-            "address": a["address"],
-            "interface": a["interface"],
-        }
-        if a.get("advertise") is not None:
-            params["advertise"] = "yes" if a["advertise"] else "no"
-        if a.get("no_dad") is not None:
-            params["no-dad"] = "yes" if a["no_dad"] else "no"
-        if a.get("comment"):
-            params["comment"] = a["comment"]
-        sections["/ipv6 address"].append(("add", params))
-
-    for n in config.get("ipv6_nd", []):
-        params = {"interface": n["interface"]}
-        if n.get("ra_lifetime") is not None:
-            params["ra-lifetime"] = n["ra_lifetime"]
-        if n.get("comment"):
-            params["comment"] = n["comment"]
-        sections["/ipv6 nd"].append(("add", params))
+    # Record sections → ("add", {ros-key: value}) straight from the
+    # schema. Sections with identity=None (routes) are generate-only.
+    for key, path, _c, ident, fields in RECORD_SECTIONS:
+        if ident is None:
+            continue
+        for entry in config.get(key, []):
+            sections[path].append(("add", _diff_params(fields, entry)))
 
     for bv in bridge.get("vlans", []):
-        params = {
-            "bridge": bridge_name,
-            "vlan-ids": bv["vlan_ids"],
-        }
-        tagged = bv.get("tagged") or []
-        untagged = bv.get("untagged") or []
-        if tagged:
-            params["tagged"] = ",".join(tagged)
-        if untagged:
-            params["untagged"] = ",".join(untagged)
-        sections["/interface bridge vlan"].append(("add", params))
+        entry = dict(bv, bridge=bridge_name)
+        sections["/interface bridge vlan"].append(
+            ("add", _diff_params(_BRIDGE_VLAN_FIELDS, entry)))
 
     return sections
 
