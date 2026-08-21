@@ -36,27 +36,40 @@ let
   };
 
   # Phase 3: Consumers — depend on modules.
-  evalConfig = import (nixpkgs + "/nixos/lib/eval-config.nix");
-
   hostEntries = builtins.readDir ./hosts/nixos;
   hostNames =
     builtins.filter
     (n: hostEntries.${n} == "directory")
     (builtins.attrNames hostEntries);
 
-  mkHost = name:
-    evalConfig {
-      modules = [
-        modules.nixos
-        (./hosts/nixos + "/${name}")
-      ];
-    };
+  # The pkgs every host is built against: injected nixpkgs + the
+  # injection-aware overlay. Shared by `configurations` (below) and the
+  # hive's meta.nixpkgs, so both build against exactly the same set.
+  hostPkgs = import ./nixpkgs.nix {
+    inherit nixpkgs;
+    overlays = [overlay];
+  };
 
-  configurations = builtins.listToAttrs (map (name: {
-      inherit name;
-      value = mkHost name;
+  # The deployment-free definition of each host, and the Colmena metadata
+  # keyed by the same names. `nodes` is the single source both consumers
+  # derive from; `deployments` only feeds the hive.
+  nodes = import ./nodes.nix {inherit nixclyx;};
+  deployments = import ./deployments.nix {
+    inherit nixclyx;
+    lib = hostPkgs.lib;
+  };
+
+  # Plain NixOS systems from `nodes` — no Colmena, no deployment. Point
+  # `nixos-rebuild -A configurations.<host>` at these; eval-config leaves
+  # each under `.config.system.build.toplevel`.
+  evalConfig = import (nixpkgs + "/nixos/lib/eval-config.nix");
+  configurations = builtins.mapAttrs (name: node:
+    evalConfig {
+      system = hostPkgs.stdenv.hostPlatform.system;
+      specialArgs = {inherit name;};
+      modules = [node];
     })
-    hostNames);
+  nodes;
 
   darwinSystem = (loadFlake sources.nix-darwin).lib.darwinSystem;
 
@@ -88,7 +101,7 @@ let
     phone = {};
   };
 
-  hive = import ./hive.nix {inherit nixclyx;};
+  hive = import ./hive.nix {inherit nodes deployments hostPkgs;};
 
   # The full nixclyx attrset. Modules see this via _module.args (lazy).
   # hive/configurations/darwinConfigurations are top-level consumers only —
@@ -96,7 +109,7 @@ let
   nixclyx =
     core
     // {
-      inherit modules hive configurations darwinConfigurations nixOnDroidConfigurations;
+      inherit nixpkgs hostPkgs nodes deployments modules hive configurations darwinConfigurations nixOnDroidConfigurations;
       hosts.nixos = builtins.listToAttrs (map (name: {
         inherit name;
         value = ./hosts/nixos + "/${name}";
