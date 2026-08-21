@@ -86,6 +86,19 @@
       lib.optional (internalDomain != null && internalDomain != "") "~${internalDomain}"
       ++ lib.optional (siteDomain != null) siteDomain
       ++ [ na.zoneName ];
+
+    # Resolver advertised in RA (RDNSS): the network's dnsRef host's own
+    # IPv6 on this network — or the gateway IPv6 when the resolver *is* the
+    # gateway — falling back to the gateway IPv6. Pinning to the resolver
+    # host (not blindly the gateway) keeps DNS correct when inter-VLAN
+    # routing is offloaded off the gateway onto a switch. Mirrors the same
+    # resolution in derived/dhcp.nix so RA RDNSS and DHCPv6 dns-servers agree.
+    resolverHost = na.dnsRef or null;
+    resolver6FromHost =
+      if resolverHost == null || resolverHost == (na.gatewayRef or null)
+      then null
+      else (eg.entities.${resolverHost}.host.addresses.${name} or {}).ipv6 or null;
+    resolver6 = if resolver6FromHost != null then resolver6FromHost else na.gateway6;
   in {
     id = vlanId;
     address4 = "${na.gateway4}/${toString na.prefixLen}";
@@ -93,6 +106,7 @@
     ulaPrefix = "${eg.ipv6UlaPrefix}:${net.network.ulaSubnetHex}::/64";
     pdSubnetId = net.network.ipv6PdSubnetId;
     inherit raDomains;
+    dnsServers = lib.optional (resolver6 != null && resolver6 != "") resolver6;
     staticRoutes = staticRoutesByVlan.${toString vlanId} or [];
   };
 

@@ -40,6 +40,18 @@
           default = [];
           description = "Domains advertised via RA option (DNSSL).";
         };
+        dnsServers = lib.mkOption {
+          type = lib.types.listOf lib.types.str;
+          default = [];
+          description = ''
+            Recursive DNS server addresses advertised in RA (RDNSS).
+            These must be addresses the resolver actually listens on —
+            the network's resolver host, not necessarily the gateway IP
+            (the two diverge when inter-VLAN routing is offloaded to a
+            switch). Empty falls back to the interface link-local, which
+            only works if the resolver binds link-local.
+          '';
+        };
         staticRoutes = lib.mkOption {
           type = lib.types.listOf (lib.types.submodule {
             options = {
@@ -174,7 +186,11 @@
       ipv6SendRAConfig = {
         Managed = true;
         OtherInformation = true;
-        DNS = "_link_local";
+        # Advertise the resolver's real address, not the link-local: the
+        # recursive resolver (unbound) binds the network's global address,
+        # not the link-local, so `_link_local` yields a dead RDNSS. Falls
+        # back to link-local only when no resolver address is projected.
+        DNS = if net.dnsServers == [] then "_link_local" else net.dnsServers;
         Domains = lib.concatStringsSep " " net.raDomains;
       };
       linkConfig.RequiredForOnline = "routable";

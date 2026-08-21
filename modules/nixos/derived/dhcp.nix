@@ -84,21 +84,25 @@
   in
     lib.concatMapStringsSep ", " (r: "${r.dst}-${r.via}") routes;
 
-  # DNS server pushed to clients on a network: resolves the network's
-  # `refs.dns` host (if set) to that host's address on this same
-  # network. Falls back to the gateway IP (which is right when the
-  # gateway also runs the resolver, but wrong for switch-routed
-  # networks like lab/storage where mdf-agg01 isn't a resolver).
-  dnsServerForNetwork = netName: net: let
-    dnsHostName = net.refs.dns or null;
-    dnsHost = if dnsHostName != null then eg.entities.${dnsHostName} else null;
-    dnsHostAddr = if dnsHost != null
-      then dnsHost.host.addresses.${netName} or null
-      else null;
+  # DNS server pushed to clients on a network, per family. The resolver is
+  # the network's `dnsRef` host (honouring the site-level ref). Its address
+  # on this network is the gateway IP when the resolver *is* the gateway,
+  # otherwise the host's own declared address on this network; it falls back
+  # to the gateway IP. Pinning to the resolver host — not blindly the
+  # gateway — keeps DNS correct when inter-VLAN routing is offloaded off the
+  # gateway onto a switch (e.g. mdf-agg01), since the gateway address is then
+  # no longer where the resolver (unbound) listens. iyr already anchors the
+  # switch-routed lab/storage VLANs this way.
+  dnsServerForNetwork = family: netName: net: let
+    na = net.attrs;
+    gwFallback = if family == "ipv4" then na.gateway4 else na.gateway6;
+    resolverHost = na.dnsRef or null;
+    fromHost =
+      if resolverHost == null || resolverHost == (na.gatewayRef or null)
+      then null
+      else (eg.entities.${resolverHost}.host.addresses.${netName} or {}).${family} or null;
   in
-    if dnsHostAddr != null && dnsHostAddr.ipv4 != null
-    then dnsHostAddr.ipv4
-    else net.attrs.gateway4;
+    if fromHost != null then fromHost else gwFallback;
 
   mkSubnet4 = _poolName: pool: let
     net = eg.entities.${pool.network};
@@ -112,7 +116,7 @@
     pools = [{pool = "${pool.ipv4Range.start} - ${pool.ipv4Range.end}";}];
     "option-data" = [
       { name = "routers"; data = na.gateway4; }
-      { name = "domain-name-servers"; data = dnsServerForNetwork pool.network net; }
+      { name = "domain-name-servers"; data = dnsServerForNetwork "ipv4" pool.network net; }
       { name = "domain-name"; data = siteDomain; }
       { name = "domain-search"; data = "${siteDomain}, ${na.zoneName}"; }
     ]
@@ -149,7 +153,7 @@
     interface = "${cfg.interface}.${toString na.vlan}";
     pools = [{pool = "${prefix6}::${pool.ipv6Suffix.start} - ${prefix6}::${pool.ipv6Suffix.end}";}];
     "option-data" = [
-      { name = "dns-servers"; data = na.gateway6; }
+      { name = "dns-servers"; data = dnsServerForNetwork "ipv6" pool.network net; }
       { name = "domain-search"; data = "${siteDomain}, ${na.zoneName}"; }
     ];
     ddns-qualifying-suffix = "${na.zoneName}.";
