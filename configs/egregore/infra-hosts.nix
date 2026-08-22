@@ -141,8 +141,6 @@
               # Apt-LAN zones egressing to WAN.
               { from = "lan"; to = "wan"; }
               { from = "infra"; to = "wan"; }
-              { from = "guest"; to = "wan"; }
-              { from = "iot"; to = "wan"; }
               # WG-routed traffic to apt zones needs source NAT.
               # WG cryptokey check at the hub drops sources outside
               # the peer's AllowedIPs; masquerading at iyr makes
