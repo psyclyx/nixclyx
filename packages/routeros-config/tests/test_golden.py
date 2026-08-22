@@ -105,5 +105,17 @@ def test_diff_agg():
         want.splitlines(), got.splitlines(), "golden", "got", lineterm=""))
 
 
+def test_rollback_arm_shape():
+    """Commit-confirm preamble snapshots config and arms a timed revert."""
+    backup, sched = rc._rollback_names("sid1")
+    assert (backup, sched) == ("preflight-sid1", "rollback-sid1")
+    p = rc._arm_preamble("sid1", 5)
+    assert f"/system backup save name={backup}" in p
+    assert f"/system scheduler add name={sched} interval=5m" in p
+    assert f"on-event=\"/system backup load name={backup}\"" in p
+    # arming must precede changes: preamble ends before any diff section.
+    assert p.rstrip().splitlines()[-1].startswith("/system scheduler add")
+
+
 if __name__ == "__main__":
     sys.exit(main())

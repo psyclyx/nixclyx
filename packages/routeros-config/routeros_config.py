@@ -1008,6 +1008,71 @@ def cmd_diff(args):
     return 0
 
 
+# ── Commit-confirm rollback ────────────────────────────────────────────
+#
+# A live apply can strand the operator (the SSH path may ride the very
+# switch being changed). So the apply ARMS a self-firing revert on the
+# device before touching anything: it snapshots the current config to a
+# backup and schedules `backup load` (a reboot-to-revert) after N minutes.
+# Silence → revert. Only an explicit `confirm` (run after verifying the
+# change is good) cancels the timer. The arming runs at the TOP of the
+# imported script, so even a change that kills SSH mid-import is covered.
+
+
+def _rollback_names(session_id):
+    return f"preflight-{session_id}", f"rollback-{session_id}"
+
+
+def _arm_preamble(session_id, minutes):
+    """rsc preamble that snapshots config and arms the timed revert."""
+    backup, sched = _rollback_names(session_id)
+    return "\n".join([
+        f"# ── commit-confirm: auto-revert in {minutes}m unless confirmed ──",
+        f"/system backup save name={backup} dont-encrypt=yes",
+        f":do {{ /system scheduler remove [find name={sched}] }} on-error={{}}",
+        (f"/system scheduler add name={sched} interval={minutes}m "
+         f'on-event="/system backup load name={backup}"'),
+        "",
+        "",
+    ])
+
+
+def _ssh(args, remote_cmd, **kw):
+    import shlex
+    import subprocess
+    ssh_extra = shlex.split(args.ssh_args) if args.ssh_args else []
+    return subprocess.run(
+        ["ssh", "-o", "BatchMode=yes", *ssh_extra, args.ssh, remote_cmd],
+        capture_output=True, text=True, **kw,
+    )
+
+
+def cmd_confirm(args):
+    """Cancel the armed rollback — the commit half of commit-confirm."""
+    backup, sched = _rollback_names(args.session_id)
+    cmd = (f":do {{ /system scheduler remove [find name={sched}] }} on-error={{}}; "
+           f":do {{ /file remove [find name={backup}.backup] }} on-error={{}}")
+    r = _ssh(args, cmd, timeout=30)
+    sys.stderr.write(r.stderr)
+    sys.stdout.write(r.stdout)
+    if r.returncode != 0:
+        sys.stderr.write("confirm FAILED — rollback still armed (will fire!).\n")
+        return r.returncode
+    sys.stderr.write(f"Committed: cancelled {sched}, removed {backup}.backup.\n")
+    return 0
+
+
+def cmd_rollback(args):
+    """Trigger the revert now (reboots the switch to the preflight backup)."""
+    backup, _ = _rollback_names(args.session_id)
+    sys.stderr.write(f"Reverting to {backup} (switch will reboot)...\n")
+    # `backup load` reboots, so the SSH session drops — a nonzero exit here
+    # is expected and not an error.
+    _ssh(args, f"/system backup load name={backup}", timeout=30)
+    sys.stderr.write("Revert triggered; switch rebooting.\n")
+    return 0
+
+
 def cmd_apply(args):
     """Pull state via SSH, compute diff, push it back.
 
@@ -1042,6 +1107,12 @@ def cmd_apply(args):
     script = format_diff_script(
         ops, identity=config.get("system", {}).get("identity")
     )
+
+    # Arm the self-firing revert at the TOP of the script, before any change
+    # — so even a change that severs SSH mid-import is still covered.
+    arm = args.rollback_timeout > 0
+    if arm:
+        script = _arm_preamble(args.session_id, args.rollback_timeout) + script
 
     op_count = sum(len(v) for v in ops.values())
     sys.stderr.write(f"Computed {op_count} operation(s) across "
@@ -1084,7 +1155,21 @@ def cmd_apply(args):
         sys.stderr.write("/import failed.\n")
         return imp.returncode
 
-    sys.stderr.write("Done.\n")
+    if arm:
+        _, sched = _rollback_names(args.session_id)
+        ssh_args_flag = f' --ssh-args "{args.ssh_args}"' if args.ssh_args else ""
+        sys.stderr.write(
+            f"\n⚠  ROLLBACK ARMED — {args.ssh} auto-reverts (reboots) in "
+            f"{args.rollback_timeout}m unless confirmed.\n"
+            f"   Verify connectivity/health, THEN commit:\n"
+            f"     routeros-config confirm {args.ssh}{ssh_args_flag} "
+            f"--session-id {args.session_id}\n"
+            f"   Or revert now:\n"
+            f"     routeros-config rollback {args.ssh}{ssh_args_flag} "
+            f"--session-id {args.session_id}\n"
+        )
+    else:
+        sys.stderr.write("Done (no rollback armed).\n")
     return 0
 
 
@@ -1114,7 +1199,21 @@ def main():
     sp_apply.add_argument("--dry-run", action="store_true",
                           help="Print the diff script instead of applying it.")
     sp_apply.add_argument("--session-id", default="cli",
-                          help="Session identifier for the uploaded filename.")
+                          help="Session identifier for the uploaded filename + rollback names.")
+    sp_apply.add_argument("--rollback-timeout", type=int, default=3, metavar="MIN",
+                          help="Arm a self-firing revert that reboots to the pre-apply "
+                               "config after MIN minutes unless `confirm`ed. 0 disables.")
+
+    for name, helptext in [
+        ("confirm", "Cancel the armed rollback (commit the last apply)."),
+        ("rollback", "Trigger the revert now (reboots to the preflight backup)."),
+    ]:
+        sp = sub.add_parser(name, help=helptext)
+        sp.add_argument("ssh", help="SSH endpoint (user@host).")
+        sp.add_argument("--ssh-args", default="",
+                        help="Extra SSH options as one string (e.g. \"-J jumphost\").")
+        sp.add_argument("--session-id", default="cli",
+                        help="Session identifier matching the apply to confirm/revert.")
 
     args = ap.parse_args()
 
@@ -1125,6 +1224,10 @@ def main():
         return cmd_diff(args)
     elif args.command == "apply":
         return cmd_apply(args)
+    elif args.command == "confirm":
+        return cmd_confirm(args)
+    elif args.command == "rollback":
+        return cmd_rollback(args)
 
 
 if __name__ == "__main__":
