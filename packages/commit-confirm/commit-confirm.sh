@@ -11,10 +11,14 @@
 # In-place reactivation keeps the disk unlocked and services running.
 #
 #   apply  <host> [--timeout MIN]
-#       Snapshot the current system, pre-stage the closure, arm a local
-#       self-firing revert to that exact snapshot (systemd timer — needs no
-#       network), then `switch` to the new config. If it breaks networking
-#       the timer reactivates the snapshot in place. Default window 3m.
+#       Snapshot the current system, arm a local self-firing revert to that
+#       exact snapshot (systemd timer — needs no network), then `colmena
+#       apply switch`. If the new config breaks networking the timer
+#       reactivates the snapshot in place. One colmena invocation (colmena
+#       re-evaluates on every command, and that eval is the slow part), so
+#       the window must cover eval + push + activate + your verify — default
+#       10m; bump it for slow hosts. Firing early (before activation) is a
+#       harmless no-op revert to the still-current snapshot.
 #   commit <host>
 #       Verified good: cancel the armed revert. The new config is already
 #       current + boot default.
@@ -37,7 +41,7 @@ cmd="${1:-}"
 host="${2:-}"
 [ -n "$cmd" ] && [ -n "$host" ] || usage
 
-mins=3
+mins=10
 shift 2
 while [ $# -gt 0 ]; do
   case "$1" in
@@ -50,11 +54,10 @@ sshhost="root@$host"
 
 case "$cmd" in
   apply)
-    echo ">> [$host] snapshotting current system + pre-staging closure…" >&2
+    echo ">> [$host] snapshotting current system…" >&2
     # Exact pre-apply system path — the revert target (deterministic even if
     # the switch below fails to create a new generation).
     prev=$(ssh "$sshhost" "readlink -f $sysprofile")
-    colmena apply push --on "$host"
 
     echo ">> [$host] arming in-place revert to $prev (fires in ${mins}m)…" >&2
     revert="nix-env -p $sysprofile --set $prev && $prev/bin/switch-to-configuration switch"
@@ -62,7 +65,7 @@ case "$cmd" in
       "systemctl stop ${unit}.timer 2>/dev/null || true; \
        systemd-run --on-active=${mins}min --unit=${unit} --collect sh -c '$revert'"
 
-    echo ">> [$host] switching to new config…" >&2
+    echo ">> [$host] building + switching to new config (colmena evaluates now)…" >&2
     colmena apply switch --on "$host"
 
     cat >&2 <<EOF
