@@ -66,6 +66,11 @@ in {
             mgmt.ipv6    = "fd9a:e830:4b1e:f0::2";
             main.ipv4    = "10.0.10.2";
             main.ipv6    = "fd9a:e830:4b1e:a::2";
+            # LAN core transit (/30) — iyr .1, agg .2. Transit-only (not a
+            # routedNetwork): the switch's default route still exits via main
+            # to iyr until the gateway migration flips it here.
+            core-transit.ipv4 = "10.0.252.2";
+            core-transit.ipv6 = "fd9a:e830:4b1e:fc::2";
             storage.ipv4 = "10.0.200.1";   # convention gateway (.1)
             storage.ipv6 = "fd9a:e830:4b1e:c8::1";
             lab.ipv4     = "10.0.210.1";

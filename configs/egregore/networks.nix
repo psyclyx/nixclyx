@@ -73,6 +73,16 @@
         network = { site = "apt"; vlan = 240; ipv4 = "10.0.240.0/24"; ulaSubnetHex = "f0"; ipv6PdSubnetId = 7; zone = "mgmt"; };
       };
 
+      # LAN core transit — the point-to-point iyr↔mdf-agg01 link for the
+      # router-on-a-stick migration: mdf-agg01 L3-routes inter-VLAN in
+      # hardware and hands north-south to iyr (NAT) over this /30. No DHCP,
+      # no clients — iyr .1, mdf-agg01 .2.
+      core-transit = {
+        type = "network";
+        tags = ["transit"];
+        network = { site = "apt"; vlan = 252; ipv4 = "10.0.252.0/30"; ulaSubnetHex = "fc"; zone = "core-transit"; };
+      };
+
       vpn = {
         type = "network";
         tags = ["overlay" "wireguard"];

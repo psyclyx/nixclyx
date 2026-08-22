@@ -61,7 +61,8 @@
       infra.label = "Apt infra services — control plane, VIPs.";
       mgmt.label = "Out-of-band management — iLO/IPMI/BMC.";
       storage.label = "Rack-internal storage fabric — unauthenticated NFS/iSCSI.";
-      lab-transit.label = "Hypervisor↔mdf-agg01 routed transit; BGP backbone.";
+      lab-transit.label = "Hypervisor↔mdf-agg01 routed transit.";
+      core-transit.label = "iyr↔mdf-agg01 router-on-a-stick transit (NAT hairpin).";
       cluster-workload.label = "Cluster prod + stage VMs — ingress-served, no WAN.";
       cluster-scratch.label = "Cluster scratch VMs — playground; WAN allowed.";
       cluster-orch.label = "Cluster orchestration control plane.";
