@@ -15,16 +15,18 @@
       };
 
       dashboard.alpha.enable = true;
-      statusline.lualine.enable = true;
+      statusline.lualine = {
+        enable = true;
+        integrations.breadcrumbs = {
+          nvim-navic.enable = true;
+          navbuddy.enable = true;
+        };
+      };
 
       ui = {
         borders = {
           enable = true;
           globalStyle = "single";
-        };
-        breadcrumbs = {
-          enable = true;
-          navbuddy.enable = true;
         };
         colorizer.enable = true;
         illuminate.enable = true;
