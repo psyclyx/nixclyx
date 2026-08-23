@@ -107,6 +107,9 @@
     pdSubnetId = net.network.ipv6PdSubnetId;
     inherit raDomains;
     dnsServers = lib.optional (resolver6 != null && resolver6 != "") resolver6;
+    # Transit links are point-to-point router↔router; no RA (no SLAAC
+    # clients, and two routers advertising to each other is just noise).
+    sendRA = !(builtins.elem "transit" (net.tags or []));
     staticRoutes = staticRoutesByVlan.${toString vlanId} or [];
   };
 

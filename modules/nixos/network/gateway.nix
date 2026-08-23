@@ -40,6 +40,15 @@
           default = [];
           description = "Domains advertised via RA option (DNSSL).";
         };
+        sendRA = lib.mkOption {
+          type = lib.types.bool;
+          default = true;
+          description = ''
+            Emit Router Advertisements on this VLAN. False for
+            point-to-point transit links (no SLAAC clients; two routers on
+            a /30 shouldn't advertise to each other).
+          '';
+        };
         dnsServers = lib.mkOption {
           type = lib.types.listOf lib.types.str;
           default = [];
@@ -180,7 +189,7 @@
         [ net.address4 ]
         ++ lib.optional (net.address6 != null) net.address6;
       networkConfig = {
-        IPv6SendRA = true;
+        IPv6SendRA = net.sendRA;
         DHCPPrefixDelegation = net.pdSubnetId != null;
       };
       ipv6SendRAConfig = {

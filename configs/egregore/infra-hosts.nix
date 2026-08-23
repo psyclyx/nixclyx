@@ -60,11 +60,10 @@
           interfaces = {
             main.device    = "enp1s0.10";
             infra.device   = "enp1s0.25";
-            guest.device   = "enp1s0.100";
-            iot.device     = "enp1s0.110";
             storage.device = "enp1s0.200";
             lab.device     = "enp1s0.210";
             mgmt.device    = "enp1s0.240";
+            core-transit.device = "enp1s0.252";
             vpn.device     = "wg0";
           };
           mac = {
