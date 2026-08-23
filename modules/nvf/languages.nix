@@ -36,7 +36,7 @@
           extensions.crates-nvim.enable = true;
         };
         sql.enable = true;
-        ts.enable = true;
+        typescript.enable = true;
         wgsl.enable = true;
         yaml.enable = true;
         zig.enable = true;
