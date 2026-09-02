@@ -177,6 +177,41 @@
                 Empty for mode = "local".
               '';
             };
+            firmwareNics = lib.mkOption {
+              type = lib.types.attrsOf (lib.types.submodule {
+                options = {
+                  adapter = lib.mkOption {
+                    type = lib.types.str;
+                    description = ''
+                      Firmware's name for the card this NIC lives on, as the
+                      BMC reports it (e.g. "EmbNic", "FlexLom1", "PciSlot2").
+                    '';
+                  };
+                  port = lib.mkOption {
+                    type = lib.types.int;
+                    description = "1-based port number on that adapter.";
+                  };
+                };
+              });
+              default = {};
+              description = ''
+                Physical seat of each interface, keyed by egregore network
+                name — where the NIC actually is in the chassis.
+
+                This is what lets `pxeInterfaces` be enforced in firmware
+                rather than merely hoped for. DHCP reservations decide which
+                NICs get *offered* a bootfile, but firmware decides which
+                NICs *try* to boot; a NIC that PXEs without a bootfile offer
+                stalls forever. Declaring seats lets the BMC projection
+                disable network boot on every seat not in pxeInterfaces.
+
+                Seats, not firmware indices: indices (NicBoot1..N) are a
+                BIOS enumeration artefact that shifts when cards move, and
+                the BMC can resolve seat → index itself. Seats are also
+                stable while the host is powered off or wedged in POST,
+                which is when you most need to change boot order.
+              '';
+            };
           };
         };
         default = {};

@@ -11,12 +11,12 @@
 #
 { writeShellApplication, symlinkJoin, installShellFiles, runCommand,
   nix, jq, coreutils, curl, redfishtool,
-  sodola-config, swos-config, routeros-config }:
+  sodola-config, swos-config, routeros-config, ilo-config }:
 
 let
   cli = writeShellApplication {
     name = "egregore";
-    runtimeInputs = [ nix jq coreutils curl redfishtool sodola-config swos-config routeros-config ];
+    runtimeInputs = [ nix jq coreutils curl redfishtool sodola-config swos-config routeros-config ilo-config ];
     text = ''
       set -euo pipefail
 

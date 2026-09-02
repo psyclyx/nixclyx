@@ -13,6 +13,7 @@ let
     sodola-config = ./sodola-config;
     swos-config = ./swos-config;
     routeros-config = ./routeros-config;
+    ilo-config = ./ilo-config;
     commit-confirm = ./commit-confirm;
   };
 in
@@ -26,6 +27,6 @@ in
     # base24-gen comes from its producer overlay (in pkgs), resolved by callPackage.
     regenerate-palettes = pkgs.callPackage ./regenerate-palettes.nix { };
     egregore = pkgs.callPackage ./egregore.nix {
-      inherit (packages) sodola-config swos-config routeros-config;
+      inherit (packages) sodola-config swos-config routeros-config ilo-config;
     };
   }
