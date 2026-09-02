@@ -58,19 +58,18 @@ add bridge=bridge1 interface=sfp-sfpplus24 pvid=1 comment="trunk to mdf-brk01"
 
 # ── VLAN table ──
 /interface bridge vlan
-add bridge=bridge1 vlan-ids=10 tagged=bond-css326,sfp-sfpplus20,sfp-sfpplus24 untagged=bond-sigil
+add bridge=bridge1 vlan-ids=10 tagged=bond-css326,sfp-sfpplus20,sfp-sfpplus24,bridge1 untagged=bond-sigil
 add bridge=bridge1 vlan-ids=25 tagged=bond-css326,sfp-sfpplus20,sfp-sfpplus24
-add bridge=bridge1 vlan-ids=100 tagged=bond-css326,sfp-sfpplus20,sfp-sfpplus24
-add bridge=bridge1 vlan-ids=110 tagged=bond-css326,sfp-sfpplus20,sfp-sfpplus24
-add bridge=bridge1 vlan-ids=200 tagged=bond-css326,sfp-sfpplus20,sfp-sfpplus24 untagged=sfp-sfpplus1,sfp-sfpplus3,sfp-sfpplus5,sfp-sfpplus7
-add bridge=bridge1 vlan-ids=210 tagged=bond-css326,sfp-sfpplus20,sfp-sfpplus24 untagged=sfp-sfpplus2,sfp-sfpplus4,sfp-sfpplus6,sfp-sfpplus8
-add bridge=bridge1 vlan-ids=220 tagged=bond-css326,sfp-sfpplus20,sfp-sfpplus24
-add bridge=bridge1 vlan-ids=221 tagged=bond-css326,sfp-sfpplus20,sfp-sfpplus24
-add bridge=bridge1 vlan-ids=222 tagged=bond-css326,sfp-sfpplus20,sfp-sfpplus24
-add bridge=bridge1 vlan-ids=223 tagged=bond-css326,sfp-sfpplus20,sfp-sfpplus24
+add bridge=bridge1 vlan-ids=200 tagged=bond-css326,sfp-sfpplus20,sfp-sfpplus24,bridge1 untagged=sfp-sfpplus1,sfp-sfpplus3,sfp-sfpplus5,sfp-sfpplus7
+add bridge=bridge1 vlan-ids=210 tagged=bond-css326,sfp-sfpplus20,sfp-sfpplus24,bridge1 untagged=sfp-sfpplus2,sfp-sfpplus4,sfp-sfpplus6,sfp-sfpplus8
+add bridge=bridge1 vlan-ids=220 tagged=bond-css326,sfp-sfpplus20,sfp-sfpplus24,bridge1
+add bridge=bridge1 vlan-ids=221 tagged=bond-css326,sfp-sfpplus20,sfp-sfpplus24,bridge1
+add bridge=bridge1 vlan-ids=222 tagged=bond-css326,sfp-sfpplus20,sfp-sfpplus24,bridge1
+add bridge=bridge1 vlan-ids=223 tagged=bond-css326,sfp-sfpplus20,sfp-sfpplus24,bridge1
 add bridge=bridge1 vlan-ids=240 tagged=bond-css326,sfp-sfpplus20,sfp-sfpplus24,bridge1
 add bridge=bridge1 vlan-ids=250 tagged=sfp-sfpplus20,sfp-sfpplus24
 add bridge=bridge1 vlan-ids=251 tagged=sfp-sfpplus20,sfp-sfpplus24
+add bridge=bridge1 vlan-ids=252 tagged=sfp-sfpplus24,bridge1
 
 # ── VLAN interfaces ──
 /interface vlan
@@ -78,6 +77,7 @@ add interface=bridge1 name=vlan223 vlan-id=223 mtu=1500
 add interface=bridge1 name=vlan220 vlan-id=220 mtu=1500
 add interface=bridge1 name=vlan222 vlan-id=222 mtu=1500
 add interface=bridge1 name=vlan221 vlan-id=221 mtu=1500
+add interface=bridge1 name=vlan252 vlan-id=252 mtu=1500
 add interface=bridge1 name=vlan210 vlan-id=210 mtu=1500
 add interface=bridge1 name=vlan10 vlan-id=10 mtu=1500
 add interface=bridge1 name=vlan240 vlan-id=240 mtu=1500
@@ -98,6 +98,7 @@ add address=10.0.223.1/24 interface=vlan223 network=10.0.223.0
 add address=10.0.220.1/24 interface=vlan220 network=10.0.220.0
 add address=10.0.222.1/24 interface=vlan222 network=10.0.222.0
 add address=10.0.221.1/24 interface=vlan221 network=10.0.221.0
+add address=10.0.252.2/30 interface=vlan252 network=10.0.252.0
 add address=10.0.210.1/24 interface=vlan210 network=10.0.210.0
 add address=10.0.10.2/24 interface=vlan10 network=10.0.10.0
 add address=10.0.240.2/24 interface=vlan240 network=10.0.240.0
@@ -107,12 +108,23 @@ add address=10.0.200.1/24 interface=vlan200 network=10.0.200.0
 /ip route
 add dst-address=0.0.0.0/0 gateway=10.0.10.1
 
+# ── DHCP relay ──
+/ip dhcp-relay
+add name=relay-cluster-orch interface=vlan223 dhcp-server=10.0.10.1 local-address=10.0.223.1 disabled=no
+add name=relay-cluster-prod interface=vlan220 dhcp-server=10.0.10.1 local-address=10.0.220.1 disabled=no
+add name=relay-cluster-scratch interface=vlan222 dhcp-server=10.0.10.1 local-address=10.0.222.1 disabled=no
+add name=relay-cluster-stage interface=vlan221 dhcp-server=10.0.10.1 local-address=10.0.221.1 disabled=no
+add name=relay-lab interface=vlan210 dhcp-server=10.0.10.1 local-address=10.0.210.1 disabled=no
+add name=relay-main interface=vlan10 dhcp-server=10.0.10.1 local-address=10.0.10.2 disabled=no
+add name=relay-storage interface=vlan200 dhcp-server=10.0.10.1 local-address=10.0.200.1 disabled=no
+
 # ── IPv6 addresses ──
 /ipv6 address
 add address=fd9a:e830:4b1e:df::1/64 interface=vlan223
 add address=fd9a:e830:4b1e:dc::1/64 interface=vlan220
 add address=fd9a:e830:4b1e:de::1/64 interface=vlan222
 add address=fd9a:e830:4b1e:dd::1/64 interface=vlan221
+add address=fd9a:e830:4b1e:fc::2/64 interface=vlan252
 add address=fd9a:e830:4b1e:d2::1/64 interface=vlan210
 add address=fd9a:e830:4b1e:a::2/64 interface=vlan10
 add address=fd9a:e830:4b1e:f0::2/64 interface=vlan240

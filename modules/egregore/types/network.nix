@@ -66,6 +66,23 @@
           the overlay has no site-local shortcut anywhere.
         '';
       };
+      dhcpRelay = lib.mkOption {
+        type = lib.types.bool;
+        default = false;
+        description = ''
+          Relay DHCP for this segment instead of relying on the client's
+          broadcast reaching the server by flooding. Every L3 device
+          holding an address here emits a relay entry pointing at the
+          network's DHCP server (refs.dns, with site fallback).
+
+          Two cases need it: the server has no L2 presence on the segment
+          (it's reached over a routed path), or the broadcast domain
+          doesn't reliably carry the flood. Relay is purely additive — it
+          adds a unicast path without suppressing the broadcast one — so
+          enabling it where flooding already works is safe, and is the
+          way to migrate off an L2-anchor without a flag day.
+        '';
+      };
       zone = lib.mkOption {
         type = lib.types.str;
         default = "";

@@ -1,4 +1,4 @@
-# 2026-08-20 22:46:37 by RouterOS 7.21.1
+# 2026-08-31 17:47:45 by RouterOS 7.21.1
 # software id = JHSS-MKL1
 #
 # model = CRS326-24S+2Q+
@@ -32,6 +32,7 @@ add interface=bridge1 mtu=9000 name=vlan200 vlan-id=200
 /interface vlan add interface=bridge1 name=vlan222 vlan-id=222
 /interface vlan add interface=bridge1 name=vlan223 vlan-id=223
 /interface vlan add interface=bridge1 name=vlan240 vlan-id=240
+/interface vlan add interface=bridge1 name=vlan252 vlan-id=252
 /interface bonding add comment="CSS326 trunk" mode=802.3ad name=bond-css326 slaves=sfp-sfpplus9,sfp-sfpplus10
 /interface bonding add comment=Sigil lacp-mode=passive mode=802.3ad name=bond-sigil slaves=sfp-sfpplus11,sfp-sfpplus12
 /interface bridge port add bridge=bridge1 comment="lab-1 storage" interface=sfp-sfpplus1 pvid=200
@@ -49,8 +50,6 @@ add interface=bridge1 mtu=9000 name=vlan200 vlan-id=200
 /interface ethernet switch l3hw-settings set ipv6-hw=yes
 /interface bridge vlan add bridge=bridge1 tagged=bond-css326,sfp-sfpplus20,sfp-sfpplus24 untagged=bond-sigil vlan-ids=10
 /interface bridge vlan add bridge=bridge1 tagged=bond-css326,sfp-sfpplus20,sfp-sfpplus24 vlan-ids=25
-/interface bridge vlan add bridge=bridge1 tagged=bond-css326,sfp-sfpplus20,sfp-sfpplus24 vlan-ids=100
-/interface bridge vlan add bridge=bridge1 tagged=bond-css326,sfp-sfpplus20,sfp-sfpplus24 vlan-ids=110
 /interface bridge vlan add bridge=bridge1 tagged=bond-css326,sfp-sfpplus20,sfp-sfpplus24,bridge1 vlan-ids=240
 /interface bridge vlan add bridge=bridge1 tagged=sfp-sfpplus20,sfp-sfpplus24 vlan-ids=250
 /interface bridge vlan add bridge=bridge1 tagged=bond-css326,sfp-sfpplus20,sfp-sfpplus24 untagged=sfp-sfpplus1,sfp-sfpplus3,sfp-sfpplus5,sfp-sfpplus7 vlan-ids=200
@@ -60,6 +59,7 @@ add interface=bridge1 mtu=9000 name=vlan200 vlan-id=200
 /interface bridge vlan add bridge=bridge1 tagged=bond-css326,sfp-sfpplus20,sfp-sfpplus24 vlan-ids=222
 /interface bridge vlan add bridge=bridge1 tagged=bond-css326,sfp-sfpplus20,sfp-sfpplus24 vlan-ids=223
 /interface bridge vlan add bridge=bridge1 tagged=sfp-sfpplus20,sfp-sfpplus24 vlan-ids=251
+/interface bridge vlan add bridge=bridge1 tagged=sfp-sfpplus24 vlan-ids=252
 /interface ethernet switch set 0 l3-hw-offloading=yes
 /ip address add address=10.0.240.2/24 interface=vlan240 network=10.0.240.0
 /ip address add address=10.0.10.2/24 interface=vlan10 network=10.0.10.0
@@ -69,6 +69,7 @@ add interface=bridge1 mtu=9000 name=vlan200 vlan-id=200
 /ip address add address=10.0.221.1/24 interface=vlan221 network=10.0.221.0
 /ip address add address=10.0.222.1/24 interface=vlan222 network=10.0.222.0
 /ip address add address=10.0.223.1/24 interface=vlan223 network=10.0.223.0
+/ip address add address=10.0.252.2/30 interface=vlan252 network=10.0.252.0
 /ip dns set servers=10.0.240.1
 /ip route add disabled=yes dst-address=0.0.0.0/0 gateway=10.0.240.1
 /ip route add comment="iyr on main" dst-address=0.0.0.0/0 gateway=10.0.10.1
@@ -81,6 +82,7 @@ add interface=bridge1 mtu=9000 name=vlan200 vlan-id=200
 /ipv6 address add address=fd9a:e830:4b1e:de::1 interface=vlan222
 /ipv6 address add address=fd9a:e830:4b1e:df::1 interface=vlan223
 /ipv6 address add address=fd9a:e830:4b1e:f0::2 interface=vlan240
+/ipv6 address add address=fd9a:e830:4b1e:fc::2 interface=vlan252
 /ipv6 nd add interface=vlan10 ra-lifetime=none
 /snmp set enabled=yes
 /system clock set time-zone-name=America/Los_Angeles

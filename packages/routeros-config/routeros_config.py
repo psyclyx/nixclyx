@@ -150,6 +150,18 @@ RECORD_SECTIONS = [
         F("address", omit="req"), F("interface", omit="req"),
         F("network", omit="falsy"), F("comment", kind="qstr", omit="falsy")]),
     ("routes", "/ip route", "# ── Routes ──", None, _ROUTE_FIELDS),
+    # DHCP relay. Diffable (identity = name) so relays can be added to a
+    # live switch without a reboot: the relay only adds a unicast path to
+    # the server, it never removes the existing broadcast one, so a client
+    # that already reaches DHCP by flooding is unaffected while one that
+    # doesn't starts working.
+    ("dhcp_relays", "/ip dhcp-relay", "# ── DHCP relay ──",
+     ("name",), [
+        F("name", omit="req"), F("interface", omit="req"),
+        F("dhcp_server", "dhcp-server", kind="list", omit="req"),
+        F("local_address", "local-address", omit="falsy"),
+        F("disabled", kind="bool"),
+        F("comment", kind="qstr", omit="falsy")]),
     ("ipv6_addresses", "/ipv6 address", "# ── IPv6 addresses ──",
      ("address",), [
         F("address", omit="req"), F("interface", omit="req"),
@@ -220,6 +232,7 @@ def generate(config):
     nd6 = config.get("ipv6_nd", [])
     routes = config.get("routes", [])
     routes6 = config.get("ipv6_routes", [])
+    dhcp_relays = config.get("dhcp_relays", [])
 
     # Determine model and all hardware ports
     model = config.get("model", "")
@@ -549,6 +562,13 @@ def generate(config):
     _emit_record_section(
         lines, "/ip route", "# ── Routes ──",
         _SECTION_BY_PATH["/ip route"][0], routes)
+
+    # ── DHCP relay ─────────────────────────────────────────────
+    # Emitted after /ip address so the local-address it references is
+    # already on the box.
+    _emit_record_section(
+        lines, "/ip dhcp-relay", "# ── DHCP relay ──",
+        _SECTION_BY_PATH["/ip dhcp-relay"][0], dhcp_relays)
 
     # ── IPv6 addresses ─────────────────────────────────────────
     _emit_record_section(

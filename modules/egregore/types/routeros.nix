@@ -197,6 +197,22 @@
 
       adminKeys = top.conventions.adminSshKeys or [];
 
+      # Address of a relayed network's DHCP server as reachable from this
+      # switch. Relayed requests carry giaddr, so the server does not need
+      # to be on-link with the client's VLAN — it only has to be routable
+      # from here, and the uplink is by construction that path. Resolving
+      # against the uplink (rather than pinning an address) means the
+      # relay target follows the uplink when it moves.
+      dhcpServerAddr = netName: let
+        serverName = (top.entities.${netName}).attrs.dnsRef;
+        server = top.entities.${serverName} or null;
+      in
+        if serverName == null || server == null then null
+        # The server is the uplink network's gateway, so it takes that
+        # network's convention address rather than declaring one.
+        else if (uplinkNet.attrs.gatewayRef or null) == serverName then uplinkGw
+        else server.host.addresses.${uplinkName}.ipv4 or null;
+
       # All entries in sw.addresses get an L3 interface. Routed networks
       # are the gateway for their subnet; others are transit-only IPs that
       # let the switch participate on the VLAN (e.g. to reach a next-hop).
@@ -228,6 +244,10 @@
         tVlans = builtins.concatLists (map (n: (portCfg n).vlans) trunkPorts);
       in lib.sort builtins.lessThan (lib.unique (aVlans ++ tVlans ++ [mgmtVlan]));
 
+      # VLANs the switch holds an L3 address on — the ones whose traffic
+      # the CPU must be able to see (see `tagged` in vlanEntry).
+      sviVlans = map (netName: (top.entities.${netName}).network.vlan) addressedNetworks;
+
       accessByVlan = let
         pairs = map (pname: { vlan = (portCfg pname).vlan; port = pname; }) accessPorts;
       in builtins.groupBy (p: toString p.vlan) pairs;
@@ -242,7 +262,16 @@
         tIfaces = lib.unique (builtins.filter (iface:
           builtins.any (tp: bridgeIface tp == iface && trunkCarriesVlan tp vlan) trunkPorts
         ) (map bridgeIface trunkPorts));
-        tagged = tIfaces ++ (if vlan == mgmtVlan then ["bridge1"] else []);
+        # The bridge itself is a tagged member of every VLAN the switch
+        # holds an address on — not just mgmt. Unicast addressed to an SVI
+        # is punted to the CPU either way, which is why L3 routing and
+        # pings to the SVI work without this and the gap stays invisible.
+        # *Flooded* traffic is what needs the membership: without it the
+        # CPU never sees a broadcast on that VLAN, which silently breaks
+        # /ip dhcp-relay (it has nothing to relay). mgmt is in
+        # addressedNetworks like any other, so this subsumes the old
+        # mgmt-only special case rather than extending it.
+        tagged = tIfaces ++ lib.optional (builtins.elem vlan sviVlans) "bridge1";
       in {
         vlan_ids = vStr;
         inherit tagged untagged;
@@ -338,6 +367,27 @@
           address   = "${v6}/64";
           interface = "vlan${toString net.network.vlan}";
         });
+
+        # DHCP relay, for networks that ask for it. The switch relays from
+        # the SVI it already holds on that network to the network's DHCP
+        # server, stamping giaddr with its own address there so the server
+        # picks the right subnet. Emitted for every addressed network with
+        # dhcpRelay set — including ones where the switch isn't the
+        # gateway, since relaying is about carrying the request, not about
+        # routing the client.
+        dhcp_relays = lib.flip lib.concatMap addressedNetworks (netName: let
+          net = top.entities.${netName};
+          server = dhcpServerAddr netName;
+          localAddr = sw.addresses.${netName}.ipv4 or null;
+        in lib.optional
+          (net.network.dhcpRelay && server != null && localAddr != null)
+          {
+            name = "relay-${netName}";
+            interface = "vlan${toString net.network.vlan}";
+            dhcp_server = [ server ];
+            local_address = localAddr;
+            disabled = false;
+          });
 
         ipv6_settings = lib.optionalAttrs (sw.ipv6Forward != null) {
           forwarding = sw.ipv6Forward;
