@@ -22,6 +22,7 @@ let
     (import sources.shoal { }).overlay
     (import sources.tidepool { }).overlay
     (import sources.base24-gen { }).overlay
+    (import sources.fix { }).overlay
   ];
 
   own = import ./overlay.nix;

@@ -81,6 +81,22 @@
       "url": "https://github.com/psyclyx/emacs/archive/c9a904d7dc72b81315efb7bf2849c34242b2cd8d.tar.gz",
       "hash": "sha256-gzvqMm0KwWUPPQEhxJ/heih/ZHRVx22UiEzE9/G/Qdc="
     },
+    "fix": {
+      "type": "GitRelease",
+      "repository": {
+        "type": "GitHub",
+        "owner": "psyclyx",
+        "repo": "fix"
+      },
+      "pre_releases": false,
+      "version_upper_bound": null,
+      "release_prefix": null,
+      "submodules": false,
+      "version": "v0.3.0",
+      "revision": "2141010575ef8295ce4f265adfbbb621e3bedb4a",
+      "url": "https://api.github.com/repos/psyclyx/fix/tarball/refs/tags/v0.3.0",
+      "hash": "sha256-qLTYqSdaxPNMsI59PVgOCMVZjBn655xujFeraqxyK/M="
+    },
     "flake-compat": {
       "type": "Git",
       "repository": {

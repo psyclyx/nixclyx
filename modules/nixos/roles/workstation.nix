@@ -37,6 +37,7 @@
       nixclyx.packageGroups.dev pkgs
       ++ nixclyx.packageGroups.media pkgs
       ++ [
+        pkgs.fix
         pkgs.mpv
         pkgs.vlc
         pkgs.psyclyx.ilo
