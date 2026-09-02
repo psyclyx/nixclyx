@@ -74,18 +74,33 @@
             local n=''${#parts}
             (( n <= 2 )) && { print -n "$raw"; return }
 
+            # Declare once, outside the loops. `local name` on a parameter
+            # that already has a value makes zsh *print* `name=value`, so
+            # re-declaring per iteration dumped a `len=N` line into the
+            # prompt for every path component past the first — the deeper
+            # the directory, the more garbage.
             local result="''${parts[1]}"
-            local i
+            local real="''${~parts[1]}"
+            local i len component abbrev
+            local -a siblings
             for (( i = 2; i < n; i++ )); do
-              local expanded="''${~result}"
-              local component="''${parts[$i]}"
-              local abbrev="" len
+              component="''${parts[$i]}"
+              # No unique prefix (a sibling is a prefix of this name, e.g.
+              # alpha/alphabet) means fall back to the whole component.
+              abbrev="$component"
               for (( len = 1; len <= ''${#component}; len++ )); do
                 abbrev="''${component:0:$len}"
-                local -a siblings=( "''${expanded}"/''${abbrev}*(N/) )
+                # Glob the REAL path, not the abbreviated one: the
+                # abbreviated form doesn't exist on disk, so the sibling
+                # count was always 0 and every component collapsed to a
+                # single character no matter what else was there. Quote the
+                # prefix so a directory whose name contains glob
+                # metacharacters can't corrupt the pattern.
+                siblings=( "$real"/"''${abbrev}"*(N/) )
                 (( ''${#siblings} <= 1 )) && break
               done
               result+="/''${abbrev}"
+              real+="/''${component}"
             done
             result+="/''${parts[$n]}"
             print -n "$result"
