@@ -28,6 +28,24 @@
       };
     };
 
+    # /: the impermanence-rolled root. Rolled back to @blank in stage-1
+    # on every boot (see hosts/nixos/sigil/filesystems.nix), so nothing
+    # here survives a reboot — /persist, /nix, /var/log and the home
+    # datasets are siblings that do.
+    #
+    # neededForBoot is true because it is the root filesystem: NixOS
+    # treats "/" as boot-critical regardless, and declaring it here keeps
+    # the projection from tagging the mount `nofail`.
+    sigil-root = {
+      type = "zfs-dataset";
+      refs.pool = "sigil-rpool";
+      zfs-dataset = {
+        path = "rpool/ROOT/nixos";
+        mountpoint = "/";
+        neededForBoot = true;
+      };
+    };
+
     # /nix: plaintext (reproducible store, no secrets — encrypting it
     # would just add a boot prompt for no real gain, matching the
     # tank-nix-shared rationale).
@@ -88,6 +106,14 @@
       zfs-dataset = {
         path = "rpool/home/psyc";
         mountpoint = "/home/psyc";
+        # pam_zfs_key.so is the sole mount path: it loads the key from the
+        # login password on auth and mounts on session_open. mountedBy
+        # keeps this dataset out of fileSystems entirely — a fileSystems
+        # entry would have systemd try to mount it at boot, before any key
+        # is loaded. It also drives security.pam.zfs.enable on the host,
+        # and keeps the dataset out of requestEncryptionCredentials so
+        # initrd doesn't prompt for it.
+        mountedBy = "pam";
         # canmount stays at the default `on`. pam_zfs_key.so refuses
         # to mount datasets with canmount != on, so we accept the
         # cost: at boot, `zfs mount -a` tries this dataset, sees the

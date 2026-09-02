@@ -16,20 +16,18 @@
   boot.loader.grub.enable = false;
   boot.loader.generic-extlinux-compatible.enable = false;
 
-  # disko config + zfs-runtime per-dataset mounts are derived by
-  # topology/storage.nix from the zfs-pool / zfs-dataset entities in
-  # configs/egregore/storage.nix. Only the runtime knobs (pool name,
-  # hostId, ARC cap) live here.
-  psyclyx.nixos.filesystems.zfs-runtime = {
+  # disko config, per-dataset mounts, and the pool-import classification
+  # are all derived by derived/storage.nix from the zfs-pool / zfs-dataset
+  # entities in configs/egregore/storage.nix. Pool names come from those
+  # entities; only the knobs that aren't fleet data live here.
+  #
+  # That derivation is what distinguishes tank from vault without either
+  # being named: tank carries neededForBoot datasets (/, /nix, /persist) so
+  # initrd imports it, while vault has none and is brought up post-boot via
+  # zfs-import-vault.service.
+  psyclyx.nixos.filesystems.zfs = {
     enable = true;
-    poolName = "tank";
     hostId = "6fa90ede";
     arc.maxBytes = 137438953472; # 128 GiB
   };
-
-  # vault holds bulk + archive datasets; the runtime layer's single-
-  # pool option only covers tank (the clevis-tang unsealed boot pool).
-  # NixOS's extraPools brings vault up post-boot via
-  # zfs-import-vault.service.
-  boot.zfs.extraPools = [ "vault" ];
 }

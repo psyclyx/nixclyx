@@ -55,6 +55,25 @@
           here.
         '';
       };
+      mountedBy = lib.mkOption {
+        type = lib.types.enum [ "fileSystems" "pam" "manual" ];
+        default = "fileSystems";
+        description = ''
+          Who performs the mount. Only meaningful when mountpoint != null;
+          `mountpoint = null` already means "never mounted".
+
+          - "fileSystems" (default): the storage projection emits a
+            fileSystems entry and NixOS mounts it at boot.
+          - "pam": pam_zfs_key.so loads the key from the login password and
+            mounts the dataset at session open. The dataset must NOT appear
+            in fileSystems — systemd would try to mount it at boot, before
+            any key is loaded. The mountpoint is still declared because it
+            is still where the dataset lands; only the mounting agent
+            differs. Implies the host needs `security.pam.zfs.enable`.
+          - "manual": mounted ad-hoc by an operator. Nothing is emitted.
+        '';
+      };
+
       encryption = lib.mkOption {
         type = lib.types.nullOr (
           lib.types.submodule {

@@ -4,8 +4,12 @@
 # everything storage-shaped on each host:
 #
 #   - For pools I produce: disko block (pool topology + per-dataset
-#     create-time options) and zfs-runtime mounts for each dataset
-#     I own with a non-null mountpoint.
+#     create-time options), a fileSystems entry for each dataset I own
+#     with a non-null mountpoint, and the pool-import classification —
+#     a pool is a `filesystems.zfs.dataPools` entry (imported post-boot)
+#     unless one of its datasets is neededForBoot, in which case initrd
+#     imports it. disko and mounts are individually gateable for hosts
+#     whose on-disk layout the projection doesn't describe.
 #   - For clevis-bindings whose protected dataset lives in a pool I
 #     produce: boot.initrd.clevis device (if any descendant dataset
 #     has neededForBoot) OR a post-boot `zfs-load-key-<name>`
@@ -143,15 +147,93 @@ let
   diskoMerged =
     lib.foldl' lib.recursiveUpdate { } (lib.mapAttrsToList diskoConfigFor myPools);
 
-  # ── runtime zfs mounts (zfs-runtime sugar) ───────────────────────
+  # ── runtime zfs mounts ───────────────────────────────────────────
 
-  mountsForMyDatasets = lib.mapAttrs' (_: d:
-    lib.nameValuePair d.zfs-dataset.path {
-      mountpoint = d.zfs-dataset.mountpoint;
-      options = [ "defaults" ];
+  # Datasets I own with a mountpoint become explicit fileSystems entries.
+  # Anything not needed for boot gets nofail + a short device timeout so a
+  # missing pool degrades to a failed mount rather than blocking the boot.
+  # Only datasets NixOS itself mounts. A "pam" dataset is real and has a
+  # mountpoint, but must stay out of fileSystems — systemd would try to
+  # mount it at boot, before pam_zfs_key has loaded the key.
+  myMountedDatasets = lib.filterAttrs
+    (_: d: d.zfs-dataset.mountpoint != null && d.zfs-dataset.mountedBy == "fileSystems")
+    myDatasets;
+
+  fsForMyDatasets = lib.mapAttrs' (_: d:
+    lib.nameValuePair d.zfs-dataset.mountpoint {
+      device = d.zfs-dataset.path;
+      fsType = "zfs";
+      # nofail keeps a non-boot dataset from failing the boot outright.
+      # Never for "/": a root that silently doesn't mount is unbootable in
+      # a much worse way, so guard it here rather than trusting the data.
+      options = [ "defaults" ]
+        ++ lib.optionals
+          (!d.zfs-dataset.neededForBoot && d.zfs-dataset.mountpoint != "/") [
+            "nofail"
+            "x-systemd.device-timeout=10s"
+          ];
       neededForBoot = d.zfs-dataset.neededForBoot;
     }
-  ) (lib.filterAttrs (_: d: d.zfs-dataset.mountpoint != null) myDatasets);
+  ) myMountedDatasets;
+
+  # Datasets mounted by pam_zfs_key at login rather than by systemd at boot.
+  myPamDatasets = lib.filterAttrs (_: d: d.zfs-dataset.mountedBy == "pam") myDatasets;
+
+  # ── pool import classification ───────────────────────────────────
+
+  # A pool I produce is imported in initrd iff one of its datasets is needed
+  # for boot; otherwise it's imported post-boot by a stage-2
+  # zfs-import-<pool>.service. That's exactly `filesystems.zfs.dataPools`,
+  # which pins those units to boot-time only — see that option for why.
+  #
+  # Deriving it here rather than in the generic module is the point: the
+  # neededForBoot facts are already declared per dataset, so this needs no
+  # reconstruction of nixpkgs' own root/data pool split.
+  datasetsOfPool = poolEntName:
+    lib.filterAttrs (_: d: (d.refs.pool or null) == poolEntName) myDatasets;
+
+  poolIsBootCritical = poolEntName:
+    lib.any (d: d.zfs-dataset.neededForBoot)
+      (lib.attrValues (datasetsOfPool poolEntName));
+
+  myDataPools = lib.listToAttrs (lib.mapAttrsToList
+    (_: p: lib.nameValuePair p.zfs-pool.name { })
+    (lib.filterAttrs (poolEntName: _: !(poolIsBootCritical poolEntName)) myPools));
+
+  # The complement: pools initrd imports. These two partition my pools, and
+  # only these have initrd import units to configure.
+  myRootPools = lib.mapAttrsToList (_: p: p.zfs-pool.name)
+    (lib.filterAttrs (poolEntName: _: poolIsBootCritical poolEntName) myPools);
+
+  # Encryption roots initrd must unlock.
+  #
+  # An encryption root qualifies if IT or ANYTHING UNDER IT is needed for
+  # boot — children inherit the parent's key, so a dataset can be
+  # neededForBoot while the root actually holding its key is not. Filtering
+  # on the root's own neededForBoot misses exactly that case (a /persist
+  # nested under an unmounted encryption root) and leaves the mount with no
+  # key. Same subtree test as `bindingIsInitrd` uses for clevis, for the
+  # same reason.
+  #
+  # Naming datasets rather than pools is required, not cosmetic: nixpkgs
+  # runs `zfs list` WITHOUT -r over this list (tasks/filesystems/zfs.nix,
+  # getKeyLocations), so a pool name only ever matches the pool's own top
+  # dataset. Naming a pool whose encryption roots are children silently
+  # unlocks nothing.
+  #
+  # "pam" datasets are excluded: their key comes from the login password at
+  # session open, so prompting for them in initrd would defeat the point.
+  encryptionRootNeededForBoot = d:
+    lib.any (x: x.zfs-dataset.neededForBoot)
+      (lib.attrValues (descendantsAndSelf d.zfs-dataset.path));
+
+  myEncryptionRoots = lib.mapAttrsToList (_: d: d.zfs-dataset.path)
+    (lib.filterAttrs
+      (_: d:
+        d.zfs-dataset.encryption != null
+        && d.zfs-dataset.mountedBy != "pam"
+        && encryptionRootNeededForBoot d)
+      myDatasets);
 
   # ── clevis: initrd vs post-boot ──────────────────────────────────
 
@@ -331,9 +413,32 @@ in
   options.psyclyx.nixos.derived.storage = {
     enable = lib.mkEnableOption ''
       project zfs-pool / zfs-dataset / clevis-binding entities into
-      disko, zfs-runtime mounts, initrd clevis (or post-boot
-      key-load), and producer/consumer NFS wiring.
+      disko, fileSystems entries, pool-import classification, initrd
+      clevis (or post-boot key-load), and producer/consumer NFS wiring.
     '';
+    disko.enable = lib.mkOption {
+      type = lib.types.bool;
+      default = true;
+      description = ''
+        Whether to emit disko config for pools this host produces. The
+        translation assumes whole-disk GPT pools; turn it off on hosts whose
+        pools were partitioned by hand (EFI + swap + zfs on one disk), where
+        the emitted layout would not describe reality. Note disko's
+        `enableConfig` also derives `fileSystems`, so a wrong layout here is
+        not inert.
+      '';
+    };
+
+    mounts.enable = lib.mkOption {
+      type = lib.types.bool;
+      default = true;
+      description = ''
+        Whether to emit `fileSystems` entries for datasets this host owns.
+        Turn it off where mounts are declared by hand — e.g. a dataset that
+        must not be in `fileSystems` at all because PAM mounts it at login.
+      '';
+    };
+
     exportNetwork = lib.mkOption {
       type = lib.types.str;
       default = "lab";
@@ -345,10 +450,24 @@ in
   };
 
   config = lib.mkIf enabled (lib.mkMerge [
-    # Producer side: disko + runtime mounts + clevis.
+    # Producer side: pool classification + clevis (+ disko and mounts where
+    # this host's layout actually matches what the projection emits).
     (lib.mkIf amProducer {
-      disko.devices = diskoMerged;
-      psyclyx.nixos.filesystems.zfs-runtime.datasets = mountsForMyDatasets;
+      # Pure derived metadata — safe even where disko/mounts are hand-managed.
+      psyclyx.nixos.filesystems.zfs = {
+        pools = myRootPools;
+        dataPools = myDataPools;
+        encryptionRoots = myEncryptionRoots;
+        explicitMounts = cfg.mounts.enable;
+      };
+
+      # A dataset declared mountedBy = "pam" is only mountable if pam_zfs_key
+      # is actually wired into the PAM stack.
+      security.pam.zfs.enable = lib.mkIf (myPamDatasets != { }) true;
+      # dataPools are by construction the post-boot pools, which is exactly
+      # what extraPools means for a pool with no mounted dataset of its own.
+      boot.zfs.extraPools = lib.attrNames myDataPools;
+
       boot.initrd.clevis = lib.mkIf (initrdClevisDevices != { }) {
         enable = true;
         useTang = true;
@@ -357,6 +476,14 @@ in
       systemd.services = postBootKeyServices;
       psyclyx.nixos.services.nfs-server.exports = myExports;
       system.extraDependencies = nixConsumerToplevels;
+    })
+
+    (lib.mkIf (amProducer && cfg.disko.enable) {
+      disko.devices = diskoMerged;
+    })
+
+    (lib.mkIf (amProducer && cfg.mounts.enable) {
+      fileSystems = fsForMyDatasets;
     })
 
     # Consumer side: NFS root for /nix and /persist.

@@ -30,15 +30,15 @@
   home-manager.backupFileExtension = "hm-backup";
 
   psyclyx.nixos = {
-    # ZFS-on-rpool: pools = ["rpool"] makes the zfs module request
-    # encryption credentials in initrd for every encryption root on
-    # the pool (today: rpool/persist and rpool/home/psyc). bcachefs
-    # impermanence is gone — the @blank rollback for / is wired in
-    # filesystems.nix as a stage-1 systemd service.
+    # Pools, data pools, and the initrd encryption roots are all derived
+    # from the zfs-pool / zfs-dataset entities in
+    # configs/egregore/storage/sigil.nix by derived/storage.nix — see
+    # filesystems.nix. Only hostId (a host fact, not fleet data) is set
+    # here. bcachefs impermanence is gone — the @blank rollback for / is
+    # wired in filesystems.nix as a stage-1 systemd service.
     filesystems.zfs = {
       enable = true;
       hostId = "8372b94b";
-      pools = ["rpool"];
       encryption.enable = true;
     };
 

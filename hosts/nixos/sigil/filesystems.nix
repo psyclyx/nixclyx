@@ -1,4 +1,4 @@
-{ lib, pkgs, ... }:
+{ pkgs, ... }:
 let
   # Boot-history retention. The pre-rollback delta from each boot
   # is sent into rpool/ROOT/history as @boot-<timestamp>. Snapshots
@@ -12,71 +12,26 @@ in
   # declared here anymore.
   psyclyx.nixos.filesystems.bcachefs.enable = true;
 
-  fileSystems = {
-    "/" = {
-      device = "rpool/ROOT/nixos";
-      fsType = "zfs";
-    };
-
-    "/boot" = {
-      device = "/dev/disk/by-uuid/71AE-12DD";
-      fsType = "vfat";
-      options = [ "fmask=0077" "dmask=0077" ];
-    };
-
-    "/nix" = {
-      device = "rpool/nix";
-      fsType = "zfs";
-      neededForBoot = true;
-    };
-
-    "/persist" = {
-      device = "rpool/persist";
-      fsType = "zfs";
-      neededForBoot = true;
-    };
-
-    "/var/log" = {
-      device = "rpool/log";
-      fsType = "zfs";
-      neededForBoot = true;
-    };
-
-    # /home/psyc is intentionally NOT declared as a fileSystems entry.
-    # pam_zfs_key.so is the sole mount path: it loads the encryption
-    # key on auth and mounts the dataset on session_open. The dataset
-    # keeps the default `canmount=on` (pam_zfs_key explicitly checks
-    # for canmount=on and skips otherwise — `noauto` was tried and
-    # is the wrong knob). `zfs mount -a` at boot tries it, sees the
-    # key isn't loaded, and emits a one-line failure; that's the
-    # accepted cost of the per-user-key model.
-
-    "/root" = {
-      device = "rpool/home/root";
-      fsType = "zfs";
-    };
-
-    # scratchpool datasets — single-SSD scratch space, unencrypted.
-    # Mount unit options pin them out of stage-1 (default) and out
-    # of any per-user systemd dep chain that doesn't already
-    # `RequiresMountsFor=/tmp` / `/build`.
-    "/tmp" = {
-      device = "scratchpool/tmp";
-      fsType = "zfs";
-    };
-
-    "/build" = {
-      device = "scratchpool/build";
-      fsType = "zfs";
-    };
+  # Every ZFS mount here is derived from the zfs-dataset entities in
+  # configs/egregore/storage/sigil.nix. /home/psyc is deliberately absent
+  # from the derived set: its entity declares mountedBy = "pam", so
+  # pam_zfs_key.so mounts it at login and it never enters fileSystems —
+  # systemd would otherwise try to mount it at boot, before any key is
+  # loaded.
+  #
+  # /boot stays hand-declared: it is a vfat EFI partition, not a ZFS
+  # dataset, so no entity describes it.
+  fileSystems."/boot" = {
+    device = "/dev/disk/by-uuid/71AE-12DD";
+    fsType = "vfat";
+    options = [ "fmask=0077" "dmask=0077" ];
   };
 
   # PAM unlocks rpool/home/<user> at session start using the login
-  # password (`pam_zfs_key.so`). For that to be the actual unlock path
-  # — not just a no-op after initrd already prompted — we override the
-  # zfs module's per-pool credential request to skip /home/psyc. Only
-  # /persist (which has no PAM session to hook into) prompts in
-  # initrd; /home/psyc stays locked until login.
+  # password (`pam_zfs_key.so`). Both halves of that are now derived from
+  # the dataset's `mountedBy = "pam"`: it turns on security.pam.zfs, and it
+  # keeps the dataset out of the initrd encryption roots so /persist (which
+  # has no PAM session to hook into) is the only thing that prompts at boot.
   #
   # `home-manager.startAsUserService = true` (set in default.nix)
   # makes HM activation a user systemd service with
@@ -90,15 +45,22 @@ in
   # set on rpool/home/psyc. If you change one, run `zfs change-key
   # rpool/home/psyc` (or `passwd` with pam_zfs_key active) to keep them
   # in sync.
-  security.pam.zfs.enable = true;
-  boot.zfs.requestEncryptionCredentials = lib.mkForce [ "rpool/persist" ];
-
-  # Import bulkpool in stage-1 so the pre-rollback snapshot service
-  # can send into `bulkpool/boot-history` before the rollback runs.
-  # Costs ~spin-up latency on a 7.2k SAS spinner (≤ 10s in practice)
-  # in exchange for the rollback being able to capture history into
-  # the backup tier rather than into rpool.
-  boot.zfs.extraPools = [ "bulkpool" ];
+  # Storage is projected from the zfs-pool / zfs-dataset entities in
+  # configs/egregore/storage/sigil.nix: fileSystems, the root/data pool
+  # split (rpool imported in initrd; scratchpool + bulkpool imported after
+  # boot, with their zfs-import units pinned to boot-time only — see
+  # `dataPools` in filesystems/zfs.nix), boot.zfs.extraPools, the initrd
+  # encryption roots, and security.pam.zfs.
+  #
+  # disko stays off. sigil's pools were created by hand on an EFI + swap +
+  # zfs layout, and the projection's translation assumes whole-disk GPT
+  # pools; since disko.enableConfig is on, emitting that wrong layout would
+  # also emit wrong fileSystems. The topology blocks in the egregore data
+  # are documentation of what exists, not a provisioning plan.
+  psyclyx.nixos.derived.storage = {
+    enable = true;
+    disko.enable = false;
+  };
 
   # Impermanence: roll / back to the empty @blank snapshot on every
   # boot. Runs in stage-1 after rpool is imported and before sysroot

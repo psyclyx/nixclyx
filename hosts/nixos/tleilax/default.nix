@@ -29,14 +29,13 @@ in
   # ZFS support — pool `tank` lives on sda+sdc+sdd as raidz1. Pool
   # layout + datasets are declared as egregore entities
   # (configs/egregore/storage.nix: tleilax-tank-pool, tleilax-tank-
-  # backups); topology/storage.nix below picks them up and feeds them
-  # to zfs-runtime for the per-dataset mounts.
-  psyclyx.nixos.filesystems.zfs-runtime = {
+  # backups); derived/storage.nix below picks them up and emits the
+  # per-dataset mounts and the pool-import classification.
+  psyclyx.nixos.filesystems.zfs = {
     enable = true;
-    poolName = "tank";
     hostId = "471f0151";
+    encryption.enable = false;
   };
-  psyclyx.nixos.filesystems.zfs.encryption.enable = false;
 
   psyclyx.nixos.derived.storage.enable = true;
 
