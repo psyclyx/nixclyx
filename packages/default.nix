@@ -1,6 +1,6 @@
 {pkgs}:
 let
-  # Internal producers (river, set-output-icc, whirlpool, base24-gen)
+  # Internal producers (river, set-output-icc, tidepool, base24-gen, shoal)
   # are provided by their own overlays now; only nixclyx's own packages live
   # here. Producers are aliased back under pkgs.psyclyx.* in ../overlay.nix.
   packages = builtins.mapAttrs (_: x: pkgs.callPackage x {}) {

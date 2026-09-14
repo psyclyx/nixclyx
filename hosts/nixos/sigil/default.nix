@@ -8,6 +8,7 @@
     pkgs.bitwig-studio4
     pkgs.gimp-with-plugins
     pkgs.kicad
+    (pkgs.zoom-us.override {wlrXdgDesktopPortalSupport = true;})
   ];
 
   # home-manager activation runs as a user systemd service with

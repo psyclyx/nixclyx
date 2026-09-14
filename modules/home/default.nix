@@ -6,7 +6,8 @@ in
       [
         (import sources.nvf).homeManagerModules.default
         "${sources.sops-nix}/modules/home-manager/sops.nix"
-        (sources.whirlpool + "/nix/hm-module.nix")
+        (sources.shoal + "/nix/hm-module.nix")
+        (sources.tidepool + "/nix/hm-module.nix")
         (import (sources.emacs + "/hm-module.nix"))
       ]
       ++ nixclyx.lib.fs.collectSpecs nixclyx.lib.modules.mkModule ./.;

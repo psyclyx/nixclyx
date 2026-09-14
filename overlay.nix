@@ -25,7 +25,7 @@ in
           # Internal producers now come from their own overlays (composed
           # ahead of this one in ./overlays.nix), aliased under psyclyx so the
           # existing pkgs.psyclyx.* module references keep working.
-          inherit (prev) river whirlpool set-output-icc;
+          inherit (prev) river shoal tidepool set-output-icc;
           "base24-gen" = prev."base24-gen";
         };
       colmena = colmena.packages.${prev.stdenv.hostPlatform.system};

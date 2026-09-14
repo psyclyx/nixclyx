@@ -46,6 +46,12 @@
       enable = lib.mkDefault true;
       wlr.enable = lib.mkDefault true;
       extraPortals = [pkgs.xdg-desktop-portal-gtk];
+      config.river = {
+        default = ["gtk"];
+        "org.freedesktop.impl.portal.ScreenCast" = ["wlr"];
+        "org.freedesktop.impl.portal.Screenshot" = ["wlr"];
+        "org.freedesktop.impl.portal.Inhibit" = ["none"];
+      };
     };
   };
 }

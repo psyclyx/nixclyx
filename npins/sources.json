@@ -292,6 +292,19 @@
       "url": "https://github.com/rustfs/rustfs-flake/archive/0eeef21f2410ba0e47fbbf44b3ba70fc8f19d468.tar.gz",
       "hash": "sha256-2xMfAqVcFGUv5KSTPyPQo8lYFEhpRz79U1SeZDyDQ0g="
     },
+    "shoal": {
+      "type": "Git",
+      "repository": {
+        "type": "GitHub",
+        "owner": "psyclyx",
+        "repo": "shoal"
+      },
+      "branch": "main",
+      "submodules": false,
+      "revision": "44986c3696e957ce66fb62fa99bb60f3be73228e",
+      "url": "https://github.com/psyclyx/shoal/archive/44986c3696e957ce66fb62fa99bb60f3be73228e.tar.gz",
+      "hash": "sha256-7ryc9400Cs6JwKt5rJtjhnXR0NF9EleRZli2N3pSmw8="
+    },
     "sops-nix": {
       "type": "Git",
       "repository": {
@@ -318,18 +331,18 @@
       "url": "https://github.com/nix-community/stylix/archive/5e3809851f486e7fc7e84b40f174c74b60ecc784.tar.gz",
       "hash": "sha256-DkkJSBOXWV/mja5Vy8az5g1KpZlsbUwlmH0BsQhowaQ="
     },
-    "whirlpool": {
+    "tidepool": {
       "type": "Git",
       "repository": {
         "type": "GitHub",
         "owner": "psyclyx",
-        "repo": "whirlpool"
+        "repo": "tidepool"
       },
       "branch": "main",
       "submodules": false,
-      "revision": "a95513eed9f5f936a7c38f7086fd14ef68e65ece",
-      "url": "https://github.com/psyclyx/whirlpool/archive/a95513eed9f5f936a7c38f7086fd14ef68e65ece.tar.gz",
-      "hash": "sha256-zejz0jfCHj0SrEMHRpOeMWyBrFs9kgMcUHIVNEmUKgo="
+      "revision": "c1e1789ecf69965fcedd914e9c4242e042f1db25",
+      "url": "https://github.com/psyclyx/tidepool/archive/c1e1789ecf69965fcedd914e9c4242e042f1db25.tar.gz",
+      "hash": "sha256-ogY2b7yeDB06umXvFy17jVeoQqAdn3lk4SnQXDgo+T0="
     }
   },
   "version": 8

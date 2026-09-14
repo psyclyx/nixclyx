@@ -2,7 +2,7 @@
   # nixpkgs used to build hosts. Standalone: nixclyx's own pin. The monorepo
   # superproject passes the shared lib/nixpkgs.
   nixpkgs ? (import ./npins).nixpkgs,
-  # Sibling sources for the internal producers (river/whirlpool/
+  # Sibling sources for the internal producers (river/shoal/tidepool/
   # base24-gen/emacs). Default {} => use nixclyx's own npins pins
   # (standalone). The monorepo superproject overrides these with the sibling
   # checkouts, so BOTH the producer overlays and the home-manager module
