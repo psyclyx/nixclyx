@@ -17,10 +17,12 @@
 # rich shape for both spellings; refs itself is left as written, so a
 # reader that just wants the name reads it the same way it always did.
 #
-# Every entity also gets an automatic attrs.refsIn — the inverse of
-# refs. If `foo.refs.bar = "baz"`, then `baz.attrs.refsIn.bar` contains
-# `"foo"`. Lets target entities answer "who refs me?" without scattering
-# filter queries across type modules.
+# Every entity also gets an automatic refsIn — the inverse of refs and
+# relations. If `foo.refs.bar = "baz"`, then `baz.refsIn.bar` contains
+# `"foo"`. Type modules may also state a resolved relation with the same
+# name, so an edge inherited from a default (a network's gateway from its
+# site) is inverted too. Lets target entities answer "who refs me?"
+# without scattering filter queries across type modules.
 #
 { config, lib, egregorLib, ... }:
 let
@@ -74,6 +76,31 @@ in {
               edge; `attrs.refs` gives the rich shape for either.
 
               Validated: every target must exist in the registry.
+            '';
+          };
+
+          relations = mkOption {
+            type = types.attrsOf (types.nullOr types.str);
+            default = {};
+            internal = true;
+            description = ''
+              Resolved outbound edges, keyed by ref name. Type modules
+              state an edge here in the form it actually has — after
+              site-level fallback and family defaults — so its inverse is
+              queryable. `refs` stays the author's declaration; this is
+              the graph's actual edge. Null means "no resolved edge".
+            '';
+          };
+
+          refsIn = mkOption {
+            type = types.attrsOf (types.listOf types.str);
+            default = {};
+            internal = true;
+            description = ''
+              Inverse index: for each ref name, the entities that refer to
+              this one. Computed from every entity's `refs` and `relations`.
+              A top-level option, not an attr, so a type's own `attrs` can
+              read it without depending on the attrs it is computing.
             '';
           };
 
@@ -133,15 +160,26 @@ in {
         # still reads back as a bare name.
         config.attrs.refs = lib.mapAttrs (_: refNorm) config.refs;
 
-        # Inverse-ref index: for each (src, refName) whose ref targets
-        # this entity, append srcName to attrs.refsIn.refName. Reads only
-        # entities.*.refs (plain user data) — no cycle with attrs setters.
-        config.attrs.refsIn = lib.foldlAttrs (acc: srcName: src:
-          lib.foldlAttrs (acc2: refName: ref:
-            if refTarget ref == name
-            then acc2 // { ${refName} = (acc2.${refName} or []) ++ [srcName]; }
-            else acc2
-          ) acc src.refs
+        # Inverse index: for each (src, refName) whose declared ref *or*
+        # resolved relation targets this entity, append srcName to
+        # config.refsIn.refName. Both inputs are plain data — not attrs of
+        # this entity — so there is no cycle with the attrs setters.
+        #
+        # Covering resolved relations is what makes an inherited edge
+        # queryable: a network whose gateway comes from its site never
+        # writes `refs.gateway`, but still shows up in the site router's
+        # refsIn.gateway.
+        config.refsIn = let
+          add = acc: refName: srcName:
+            acc // { ${refName} = lib.unique ((acc.${refName} or []) ++ [srcName]); };
+        in lib.foldlAttrs (acc: srcName: src:
+          let
+            afterRefs = lib.foldlAttrs (a: refName: ref:
+              if refTarget ref == name then add a refName srcName else a
+            ) acc src.refs;
+          in lib.foldlAttrs (a: refName: target:
+            if target != null && target == name then add a refName srcName else a
+          ) afterRefs (src.relations or {})
         ) {} topConfig.entities;
       }));
       default = {};

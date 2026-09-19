@@ -10,8 +10,10 @@
   gw = if myHost == null then {} else (myHost.gateway or {});
   enabled = (gw.lanInterface or null) != null;
 
-  # Networks this host routes, for either family. VLAN-backed only;
-  # overlay networks (vpn) excluded.
+  # Networks this host routes, by family, read from the resolved inverse
+  # of the network graph: a network whose gateway (or gateway6) resolves
+  # to this host lists it in refsIn, whether it said so literally or
+  # inherited it from its site. VLAN-backed only; overlays excluded.
   #
   # The two families are asked separately because they can differ. A
   # host that routes only v6 for a segment still holds the ULA address
@@ -19,8 +21,11 @@
   # address. Asking one question for both would mean handing over v4
   # also silently hands over router advertisements, the advertised
   # resolver, and the prefix delegation.
-  isV4Gateway = e: (e.attrs.gatewayRef or null) == hostname;
-  isV6Gateway = e: (e.attrs.gateway6Ref or null) == hostname;
+  myRefsIn = lib.attrByPath ["entities" hostname "refsIn"] {} eg;
+  v4Gatewayed = myRefsIn.gateway or [];
+  v6Gatewayed = myRefsIn.gateway6 or [];
+  isV4Gateway = e: builtins.elem e.attrs.name v4Gatewayed;
+  isV6Gateway = e: builtins.elem e.attrs.name v6Gatewayed;
   gatewayedNetworks = lib.filterAttrs
     (_: e:
       e.type == "network"
@@ -41,7 +46,7 @@
   # to reach it over — so it lands on the network unit for `refs.over`.
   staticRoutesByVlan = let
     myRoutes = map (n: eg.entities.${n})
-      (eg.entities.${hostname}.attrs.refsIn.on or []);
+      (eg.entities.${hostname}.refsIn.on or []);
     onLink = r: eg.entities.${r.refs.over}.network.vlan;
   in lib.foldl' (acc: r:
     let vid = toString (onLink r); in

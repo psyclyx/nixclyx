@@ -23,6 +23,11 @@
 
   me = lib.attrByPath ["entities" hostname "host"] null eg;
 
+  # Networks whose resolved v4 gateway is this host, read from the graph
+  # inverse so a network that inherited its gateway from its site counts
+  # too.
+  gatewayedV4 = lib.attrByPath ["entities" hostname "refsIn" "gateway"] [] eg;
+
   # Networks where:
   #  - host has a declared address (host.addresses.X exists)
   #  - host has a declared interface (host.interfaces.X exists)
@@ -33,13 +38,12 @@
     else lib.filterAttrs (netName: _addr:
       let
         netEnt = eg.entities.${netName} or null;
-        gw = if netEnt == null then null else netEnt.attrs.gatewayRef or null;
         vlan = if netEnt == null then null
                else netEnt.network.vlan or null;
       in
         netEnt != null
         && (me.interfaces or {}) ? ${netName}
-        && gw != hostname
+        && !(builtins.elem netName gatewayedV4)
         && vlan != null
     ) (me.addresses or {});
 

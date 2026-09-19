@@ -38,6 +38,12 @@ in rec {
     description ? "",
     options ? {},
     entityModule ? null,
+    # Resolved outbound edges, by ref name. `refs` is what the author
+    # wrote; this is what it resolves to once type defaults (site
+    # fallback, family defaults) are applied. Core inverts it into
+    # refsIn alongside raw refs, so the inverse index is complete
+    # even when the edge was inherited rather than written.
+    relations ? _name: _config: _topConfig: {},
     attrs ? _name: _config: _topConfig: {},
     verbs ? _name: _config: _topConfig: {},
     assertions ? _name: _config: _topConfig: [],
@@ -62,6 +68,7 @@ in rec {
 
           config = mkIf (config.type == typeName) {
             attrs = attrs name config topConfig;
+            relations = relations name config topConfig;
             verbs = verbs name config topConfig;
             assertions = assertions name config topConfig;
           };

@@ -116,7 +116,7 @@
           the host owns as part of its identity in the fleet. Projections
           union this with apex zones contributed by services that target
           this host via `refs.dnsAuthority` (seen here as
-          `entity.attrs.refsIn.dnsAuthority`).
+          `entity.refsIn.dnsAuthority`).
         '';
       };
       publicAcme = lib.mkOption {
@@ -599,26 +599,18 @@
         siteDomain = if siteEntity != null then siteEntity.site.domain or null else null;
 
         # Resolved addresses view — declared addresses, plus gateway-derived
-        # entries for networks where this host is the declared gateway
-        # (network.refs.gateway directly or inherited from site.refs.gateway).
-        # Declared always wins.
-        networkEntities = lib.filterAttrs (_: e: e.type == "network") (top.entities or { });
-
-        gatewayHostFor =
-          netName: net:
-          let
-            netGw = net.refs.gateway or null;
-            siteName = net.network.site or null;
-            site = if siteName != null then top.entities.${siteName} or null else null;
-            siteGw = if site != null then site.refs.gateway or null else null;
-          in
-          if netGw != null then netGw else siteGw;
-
-        gatewayDerivedAddresses = lib.mapAttrs (_: net: {
-          ipv4 = net.attrs.gateway4 or null;
-          ipv6 = net.attrs.gateway6 or null;
-          dhcp = false;
-        }) (lib.filterAttrs (netName: net: gatewayHostFor netName net == name) networkEntities);
+        # entries for networks where this host is the resolved v4 gateway.
+        # `refsIn.gateway` is the graph inverse, so it covers a gateway
+        # inherited from the site as well as one written literally; filter
+        # to networks, since a site also names a gateway. Declared wins.
+        gatewayDerivedAddresses = lib.genAttrs
+          (lib.filter (n: (top.entities.${n}).type or "" == "network")
+            (entity.refsIn.gateway or []))
+          (netName: let net = top.entities.${netName}; in {
+            ipv4 = net.attrs.gateway4 or null;
+            ipv6 = net.attrs.gateway6 or null;
+            dhcp = false;
+          });
 
         # Resolution order (last write wins under //): gateway-derived
         # addresses provide the floor; declared addresses always win.

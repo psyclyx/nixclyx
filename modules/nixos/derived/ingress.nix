@@ -82,7 +82,7 @@
   # contributed by services that ref this host via refs.dnsAuthority.
   effectiveDnsAuthority = h: let
     intrinsic = h.host.dnsAuthority or [];
-    sources = h.attrs.refsIn.dnsAuthority or [];
+    sources = h.refsIn.dnsAuthority or [];
     contributed = lib.concatMap (n: let
       e = eg.entities.${n} or null;
     in lib.optional (e != null && e.type == "service" && e.attrs.resolvedDomain != null)

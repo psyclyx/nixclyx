@@ -12,7 +12,7 @@ let
   hostName = config.psyclyx.nixos.host;
   me = eg.entities.${hostName} or null;
   intrinsic = if me != null && me.type == "host" then me.host.dnsAuthority or [] else [];
-  sources = if me != null then me.attrs.refsIn.dnsAuthority or [] else [];
+  sources = if me != null then me.refsIn.dnsAuthority or [] else [];
   contributed = lib.concatMap (n: let
     e = eg.entities.${n} or null;
   in lib.optional (e != null && e.type == "service" && e.attrs.resolvedDomain != null)

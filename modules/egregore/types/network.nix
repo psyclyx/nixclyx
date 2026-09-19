@@ -17,6 +17,30 @@
       padded = lib.fixedWidthString width "0" hex;
       chars = lib.stringToCharacters padded;
     in lib.concatStringsSep "." (lib.reverseList chars);
+
+    # Resolve this network's refs against site-level fallback, in one
+    # place, so `attrs` and `relations` can't disagree about the edge.
+    resolve = entity: top: let
+      net = entity.network;
+      siteEntity = if net.site != null then top.entities.${net.site} or null else null;
+      netRefs = entity.refs or {};
+      siteRefs = if siteEntity != null then siteEntity.refs or {} else {};
+    in {
+      inherit siteEntity;
+      siteDomain = if siteEntity != null then siteEntity.site.domain or null else null;
+      dnsRef = netRefs.dns or siteRefs.dns or null;
+      gatewayRef = netRefs.gateway or siteRefs.gateway or null;
+      # Which router serves each family. Normally the same box, so v6
+      # falls back to the v4 answer — but they are separate facts, and a
+      # dual-stack network can legitimately have different routers for
+      # each, which is what a migration looks like while it is halfway
+      # done. Whoever is the v6 router holds the ULA gateway address,
+      # sends the RAs and is advertised as the resolver in them; the v4
+      # router holds the v4 gateway address. Fusing the two means moving
+      # one silently moves the other.
+      gateway6Ref = netRefs.gateway6 or netRefs.gateway
+        or siteRefs.gateway6 or siteRefs.gateway or null;
+    };
   in {
     name = "network";
     description = "L3 IP segment, optionally VLAN-backed.";
@@ -97,37 +121,32 @@
       };
     };
 
+    # The edges this network has, resolved. `refs` is what the config
+    # declared; these are what it means after site-level fallback. Core
+    # inverts them into refsIn, so a router can ask "which networks
+    # do I gateway?" — including ones that inherited it — instead of
+    # every consumer re-deriving the fallback.
+    relations = _name: entity: top: let r = resolve entity top; in {
+      gateway = r.gatewayRef;
+      gateway6 = r.gateway6Ref;
+      dns = r.dnsRef;
+    };
+
     attrs = name: entity: top: let
       net = entity.network;
       prefix = prefixOf net.ipv4;
       gw = top.conventions.gatewayOffset or 1;
       ulaPrefix = top.ipv6UlaPrefix or "";
       hasV6 = ulaPrefix != "" && net.ulaSubnetHex != "";
+      r = resolve entity top;
+      inherit (r) siteEntity siteDomain dnsRef gatewayRef gateway6Ref;
 
       # Zone name: site domain for site networks; for site-less overlays
       # (e.g. wireguard) fall back to domains.internal. A network with
       # neither is a config error and yields an empty zoneName.
-      siteEntity = if net.site != null then top.entities.${net.site} or null else null;
-      siteDomain = if siteEntity != null then siteEntity.site.domain or null else null;
       baseDomain =
         if siteDomain != null then siteDomain
         else top.domains.internal or "";
-
-      # Refs with site-level fallback.
-      netRefs = entity.refs or {};
-      siteRefs = if siteEntity != null then siteEntity.refs or {} else {};
-      dnsRef = netRefs.dns or siteRefs.dns or null;
-      gatewayRef = netRefs.gateway or siteRefs.gateway or null;
-      # Which router serves each family. Normally the same box, so v6
-      # falls back to the v4 answer — but they are separate facts, and a
-      # dual-stack network can legitimately have different routers for
-      # each, which is what a migration looks like while it is halfway
-      # done. Whoever is the v6 router holds the ULA gateway address,
-      # sends the RAs and is advertised as the resolver in them; the v4
-      # router holds the v4 gateway address. Fusing the two means moving
-      # one silently moves the other.
-      gateway6Ref = netRefs.gateway6 or netRefs.gateway
-        or siteRefs.gateway6 or siteRefs.gateway or null;
     in {
       vlan = net.vlan;
       prefix = prefix;

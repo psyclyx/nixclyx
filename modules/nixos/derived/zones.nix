@@ -14,10 +14,14 @@
   # to networks where gwName is the gateway. A host without that role
   # for a given network has no business being authoritative for it.
   networks = lib.filterAttrs (_: e: e.type == "network") eg.entities;
+  # Networks whose resolved v4 gateway is gwName, from the graph inverse.
+  gwGatewayed =
+    lib.attrByPath ["entities" gwName "refsIn" "gateway"] [] eg;
+
   # Networks this host serves DNS for. Prefer the explicit dnsRef
   # (refs.dns or site fallback) so an L2-only DHCP/DNS listener like
   # iyr serves storage/lab zones it isn't the gateway for; fall back
-  # to gatewayRef when dnsRef isn't set so the existing
+  # to the gateway relation when dnsRef isn't set so the existing
   # gateway-as-DNS case keeps working.
   vlanNetworks = lib.filterAttrs (
     _: e:
@@ -25,7 +29,7 @@
       && (
         (e.attrs.dnsRef or null) == gwName
         || ((e.attrs.dnsRef or null) == null
-            && (e.attrs.gatewayRef or null) == gwName)
+            && builtins.elem e.attrs.name gwGatewayed)
       )
   ) networks;
 

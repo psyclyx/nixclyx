@@ -164,7 +164,6 @@
       r = entity.routeros;
       active = lib.filterAttrs (_: p: portType p != "unused") r.ports;
       mgmtAddr = r.addresses.${r.mgmtNetwork}.ipv4 or null;
-      networkEntities = lib.filterAttrs (_: e: e.type == "network") (top.entities or {});
     in {
       address = mgmtAddr;
       # Addresses keyed by network, the same shape a host exposes.
@@ -183,14 +182,6 @@
       portNames = modelPorts.${r.model} or (builtins.attrNames r.ports);
       # Physical topology: one entry per port ref, as a normalized edge.
       links = portDef.links r.ports;
-      # Networks this switch is the canonical gateway for, derived solely
-      # from the network's own `refs.gateway`. This is a statement about
-      # policy — who other hosts should route to — NOT about what the
-      # chip forwards: with l3-hw-offloading on, the switch routes every
-      # VLAN it holds an address on, whether or not it is named here.
-      gatewayNetworks = lib.attrNames (
-        lib.filterAttrs (_: net: (net.attrs.gatewayRef or null) == name) networkEntities
-      );
     };
 
     assertions = name: entity: top:
@@ -207,7 +198,7 @@
       # Routes this switch installs, declared as entities. `refsIn.on` is
       # the inverse index — every route whose refs.on points here.
       myRoutes = map (n: top.entities.${n})
-        (entity.attrs.refsIn.on or []);
+        (entity.refsIn.on or []);
       routesFor    = family: builtins.filter (r: r.attrs.family == family) myRoutes;
       mkRouteRow   = r: { inherit (r.attrs) dst gateway disabled; inherit (r.route) comment; };
       defaultDst   = family: if family == "ipv6" then "::/0" else "0.0.0.0/0";
@@ -237,11 +228,10 @@
         if serverName == null || server == null || egressNet == null then null
         else ((server.attrs.addresses or {}).${egressNet} or {}).ipv4 or null;
 
-      # All entries in sw.addresses get an L3 interface, and with
-      # l3-hw-offloading on the chip routes every one of them. There is no
-      # "transit-only" address: holding an address on a VLAN is what makes
-      # the switch route it.
-      addressedNetworks = lib.attrNames sw.addresses;
+      # Networks this switch holds an L3 interface on. Holding an address
+      # on a VLAN is what makes the chip route it — there is no separate
+      # "route this VLAN" declaration and no transit-only address.
+      addressNetworks = lib.attrNames sw.addresses;
 
       # A slice of someone else's delegation, if one is offered to us.
       # Both ends read the same entity: the delegating router derives
@@ -253,13 +243,14 @@
 
       pdPool = "delegated";
 
-      # SVIs that draw a /64 from it: the ones we route v6 for. Not the
-      # ones we merely hold an address on — whoever sends the RAs owns
-      # the prefix, and advertising one we don't route would point hosts
-      # at a router that can't carry their traffic.
-      pdNetworks = builtins.filter
-        (n: ((top.entities.${n}).attrs.gateway6Ref or null) == name)
-        addressedNetworks;
+      # SVIs that draw a /64 from it: the ones we route v6 for, read
+      # from the resolved inverse rather than re-deriving the gateway
+      # default. Not the ones we merely hold an address on — whoever
+      # sends the RAs owns the prefix, and advertising one we don't route
+      # would point hosts at a router that can't carry their traffic.
+      pdNetworks = lib.intersectLists
+        addressNetworks
+        (entity.refsIn.gateway6 or []);
 
       # Switch-chip ACLs, derived from the forward policy rather than
       # written twice. A network this switch routes whose zone has no
@@ -279,7 +270,7 @@
       wanDenied = builtins.filter (netName: let
         zone = (top.entities.${netName}).attrs.zone or "";
         policy = (top.policy.${zone} or {}).wan or null;
-      in zone != "" && policy != "accept") addressedNetworks;
+      in zone != "" && policy != "accept") addressNetworks;
 
       switchRules = lib.concatMap (netName: let
         vlan = (top.entities.${netName}).network.vlan;
@@ -297,7 +288,7 @@
       # Null when nothing wants more than a standard frame, so switches
       # with no jumbo networks emit no l2mtu lines at all.
       maxNetMtu = lib.foldl' lib.max 1500
-        (map (n: top.entities.${n}.network.mtu or 1500) addressedNetworks);
+        (map (n: top.entities.${n}.network.mtu or 1500) addressNetworks);
       portL2mtu = if maxNetMtu > 1500 then maxNetMtu + 4 else null;
 
       # Port config lookup with default for unassigned hardware ports.
@@ -325,7 +316,7 @@
 
       # VLANs the switch holds an L3 address on — the ones whose traffic
       # the CPU must be able to see (see `tagged` in vlanEntry).
-      sviVlans = map (netName: (top.entities.${netName}).network.vlan) addressedNetworks;
+      sviVlans = map (netName: (top.entities.${netName}).network.vlan) addressNetworks;
 
       accessByVlan = let
         pairs = map (pname: { vlan = (portCfg pname).vlan; port = pname; }) accessPorts;
@@ -348,7 +339,7 @@
         # *Flooded* traffic is what needs the membership: without it the
         # CPU never sees a broadcast on that VLAN, which silently breaks
         # /ip dhcp-relay (it has nothing to relay). mgmt is in
-        # addressedNetworks like any other, so this subsumes the old
+        # addressNetworks like any other, so this subsumes the old
         # mgmt-only special case rather than extending it.
         tagged = tIfaces ++ lib.optional (builtins.elem vlan sviVlans) "bridge1";
       in {
@@ -451,7 +442,7 @@
           name      = "vlan${toString net.network.vlan}";
           "vlan_id" = net.network.vlan;
           mtu       = net.network.mtu;
-        }) addressedNetworks;
+        }) addressNetworks;
 
         addresses = map (netName: let
           net = top.entities.${netName};
@@ -459,12 +450,12 @@
           address   = "${sw.addresses.${netName}.ipv4}/${toString net.attrs.prefixLen}";
           interface = "vlan${toString net.network.vlan}";
           network   = net.attrs.network4;
-        }) addressedNetworks;
+        }) addressNetworks;
 
         # IPv6 addresses follow the same shape, emitted only for
         # networks where an ipv6 entry is set. Prefix is /64 (the
         # network's ULA + per-VLAN subnet via ulaSubnetHex).
-        "ipv6_addresses" = lib.flip lib.concatMap addressedNetworks (netName: let
+        "ipv6_addresses" = lib.flip lib.concatMap addressNetworks (netName: let
           net = top.entities.${netName};
           v6 = sw.addresses.${netName}.ipv6 or null;
           iface = "vlan${toString net.network.vlan}";
@@ -491,7 +482,7 @@
         # dhcpRelay set — including ones where the switch isn't the
         # gateway, since relaying is about carrying the request, not about
         # routing the client.
-        "dhcp_relays" = lib.flip lib.concatMap addressedNetworks (netName: let
+        "dhcp_relays" = lib.flip lib.concatMap addressNetworks (netName: let
           net = top.entities.${netName};
           server = dhcpServerAddr netName;
           localAddr = sw.addresses.${netName}.ipv4 or null;
@@ -534,7 +525,7 @@
             "ra_lifetime" = "none";
           }) (builtins.filter
             (n: (sw.addresses.${n}.ipv6 or null) != null)
-            addressedNetworks));
+            addressNetworks));
 
         "ipv6_dhcp_clients" = lib.optional (myDelegation != null) {
           interface = "vlan${toString (top.entities.${myDelegation.refs.over}).network.vlan}";
