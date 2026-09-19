@@ -1,8 +1,23 @@
-# Entity type: service (a named, reachable endpoint).
+# Entity type: service — a named offering, and how it is presented.
+#
+# Split into two concerns that change for different reasons:
+#
+#   intrinsic  protocol, backend, audiences
+#              what it offers, where it runs, who can reach it
+#   presentation  domain/environment, ingress, websockets, streaming, check
+#              how it is named and proxied in each reachability context
+#
+# A service need not be presented: `tang` is an HTTP offering reached
+# directly at its backend address, with no FQDN and no ingress. The
+# presentation fields are then simply absent, and the ingress projection
+# (which keys on a resolved domain and an ingress host) ignores it.
+#
+# `kind` is the one deliberate exception (see its definition): a label,
+# not a mechanism.
 {
   egregoreType = { lib, ... }: {
     name = "service";
-    description = "A named, reachable endpoint (HTTP or TCP).";
+    description = "A named, reachable offering (HTTP or raw TCP).";
 
     options = {
       domain = lib.mkOption {
@@ -18,6 +33,18 @@
       protocol = lib.mkOption {
         type = lib.types.enum ["http" "tcp"];
         default = "http";
+      };
+
+      # COHESION EXCEPTION: a one-word label ("tang", "kdc", ...) so a
+      # service can be recognised by kind without fragmenting into a
+      # type per vendor. This is a label ONLY — the mechanism behind a
+      # kind (tang's keys, a KDC's database) is host config, never a
+      # block here. If this grows past a label, it is no longer an
+      # exception and the kind gets a proper noun.
+      kind = lib.mkOption {
+        type = lib.types.nullOr lib.types.str;
+        default = null;
+        description = "Optional kind label. Fleet fact role, not a mechanism carrier.";
       };
       backend = lib.mkOption {
         type = lib.types.submodule {
@@ -154,9 +181,13 @@
     in {
       inherit resolvedDomain backendType resolvedAddress resolvedPort;
       inherit effectiveIngress;
-      url = if s.protocol == "http" && resolvedDomain != null
-        then "https://${resolvedDomain}"
-        else null;
+      # A service's URL is its presentation: the FQDN when it has one,
+      # otherwise the address it is reached at directly (e.g. tang).
+      url =
+        if s.protocol == "http" && resolvedDomain != null then "https://${resolvedDomain}"
+        else if s.protocol == "http" && resolvedAddress != null && resolvedPort != null
+          then "http://${resolvedAddress}:${toString resolvedPort}"
+          else null;
       label = if s.label != null then s.label else name;
       protocol = s.protocol;
       websockets = s.websockets;
@@ -189,10 +220,6 @@
       {
         assertion = backendCount == 1;
         message = "service '${name}': exactly one backend required (ha, host, or local), got ${toString backendCount}";
-      }
-      {
-        assertion = s.domain != null || s.environment != null;
-        message = "service '${name}': must set either 'domain' or 'environment'";
       }
       {
         assertion = !(s.domain != null && s.environment != null);

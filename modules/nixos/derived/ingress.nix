@@ -28,8 +28,12 @@
   me = eg.entities.${hostname} or null;
 
   services = lib.filterAttrs (_: e: e.type == "service") eg.entities;
-  httpServices = lib.filterAttrs (_: e: e.service.protocol == "http") services;
-  tcpServices = lib.filterAttrs (_: e: e.service.protocol == "tcp") services;
+  # Presentation requires a resolved domain: a service reached directly
+  # (no FQDN, no ingress — e.g. tang) is not the ingress projection's
+  # business. It is skipped here, not mangled into a null-domain record.
+  presented = lib.filterAttrs (_: e: e.attrs.resolvedDomain != null) services;
+  httpServices = lib.filterAttrs (_: e: e.service.protocol == "http") presented;
+  tcpServices = lib.filterAttrs (_: e: e.service.protocol == "tcp") presented;
 
   audiences = eg.audiences;
   envEntities = lib.filterAttrs

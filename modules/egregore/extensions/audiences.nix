@@ -9,7 +9,11 @@
 #     hosts use.
 #   - defaultIngress: the host (entity name) that runs ingress for
 #     services in this audience by default. Per-service `service.ingress`
-#     overrides this on a per-(service, audience) basis.
+#     overrides this on a per-(service, audience) basis. **Null means the
+#     audience is direct**: nothing proxies it, and services in it are
+#     reached at their own backend address (tang over the infra network,
+#     for instance). The ingress projection emits nothing for a direct
+#     audience; a direct-reach projection owns that side.
 #
 # This module owns the abstract concept; concrete audience names, address
 # keys, and default ingress assignments are fleet data (tier 3). The
