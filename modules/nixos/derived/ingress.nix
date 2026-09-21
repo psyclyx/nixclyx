@@ -126,6 +126,12 @@
   mkBackend = svcName: e: let
     a = e.attrs;
     s = e.service;
+    # A `local` backend is localhost on this proxy host unless the host
+    # config names another host-local address (e.g. a netns veth).
+    localOverride = config.psyclyx.nixos.services.ingress.localBackendAddress.${svcName} or null;
+    backendAddr =
+      if a.backendType == "local" && localOverride != null then localOverride
+      else a.resolvedAddress;
     opts = lib.concatStringsSep "\n" (
       lib.optional s.websockets "    option http-server-close"
       ++ lib.optionals s.streaming [
@@ -143,7 +149,7 @@
     backend bk_svc_${svcName}
       mode http
   '' + lib.optionalString (opts != "") (opts + "\n")
-     + "    server srv1 ${a.resolvedAddress}:${toString a.resolvedPort} check inter 10s\n";
+     + "    server srv1 ${backendAddr}:${toString a.resolvedPort} check inter 10s\n";
 
   myBackendSvcs = lib.unique (map (t: t.svcName) myIngressTuples);
   backends = lib.concatStringsSep "" (map

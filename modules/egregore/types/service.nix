@@ -57,12 +57,23 @@
             host = lib.mkOption {
               type = lib.types.nullOr (lib.types.submodule {
                 options = {
-                  address = lib.mkOption { type = lib.types.str; };
-                  port = lib.mkOption { type = lib.types.int; };
+                  host = lib.mkOption {
+                    type = lib.types.str;
+                    description = "Backend host entity name.";
+                  };
+                  network = lib.mkOption {
+                    type = lib.types.str;
+                    description = ''
+                      Network entity whose address on `host` the backend
+                      is reached at. Derived, not a literal IP — moving
+                      the backend is an edit to this reference.
+                    '';
+                  };
+                  port = lib.mkOption { type = lib.types.port; };
                 };
               });
               default = null;
-              description = "Fixed host:port backend.";
+              description = "Backend on a named host, at its address on a network.";
             };
             local = lib.mkOption {
               type = lib.types.nullOr (lib.types.submodule {
@@ -169,10 +180,18 @@
         then top.entities.${haGroupName}
         else null;
 
+      # Backend on a named host: its address on the chosen network is the
+      # resolved address, so the offering moves with the graph instead of
+      # carrying a literal IP.
+      hostBackendAddr =
+        if backendType == "host"
+        then (top.entities.${s.backend.host.host}.attrs.addresses.${s.backend.host.network} or {}).ipv4 or null
+        else null;
+
       # Resolved address and port
       resolvedAddress =
         if backendType == "ha" && haGroup != null then haGroup.ha-group.vip.ipv4
-        else if backendType == "host" then s.backend.host.address
+        else if backendType == "host" then hostBackendAddr
         else if backendType == "local" then "127.0.0.1"
         else null;
       resolvedPort =
@@ -250,6 +269,14 @@
         message = "service '${name}': cannot set both 'domain' and 'environment'";
       }
     ]
+    ++ lib.optional (s.backend.host != null) {
+      assertion = top.entities ? ${s.backend.host.host} && top.entities.${s.backend.host.host}.type == "host";
+      message = "service '${name}': backend.host.host '${s.backend.host.host}' is not a host entity";
+    }
+    ++ lib.optional (s.backend.host != null) {
+      assertion = top.entities ? ${s.backend.host.network} && top.entities.${s.backend.host.network}.type == "network";
+      message = "service '${name}': backend.host.network '${s.backend.host.network}' is not a network entity";
+    }
     ++ lib.optional (s.environment != null) {
       assertion = top.entities ? ${s.environment} && top.entities.${s.environment}.type == "environment";
       message = "service '${name}': environment '${s.environment}' is not an environment entity";
