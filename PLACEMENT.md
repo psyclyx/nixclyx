@@ -58,10 +58,13 @@ A field answering more than one of these is more than one field.
   `streaming`, `check`. How it is named and proxied, per context.
 - **exception** — `kind`: a one-word label. Not a mechanism carrier.
 
-An `audience` is a reachability context and is **direct**
-(`defaultIngress = null`) when nothing proxies it — services in it are
-reached at their own backend address. The ingress projection handles
-presented services; a direct-reach projection will own the rest.
+An `audience` is a pure reachability scope. **A proxy is a service**
+(`service.proxy`, naming the host it runs on) whose `audiences` are the
+scopes it fronts; a service exposed in a scope is routed by the proxy
+serving it, overridable per service. An audience no proxy serves is
+reached directly at the service's backend. The projection's HAProxy
+config, certs, and DNS are a projection over that data; a direct-reach
+projection owns the rest.
 
 This is what lets `tang` be a service (HTTP offering, host backend, no
 FQDN, no ingress) instead of a vendor noun.

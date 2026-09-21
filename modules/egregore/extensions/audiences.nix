@@ -1,24 +1,20 @@
-# Reachability audiences — named contexts in which services are reached.
+# Reachability audiences — named scopes in which services are reached.
 #
 # An audience is a primitive abstract concept: a named *reachability
-# context* with two intrinsic facts the fleet's projection layer needs:
+# scope*. Its one intrinsic fact is the address key it names, looked up
+# in host.attrs.addresses. The string is opaque to this module — it just
+# composes with whatever address keys the fleet's hosts use.
 #
-#   - address: a key into host.attrs.addresses on whichever host
-#     terminates ingress for the audience. The string is opaque to this
-#     module — it just composes with whatever address keys the fleet's
-#     hosts use.
-#   - defaultIngress: the host (entity name) that runs ingress for
-#     services in this audience by default. Per-service `service.ingress`
-#     overrides this on a per-(service, audience) basis. **Null means the
-#     audience is direct**: nothing proxies it, and services in it are
-#     reached at their own backend address (tang over the infra network,
-#     for instance). The ingress projection emits nothing for a direct
-#     audience; a direct-reach projection owns that side.
+# Who terminates ingress for an audience is not an audience fact: it is
+# a service (`service.proxy`), the way a thing that forwards is a node. A
+# service is proxied on the proxy that serves its audience, overridable
+# per service; an audience no proxy serves is reached directly at the
+# service's backend. Keeping the proxy out of the context is what lets the
+# same scope be served by different boxes (or by none) without rewriting
+# the scope.
 #
-# This module owns the abstract concept; concrete audience names, address
-# keys, and default ingress assignments are fleet data (tier 3). The
-# projection layer reads (audience, ingress host) and composes everything
-# else (DNS view, cert source, bind interface) from existing fleet facts.
+# This module owns the abstract concept; concrete audience names and
+# address keys are fleet data (tier 3).
 {
   options = { lib, ... }: {
     audiences = lib.mkOption {
@@ -32,17 +28,9 @@
           address = lib.mkOption {
             type = lib.types.str;
             description = ''
-              Address key (looked up in host.attrs.addresses on the
-              audience's ingress host). Determines the bind interface
-              and the DNS A record value.
-            '';
-          };
-          defaultIngress = lib.mkOption {
-            type = lib.types.nullOr lib.types.str;
-            default = null;
-            description = ''
-              Default ingress host (entity name) for services in this
-              audience. Per-service `service.ingress` may override.
+              Address key (looked up in host.attrs.addresses on a host
+              that terminates ingress for this audience). Determines the
+              bind interface and the DNS A record value.
             '';
           };
         };

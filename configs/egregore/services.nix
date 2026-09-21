@@ -13,6 +13,32 @@
   config = {
     entities = {
 
+      # --- Reverse proxies ---
+      # A proxy is a service: it offers HTTP/HTTPS and terminates TLS for
+      # the services exposed in its audiences. Its routing table is
+      # derived from those services' presentation, so all that is declared
+      # here is where it runs and which scopes it fronts.
+
+      proxy-tleilax = {
+        type = "service";
+        tags = ["infra" "proxy"];
+        service = {
+          proxy.host = "tleilax";
+          audiences = ["public" "vpn"];
+          label = "Public/VPN ingress";
+        };
+      };
+
+      proxy-iyr = {
+        type = "service";
+        tags = ["infra" "proxy"];
+        service = {
+          proxy.host = "iyr";
+          audiences = ["apt"];
+          label = "Apartment ingress";
+        };
+      };
+
       # --- Public HTTP (psyclyx.xyz) ---
 
       docs = {
@@ -49,9 +75,9 @@
           backend.local.port = 8080;
           streaming = true;
           audiences = ["apt" "vpn"];
-          # apt's defaultIngress is iyr already; override vpn to iyr too
+          # apt is ingressed by iyr already; override vpn to iyr too
           # so road warriors hit iyr directly instead of hairpinning.
-          ingress = { vpn = "iyr"; };
+          ingress = { vpn = "proxy-iyr"; };
           label = "Lights";
         };
       };

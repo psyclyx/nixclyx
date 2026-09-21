@@ -77,6 +77,22 @@
         };
         default = {};
       };
+      proxy = lib.mkOption {
+        type = lib.types.nullOr (lib.types.submodule {
+          options.host = lib.mkOption {
+            type = lib.types.str;
+            description = "Host entity that runs the proxy.";
+          };
+        });
+        default = null;
+        description = ''
+          Set when this service is a reverse proxy: it terminates TLS and
+          routes by name for the audiences in `audiences`, running on
+          `host`. Its routing table is derived — from the presentation of
+          the services it fronts — so it is not declared here. A proxy is
+          a service (it offers HTTP/HTTPS); this block is its placement.
+        '';
+      };
       websockets = lib.mkOption {
         type = lib.types.bool;
         default = false;
@@ -112,8 +128,10 @@
         type = lib.types.attrsOf lib.types.str;
         default = { };
         description = ''
-          Per-audience ingress host override, keyed by audience name.
-          Audiences not listed here use the audience's defaultIngress.
+          Per-audience proxy override, keyed by audience name: the
+          `service.proxy` that fronts this service in that audience.
+          Audiences not listed here use the unique proxy serving the
+          audience; if none serves it, the service is direct there.
         '';
       };
     };
@@ -167,17 +185,23 @@
         else if backendType == "local" then s.backend.local.port
         else null;
 
-      # Resolve audience → ingress host. Per-service ingress override wins,
-      # otherwise fall back to the audience's defaultIngress.
-      audienceDefs = top.audiences or {};
+      # The proxy fronting an audience is a *service* (`service.proxy`)
+      # that serves it — not a host role. A per-service `ingress`
+      # override names a proxy directly. An audience no proxy serves, or
+      # one several claim, is direct for this service: the projection
+      # emits nothing.
+      proxyServing = a: let
+        claimants = builtins.filter
+          (n: let e = top.entities.${n}; in
+            e.type == "service" && (e.service.proxy or null) != null
+            && builtins.elem a e.service.audiences)
+          (builtins.attrNames top.entities);
+      in if builtins.length claimants == 1 then builtins.head claimants else null;
+      proxyHostOf = p: if p == null then null else (top.entities.${p}.service.proxy.host or null);
       effectiveIngress = builtins.listToAttrs (map (a: let
         override = s.ingress.${a} or null;
-        audience = audienceDefs.${a} or null;
-        host =
-          if override != null then override
-          else if audience != null then audience.defaultIngress
-          else null;
-      in lib.nameValuePair a host) s.audiences);
+        proxy = if override != null then override else proxyServing a;
+      in lib.nameValuePair a (proxyHostOf proxy)) s.audiences);
     in {
       inherit resolvedDomain backendType resolvedAddress resolvedPort;
       inherit effectiveIngress;
@@ -212,13 +236,13 @@
       unknownAudiences = builtins.filter (a: !(builtins.elem a knownAudiences)) s.audiences;
       overrideKeys = builtins.attrNames s.ingress;
       extraIngressKeys = builtins.filter (k: !(builtins.elem k s.audiences)) overrideKeys;
-      invalidIngressHosts = lib.filter
-        (h: !(top.entities ? ${h} && top.entities.${h}.type == "host"))
+      invalidIngressProxies = lib.filter
+        (p: !(top.entities ? ${p} && (top.entities.${p}.service.proxy or null) != null))
         (builtins.attrValues s.ingress);
       dnsAuthRef = entity.refs.dnsAuthority or null;
     in [
       {
-        assertion = backendCount == 1;
+        assertion = backendCount == 1 || s.proxy != null;
         message = "service '${name}': exactly one backend required (ha, host, or local), got ${toString backendCount}";
       }
       {
@@ -252,8 +276,8 @@
         message = "service '${name}': ingress override keys ${builtins.toJSON extraIngressKeys} not in declared audiences ${builtins.toJSON s.audiences}";
       }
       {
-        assertion = invalidIngressHosts == [];
-        message = "service '${name}': ingress override targets ${builtins.toJSON invalidIngressHosts} are not host entities";
+        assertion = invalidIngressProxies == [];
+        message = "service '${name}': ingress override targets ${builtins.toJSON invalidIngressProxies} are not proxy services";
       }
     ]
     ++ lib.optional (dnsAuthRef != null) {

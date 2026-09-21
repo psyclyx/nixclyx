@@ -1,35 +1,31 @@
 # Reachability audiences for the psyclyx fleet.
 #
-# Each audience names a reachability context: the host address key its
-# ingress binds on, and the host that runs ingress by default.
+# Each audience names a reachability scope: the host address key it maps
+# to. Who terminates ingress for a scope is a service — `service.proxy`
+# on proxy-tleilax (public, vpn) and proxy-iyr (apt) — not a property of
+# the scope, so it is not declared here.
 #
-#   public — publicly-resolvable services served by tleilax on its
-#            public IP (and SSL-terminated there).
-#   vpn    — *.psyclyx.net served on the VPN overlay; clients are road
-#            warriors over WG.
-#   apt    — *.psyclyx.net served on the apartment LAN; clients on the
-#            main VLAN hit iyr directly.
+#   public — publicly-resolvable services, served on tleilax's public IP.
+#   vpn    — *.psyclyx.net over the WG overlay.
+#   apt    — *.psyclyx.net on the apartment LAN.
 #
 # Conventions used by the ingress projection:
-#   - audience.address == "public"             → DNS in the authoritative
-#                                                 zone matching the service
-#                                                 domain; cert is the
-#                                                 wildcard or per-domain
-#                                                 ACME for that zone.
-#   - audience.address is a network entity name → DNS in resolver-localzone
-#                                                 served by that network's
-#                                                 dns ref; cert is the
-#                                                 internal wildcard.
+#   - address = "public"            → DNS in the authoritative zone
+#                                     matching the service domain; cert is
+#                                     the wildcard or per-domain ACME.
+#   - address is a network entity   → DNS in resolver-localzone served by
+#                                     that network's dns ref; cert is the
+#                                     internal wildcard.
 #
 # Multi-audience services (e.g. light) override per-audience ingress when
-# the audience's defaultIngress isn't who they want.
+# the default ingressor isn't who they want.
 {
   gate = "always";
   config = {
     audiences = {
-      public = { address = "public"; defaultIngress = "tleilax"; };
-      vpn    = { address = "vpn";    defaultIngress = "tleilax"; };
-      apt    = { address = "main";   defaultIngress = "iyr";     };
+      public = { address = "public"; };
+      vpn    = { address = "vpn";    };
+      apt    = { address = "main";   };
     };
   };
 }
