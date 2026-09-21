@@ -79,8 +79,8 @@ Plus the extension mechanism and `audiences` (direct/ingressed).
 ### → fleet egregore schema (`modules/egregore/`) — the fleet must know it
 
 `environment`, `ha-group` (a service backend), `prefix-delegation`,
-`unmanaged`, `nfs-export`, `lun`, `clevis-binding`, `tang-server`
-(as a `service` + host config), `openbao-{pki,ssh-cert,cert}-role`,
+`unmanaged`, `nfs-export`, `lun`, `clevis-binding`, the tang service (a
+`service` of kind `tang`), `openbao-{pki,ssh-cert,cert}-role`,
 `openbao-policy`, `openbao-seal-oracle`, `kv-secret`, and the platform
 node nouns `routeros` / `swos` / `sodola` / `ilo`.
 

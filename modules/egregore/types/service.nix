@@ -104,6 +104,15 @@
           a service (it offers HTTP/HTTPS); this block is its placement.
         '';
       };
+      reach = lib.mkOption {
+        type = lib.types.listOf lib.types.str;
+        default = [ ];
+        description = ''
+          Networks whose clients may reach this service directly, beyond
+          its backend's own network. For a direct service (no proxy) that
+          needs an explicit ACL — e.g. tang, reached from a second VLAN.
+        '';
+      };
       websockets = lib.mkOption {
         type = lib.types.bool;
         default = false;

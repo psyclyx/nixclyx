@@ -7,16 +7,19 @@
   gate = "always";
   config.entities = {
     iyr-tang = {
-      type = "tang-server";
-      refs.host = "iyr";
-      tang-server = {
-        port = 7654;
-        # Tang advertises on iyr's infra address; the JWE blobs
-        # clients carry embed that URL, so moving it means re-binding
-        # clevis on anything already sealed. aclNetworks admits the
-        # clients that reach it from another segment.
-        network = "infra";
-        aclNetworks = [ "main" ];
+      type = "service";
+      tags = ["infra" "tang"];
+      service = {
+        kind = "tang";
+        protocol = "http";
+        # Tang advertises on iyr's infra address; the JWE blobs clients
+        # carry embed that URL, so moving it means re-binding clevis on
+        # anything already sealed. `reach` admits the clients that come
+        # from another segment.
+        backend.host = { host = "iyr"; network = "infra"; port = 7654; };
+        audiences = [];
+        reach = [ "main" ];
+        label = "Tang (NBDE)";
       };
     };
 

@@ -130,8 +130,8 @@
         }
       ]
       ++ map (tn: {
-        assertion = top.entities ? ${tn} && top.entities.${tn}.type == "tang-server";
-        message = "clevis-binding '${name}' tang '${tn}' is not a tang-server entity";
+        assertion = top.entities ? ${tn} && top.entities.${tn}.type == "service" && (top.entities.${tn}.service.kind or null) == "tang";
+        message = "clevis-binding '${name}' tang '${tn}' is not a service of kind 'tang'";
       }) b.tangs;
   };
 }
