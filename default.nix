@@ -136,6 +136,7 @@ let
       inherit nixpkgs hostPkgs nodes deployments modules hive configurations darwinConfigurations nixOnDroidConfigurations;
       inherit fleet;
       routerosSystems = systemsOfType "routeros" ./lib/platform/routeros ./modules/routeros/projection.nix;
+      swosSystems = systemsOfType "swos" ./lib/platform/swos ./modules/swos/projection.nix;
       hosts.nixos = builtins.listToAttrs (map (name: {
         inherit name;
         value = ./hosts/nixos + "/${name}";
