@@ -137,6 +137,7 @@ let
       inherit fleet;
       routerosSystems = systemsOfType "routeros" ./lib/platform/routeros ./modules/routeros/projection.nix;
       swosSystems = systemsOfType "swos" ./lib/platform/swos ./modules/swos/projection.nix;
+      sodolaSystems = systemsOfType "sodola" ./lib/platform/sodola ./modules/sodola/projection.nix;
       hosts.nixos = builtins.listToAttrs (map (name: {
         inherit name;
         value = ./hosts/nixos + "/${name}";
