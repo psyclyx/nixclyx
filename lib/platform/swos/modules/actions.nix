@@ -1,33 +1,42 @@
 # SwOS platform — pull / diff / deploy actions.
 #
-# Target-agnostic: the switch is an argument. The generated `.swb` is the
-# build; these are the placement.
+# The host is an argument; credentials come from the environment
+# (`SWOS_USER`, `SWOS_PASSWORD`), defaulting the user to the fleet's
+# declared one. Nothing connection-shaped is baked into the artifact.
 { config, lib, pkgs, swosLib, ... }:
 let
   s = config.swos;
   jsonFile = config.system.build.json;
-  auth = ''--digest -u "${s.username}:${s.password}"'';
-  pullCmd = ''curl -sf --connect-timeout 5 ${auth} "http://$target/backup.swb"'';
 in {
   system.build = {
     pull = pkgs.writeShellApplication {
       name = "swos-pull";
       runtimeInputs = [ pkgs.curl swosLib.render ];
       text = ''
-        target="''${1:?usage: swos-pull <host> [--raw]}"
-        if [ "''${2:-}" = "--raw" ]; then
-          ${pullCmd}
-        else
-          ${pullCmd} | swos-config parse
-        fi
+        usage() { echo "usage: swos-pull <host> [--raw]" >&2; }
+        [ $# -ge 1 ] || { usage; exit 2; }
+        host="$1"; shift
+        user="''${SWOS_USER:-${s.username}}"
+        : "''${SWOS_PASSWORD:?set SWOS_PASSWORD}"
+
+        fetch() {
+          curl -sf --connect-timeout 5 --digest -u "$user:$SWOS_PASSWORD" "http://$host/backup.swb"
+        }
+        if [ "''${1:-}" = "--raw" ]; then fetch; else fetch | swos-config parse; fi
       '';
     };
     diff = pkgs.writeShellApplication {
       name = "swos-diff";
       runtimeInputs = [ pkgs.curl swosLib.render pkgs.diffutils ];
       text = ''
-        target="''${1:?usage: swos-diff <host>}"
-        live=$(${pullCmd} | swos-config parse)
+        usage() { echo "usage: swos-diff <host>" >&2; }
+        [ $# -ge 1 ] || { usage; exit 2; }
+        host="$1"
+        user="''${SWOS_USER:-${s.username}}"
+        : "''${SWOS_PASSWORD:?set SWOS_PASSWORD}"
+
+        live=$(curl -sf --connect-timeout 5 --digest -u "$user:$SWOS_PASSWORD" \
+          "http://$host/backup.swb" | swos-config parse)
         desired=$(swos-config generate < ${jsonFile} | swos-config parse)
         diff --color=auto -u <(echo "$live") <(echo "$desired") || true
       '';
@@ -36,19 +45,23 @@ in {
       name = "swos-deploy";
       runtimeInputs = [ pkgs.curl swosLib.render pkgs.python3 ];
       text = ''
-        target="''${1:?usage: swos-deploy <host>}"
-        echo "Generating config..." >&2
+        usage() { echo "usage: swos-deploy <host>" >&2; }
+        [ $# -ge 1 ] || { usage; exit 2; }
+        host="$1"
+        user="''${SWOS_USER:-${s.username}}"
+        : "''${SWOS_PASSWORD:?set SWOS_PASSWORD}"
+
         tmpfile=$(mktemp --suffix=.swb)
         trap 'rm -f "$tmpfile"' EXIT
         swos-config generate < ${jsonFile} > "$tmpfile"
 
-        echo "Deploying to $target..." >&2
+        echo "Deploying to $host ..." >&2
         # SwOS ignores multipart backup uploads; POST each section.
-        python3 - "$tmpfile" "$target" << 'DEPLOY_EOF'
+        python3 - "$tmpfile" "$host" "$user" "$SWOS_PASSWORD" << 'DEPLOY_EOF'
 import re, subprocess, sys
 
 data = open(sys.argv[1]).read()
-mgmt_ip = sys.argv[2]
+host, user, password = sys.argv[2], sys.argv[3], sys.argv[4]
 sections = []
 i = 0
 while i < len(data):
@@ -73,17 +86,15 @@ failed = False
 for name, content in sections:
     r = subprocess.run(
         ['curl', '-sf', '--connect-timeout', '5', '--max-time', '10',
-         '--digest', '-u', '${s.username}:${s.password}',
-         '-X', 'POST', '-d', content,
-         f'http://{mgmt_ip}/' + name],
-        capture_output=True, timeout=15
+         '--digest', '-u', f'{user}:{password}',
+         '-X', 'POST', '-d', content, f'http://{host}/' + name],
+        capture_output=True, timeout=15,
     )
     print(f'  {"OK" if r.returncode == 0 else "FAIL"}: {name}', file=sys.stderr)
     failed = failed or r.returncode != 0
 if failed:
     sys.exit(1)
 DEPLOY_EOF
-
         echo "Deploy complete." >&2
       '';
     };
