@@ -53,6 +53,7 @@ let
   };
 in {
   sodola.model = sw.model;
+  sodola.password = sw.password;
   sodola.auth.username = sw.username;
   sodola.network = {
     ip = sw.addresses.mgmt.ipv4;

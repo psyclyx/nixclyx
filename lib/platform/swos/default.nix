@@ -6,7 +6,7 @@ in {
   inherit render;
   eval = { modules ? [ ], specialArgs ? { } }:
     lib.evalModules {
-      modules = [ ./modules/options.nix ./modules/render.nix ] ++ modules;
+      modules = [ ./modules/options.nix ./modules/render.nix ./modules/actions.nix ] ++ modules;
       specialArgs = { inherit pkgs; swosLib = { inherit render; }; } // specialArgs;
     };
 }

@@ -73,6 +73,7 @@ let
   };
 in {
   swos.identity = identity;
+  swos.username = sw.username;
   swos.password = sw.password;
   swos.ports = map mkPort allIndices;
   swos.vlans = map (vlan: {

@@ -22,6 +22,7 @@ in {
     type = types.submodule {
       options = {
         identity = mkOption { type = types.str; default = ""; };
+        username = mkOption { type = types.str; default = "admin"; };
         password = mkOption { type = types.str; default = ""; };
 
         ports = mkOption {

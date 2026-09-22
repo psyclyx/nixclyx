@@ -15,7 +15,7 @@ in {
   # with `config.routeros` and `config.system.build.*`.
   eval = { modules ? [ ], specialArgs ? { } }:
     lib.evalModules {
-      modules = [ ./modules/options.nix ./modules/render.nix ] ++ modules;
+      modules = [ ./modules/options.nix ./modules/render.nix ./modules/deploy.nix ] ++ modules;
       specialArgs = { inherit pkgs; routerosLib = { inherit render; }; } // specialArgs;
     };
 }

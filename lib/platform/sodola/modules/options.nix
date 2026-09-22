@@ -14,6 +14,7 @@ in {
     type = types.submodule {
       options = {
         model = mkOption { type = types.str; default = ""; };
+        password = mkOption { type = types.str; default = "admin"; };
         auth = mkOption {
           type = types.submodule { options.username = mkOption { type = types.str; default = "admin"; }; };
           default = { };
