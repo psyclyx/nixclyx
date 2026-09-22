@@ -10,15 +10,19 @@ let
     nvf = ./nvf.nix;
     ssacli = ./ssacli.nix;
     upscale-image = ./upscale-image;
-    sodola-config = ./sodola-config;
-    swos-config = ./swos-config;
-    routeros-config = ./routeros-config;
-    ilo-config = ./ilo-config;
     commit-confirm = ./commit-confirm;
     pi = ./pi-agent;
   };
 in
   packages // {
+    # Platform renderers live with their platform library (`lib/platform`).
+    # Exposed through the package set only because the (transitional)
+    # egregore CLI reaches them this way; the platform consumers import
+    # them directly.
+    sodola-config = pkgs.callPackage ../lib/platform/sodola/render { };
+    swos-config = pkgs.callPackage ../lib/platform/swos/render { };
+    routeros-config = pkgs.callPackage ../lib/platform/routeros/render { };
+    ilo-config = pkgs.callPackage ../lib/platform/ilo/render { };
     ilo = pkgs.callPackage ./ilo.nix {
       inherit (packages) ilo4-console;
     };

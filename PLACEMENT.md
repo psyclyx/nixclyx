@@ -10,9 +10,9 @@ nixclyx.
 | layer | dir | owns | depends on |
 |---|---|---|---|
 | **egregore core** | `egregore/` | the graph: entities, refs, relations, attrs, assertions, queries | `lib` |
-| **egregore stdlib** | `egregore/stdlib/` | the minimal vocabulary of fleet concepts | core |
+| **egregore modules** | `lib/egregore/modules/` | the minimal vocabulary of fleet concepts (the egregore module library, à la `nixos/modules`) | core |
 | **platform library** | `lib/platform/<p>/` | a config module system for a platform we *implement* (routeros, swos, sodola, ilo) + render + build/actions | nothing egregore |
-| **fleet egregore schema** | `modules/egregore/` | this fleet's nouns and extensions — the concepts psyclyx actually uses | stdlib |
+| **fleet egregore schema** | `modules/egregore/` | this fleet's nouns and extensions — the concepts psyclyx actually uses | egregore modules |
 | **fleet platform config** | `modules/<p>/` | this fleet's egregore→platform mappings and platform opinions | platform, fleet schema |
 | **host config** | `hosts/`, `modules/nixos/` | genuinely local config (storage layout, TPM, services a host runs) | platform, fleet config |
 | **data** | `configs/egregore/`, host instances | values only | schema |
@@ -23,7 +23,8 @@ zero knowledge of psyclyx.
 
 ## The rule
 
-A field belongs in the stdlib only if it is **intrinsic** (removing it
+A field belongs in the generic egregore module library only if it is
+**intrinsic** (removing it
 would stop the noun describing the thing) **and uncontested** (no
 reasonable fleet would define it differently). Choices, conventions, and
 vendor/technology names are out.
@@ -71,7 +72,7 @@ FQDN, no ingress) instead of a vendor noun.
 
 ## The noun mapping
 
-### → egregore stdlib (shippable, ~6 nouns)
+### → egregore modules (`lib/egregore/modules/`, shippable, ~6 nouns)
 
 `site`, `network`, `host` (a.k.a. node), `service`, `route`.
 Plus the extension mechanism and `audiences` (direct/ingressed).
@@ -96,9 +97,9 @@ and iLO (Redfish). No egregore in any of them.
 
 ### Splits (files that fuse several of the above)
 
-- `types/{routeros,swos,sodola,ilo}.nix` — node facts → stdlib; menu
-  schema + render → `lib/platform/<p>`; projection/mappings →
-  `modules/<p>`.
+- `types/{routeros,swos,sodola,ilo}.nix` — node noun → `modules/egregore/`
+  (an egregore module about a platform); menu schema + render →
+  `lib/platform/<p>`; projection/mappings → `modules/<p>`.
 - `types/service.nix` — already split in intent (offering/presentation);
   a shape move (grouping the presentation fields) is a later step.
 - `types/host.nix` — the noun is stdlib; the psyclyx blocks
@@ -109,11 +110,13 @@ and iLO (Redfish). No egregore in any of them.
 
 1. ✅ resolved inverse index (`refsIn`), drop hand-rolled gateway scans.
 2. ✅ generalized `service` + `audience` (offering/presentation, direct).
-3. Direct-reach projection; migrate `tang-server` → `service`.
+3. ✅ direct reach via `service.reach`; tang is a `service` of kind
+   `tang` (host config owns the mechanism).
 4. Extract `lib/platform/<p>` from the platform node types (three-way
    split).
 5. Demote `zfs-*`, `tpm-key` to host config; move the rest of the vendor
    nouns to `modules/egregore/`.
-6. Physical moves: `egregore/` + `stdlib/` + `lib/platform/` out of the
-   fleet path; `modules/egregore/` becomes the fleet schema home.
+6. Physical moves: `egregore/` (core) + `egregore/modules/` +
+   `lib/platform/` out of the fleet path; `modules/egregore/` becomes the
+   fleet schema home.
 7. CLI → manifest interpreter; `verbs` retired.
