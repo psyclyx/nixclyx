@@ -13,22 +13,24 @@ let
     commit-confirm = ./commit-confirm;
     pi = ./pi-agent;
   };
-in
-  packages // {
-    # Platform renderers live with their platform library (`lib/platform`).
-    # Exposed through the package set only because the (transitional)
-    # egregore CLI reaches them this way; the platform consumers import
-    # them directly.
+
+  # Platform renderers live with their platform library (`lib/platform`).
+  platform = {
     sodola-config = pkgs.callPackage ../lib/platform/sodola/render { };
     swos-config = pkgs.callPackage ../lib/platform/swos/render { };
     routeros-config = pkgs.callPackage ../lib/platform/routeros/render { };
     ilo-config = pkgs.callPackage ../lib/platform/ilo/render { };
+  };
+in
+  packages
+  // platform
+  // {
     janet-lsp = pkgs.callPackage ./janet-lsp.nix {
       inherit (packages) spork;
     };
     # base24-gen comes from its producer overlay (in pkgs), resolved by callPackage.
     regenerate-palettes = pkgs.callPackage ./regenerate-palettes.nix { };
     egregore = pkgs.callPackage ./egregore.nix {
-      inherit (packages) sodola-config swos-config routeros-config ilo-config;
+      inherit (platform) sodola-config swos-config routeros-config ilo-config;
     };
   }

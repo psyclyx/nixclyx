@@ -5,8 +5,6 @@
 #   egregore show <entity>
 #   egregore inspect
 #   egregore attrs <entity> [attr]
-#   egregore verbs <entity>
-#   egregore verb <verb> <entity> [args]
 #   egregore graph
 #
 { writeShellApplication, symlinkJoin, installShellFiles, runCommand,
@@ -167,13 +165,13 @@ let
           "run ''${DIM}egregore list''${RESET} to see available entities."
         local name="$1"
         local json
-        json=$(nix_eval_json "let e = fleet.entities.\"$name\"; in { inherit (e) type tags refs; attrs = lib.mapAttrs (_: v: if builtins.isList v then v else if builtins.isAttrs v then v else builtins.toString v) e.attrs; verbs = lib.mapAttrs (_: v: { inherit (v) pure description; }) e.verbs; }")
+        json=$(nix_eval_json "let e = fleet.entities.\"$name\"; in { inherit (e) type tags refs; attrs = lib.mapAttrs (_: v: if builtins.isList v then v else if builtins.isAttrs v then v else builtins.toString v) e.attrs; }")
 
         [[ -n "$json" ]] || die "entity ''${BOLD}$name''${RESET} not found" \
           "run ''${DIM}egregore list''${RESET} to see available entities."
 
         echo "$json" | jq -r --arg B "$BOLD" --arg R "$RESET" --arg C "$CYAN" --arg G "$GREEN" --arg Y "$YELLOW" --arg M "$MAGENTA" --arg BL "$BLUE" --arg D "$DIM" '
-          .type as $type | .tags as $tags | .refs as $refs | .attrs as $attrs | .verbs as $verbs |
+          .type as $type | .tags as $tags | .refs as $refs | .attrs as $attrs |
 
           "\($B)'"$name"'\($R)  \($C)\($type)\($R)\(if ($tags | length) > 0 then "  \($Y)\($tags | join(", "))\($R)" else "" end)",
           "",
@@ -183,13 +181,7 @@ let
             ""
           else empty end),
           "\($G)attrs\($R)",
-          ($attrs | to_entries | sort_by(.key)[] | "  \($G)\(.key)\($R) = \(.value)"),
-          (if ($verbs | length) > 0 then
-            "",
-            "\($M)verbs\($R)",
-            ($verbs | to_entries | sort_by(.key)[] |
-              "  \($M)\(.key)\($R) \($D)\(if .value.pure then "(pure)" else "" end) \(.value.description)\($R)")
-          else empty end)
+          ($attrs | to_entries | sort_by(.key)[] | "  \($G)\(.key)\($R) = \(.value)")
         '
       }
 
@@ -204,101 +196,6 @@ let
           nix_eval_json "fleet.entities.\"$name\".attrs.\"$attr\"" | jq -C .
         else
           nix_eval_json "fleet.entities.\"$name\".attrs" | jq -C .
-        fi
-      }
-
-      # Show all verbs across all entities, grouped by verb then by type.
-      show_all_verbs() {
-        local json
-        json=$(nix_eval_json "lib.mapAttrs (name: e: { inherit (e) type; verbs = lib.mapAttrs (_: v: { inherit (v) description; }) e.verbs; }) fleet.entities")
-
-        [[ -n "$json" ]] || return
-
-        echo "$json" | jq -r '
-          [ to_entries[] | .key as $ent | .value.type as $type |
-            .value.verbs | to_entries[] |
-            {verb: .key, desc: .value.description, entity: $ent, type: $type} ]
-          | group_by(.verb) | sort_by(.[0].verb)[]
-          | .[0].verb as $v | .[0].desc as $d |
-            group_by(.type) | sort_by(.[0].type)[] |
-            .[0].type as $t | [.[].entity] | sort as $ents |
-            "\($v)\t\($d)\t\($t)\t\($ents | join(", "))"
-        ' | {
-          local last_verb=""
-          while IFS=$'\t' read -r verb desc typ ents; do
-            if [[ "$verb" != "$last_verb" ]]; then
-              [[ -n "$last_verb" ]] && echo ""
-              printf "  ''${MAGENTA}%s''${RESET}  ''${DIM}%s''${RESET}\n" "$verb" "$desc"
-              last_verb="$verb"
-            fi
-            printf "    ''${CYAN}%-12s''${RESET} %s\n" "$typ" "$ents"
-          done
-        }
-      }
-
-      cmd_verbs() {
-        if [[ $# -eq 0 ]]; then
-          show_all_verbs
-          return
-        fi
-        local name="$1"
-        local json
-        json=$(nix_eval_json "lib.mapAttrs (_: v: { inherit (v) pure description defaults; }) fleet.entities.\"$name\".verbs")
-
-        [[ -n "$json" ]] || die "entity ''${BOLD}$name''${RESET} not found" \
-          "run ''${DIM}egregore list''${RESET} to see available entities."
-
-        echo "$json" | jq -r 'to_entries | sort_by(.key)[] | "\(.key)\t\(if .value.pure then "pure" else "impure" end)\t\(.value.description)\t\(.value.defaults | join(" "))"' | while IFS=$'\t' read -r verb kind desc defs; do
-          local def_str=""
-          if [[ -n "$defs" ]]; then
-            def_str=" ''${DIM}[''${defs}]''${RESET}"
-          fi
-          printf "  ''${MAGENTA}%-16s''${RESET} ''${DIM}%-8s''${RESET} %s%s\n" "$verb" "$kind" "$desc" "$def_str"
-        done
-      }
-
-      cmd_verb() {
-        if [[ $# -eq 0 ]]; then
-          echo "''${RED}error:''${RESET} missing verb name" >&2
-          echo "usage: egregore verb ''${MAGENTA}<verb>''${RESET} <entity> [args...]" >&2
-          echo "" >&2
-          show_all_verbs >&2
-          exit 1
-        fi
-        local verb="$1"
-
-        [[ $# -ge 2 ]] || die "missing entity name for verb ''${MAGENTA}$verb''${RESET}" \
-          "usage: egregore verb $verb ''${BOLD}<entity>''${RESET} [args...]" \
-          "run ''${DIM}egregore list''${RESET} to see available entities."
-        local name="$2"
-        shift 2
-
-        local meta
-        meta=$(nix_eval_json "let v = fleet.entities.\"$name\".verbs.\"$verb\"; in { inherit (v) pure impl defaults; }") || true
-
-        if [[ -z "$meta" ]]; then
-          die "verb ''${MAGENTA}$verb''${RESET} not found on entity ''${BOLD}$name''${RESET}" \
-            "run ''${DIM}egregore verbs $name''${RESET} to see available verbs."
-        fi
-
-        local is_pure impl
-        is_pure=$(echo "$meta" | jq -r '.pure')
-        impl=$(echo "$meta" | jq -r '.impl')
-
-        # Use verb defaults when no CLI args given.
-        if [[ $# -eq 0 ]]; then
-          local -a defs
-          readarray -t defs < <(echo "$meta" | jq -r '.defaults[]')
-          if [[ ''${#defs[@]} -gt 0 ]]; then
-            set -- "''${defs[@]}"
-          fi
-        fi
-
-        if [[ "$is_pure" == "true" ]]; then
-          echo "$impl"
-        else
-          echo "''${BOLD}=== $verb → $name ===''${RESET}" >&2
-          eval "$impl"
         fi
       }
 
@@ -362,8 +259,6 @@ let
         show)     cmd_show "$@" ;;
         inspect)  cmd_inspect "$@" ;;
         attrs)    cmd_attrs "$@" ;;
-        verbs)    cmd_verbs "$@" ;;
-        verb|run) cmd_verb "$@" ;;
         graph)    cmd_graph "$@" ;;
         "")
           echo "''${BOLD}egregore''${RESET} — entity registry CLI"
@@ -373,8 +268,6 @@ let
           echo "  egregore ''${CYAN}show''${RESET}    <entity>              Entity overview"
           echo "  egregore ''${CYAN}inspect''${RESET}                       Full fleet overview"
           echo "  egregore ''${CYAN}attrs''${RESET}   <entity> [attr]       Query attributes"
-          echo "  egregore ''${CYAN}verbs''${RESET}   [entity]              List verbs"
-          echo "  egregore ''${CYAN}verb''${RESET}    <verb> <entity> [..]  Execute a verb"
           echo "  egregore ''${CYAN}graph''${RESET}                         Graphviz DOT"
           echo ""
           echo "''${BOLD}Flags:''${RESET}"
