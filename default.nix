@@ -127,6 +127,14 @@ let
       (name: _: mkSwitchSystem type platformDir projection name)
       (hostPkgs.lib.filterAttrs (_: e: e.type == type) fleet.entities);
 
+  # Device CLIs (generic, connection-agnostic). Home modules put these on
+  # PATH; the deploy scripts compose them. Egregore-unaware on purpose.
+  platformTools = {
+    swos = (import ./lib/platform/swos { lib = hostPkgs.lib; pkgs = hostPkgs; }).cli;
+    sodola = (import ./lib/platform/sodola { lib = hostPkgs.lib; pkgs = hostPkgs; }).cli;
+    ilo = (import ./lib/platform/ilo { lib = hostPkgs.lib; pkgs = hostPkgs; }).cli;
+  };
+
   # The full nixclyx attrset. Modules see this via _module.args (lazy).
   # hive/configurations/darwinConfigurations are top-level consumers only —
   # no module spec should reference them.
@@ -134,7 +142,7 @@ let
     core
     // {
       inherit nixpkgs hostPkgs nodes deployments modules hive configurations darwinConfigurations nixOnDroidConfigurations;
-      inherit fleet;
+      inherit fleet platformTools;
       routerosSystems = systemsOfType "routeros" ./lib/platform/routeros ./modules/routeros/projection.nix;
       swosSystems = systemsOfType "swos" ./lib/platform/swos ./modules/swos/projection.nix;
       sodolaSystems = systemsOfType "sodola" ./lib/platform/sodola ./modules/sodola/projection.nix;
