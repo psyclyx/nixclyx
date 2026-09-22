@@ -103,6 +103,30 @@ let
 
   hive = import ./hive.nix {inherit nodes deployments hostPkgs;};
 
+  # The fleet graph, evaluated once, and the platform systems derived from
+  # it. Each switch gets a `lib/platform/<p>` eval whose projection module
+  # reads this graph; the result exposes `config.system.build.{json,script}`
+  # the way a NixOS system exposes `toplevel`. Build/deploy tooling reads
+  # these; nothing here knows about deployment targets.
+  egregoreSpec = import ./egregore.nix;
+  egregorePkg = import egregoreSpec.lib { inherit (hostPkgs) lib; };
+  fleet = egregorePkg.eval { modules = [ egregoreSpec.root ]; };
+
+  mkSwitchSystem = platform: platformDir: projection: name:
+    (import platformDir { lib = hostPkgs.lib; pkgs = hostPkgs; }).eval {
+      modules = [ projection ];
+      specialArgs = {
+        egregore = fleet;
+        egregorLib = egregorePkg.lib;
+        deviceName = name;
+      };
+    };
+
+  systemsOfType = type: platformDir: projection:
+    hostPkgs.lib.mapAttrs
+      (name: _: mkSwitchSystem type platformDir projection name)
+      (hostPkgs.lib.filterAttrs (_: e: e.type == type) fleet.entities);
+
   # The full nixclyx attrset. Modules see this via _module.args (lazy).
   # hive/configurations/darwinConfigurations are top-level consumers only —
   # no module spec should reference them.
@@ -110,6 +134,8 @@ let
     core
     // {
       inherit nixpkgs hostPkgs nodes deployments modules hive configurations darwinConfigurations nixOnDroidConfigurations;
+      inherit fleet;
+      routerosSystems = systemsOfType "routeros" ./lib/platform/routeros ./modules/routeros/projection.nix;
       hosts.nixos = builtins.listToAttrs (map (name: {
         inherit name;
         value = ./hosts/nixos + "/${name}";
