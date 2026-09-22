@@ -13,6 +13,12 @@ in {
     default = { };
     description = "Build targets (the `.rsc`, the JSON view) — the analogue of a NixOS `system.build`.";
   };
+  options.routerosJson = mkOption {
+    type = types.anything;
+    default = { };
+    internal = true;
+    description = "The assembled desired-state document, as a value (the render input).";
+  };
   options.routeros = mkOption {
     default = { };
     type = types.submodule ({ ... }: {

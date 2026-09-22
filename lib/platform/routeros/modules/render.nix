@@ -77,9 +77,9 @@ let
 
   jsonFile = pkgs.writeText "routeros-${r.identity}.json" (builtins.toJSON json);
 in {
+  routerosJson = json;
   system.build = {
-    inherit jsonFile;
-    inherit json;
+    json = jsonFile;
     script = pkgs.runCommand "routeros-${r.identity}.rsc" { } ''
       ${routerosLib.render}/bin/routeros-config generate < ${jsonFile} > $out
     '';
