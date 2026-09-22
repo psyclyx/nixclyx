@@ -1,43 +1,41 @@
-# iLO platform — desired state → spec JSON and BMC action scripts.
+# iLO platform — desired state + actions as compositions of the `ilo` tool.
 #
-# Credentials come from the environment (ILO_USER / ILO_PASSWORD), never
-# baked into an artifact: the caller decides where secrets live.
-{ config, lib, pkgs, iloLib, ... }:
+# The tool owns Redfish and credentials; these hand it the target (the
+# device's BMC address by default, overridable) and the desired state.
+{ config, lib, pkgs, platformTool, ... }:
 let
   i = config.ilo;
   specFile = pkgs.writeText "ilo-${i.address}.json" (builtins.toJSON i.spec);
-  rf = sub: ''redfishtool -r "${i.address}" -u "$ILO_USER" -p "$ILO_PASSWORD" -S Always ${sub}'';
 in {
   system.build = {
     json = specFile;
     plan = pkgs.writeShellApplication {
       name = "ilo-plan";
-      runtimeInputs = [ iloLib.render ];
-      text = ''ilo-config apply --dry-run "${i.address}" < ${specFile}'';
+      runtimeInputs = [ platformTool ];
+      text = ''
+        exec ilo "''${1:-${i.address}}" plan < ${specFile}
+      '';
     };
     apply = pkgs.writeShellApplication {
       name = "ilo-apply";
-      runtimeInputs = [ iloLib.render ];
-      text = ''ilo-config apply "${i.address}" < ${specFile}'';
+      runtimeInputs = [ platformTool ];
+      text = ''
+        exec ilo "''${1:-${i.address}}" apply < ${specFile}
+      '';
     };
     power = pkgs.writeShellApplication {
       name = "ilo-power";
-      runtimeInputs = [ pkgs.redfishtool ];
+      runtimeInputs = [ platformTool ];
       text = ''
-        action="''${1:-}"
-        case "$action" in
-          on)    ${rf "Systems -F reset On"} ;;
-          off)   ${rf "Systems -F reset ForceOff"} ;;
-          reset) ${rf "Systems -F reset ForceRestart"} ;;
-          "")    ${rf "Systems -F get"} ;;
-          *)     echo "Unknown power action: $action" >&2; exit 1 ;;
-        esac
+        exec ilo "''${1:-${i.address}}" power "''${2:-status}"
       '';
     };
     info = pkgs.writeShellApplication {
       name = "ilo-info";
-      runtimeInputs = [ pkgs.redfishtool ];
-      text = rf "Systems -F get";
+      runtimeInputs = [ platformTool ];
+      text = ''
+        exec ilo "''${1:-${i.address}}" info
+      '';
     };
   };
 }
