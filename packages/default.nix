@@ -23,9 +23,6 @@ in
     swos-config = pkgs.callPackage ../lib/platform/swos/render { };
     routeros-config = pkgs.callPackage ../lib/platform/routeros/render { };
     ilo-config = pkgs.callPackage ../lib/platform/ilo/render { };
-    ilo = pkgs.callPackage ./ilo.nix {
-      inherit (packages) ilo4-console;
-    };
     janet-lsp = pkgs.callPackage ./janet-lsp.nix {
       inherit (packages) spork;
     };
