@@ -138,6 +138,7 @@ let
       routerosSystems = systemsOfType "routeros" ./lib/platform/routeros ./modules/routeros/projection.nix;
       swosSystems = systemsOfType "swos" ./lib/platform/swos ./modules/swos/projection.nix;
       sodolaSystems = systemsOfType "sodola" ./lib/platform/sodola ./modules/sodola/projection.nix;
+      iloSystems = systemsOfType "ilo" ./lib/platform/ilo ./modules/ilo/projection.nix;
       hosts.nixos = builtins.listToAttrs (map (name: {
         inherit name;
         value = ./hosts/nixos + "/${name}";
