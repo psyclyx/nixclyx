@@ -9,7 +9,11 @@
 # specs and feed the lot to egregore.eval.
 let
   fs = import ../../lib/fs.nix;
+  # The generic vocabulary (site, network, host, service, route) lives with
+  # the egregore library; the fleet's own and vendor nouns stay here.
+  genericTypeSpecs = map builtins.import (fs.collectModules ../../lib/egregore/modules/types);
+  fleetTypeSpecs = map builtins.import (fs.collectModules ./types);
 in {
-  typeSpecs = map builtins.import (fs.collectModules ./types);
+  typeSpecs = genericTypeSpecs ++ fleetTypeSpecs;
   extensionSpecs = map builtins.import (fs.collectModules ./extensions);
 }
