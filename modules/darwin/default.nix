@@ -8,7 +8,7 @@ in {
       (loadFlake sources.nix-homebrew).darwinModules.nix-homebrew
       modules.common
     ]
-    ++ nixclyx.lib.fs.collectSpecs nixclyx.lib.modules.mkModule ./.;
+    ++ nixclyx.lib.fs.collectSpecs nixclyx.lib.spec.mkModule ./.;
 
   config = {
     _module.args.nixclyx = nixclyx;

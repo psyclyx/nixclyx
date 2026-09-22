@@ -4,7 +4,7 @@
 # Extensions add cross-cutting options (globals, audiences, etc.).
 #
 # These are egregore module specs — they go through the shared
-# spec compiler (`nixclyx/lib/modules.nix`) with the egregore-type
+# spec compiler (`nixclyx/lib/spec`) with the egregore-type
 # interceptor in the chain. Consumers compose with their own data
 # specs and feed the lot to egregore.eval.
 let

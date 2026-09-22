@@ -7,7 +7,7 @@
 # compose by writing their own root with
 # `imports = [nixclyx.root ...local specs...]`.
 #
-# `mkModule` is the shared spec compiler from `nixclyx/lib/modules.nix`,
+# `mkModule` is the shared spec compiler from `nixclyx/lib/spec`,
 # re-exported here so consumers can compile their own config specs the
 # same way nixclyx does.
 let

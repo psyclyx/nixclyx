@@ -7,8 +7,8 @@ let
   mods = import ../../modules/egregore;
   lib = import <nixpkgs/lib>;
   fs = import ../../lib/fs.nix;
-  libModules = import ../../lib/modules.nix;
-  egregoreLib = import ../../egregore/lib.nix { inherit lib; };
+  libModules = import ../../lib/spec/default.nix;
+  egregoreLib = import ../../lib/egregore/lib.nix { inherit lib; };
 
   dataSpecs = map builtins.import (fs.collectModules ./.);
 
@@ -32,5 +32,5 @@ let
 in {
   inherit lib root;
   inherit (libModules) mkModule;
-  egregoreLib = ../../egregore;
+  egregoreLib = ../../lib/egregore;
 }

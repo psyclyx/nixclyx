@@ -154,7 +154,7 @@ in rec {
   # ── Spec interceptor ────────────────────────────────────────────────
   #
   # An interceptor (for the pedestal-style spec system in
-  # `nixclyx/lib/modules.nix`) that turns an `egregoreType` spec field
+  # `nixclyx/lib/spec`) that turns an `egregoreType` spec field
   # into an `imports` entry calling `mkType` at module-eval time.
   #
   # `egregoreType` is a function of moduleArgs (giving the type body

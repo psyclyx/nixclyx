@@ -5,7 +5,7 @@ in {
     [
       (loadFlake sources.stylix).nixOnDroidModules.stylix
     ]
-    ++ nixclyx.lib.fs.collectSpecs nixclyx.lib.modules.mkModule ./.;
+    ++ nixclyx.lib.fs.collectSpecs nixclyx.lib.spec.mkModule ./.;
 
   config = {
     _module.args.nixclyx = nixclyx;

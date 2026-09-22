@@ -10,7 +10,7 @@ in
         (sources.tidepool + "/nix/hm-module.nix")
         (import (sources.emacs + "/hm-module.nix"))
       ]
-      ++ nixclyx.lib.fs.collectSpecs nixclyx.lib.modules.mkModule ./.;
+      ++ nixclyx.lib.fs.collectSpecs nixclyx.lib.spec.mkModule ./.;
 
     config = {
       _module.args.nixclyx = nixclyx;

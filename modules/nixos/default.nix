@@ -11,7 +11,7 @@ in {
       modules.common
       "${sources.nixos-apple-silicon}/apple-silicon-support"
     ]
-    ++ nixclyx.lib.fs.collectSpecs nixclyx.lib.modules.mkModule ./.;
+    ++ nixclyx.lib.fs.collectSpecs nixclyx.lib.spec.mkModule ./.;
 
   config = {
     _module.args.nixclyx = nixclyx;
