@@ -76,6 +76,41 @@ in rec {
       };
     };
 
+  # Extend an existing type with more options/attrs/assertions.
+  #
+  # The module system merges a nested option declaration into an existing
+  # submodule option, so an extension contributes `options.<type>.<field>`
+  # alongside the base type's `options.<type> = mkOption { … }`. The base
+  # type's module and this one must have the same submodule shape (same
+  # `functionArgs`) for the merge to take; both use `{ config, name, … }`.
+  # The type itself is registered by the base, so this does not touch
+  # `config.types`.
+  mkTypeExtend = {
+    name,
+    topConfig ? {},
+    options ? {},
+    attrs ? _name: _config: _topConfig: {},
+    relations ? _name: _config: _topConfig: {},
+    verbs ? _name: _config: _topConfig: {},
+    assertions ? _name: _config: _topConfig: [],
+  }:
+    let
+      typeName = name;
+    in {
+      options.entities = mkOption {
+        type = types.attrsOf (types.submodule ({ config, name, ... }: {
+          options.${typeName} = options;
+
+          config = mkIf (config.type == typeName) {
+            attrs = attrs name config topConfig;
+            relations = relations name config topConfig;
+            verbs = verbs name config topConfig;
+            assertions = assertions name config topConfig;
+          };
+        }));
+      };
+    };
+
   # ── Refs ────────────────────────────────────────────────────────────
   #
   # A ref is an edge to another entity. Two spellings, one meaning:
@@ -157,6 +192,9 @@ in rec {
   # `nixclyx/lib/spec`) that turns an `egregoreType` spec field
   # into an `imports` entry calling `mkType` at module-eval time.
   #
+  # A spec may instead declare `extends = "<type>"` to contribute to an
+  # existing type; that routes to `mkTypeExtend`.
+  #
   # `egregoreType` is a function of moduleArgs (giving the type body
   # access to lib, egregorLib, config) returning the mkType-config
   # attrset minus `topConfig` (which the interceptor injects):
@@ -182,7 +220,14 @@ in rec {
             let
               inherit (moduleArgs) egregorLib config;
               resolved = if builtins.isFunction etype then etype moduleArgs else etype;
-            in egregorLib.mkType (resolved // { topConfig = config; });
+            in
+              if resolved ? extends
+              then egregorLib.mkTypeExtend
+                ((builtins.removeAttrs resolved [ "extends" ]) // {
+                  name = resolved.extends;
+                  topConfig = config;
+                })
+              else egregorLib.mkType (resolved // { topConfig = config; });
         in bundle // {
           value = (builtins.removeAttrs bundle.value ["egregoreType"]) // {
             imports = (bundle.value.imports or []) ++ [ typeModule ];
