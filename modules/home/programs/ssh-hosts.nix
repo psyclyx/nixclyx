@@ -14,6 +14,12 @@
       type = lib.types.bool;
       default = false;
     };
+
+    initrdPort = lib.mkOption {
+      type = lib.types.port;
+      default = 8022;
+      description = "SSH port the initrd unlock service listens on, for `<host>-unlock` entries.";
+    };
   };
   config = {
     config,
@@ -80,11 +86,26 @@
         HostName = e.attrs.address;
         User = e.routeros.sshUser;
       };
+
+      # Initrd unlock: a host whose BMC ref lets it netboot exposes its
+      # initrd ssh on a fixed port, reachable at the deploy address.
+      unlockHosts = lib.filterAttrs (_: e:
+        e.type == "host" && e.refs ? bmc && e.host.deployAddress != null
+      ) eg.entities;
+
+      mkUnlock = name: e: lib.nameValuePair "${name}-unlock" {
+        HostName = e.host.deployAddress;
+        Port = cfg.initrdPort;
+        User = "root";
+        ForwardAgent = false;
+        HostKeyAlias = "${name}-initrd";
+      };
     in
       lib.mkIf cfg.enable {
         programs.ssh.settings =
           lib.mapAttrs' mkHost reachable
           // lib.mapAttrs' mkSwitch switches
+          // lib.mapAttrs' mkUnlock unlockHosts
           // lib.optionalAttrs (cfg.identityFile != null) {
             "*".IdentityFile = cfg.identityFile;
           };
