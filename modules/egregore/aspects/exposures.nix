@@ -6,11 +6,11 @@
 # its identity (an offering refs an exposure by name) and the role says
 # which projection reads it (§8.5) — the egregore core reads neither.
 #
-# This aspect is the declared home; ssh and initrd-ssh are declared
-# here as of Phase 2 (EGREGORE-PLAN §3). Phase 1 derived them in
-# `attrs.exposures`; the exporter exposures still derive there from
-# `exporters.<name>` until Phase 3. Both forms have the same structure
-# and are read the same way (`egregorLib.exposuresOf`).
+# This aspect is the declared home; ssh, initrd-ssh and (Phase 3) the
+# exporter exposures are declared here. Computed exporter exposures
+# still derive in `attrs.exposures` from tags and ha-group membership —
+# written as data or computed, same structure, read the same way
+# (`egregorLib.exposuresOf`).
 {
   egregoreAspect = { lib, egregorLib, ... }: {
     options = {

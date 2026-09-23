@@ -324,23 +324,6 @@
         '';
       };
 
-      exporters = lib.mkOption {
-        type = lib.types.attrsOf (
-          lib.types.submodule {
-            options = {
-              port = lib.mkOption {
-                type = lib.types.int;
-                default = 0;
-              };
-              networks = lib.mkOption {
-                type = lib.types.listOf lib.types.str;
-                default = [ ];
-              };
-            };
-          }
-        );
-        default = { };
-      };
     };
 
     attrs =
@@ -397,22 +380,20 @@
               networks = [ "infra" ];
             };
           });
-
-        resolvedExporters = lib.recursiveUpdate computedExporters entity.exporters;
       in
       lib.mkIf (h != null) {
-        inherit resolvedExporters;
         hasTpm = entity.hardware.tpm;
-        # Exposures (derived form, model §6): one per exporter, named
-        # for the exporter — the networks it is scraped from become its
-        # scopes (§8.2 makes them a declared choice when they move).
+        # Exposures (derived form, model §6): one computed exporter
+        # exposure per service/tag — named for the exporter, its scopes
+        # the networks it is scraped from. Data declares (or overrides)
+        # exporter exposures in `exposures`; the declared form wins.
         exposures =
           lib.mapAttrs (_: x: {
             role = "exporter";
             port = x.port;
             scopes = x.networks;
             identity = null;
-          }) resolvedExporters;
+          }) computedExporters;
       };
 
     assertions =

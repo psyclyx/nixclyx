@@ -2,16 +2,22 @@
 let
   eg = config.psyclyx.egregore;
 
+  # Exporter exposures (model §6) in their two homes — the derived
+  # attrs.exposures and the declared `exposures` aspect — merged,
+  # declared winning. Kept local until Phase 6 collapses the homes.
+  exposuresOf = e: (e.attrs.exposures or { }) // (e.exposures or { });
+  exportersOf = e: lib.filterAttrs (_: x: (x.role or null) == "exporter") (exposuresOf e);
+
   mkTarget =
     hostName: svc:
     let
-      net = builtins.head svc.networks;
+      net = builtins.head svc.scopes;
       fqdn = eg.entities.${hostName}.attrs.fqdns.${net} or null;
     in
     if fqdn != null then "${fqdn}:${toString svc.port}" else null;
 
   monitoredHosts = lib.filterAttrs (
-    _: e: e.type == "host" && e.attrs.resolvedExporters != { }
+    _: e: e.type == "host" && exportersOf e != { }
   ) eg.entities;
 
   hubName = eg.entities.vpn.attrs.gatewayRef;
@@ -25,7 +31,7 @@ let
         lib.mapAttrsToList (svcName: svc: {
           inherit svcName;
           target = mkTarget hostName svc;
-        }) e.attrs.resolvedExporters
+        }) (exportersOf e)
       ) hosts
     );
 
@@ -43,7 +49,7 @@ let
   hubVpnAddress = monitoredHosts.${hubName}.host.addresses.vpn.ipv4;
 
   hubExporters = lib.filterAttrs (name: _: name != "node") (
-    monitoredHosts.${hubName}.attrs.resolvedExporters or { }
+    exportersOf monitoredHosts.${hubName}
   );
 
   hubExtraScrapeConfigs = lib.mapAttrsToList (svcName: svc: {
@@ -51,16 +57,16 @@ let
     static_configs = [ { targets = [ "localhost:${toString svc.port}" ]; } ];
   }) hubExporters;
 
-  # For each exporter declared on THIS host, set its listenAddress to
-  # the host's IPv4 on the exporter's first network (typically the
+  # For each exporter exposure on THIS host, set its listenAddress to
+  # the host's IPv4 on the exposure's first scope (typically the
   # vpn overlay, so prom only scrapes over WG). Skips exporters whose
-  # network isn't in the host's addresses map (e.g. exporters with
-  # networks=["infra"] on a host without infra).
+  # scope isn't in the host's addresses map (e.g. exporters with
+  # scopes = ["infra"] on a host without infra).
   myName = config.psyclyx.nixos.host;
   meEntity = eg.entities.${myName} or null;
-  myExporters = if meEntity == null then {} else meEntity.attrs.resolvedExporters or {};
+  myExporters = if meEntity == null then { } else exportersOf meEntity;
   exporterListenAddrs = lib.mapAttrs (_: svc:
-    let net = builtins.head svc.networks;
+    let net = builtins.head svc.scopes;
         addr = (meEntity.attrs.addresses.${net} or {}).ipv4 or null;
     in addr
   ) myExporters;

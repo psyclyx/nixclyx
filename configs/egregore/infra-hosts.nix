@@ -39,9 +39,17 @@
         # the public IP. vpn is the WG-hub endpoint; tleilax is the
         # host's own public name.
         publicNames = [ "tleilax" "vpn" ];
-        exporters = {
-          node     = { port = 9100; networks = ["vpn"]; };
-          smartctl = { port = 9633; networks = ["vpn"]; };
+        # Exporter exposures (model §6): one listener per exporter,
+        # scraped from the vpn scope.
+        exposures.node = {
+          role = "exporter";
+          port = 9100;
+          scopes = [ "vpn" ];
+        };
+        exposures.smartctl = {
+          role = "exporter";
+          port = 9633;
+          scopes = [ "vpn" ];
         };
       };
 
@@ -118,9 +126,15 @@
           ];
         };
         hardware.tpm = true;
-        exporters = {
-          node     = { port = 9100; networks = ["vpn"]; };
-          smartctl = { port = 9633; networks = ["vpn"]; };
+        exposures.node = {
+          role = "exporter";
+          port = 9100;
+          scopes = [ "vpn" ];
+        };
+        exposures.smartctl = {
+          role = "exporter";
+          port = 9633;
+          scopes = [ "vpn" ];
         };
       };
 
@@ -162,9 +176,15 @@
         # FQDN sigil resolves lab-4 to (sigil.main.apt.psyclyx.net).
         kerberos.fqdnNetwork = "main";
         hardware.tpm = true;
-        exporters = {
-          node     = { port = 9100; networks = ["vpn"]; };
-          smartctl = { port = 9633; networks = ["vpn"]; };
+        exposures.node = {
+          role = "exporter";
+          port = 9100;
+          scopes = [ "vpn" ];
+        };
+        exposures.smartctl = {
+          role = "exporter";
+          port = 9633;
+          scopes = [ "vpn" ];
         };
       };
 
@@ -238,8 +258,10 @@
           allowedNetworks = ["main"];
         };
         publicAcme = true;
-        exporters = {
-          node = { port = 9100; networks = ["vpn"]; };
+        exposures.node = {
+          role = "exporter";
+          port = 9100;
+          scopes = [ "vpn" ];
         };
       };
     };
