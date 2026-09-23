@@ -77,13 +77,21 @@ FQDN, no ingress) instead of a vendor noun.
 `site`, `network`, `host` (a.k.a. node), `service`, `route`.
 Plus the extension mechanism and `audiences` (direct/ingressed).
 
+The `host` noun is intrinsic only: `site`, `addresses`, `interfaces`,
+`mac`, `roles`, `sshPort`, `deployAddress`, `deployUser`. Everything
+fleet-shaped a host can be — `gateway`, `firewall`, `bgp`, `kerberos`,
+`openbao`, `wireguard`, `hardware`, `boot`, `dnsAuthority`,
+`public{Names,Acme}`, `exporters` — is a fleet convention, added to
+the noun by name (`extends = "host"`).
+
 ### → fleet egregore schema (`modules/egregore/`) — the fleet must know it
 
 `environment`, `ha-group` (a service backend), `prefix-delegation`,
 `unmanaged`, `nfs-export`, `lun`, `clevis-binding`, the tang service (a
 `service` of kind `tang`), `openbao-{pki,ssh-cert,cert}-role`,
-`openbao-policy`, `openbao-seal-oracle`, `kv-secret`, and the platform
-node nouns `routeros` / `swos` / `sodola` / `ilo`.
+`openbao-policy`, `openbao-seal-oracle`, `kv-secret`, the platform
+node nouns `routeros` / `swos` / `sodola` / `ilo`, and the `host-fleet`
+extension (the host blocks above).
 
 ### → host config (`modules/nixos/`, `hosts/`) — implementation of one box
 
@@ -102,9 +110,12 @@ and iLO (Redfish). No egregore in any of them.
   `lib/platform/<p>`; projection/mappings → `modules/<p>`.
 - `types/service.nix` — already split in intent (offering/presentation);
   a shape move (grouping the presentation fields) is a later step.
-- `types/host.nix` — the noun is stdlib; the psyclyx blocks
-  (`gateway`, `firewall`, `kerberos`, `bgp`, `openbao`, `exporters`)
-  are fleet schema extensions.
+- `types/host.nix` — ✅ split: the intrinsic noun is
+  `lib/egregore/modules/types/host.nix`; the psyclyx blocks are the
+  `host-fleet` extension (`modules/egregore/types/host-fleet.nix`),
+  merged by `extends`. Follow-ups: collapse `roles` into `tags`, derive
+  `deployAddress`, and lift the pure mechanisms (gateway NICs/QoS,
+  firewall plumbing, boot recipe) into host config.
 
 ## Migration order
 
@@ -120,3 +131,6 @@ and iLO (Redfish). No egregore in any of them.
    `lib/platform/` out of the fleet path; `modules/egregore/` becomes the
    fleet schema home.
 7. CLI → manifest interpreter; `verbs` retired.
+8. ✅ split `host` into the intrinsic noun (`lib/egregore/modules/`)
+   and the fleet `host-fleet` extension (`modules/egregore/`), via
+   `extends`. Byte-identical.
