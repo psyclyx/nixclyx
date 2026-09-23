@@ -21,6 +21,7 @@ toward.
 | `2ce93ee3` | `exposures` aspect (the model's four fields) with the derived form in `attrs.exposures`; `exposuresOf`/`withRole`; `host.deployUser` and `attrs.ssh.user` removed — the account is client policy (`sshHosts.user`) |
 | `e5b3cffb` | `host.sshPort` → declared `ssh` exposures on every host and switch; `initrd-ssh` (8022, scopes) replaces `gateway.initrdVlans` and the `gateway` facet; ssh-hosts/deployments/openssh read the exposures (privclyx: `9cf4c4b`) |
 | `02a0593f` | `exporters.<name>` → exporter exposures (role `exporter`, port, scopes); computed exporters derive, data declares/overrides; monitoring reads the exposure scopes |
+| `8fea7c68` | scope/DNS-view split: `audiences` → `scopes` (reachability, address key only); `dnsViews.<n>.records` (authoritative vs localzone) with the `scopes.<n>.view` ref; ingress dispatches on the view, record values from the scope's address key (privclyx: `3b33ff5`) |
 | `2182e116` | earlier progress notes |
 
 ### Code shape
