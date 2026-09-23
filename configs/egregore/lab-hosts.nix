@@ -111,7 +111,6 @@ let
           publicKey = wgKey;
           allowedNetworks = [ ];
         };
-        deployAddress = "10.0.10.${toString (10 + n)}";
         # NFS principals (nfs/<fqdn>) use the lab host's lab-VLAN
         # FQDN so off-rack clients mount via lab (eno49np0, 10G), not
         # storage (eno50np1, 10G — reserved exclusively for iSCSI to

@@ -67,11 +67,6 @@
         type = lib.types.int;
         default = 22;
       };
-      deployAddress = lib.mkOption {
-        type = lib.types.nullOr lib.types.str;
-        default = null;
-        description = "SSH target for deployment. Null = not remotely deployable.";
-      };
       deployUser = lib.mkOption {
         type = lib.types.str;
         default = "root";
@@ -105,10 +100,6 @@
         # addresses provide the floor; declared addresses always win.
         resolvedAddresses = gatewayDerivedAddresses // h.addresses;
 
-      in
-      {
-        address = if vpn != null then vpn.ipv4 else null;
-        addresses = resolvedAddresses;
         fqdn = if siteDomain != null then "${name}.${siteDomain}" else null;
         fqdns = lib.mapAttrs (
           addrKey: _:
@@ -118,9 +109,27 @@
           in
           if zone != "" then "${name}.${zone}" else null
         ) resolvedAddresses;
+      in
+      {
+        address = if vpn != null then vpn.ipv4 else null;
+        addresses = resolvedAddresses;
+        inherit fqdn fqdns;
         site = h.site;
         sshPort = h.sshPort;
-        deployAddress = h.deployAddress;
+        # Where a deploy tool reaches this host. Derived, not declared:
+        # a directly routed public address first, else a stable name
+        # (the site FQDN, then the vpn FQDN). Null only if the host has
+        # neither an address nor a site name.
+        deployAddress =
+          let
+            publicV4 = (resolvedAddresses.public or { }).ipv4 or null;
+            vpnV4 = (resolvedAddresses.vpn or { }).ipv4 or null;
+            vpnFqdn = fqdns.vpn or null;
+          in
+            if publicV4 != null then publicV4
+            else if fqdn != null then fqdn
+            else if vpnFqdn != null then vpnFqdn
+            else vpnV4;
         hypervisor = entity.refs.hypervisor or null;
         isVm = (entity.refs.hypervisor or null) != null;
         # Logical interface names, so a switch port that says it's cabled

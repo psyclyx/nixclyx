@@ -1,7 +1,8 @@
 # Colmena deployment metadata per host: *where and how* each node is shipped
 # (targets + tags). Consumed only by `hive.nix`; `configurations` in
 # default.nix never see this. Targets are derived from each host's egregore
-# entity (deployAddress / deployUser / sshPort) where present; tags and the
+# entity (its computed deployAddress, plus deployUser / sshPort) where
+# present; tags and the
 # handful of hosts not yet in egregore stay declared here.
 {
   nixclyx,
@@ -12,10 +13,12 @@ let
   egregorePkg = import spec.lib {inherit lib;};
   eg = egregorePkg.eval {modules = [spec.root];};
 
-  # Derive deployment target from a host's egregore entity, if it declares one.
+  # Derive deployment target from a host's egregore entity (its computed
+  # deployAddress), if it has one.
   fromEgregore = name: let
-    h = (eg.entities.${name} or {host = {};}).host or {};
-    target = h.deployAddress or null;
+    e = eg.entities.${name} or { host = {}; attrs = {}; };
+    h = e.host or {};
+    target = e.attrs.deployAddress or null;
   in
     lib.optionalAttrs (target != null) {
       targetHost = target;
@@ -32,7 +35,6 @@ in {
       allowLocalDeployment = true;
     };
 
-  # Not in egregore yet — fromEgregore returns {}, target stays implicit.
   omen =
     fromEgregore "omen"
     // {
@@ -40,13 +42,12 @@ in {
       allowLocalDeployment = true;
     };
 
-  # Not in egregore yet — manual target.
-  glyph = {
-    tags = ["workstation" "laptop"];
-    allowLocalDeployment = true;
-    targetHost = "10.1.0.240";
-    targetUser = "root";
-  };
+  glyph =
+    fromEgregore "glyph"
+    // {
+      tags = ["workstation" "laptop"];
+      allowLocalDeployment = true;
+    };
 
   iyr =
     fromEgregore "iyr"

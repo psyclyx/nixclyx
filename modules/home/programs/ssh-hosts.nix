@@ -90,11 +90,11 @@
       # Initrd unlock: a host whose BMC ref lets it netboot exposes its
       # initrd ssh on a fixed port, reachable at the deploy address.
       unlockHosts = lib.filterAttrs (_: e:
-        e.type == "host" && e.refs ? bmc && e.host.deployAddress != null
+        e.type == "host" && e.refs ? bmc && (e.attrs.deployAddress or null) != null
       ) eg.entities;
 
       mkUnlock = name: e: lib.nameValuePair "${name}-unlock" {
-        HostName = e.host.deployAddress;
+        HostName = e.attrs.deployAddress;
         Port = cfg.initrdPort;
         User = "root";
         ForwardAgent = false;

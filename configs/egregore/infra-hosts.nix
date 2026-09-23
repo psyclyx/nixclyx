@@ -28,7 +28,6 @@
           # host's own public name.
           publicNames = [ "tleilax" "vpn" ];
           sshPort = 17891;
-          deployAddress = "199.255.18.171";
           exporters = {
             node     = { port = 9100; networks = ["vpn"]; };
             smartctl = { port = 9633; networks = ["vpn"]; };
@@ -190,7 +189,6 @@
             infra.ipv4   = "10.0.25.3";
           };
           sshPort = 17891;
-          deployAddress = "iyr.apt.psyclyx.net";
           hardware.tpm = true;
           exporters = {
             node     = { port = 9100; networks = ["vpn"]; };
@@ -231,7 +229,6 @@
           # NFS to lab-4 over main VLAN: principal must match the
           # FQDN sigil resolves lab-4 to (sigil.main.apt.psyclyx.net).
           kerberos.fqdnNetwork = "main";
-          deployAddress = "sigil.apt.psyclyx.net";
           hardware.tpm = true;
           exporters = {
             node     = { port = 9100; networks = ["vpn"]; };
@@ -293,7 +290,6 @@
             };
           };
           publicAcme = true;
-          deployAddress = "5.78.144.186";
           exporters = {
             node = { port = 9100; networks = ["vpn"]; };
           };
