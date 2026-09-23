@@ -528,7 +528,7 @@
       name: entity: top:
       let
         h = entity.host;
-        isServer = builtins.elem "server" (h.roles or [ ]);
+        isServer = builtins.elem "server" (entity.tags or [ ]);
 
         myGroups = lib.filterAttrs (
           _: g: g.type == "ha-group" && builtins.elem name g.ha-group.members

@@ -48,7 +48,8 @@ def generate_topology_dot(data):
     # Host nodes
     for host_name, host in hosts.items():
         hd = host.get('host', {})
-        roles = ', '.join(hd.get('roles', []))
+        tags = host.get('tags', [])
+        roles = ', '.join(tags)
         addrs = []
         for net_name, addr in hd.get('addresses', {}).items():
             ipv4 = addr.get('ipv4', '')
@@ -59,12 +60,12 @@ def generate_topology_dot(data):
         if addr_str:
             label += f"\\n{addr_str}"
 
-        color = '#d4edda' if 'server' in hd.get('roles', []) else '#fff3cd'
-        if 'router' in hd.get('roles', []):
+        color = '#d4edda' if 'server' in tags else '#fff3cd'
+        if 'router' in tags:
             color = '#f8d7da'
-        elif 'workstation' in hd.get('roles', []):
+        elif 'workstation' in tags:
             color = '#fff3cd'
-        elif 'mobile' in hd.get('roles', []):
+        elif 'mobile' in tags:
             color = '#e2e3e5'
 
         lines.append(f'  host_{host_name.replace("-", "_")} '

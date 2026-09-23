@@ -63,10 +63,6 @@
         default = null;
         description = "Site entity name where this host lives.";
       };
-      roles = lib.mkOption {
-        type = lib.types.listOf lib.types.str;
-        default = [ ];
-      };
       sshPort = lib.mkOption {
         type = lib.types.int;
         default = 22;
@@ -123,12 +119,10 @@
           if zone != "" then "${name}.${zone}" else null
         ) resolvedAddresses;
         site = h.site;
-        roles = h.roles;
         sshPort = h.sshPort;
         deployAddress = h.deployAddress;
         hypervisor = entity.refs.hypervisor or null;
         isVm = (entity.refs.hypervisor or null) != null;
-        label = builtins.concatStringsSep ", " h.roles;
         # Logical interface names, so a switch port that says it's cabled
         # to one of them can be checked against reality.
         interfaceNames = builtins.attrNames h.interfaces;

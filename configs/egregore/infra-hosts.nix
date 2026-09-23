@@ -5,7 +5,7 @@
     entities = {
       tleilax = {
         type = "host";
-        tags = ["server" "colo" "fixed"];
+        tags = ["server" "colo" "fixed" "vpn-hub"];
         host = {
           site = "cofractal-sea";
           wireguard = {
@@ -29,7 +29,6 @@
           publicNames = [ "tleilax" "vpn" ];
           sshPort = 17891;
           deployAddress = "199.255.18.171";
-          roles = ["server" "vpn-hub"];
           exporters = {
             node     = { port = 9100; networks = ["vpn"]; };
             smartctl = { port = 9633; networks = ["vpn"]; };
@@ -192,7 +191,6 @@
           };
           sshPort = 17891;
           deployAddress = "iyr.apt.psyclyx.net";
-          roles = ["server" "router"];
           hardware.tpm = true;
           exporters = {
             node     = { port = 9100; networks = ["vpn"]; };
@@ -233,7 +231,6 @@
           # NFS to lab-4 over main VLAN: principal must match the
           # FQDN sigil resolves lab-4 to (sigil.main.apt.psyclyx.net).
           kerberos.fqdnNetwork = "main";
-          roles = ["workstation"];
           deployAddress = "sigil.apt.psyclyx.net";
           hardware.tpm = true;
           exporters = {
@@ -252,7 +249,6 @@
             allowedNetworks = ["main" "infra"];
           };
           addresses.vpn.ipv4 = "10.157.0.4";
-          roles = ["mobile"];
         };
       };
 
@@ -265,7 +261,6 @@
             allowedNetworks = ["main" "infra"];
           };
           addresses.vpn.ipv4 = "10.157.0.5";
-          roles = ["workstation"];
         };
       };
 
@@ -278,7 +273,6 @@
             allowedNetworks = ["main" "infra"];
           };
           addresses.vpn.ipv4 = "10.157.0.6";
-          roles = ["workstation"];
         };
       };
 
@@ -300,7 +294,6 @@
           };
           publicAcme = true;
           deployAddress = "5.78.144.186";
-          roles = ["server"];
           exporters = {
             node = { port = 9100; networks = ["vpn"]; };
           };

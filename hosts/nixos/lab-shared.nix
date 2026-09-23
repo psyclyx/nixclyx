@@ -6,7 +6,7 @@ let
   labHostNames =
     let
       labHosts = lib.filterAttrs (
-        _: e: e.type == "host" && builtins.elem "lab" (e.host.roles or [ ])
+        _: e: e.type == "host" && builtins.elem "lab" e.tags
       ) eg.entities;
     in
     lib.sort builtins.lessThan (lib.attrNames labHosts);
