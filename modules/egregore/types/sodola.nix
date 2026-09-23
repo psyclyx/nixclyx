@@ -47,7 +47,41 @@
       };
     };
 
-    attrs = name: entity: _top: let
+    deriveOptions = {
+      # Shared capabilities — bare declarations (the full ones live with
+      # the owning kind: `address`/`addresses` in host.nix, `label` in
+      # site.nix).
+      address = lib.mkOption { type = lib.types.nullOr lib.types.str; };
+      addresses = lib.mkOption {
+        type = lib.types.attrsOf (lib.types.submodule {
+          options = {
+            ipv4 = lib.mkOption { type = lib.types.nullOr lib.types.str; };
+            ipv6 = lib.mkOption { type = lib.types.nullOr lib.types.str; };
+            dhcp = lib.mkOption { type = lib.types.bool; };
+          };
+        });
+      };
+      label = lib.mkOption { type = lib.types.str; };
+      # Switch-shared keys — bare declarations (full ones in routeros.nix).
+      platform = lib.mkOption { type = lib.types.str; };
+      model = lib.mkOption { type = lib.types.str; };
+      portCount = lib.mkOption { type = lib.types.int; };
+      activePortCount = lib.mkOption { type = lib.types.int; };
+      portNames = lib.mkOption { type = lib.types.nullOr (lib.types.listOf lib.types.str); };
+      links = lib.mkOption {
+        type = lib.types.listOf (lib.types.submodule {
+          options = {
+            localPort = lib.mkOption { type = lib.types.str; };
+            role = lib.mkOption { type = lib.types.str; };
+            target = lib.mkOption { type = lib.types.str; };
+            port = lib.mkOption { type = lib.types.nullOr lib.types.str; };
+            nic = lib.mkOption { type = lib.types.nullOr lib.types.str; };
+          };
+        });
+      };
+    };
+
+    derive = name: entity: _top: let
       s = entity.sodola;
       active = lib.filterAttrs (_: p: portType p != "unused") s.ports;
     in {

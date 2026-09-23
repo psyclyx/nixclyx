@@ -2,7 +2,7 @@
 #
 # A scope is a primitive abstract concept: a named *reachability
 # scope*. Its one intrinsic fact is the address key it names, looked up
-# in host.attrs.addresses. The string is opaque to this module — it just
+# in the `addresses` aspect. The string is opaque to this module — it just
 # composes with whatever address keys the fleet's hosts use. A scope is
 # reachability only: which record set answers its names is the DNS
 # view's fact, joined here with the `view` ref (see dns-views.nix).
@@ -30,9 +30,9 @@
           address = lib.mkOption {
             type = lib.types.str;
             description = ''
-              Address key (looked up in host.attrs.addresses on a host
-              that terminates ingress for this scope). Determines the
-              bind interface and the DNS A record value.
+              Address key (looked up in the `addresses` aspect on a
+              host that terminates ingress for this scope). Determines
+              the bind interface and the DNS A record value.
             '';
           };
           view = lib.mkOption {

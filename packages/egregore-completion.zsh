@@ -24,7 +24,7 @@ _egregore() {
     'ls:List entities'
     'show:Entity overview'
     'inspect:Full fleet overview'
-    'attrs:Query entity attributes'
+    'aspects:Query entity aspects'
     'graph:Output Graphviz DOT'
   )
 
@@ -45,7 +45,7 @@ _egregore() {
             '--type=[Filter by type]:type:_egregore_types' \
             '--tag=[Filter by tag]:tag:_egregore_tags'
           ;;
-        show|attrs)
+        show|aspects|attrs)
           _arguments '1:entity:_egregore_entities'
           ;;
       esac

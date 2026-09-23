@@ -57,7 +57,7 @@
   # built-in option 121 type.
   classlessRoutesFor = pool: let
     sitePool = pool.network;
-    poolNet = eg.entities.${sitePool}.attrs;
+    poolNet = eg.entities.${sitePool};
 
     switches = lib.filterAttrs (_: e: e.type == "routeros") eg.entities;
 
@@ -75,7 +75,7 @@
       else map (netName: let
         destNet = eg.entities.${netName};
       in {
-        dst = "${destNet.attrs.network4}/${toString destNet.attrs.prefixLen}";
+        dst = "${destNet.network4}/${toString destNet.prefixLen}";
         via = nextHopOnPoolNet;
       }) routedHere
     ) switches);
@@ -101,14 +101,14 @@
   # is a configuration error, and saying so at eval time is better than
   # shipping a lie in a DHCP option.
   dnsServerForNetwork = family: netName: net: let
-    na = net.attrs;
+    na = net;
     resolverHost = na.dnsRef or null;
     resolver =
       if resolverHost == null then null
       else eg.entities.${resolverHost} or null;
     onLink =
       if resolver == null then null
-      else ((resolver.attrs.addresses or {}).${netName} or {}).${family} or null;
+      else ((resolver.addresses or {}).${netName} or {}).${family} or null;
     # A router holds its segment's gateway address by convention rather
     # than by declaring it, so "the resolver is this family's gateway"
     # is the one case where the gateway address is the right answer.
@@ -125,7 +125,7 @@
 
   mkSubnet4 = _poolName: pool: let
     net = eg.entities.${pool.network};
-    na = net.attrs;
+    na = net;
     siteEntity = eg.entities.${net.network.site};
     siteDomain = siteEntity.site.domain;
     classless = classlessRoutesFor pool;
@@ -162,7 +162,7 @@
 
   mkSubnet6 = _poolName: pool: let
     net = eg.entities.${pool.network};
-    na = net.attrs;
+    na = net;
     prefix6 = "${eg.ipv6UlaPrefix}:${net.network.ulaSubnetHex}";
     siteEntity = eg.entities.${net.network.site};
     siteDomain = siteEntity.site.domain;
@@ -203,7 +203,7 @@
     net = eg.entities.${d.network};
   in {
     id = 900 + net.network.vlan;
-    subnet = net.attrs.subnet6;
+    subnet = net.subnet6;
     interface = me.interfaces.${d.network}.device;
     pd-pools = [{
       prefix = "::";

@@ -24,7 +24,7 @@
 
   resolveSite = svcName: root: let
     svcEnt = eg.entities.${svcName} or null;
-    domain = svcEnt.attrs.resolvedDomain or null;
+    domain = svcEnt.resolvedDomain or null;
     port = svcEnt.service.backend.local.port or null;
   in
     if svcEnt == null || domain == null || port == null then null

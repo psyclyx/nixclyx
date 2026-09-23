@@ -22,7 +22,27 @@
       };
     };
 
-    attrs = name: entity: _top: let
+    deriveOptions = {
+      domain = lib.mkOption {
+        type = lib.types.nullOr lib.types.str;
+        default = null;
+        description = ''
+          DNS zone for hosts at this site (mirrors `site.domain`). Shared
+          capability — declared by every kind that derives it; this is
+          the full declaration.
+        '';
+      };
+      label = lib.mkOption {
+        type = lib.types.str;
+        default = "";
+        description = ''
+          Human-readable label for lists and diagrams. Shared capability
+          (most kinds derive it); this is the full declaration.
+        '';
+      };
+    };
+
+    derive = name: entity: _top: let
       s = entity.site;
     in {
       domain = s.domain;

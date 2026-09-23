@@ -53,7 +53,7 @@ let
   mkPolicyBlock =
     _: p:
     let
-      hcl = p.attrs.hcl;
+      hcl = p.hcl;
     in
     ''
       bao policy write ${lib.escapeShellArg p.openbao-policy.name} - <<'EOF'
@@ -83,19 +83,19 @@ let
     in
     ''
       # cert auth role: ${cr.name}
-      CA_PEM=$(bao read -field=certificate ${lib.escapeShellArg r.attrs.pkiMount}/cert/ca)
+      CA_PEM=$(bao read -field=certificate ${lib.escapeShellArg r.pkiMount}/cert/ca)
       bao write auth/cert/certs/${lib.escapeShellArg cr.name} \
         display_name=${lib.escapeShellArg cr.name} \
-        token_policies=${lib.escapeShellArg (lib.concatStringsSep "," r.attrs.policyNames)} \
+        token_policies=${lib.escapeShellArg (lib.concatStringsSep "," r.policyNames)} \
         ${lib.optionalString (cr.boundCidrs != [ ]) ''
           token_bound_cidrs=${lib.escapeShellArg (lib.concatStringsSep "," cr.boundCidrs)} \
         ''}\
         allowed_common_names_glob=${lib.escapeShellArg cr.cnGlob} \
         certificate=-<<<"$CA_PEM"
 
-      # paired bootstrap token role: ${r.attrs.tokenRoleName}
-      bao write auth/token/roles/${lib.escapeShellArg r.attrs.tokenRoleName} \
-        allowed_policies=${lib.escapeShellArg r.attrs.initPolicyName} \
+      # paired bootstrap token role: ${r.tokenRoleName}
+      bao write auth/token/roles/${lib.escapeShellArg r.tokenRoleName} \
+        allowed_policies=${lib.escapeShellArg r.initPolicyName} \
         orphan=true \
         token_explicit_max_ttl=${toString cr.bootstrapTtl}
     '';

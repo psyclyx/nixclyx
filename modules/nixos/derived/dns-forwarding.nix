@@ -33,11 +33,11 @@
   # - vpn.<internal>: VPN peer records
   # - <internal>: service records served by the ingress hub
   vpnNet = eg.entities.vpn;
-  hubName = vpnNet.attrs.gatewayRef;
+  hubName = vpnNet.gatewayRef;
   isHub = hostName == hubName;
   hubVpnIp = eg.entities.${hubName}.host.addresses.vpn.ipv4;
   hubForwards = lib.optionalAttrs (!isHub) {
-    ${vpnNet.attrs.zoneName} = { forward-addr = [hubVpnIp]; };
+    ${vpnNet.zoneName} = { forward-addr = [hubVpnIp]; };
     ${eg.domains.internal} = { forward-addr = [hubVpnIp]; };
   };
 in {

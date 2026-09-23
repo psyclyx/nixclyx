@@ -14,8 +14,8 @@ let
 
   mgmt     = top.entities.${sw.mgmtNetwork};
   mgmtVlan = mgmt.network.vlan;
-  mgmtGw   = mgmt.attrs.gateway4;
-  mgmtPLen = mgmt.attrs.prefixLen;
+  mgmtGw   = mgmt.gateway4;
+  mgmtPLen = mgmt.prefixLen;
 
   maskOctet = bits:
     if bits >= 8 then 255

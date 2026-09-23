@@ -33,7 +33,21 @@
       };
     };
 
-    attrs = name: entity: _top: let
+    deriveOptions = {
+      subnetId = lib.mkOption {
+        type = lib.types.int;
+        default = 0;
+        description = "Which slice of the upstream prefix (mirrors `prefix-delegation.subnetId`).";
+      };
+      prefixLength = lib.mkOption {
+        type = lib.types.int;
+        default = 0;
+        description = "Size of the delegated slice (mirrors `prefix-delegation.prefixLength`).";
+      };
+      label = lib.mkOption { type = lib.types.str; };
+    };
+
+    derive = name: entity: _top: let
       refs = entity.refs or {};
     in {
       inherit (entity.prefix-delegation) subnetId prefixLength;

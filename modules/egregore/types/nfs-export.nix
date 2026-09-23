@@ -119,7 +119,30 @@
       };
     };
 
-    attrs =
+    deriveOptions = {
+      label = lib.mkOption { type = lib.types.str; };
+      producer = lib.mkOption { type = lib.types.nullOr lib.types.str; };
+      listenNetwork = lib.mkOption {
+        type = lib.types.str;
+        default = "";
+        description = ''
+          Network entity whose producer address this export binds to
+          (`nfs-export.listenNetwork`, or `network` when unset).
+        '';
+      };
+      sec = lib.mkOption {
+        type = lib.types.enum [ "sys" "krb5" "krb5i" "krb5p" ];
+        default = "sys";
+        description = "NFSv4 sec= class (mirrors `nfs-export.sec`).";
+      };
+      advertiseAs = lib.mkOption {
+        type = lib.types.enum [ "vlan-svi" "bgp32" "wg" ];
+        default = "vlan-svi";
+        description = "How clients reach the listen address (mirrors `nfs-export.advertiseAs`).";
+      };
+    };
+
+    derive =
       name: entity: _top:
       let
         n = entity.nfs-export;

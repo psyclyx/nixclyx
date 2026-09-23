@@ -10,7 +10,7 @@
 {config, lib, ...}: let
   eg = config.psyclyx.egregore;
   hostname = config.psyclyx.nixos.host;
-  meAttrs = lib.attrByPath ["entities" hostname "attrs"] {} eg;
+  meAttrs = lib.attrByPath ["entities" hostname] {} eg;
   addrMap = meAttrs.addresses or {};
 
   # Exclude any address the authoritative DNS already binds on this

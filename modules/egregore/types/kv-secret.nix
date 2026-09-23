@@ -46,7 +46,37 @@
       };
     };
 
-    attrs =
+    deriveOptions = {
+      fullPath = lib.mkOption {
+        type = lib.types.str;
+        default = "";
+        description = ''
+          Full KV path (`<mount>/<path>`). Shared capability — declared
+          by every kind that derives it; this is the full declaration.
+        '';
+      };
+      dataPath = lib.mkOption {
+        type = lib.types.str;
+        default = "";
+        description = "KV v2 data path consumers read (`<mount>/data/<path>`).";
+      };
+      metadataPath = lib.mkOption {
+        type = lib.types.str;
+        default = "";
+        description = "KV v2 metadata path (`<mount>/metadata/<path>`).";
+      };
+      producer = lib.mkOption {
+        type = lib.types.nullOr lib.types.str;
+        default = null;
+        description = ''
+          The host entity that produces this resource. Shared capability
+          (several kinds derive it); this is the full declaration.
+        '';
+      };
+      label = lib.mkOption { type = lib.types.str; };
+    };
+
+    derive =
       name: entity: _top:
       let
         s = entity.kv-secret;

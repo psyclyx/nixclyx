@@ -73,7 +73,7 @@
         secretFile = ../../hosts/nixos/lab-4/persist.jwe;
         # Consumers of bound datasets (e.g. the iSCSI target for luns
         # under tank/luns) wire their own dependencies on the unlock
-        # unit via clevis-binding.attrs.unlockUnitName — no need to
+        # unit via clevis-binding.unlockUnitName — no need to
         # list consumer unit names here.
       };
     };

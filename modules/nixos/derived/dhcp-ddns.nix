@@ -14,7 +14,7 @@
     stripped = lib.replaceStrings [":"] [""] (eg.ipv6UlaPrefix or "");
   in lib.concatStringsSep "." (lib.reverseList (lib.stringToCharacters stripped));
 
-  netAttrs = network: lib.attrByPath ["entities" network "attrs"] {} eg;
+  netAttrs = network: lib.attrByPath ["entities" network] {} eg;
 
   mkDnsServer = {
     ip-address = "127.0.0.1";

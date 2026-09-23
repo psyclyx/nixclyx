@@ -132,7 +132,80 @@
       dns = r.dnsRef;
     };
 
-    attrs = name: entity: top: let
+    deriveOptions = {
+      vlan = lib.mkOption {
+        type = lib.types.nullOr lib.types.int;
+        default = null;
+        description = "802.1Q VLAN ID of this segment (mirrors `network.vlan`). Null for non-VLAN segments.";
+      };
+      prefix = lib.mkOption {
+        type = lib.types.str;
+        default = "";
+        description = "First three octets of the IPv4 CIDR (e.g. \"10.0.25\").";
+      };
+      prefixLen = lib.mkOption {
+        type = lib.types.int;
+        default = 0;
+        description = "IPv4 prefix length of the CIDR.";
+      };
+      gateway4 = lib.mkOption {
+        type = lib.types.str;
+        default = "";
+        description = "IPv4 gateway address of this segment.";
+      };
+      network4 = lib.mkOption {
+        type = lib.types.str;
+        default = "";
+        description = "IPv4 network address of this segment.";
+      };
+      subnet6 = lib.mkOption {
+        type = lib.types.str;
+        default = "";
+        description = "IPv6 ULA subnet CIDR. Empty when the fleet has no ULA prefix or the network has no ULA hex.";
+      };
+      gateway6 = lib.mkOption {
+        type = lib.types.str;
+        default = "";
+        description = "IPv6 ULA gateway address. Empty when there is no ULA subnet.";
+      };
+      zoneName = lib.mkOption {
+        type = lib.types.str;
+        default = "";
+        description = ''
+          DNS zone of this network (`<network>.<base domain>` — the site
+          domain, or domains.internal for site-less overlays). Empty for
+          a network with neither.
+        '';
+      };
+      label = lib.mkOption { type = lib.types.str; };
+      zone = lib.mkOption {
+        type = lib.types.str;
+        default = "";
+        description = "Policy zone this network belongs to (mirrors `network.zone`).";
+      };
+      dnsRef = lib.mkOption {
+        type = lib.types.nullOr lib.types.str;
+        default = null;
+        description = "DNS-server entity for this network, with site fallback applied.";
+      };
+      gatewayRef = lib.mkOption {
+        type = lib.types.nullOr lib.types.str;
+        default = null;
+        description = "v4 gateway (router) entity for this network, with site fallback applied.";
+      };
+      gateway6Ref = lib.mkOption {
+        type = lib.types.nullOr lib.types.str;
+        default = null;
+        description = "v6 gateway (router) entity for this network, with site fallback applied.";
+      };
+      ip6Reverse = lib.mkOption {
+        type = lib.types.str;
+        default = "";
+        description = "Nibble-reversed ULA hex for IPv6 PTR reverse zones. Empty when there is no ULA hex.";
+      };
+    };
+
+    derive = name: entity: top: let
       net = entity.network;
       prefix = prefixOf net.ipv4;
       gw = top.conventions.gatewayOffset or 1;
@@ -160,8 +233,7 @@
         if net.vlan != null
         then "VLAN ${toString net.vlan} (${net.ipv4})"
         else "(${net.ipv4})";
-      site = net.site;
-      zone = net.zone;
+      inherit (net) zone;
       inherit dnsRef gatewayRef gateway6Ref;
       # DNS PTR reverse zone components.
       ip6Reverse = lib.optionalString (net.ulaSubnetHex != "")

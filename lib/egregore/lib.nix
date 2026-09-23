@@ -19,7 +19,10 @@ in rec {
   #     options = {
   #       model = lib.mkOption { type = lib.types.str; default = ""; };
   #     };
-  #     attrs = name: entityConfig: topConfig: {
+  #     deriveOptions = {
+  #       address = lib.mkOption { type = lib.types.nullOr lib.types.str; default = null; };
+  #     };
+  #     derive = name: entityConfig: topConfig: {
   #       address = entityConfig.routeros.model;
   #     };
   #   }
@@ -27,7 +30,16 @@ in rec {
   # The `options` attrset is placed under `entities.<name>.<typeName>.*`.
   # All options must have defaults (entities of other types see them).
   #
-  # attrs/verbs/assertions receive three arguments:
+  # `deriveOptions` declares the entity's derived keys — top-level entity
+  # options (the aspect namespace), beside the kind. Every key `derive`
+  # writes must be declared here (or in another module's deriveOptions/
+  # options): derived keys are closed and checked, there is no open bag.
+  # A key computed by several kinds is declared in each of them with the
+  # SAME type; exactly one declaration may carry default/description
+  # (the module system rejects duplicates of those), the rest are bare
+  # `mkOption { type = ...; }`.
+  #
+  # derive/relations/verbs/assertions receive three arguments:
   #   name       — the entity's name
   #   config     — the entity's config (includes config.<typeName>)
   #   topConfig  — the top-level egregore config
@@ -37,23 +49,26 @@ in rec {
     topConfig ? {},
     description ? "",
     options ? {},
+    deriveOptions ? {},
     # Resolved outbound edges, by ref name. `refs` is what the author
     # wrote; this is what it resolves to once type defaults (site
     # fallback, family defaults) are applied. Core inverts it into
     # refsIn alongside raw refs, so the inverse index is complete
     # even when the edge was inherited rather than written.
     relations ? _name: _config: _topConfig: {},
-    attrs ? _name: _config: _topConfig: {},
+    derive ? _name: _config: _topConfig: {},
     verbs ? _name: _config: _topConfig: {},
     assertions ? _name: _config: _topConfig: [],
   }:
     let
       typeName = name;
       mod = {
-        options.${typeName} = mkOption {
-          type = types.nullOr (types.submodule { inherit options; });
-          default = null;
-        };
+        options = {
+          ${typeName} = mkOption {
+            type = types.nullOr (types.submodule { inherit options; });
+            default = null;
+          };
+        } // deriveOptions;
       };
     in {
       config.types.${typeName} = { inherit description; };
@@ -65,19 +80,18 @@ in rec {
           elemType = types.submodule ({ config, name, ... }: {
             imports = [ mod ];
 
-            config = mkIf (config.${typeName} != null) {
+            config = mkIf (config.${typeName} != null) ({
               type = typeName;
-              attrs = attrs name config topConfig;
               relations = relations name config topConfig;
               verbs = verbs name config topConfig;
               assertions = assertions name config topConfig;
-            };
+            } // derive name config topConfig);
           });
         };
       };
     };
 
-  # Extend an existing type with more options/attrs/assertions.
+  # Extend an existing type with more options/derived keys/assertions.
   #
   # The module system merges a nested option declaration into an existing
   # submodule option, so an extension contributes `options.<type>.<field>`
@@ -85,12 +99,14 @@ in rec {
   # type's module and this one must have the same submodule shape (same
   # `functionArgs`) for the merge to take; both use `{ config, name, … }`.
   # The type itself is registered by the base, so this does not touch
-  # `config.types`.
+  # `config.types`. `deriveOptions` are top-level entity options, same
+  # as in `mkType`.
   mkTypeExtend = {
     name,
     topConfig ? {},
     options ? {},
-    attrs ? _name: _config: _topConfig: {},
+    deriveOptions ? {},
+    derive ? _name: _config: _topConfig: {},
     relations ? _name: _config: _topConfig: {},
     verbs ? _name: _config: _topConfig: {},
     assertions ? _name: _config: _topConfig: [],
@@ -103,16 +119,17 @@ in rec {
           lazy = true;
           placeholder = "id";
           elemType = types.submodule ({ config, name, ... }: {
-            options.${typeName} = mkOption {
-              type = types.nullOr (types.submodule { inherit options; });
-            };
+            options = {
+              ${typeName} = mkOption {
+                type = types.nullOr (types.submodule { inherit options; });
+              };
+            } // deriveOptions;
 
-            config = mkIf (config.${typeName} != null) {
-              attrs = attrs name config topConfig;
+            config = mkIf (config.${typeName} != null) ({
               relations = relations name config topConfig;
               verbs = verbs name config topConfig;
               assertions = assertions name config topConfig;
-            };
+            } // derive name config topConfig);
           });
         };
       };
@@ -120,14 +137,16 @@ in rec {
 
   # A facet aspect: contributes *top-level* options on the entity (not a
   # type bag). It registers nothing and derives no `type`; presence is
-  # whatever the caller's `attrs` gate on. This is how a cross-cutting
+  # whatever the caller's `derive` gates on. This is how a cross-cutting
   # concern (routing, monitoring, …) attaches to any entity without
-  # being nested under a kind.
+  # being nested under a kind. Derived keys are declared in `options`
+  # (already top-level here) and written by `derive`, whose returned
+  # attrset is spread into the entity's top-level config.
   mkAspect = {
     topConfig ? {},
     options ? {},
     relations ? _name: _config: _topConfig: {},
-    attrs ? _name: _config: _topConfig: {},
+    derive ? _name: _config: _topConfig: {},
     assertions ? _name: _config: _topConfig: [],
   }: {
     options.entities = mkOption {
@@ -139,9 +158,8 @@ in rec {
 
           config = {
             relations = relations name config topConfig;
-            attrs = attrs name config topConfig;
             assertions = assertions name config topConfig;
-          };
+          } // derive name config topConfig;
         });
       };
     };
@@ -163,7 +181,11 @@ in rec {
   #
   # Rich refs are strictly additive: every existing `refs.x = "name"`
   # keeps reading back as that same string.
-  refType = types.either types.str (types.submodule {
+  #
+  # The normalized edge shape (`refNorm` output, and the value of the
+  # entity's `edges` aspect): one attrset per edge, whichever spelling
+  # the ref used.
+  edgeType = types.submodule {
     options = {
       target = mkOption {
         type = types.str;
@@ -186,7 +208,9 @@ in rec {
         '';
       };
     };
-  });
+  };
+
+  refType = types.either types.str edgeType;
 
   # The far entity's name, whichever spelling the ref used.
   refTarget = ref: if builtins.isString ref then ref else ref.target;
@@ -227,16 +251,21 @@ in rec {
   tagged = tag: entities:
     lib.filterAttrs (_: e: builtins.elem tag e.tags) entities;
 
+  # Presence is "declared and non-null": for a nullOr aspect that is
+  # exactly "the aspect is present" (model §4), and for a closed key
+  # with a non-null default it is "the key exists" — the same sets as
+  # the old open-bag `attrs ? k && attrs.k != null` produced.
   withAttr = attrName: entities:
-    lib.filterAttrs (_: e: e.attrs ? ${attrName} && e.attrs.${attrName} != null) entities;
+    lib.filterAttrs (_: e: e ? ${attrName} && e.${attrName} != null) entities;
 
-  # A capability is just an attrs key whose schema is its contract; these
-  # are the query spelling. `withAspect "ssh"` is "everything sshable".
+  # A capability is just an aspect key whose schema is its contract;
+  # these are the query spelling. `withAspect "ssh"` is "everything
+  # sshable".
   withAspect = withAttr;
-  hasAspect = attrName: e: e.attrs ? ${attrName} && e.attrs.${attrName} != null;
+  hasAspect = attrName: e: e ? ${attrName} && e.${attrName} != null;
 
   collectAttr = attrName: entities:
-    lib.mapAttrs (_: e: e.attrs.${attrName}) (withAttr attrName entities);
+    lib.mapAttrs (_: e: e.${attrName}) (withAttr attrName entities);
 
   refsOf = entity: allEntities:
     lib.mapAttrs (_: ref: allEntities.${refTarget ref}) entity.refs;
@@ -253,13 +282,10 @@ in rec {
   #
   # An exposure is a named listener reservation on a node (model §6).
   # Its name is its identity; its role says which projection reads it
-  # (§8.5). During the migration an exposure has two homes — the
-  # derived form in `attrs.exposures` and the declared `exposures`
-  # aspect — written as data or computed, same structure either way.
-  # `exposuresOf` gives one view over both (declared wins); the
-  # migration collapses the homes as each listener moves.
-  exposuresOf = entity:
-    (entity.attrs.exposures or {}) // (entity.exposures or {});
+  # (§8.5). Written as data or computed (exporter exposures derive from
+  # tags and ha-group membership), same structure either way, in the
+  # one `exposures` aspect. `exposuresOf` is the reading spelling.
+  exposuresOf = entity: entity.exposures or {};
 
   # Everything holding an exposure of the given role.
   withRole = role: entities:
@@ -286,12 +312,13 @@ in rec {
   #       name = "site";
   #       description = "...";
   #       options = { domain = lib.mkOption { ... }; ... };
-  #       attrs = name: entity: top: { ... };
+  #       deriveOptions = { label = lib.mkOption { ... }; ... };
+  #       derive = name: entity: top: { ... };
   #     };
   #   }
   #
   # A plain attrset is also accepted for types that don't need lib in
-  # their attrs/verbs/assertions bodies.
+  # their derive/verbs/assertions bodies.
   interceptors.egregoreType = {
     enter = bundle:
       if !(bundle.value ? egregoreType) then bundle
@@ -323,7 +350,7 @@ in rec {
   #
   #   { egregoreAspect = { lib, config, ... }: {
   #       options = { vpn = lib.mkOption { ... }; };
-  #       attrs = name: entity: top: { ... };
+  #       derive = name: entity: top: { ... };
   #   }; }
   interceptors.egregoreAspect = {
     enter = bundle:

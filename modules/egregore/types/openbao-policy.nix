@@ -77,7 +77,31 @@
       };
     };
 
-    attrs =
+    deriveOptions = {
+      label = lib.mkOption { type = lib.types.str; };
+      effectiveRules = lib.mkOption {
+        type = lib.types.listOf (lib.types.submodule {
+          options = {
+            path = lib.mkOption { type = lib.types.str; default = ""; };
+            capabilities = lib.mkOption {
+              type = lib.types.listOf (lib.types.enum [
+                "create" "read" "update" "patch" "delete" "list" "sudo" "deny" "subscribe"
+              ]);
+              default = [ ];
+            };
+          };
+        });
+        default = [ ];
+        description = "Declared rules with kvReader/pkiIssuer/sshSigner expansions merged in.";
+      };
+      hcl = lib.mkOption {
+        type = lib.types.str;
+        default = "";
+        description = "The effective policy rendered as OpenBao HCL.";
+      };
+    };
+
+    derive =
       name: entity: top:
       let
         p = entity.openbao-policy;
@@ -93,11 +117,11 @@
             if secret == null then [ ]
             else [
               {
-                path = secret.attrs.dataPath;
+                path = secret.dataPath;
                 capabilities = [ "read" ];
               }
               {
-                path = secret.attrs.metadataPath;
+                path = secret.metadataPath;
                 capabilities = [
                   "read"
                   "list"

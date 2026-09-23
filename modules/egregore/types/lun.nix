@@ -84,7 +84,25 @@
       };
     };
 
-    attrs =
+    deriveOptions = {
+      dataset = lib.mkOption {
+        type = lib.types.str;
+        default = "";
+        description = ''
+          Full ZFS dataset path backing the LUN (`lun.dataset`, or
+          `<pool>/luns/<entity-name>` when unset).
+        '';
+      };
+      sizeBytes = lib.mkOption {
+        type = lib.types.int;
+        default = 0;
+        description = "Allocation size in bytes.";
+      };
+      producer = lib.mkOption { type = lib.types.nullOr lib.types.str; };
+      label = lib.mkOption { type = lib.types.str; };
+    };
+
+    derive =
       name: entity: _top:
       let
         l = entity.lun;

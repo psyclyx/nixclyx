@@ -7,7 +7,7 @@
   # Overlay topology comes from the vpn network entity + its hub host.
   vpnNet = eg.entities.vpn;
   vpnSubnet = vpnNet.network.ipv4;
-  hubName = vpnNet.attrs.gatewayRef;
+  hubName = vpnNet.gatewayRef;
   hub = eg.entities.${hubName};
   hubPort = hub.wireguard.port;
   isHub = hasWg && hostName == hubName;
@@ -115,7 +115,7 @@ in {
         {
           matchConfig.Name = "wg0";
           address = let
-            wgPrefixLen = toString vpnNet.attrs.prefixLen;
+            wgPrefixLen = toString vpnNet.prefixLen;
           in ["${me.host.addresses.vpn.ipv4}/${wgPrefixLen}"];
         }
         # Only set WG DNS for road warriors (no site or no local DNS server).

@@ -33,20 +33,20 @@ let
   adminKeys = top.conventions.adminSshKeys or [];
 
   myRoutes = map (n: top.entities.${n}) (entity.refsIn.on or []);
-  routesFor = family: builtins.filter (r: r.attrs.family == family) myRoutes;
-  mkRouteRow = r: { inherit (r.attrs) dst gateway disabled; inherit (r.route) comment; };
+  routesFor = family: builtins.filter (r: r.family == family) myRoutes;
+  mkRouteRow = r: { inherit (r) dst gateway disabled; inherit (r.route) comment; };
   defaultDst = family: if family == "ipv6" then "::/0" else "0.0.0.0/0";
   defaultRoute = family:
-    lib.findFirst (r: r.attrs.dst == defaultDst family) null (routesFor family);
+    lib.findFirst (r: r.dst == defaultDst family) null (routesFor family);
 
   egressNet = let d = defaultRoute "ipv4"; in if d == null then null else d.refs.over;
 
   dhcpServerAddr = netName: let
-    serverName = (top.entities.${netName}).attrs.dnsRef;
+    serverName = (top.entities.${netName}).dnsRef;
     server = top.entities.${serverName} or null;
   in
     if serverName == null || server == null || egressNet == null then null
-    else ((server.attrs.addresses or {}).${egressNet} or {}).ipv4 or null;
+    else ((server.addresses or {}).${egressNet} or {}).ipv4 or null;
 
   addressNetworks = lib.attrNames sw.addresses;
 
@@ -62,7 +62,7 @@ let
     lib.optional ((top.ipv6UlaPrefix or "") != "") "${top.ipv6UlaPrefix}::/48";
 
   wanDenied = builtins.filter (netName: let
-    zone = (top.entities.${netName}).attrs.zone or "";
+    zone = (top.entities.${netName}).zone or "";
     policy = (top.policy.${zone} or {}).wan or null;
   in zone != "" && policy != "accept") addressNetworks;
 
@@ -127,7 +127,7 @@ in {
   routeros.timezone = sw.timezone;
 
   routeros.system = {
-    dnsServers = [mgmt.attrs.gateway4];
+    dnsServers = [mgmt.gateway4];
     l3HwOffload = sw.l3HwOffload;
     sshKeys = map (key: { inherit key; user = sw.sshUser; }) adminKeys;
     snmp.enable = true;
@@ -196,9 +196,9 @@ in {
   routeros.addresses = map (netName: let
     net = top.entities.${netName};
   in {
-    address = "${sw.addresses.${netName}.ipv4}/${toString net.attrs.prefixLen}";
+    address = "${sw.addresses.${netName}.ipv4}/${toString net.prefixLen}";
     interface = "vlan${toString net.network.vlan}";
-    network = net.attrs.network4;
+    network = net.network4;
   }) addressNetworks;
 
   routeros.ipv6Addresses = lib.flip lib.concatMap addressNetworks (netName: let

@@ -15,8 +15,8 @@ let
   sources = if me != null then me.refsIn.dnsAuthority or [] else [];
   contributed = lib.concatMap (n: let
     e = eg.entities.${n} or null;
-  in lib.optional (e != null && e.type == "service" && e.attrs.resolvedDomain != null)
-    e.attrs.resolvedDomain) sources;
+  in lib.optional (e != null && e.type == "service" && e.resolvedDomain != null)
+    e.resolvedDomain) sources;
   zones = lib.unique (intrinsic ++ contributed);
 in
 {

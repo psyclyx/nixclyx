@@ -7,7 +7,7 @@ let
   ilo = entity.ilo;
 
   mgmtNet = top.entities.${ilo.mgmtNetwork} or null;
-  zoneName = if mgmtNet != null then mgmtNet.attrs.zoneName or null else null;
+  zoneName = if mgmtNet != null then mgmtNet.zoneName or null else null;
   derivedHostname = if zoneName != null then "${name}.${zoneName}" else name;
   resolvedHostname =
     if ilo.address != null then ilo.address

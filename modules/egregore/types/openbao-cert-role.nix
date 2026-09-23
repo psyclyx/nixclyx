@@ -79,7 +79,36 @@
       };
     };
 
-    attrs =
+    deriveOptions = {
+      label = lib.mkOption { type = lib.types.str; };
+      tokenRoleName = lib.mkOption {
+        type = lib.types.str;
+        default = "";
+        description = "Name of the paired bootstrap token role (`<name>-init`).";
+      };
+      pkiMount = lib.mkOption {
+        type = lib.types.nullOr lib.types.str;
+        default = null;
+        description = "Mount of the referenced pki role entity. Null when unresolved.";
+      };
+      pkiRoleName = lib.mkOption {
+        type = lib.types.nullOr lib.types.str;
+        default = null;
+        description = "OpenBao-side name of the referenced pki role entity. Null when unresolved.";
+      };
+      policyNames = lib.mkOption {
+        type = lib.types.listOf lib.types.str;
+        default = [ ];
+        description = "OpenBao-side names of the referenced policy entities.";
+      };
+      initPolicyName = lib.mkOption {
+        type = lib.types.nullOr lib.types.str;
+        default = null;
+        description = "OpenBao-side name of the referenced init policy entity. Null when unresolved.";
+      };
+    };
+
+    derive =
       name: entity: top:
       let
         r = entity.openbao-cert-role;

@@ -9,7 +9,12 @@
       description = lib.mkOption { type = lib.types.str; default = ""; };
     };
 
-    attrs = _name: entity: _top: {
+    deriveOptions = {
+      label = lib.mkOption { type = lib.types.str; };
+      model = lib.mkOption { type = lib.types.str; };
+    };
+
+    derive = _name: entity: _top: {
       label = entity.unmanaged.model;
       model = entity.unmanaged.model;
     };

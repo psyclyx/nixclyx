@@ -6,9 +6,9 @@
 # its identity (an offering refs an exposure by name) and the role says
 # which projection reads it (§8.5) — the egregore core reads neither.
 #
-# This aspect is the declared home; ssh, initrd-ssh and (Phase 3) the
-# exporter exposures are declared here. Computed exporter exposures
-# still derive in `attrs.exposures` from tags and ha-group membership —
+# This aspect is the one home — ssh, initrd-ssh and the exporter
+# exposures live here, declared in data or computed. Exporter exposures
+# derive from tags and ha-group membership with per-key `mkDefault` —
 # written as data or computed, same structure, read the same way
 # (`egregorLib.exposuresOf`).
 {
@@ -46,8 +46,8 @@
         default = { };
         description = ''
           Named listeners on this node — where they sit when active.
-          Read through `egregorLib.exposuresOf` / `withRole`, which see
-          the derived form too.
+          Declared in data or derived (exporter exposures); a declared
+          entry of the same name wins outright over a derived one.
         '';
       };
     };

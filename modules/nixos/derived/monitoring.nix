@@ -2,17 +2,16 @@
 let
   eg = config.psyclyx.egregore;
 
-  # Exporter exposures (model §6) in their two homes — the derived
-  # attrs.exposures and the declared `exposures` aspect — merged,
-  # declared winning. Kept local until Phase 6 collapses the homes.
-  exposuresOf = e: (e.attrs.exposures or { }) // (e.exposures or { });
+  # The one `exposures` aspect (Phase 6 merged its two homes), kept as
+  # a local spelling beside exportersOf.
+  exposuresOf = e: e.exposures or { };
   exportersOf = e: lib.filterAttrs (_: x: (x.role or null) == "exporter") (exposuresOf e);
 
   mkTarget =
     hostName: svc:
     let
       net = builtins.head svc.scopes;
-      fqdn = eg.entities.${hostName}.attrs.fqdns.${net} or null;
+      fqdn = eg.entities.${hostName}.fqdns.${net} or null;
     in
     if fqdn != null then "${fqdn}:${toString svc.port}" else null;
 
@@ -20,7 +19,7 @@ let
     _: e: e.type == "host" && exportersOf e != { }
   ) eg.entities;
 
-  hubName = eg.entities.vpn.attrs.gatewayRef;
+  hubName = eg.entities.vpn.gatewayRef;
   spokeHosts = lib.filterAttrs (name: _: name != hubName) monitoredHosts;
 
   collectTargets =
@@ -67,7 +66,7 @@ let
   myExporters = if meEntity == null then { } else exportersOf meEntity;
   exporterListenAddrs = lib.mapAttrs (_: svc:
     let net = builtins.head svc.scopes;
-        addr = (meEntity.attrs.addresses.${net} or {}).ipv4 or null;
+        addr = (meEntity.addresses.${net} or {}).ipv4 or null;
     in addr
   ) myExporters;
 in

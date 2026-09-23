@@ -27,9 +27,9 @@
     _: e:
       e.network.vlan != null
       && (
-        (e.attrs.dnsRef or null) == gwName
-        || ((e.attrs.dnsRef or null) == null
-            && builtins.elem e.attrs.name gwGatewayed)
+        (e.dnsRef or null) == gwName
+        || ((e.dnsRef or null) == null
+            && builtins.elem e.name gwGatewayed)
       )
   ) networks;
 
@@ -75,7 +75,7 @@
 
   mkForwardZoneData = vlanId: let
     name = vlanNameMap.${toString vlanId};
-    net = eg.entities.${name}.attrs;
+    net = eg.entities.${name};
     servers = managedHostsOnNetwork name;
     serverRecords = lib.concatMapStringsSep "\n" (hostname: let
       addr = eg.entities.${hostname}.host.addresses.${name};
@@ -107,7 +107,7 @@
 
   mkReverseZoneData = vlanId: let
     name = vlanNameMap.${toString vlanId};
-    net = eg.entities.${name}.attrs;
+    net = eg.entities.${name};
     octets = lib.splitString "." net.prefix;
     reverseZone = "${lib.concatStringsSep "." (lib.reverseList octets)}.in-addr.arpa";
     servers = managedHostsOnNetwork name;
@@ -138,7 +138,7 @@
   mkIp6ReverseZoneData = vlanId: let
     name = vlanNameMap.${toString vlanId};
     net = eg.entities.${name};
-    na = net.attrs;
+    na = net;
     reverseZone = "${na.ip6Reverse}.${ulaReverseBase}.ip6.arpa";
     # Only hosts with an IPv6 declared on this network — iyr's
     # storage entry is v4-only, for instance, so it's an A-record-
@@ -183,7 +183,7 @@
     # configured preference order keeps the choice predictable when
     # the site spans multiple gateway'd networks.
     ns1Net = eg.entities.${lib.head siteZoneCfg.networks};
-    ns1Addr = ns1Net.attrs.gateway4;
+    ns1Addr = ns1Net.gateway4;
 
     # All hosts at this site — we'll filter to those with a resolvable
     # address (incl. gateway-derived) on one of the listed networks.
@@ -193,7 +193,7 @@
 
     # Pick the first network in the preference list for which this host
     # has a non-null, *stable* IPv4 in its resolved addresses
-    # (host.attrs.addresses already folds in gateway-derived entries).
+    # (host.addresses already folds in gateway-derived entries).
     # A DHCP-assigned address only counts as stable when the host has a
     # modeled MAC — that's what earns it a Kea reservation (same signal
     # managedHostsOnNetwork uses), so the declared IPv4 is the address
@@ -202,7 +202,7 @@
     # apex; it's reachable via its per-VLAN DDNS name instead
     # (sigil.main.<site>). Static (dhcp=false) addresses always count.
     pickAddr = h: let
-      candidates = h.attrs.addresses or {};
+      candidates = h.addresses or {};
       hasMac = (h.host.mac or {}) != {};
       hit = lib.findFirst
         (n: candidates ? ${n}

@@ -1,19 +1,19 @@
 # Core module — defines the fundamental schema: entities, types, assertions.
 #
 # Entities are typed records in an extensible registry. Each entity has:
-#   type  — which registered type it is (determines schema, attrs, verbs)
+#   type  — which registered type it is (determines schema and derived keys)
 #   tags  — freeform labels for filtering
 #   refs  — named references to other entities (validated)
-#   attrs — computed queryable properties (set by type modules)
+#   edges — refs in normalized shape ({ target; port; nic; })
 #   verbs — available operations (set by type modules)
 #
 # Type modules extend the entity submodule to add type-specific options,
-# attrs, and verbs. The module system merges everything — each entity
-# instance sees all type modules' options, but only the matching type's
-# attrs/verbs are active (via mkIf).
+# derived keys, and verbs. The module system merges everything — each
+# entity instance sees all type modules' options, but only the matching
+# type's derived keys/verbs are active (via mkIf).
 #
 # A ref value is either a bare entity name or `{ target; port; nic; }`
-# naming the attachment point on the far side. attrs.refs carries the
+# naming the attachment point on the far side. `edges` carries the
 # rich shape for both spellings; refs itself is left as written, so a
 # reader that just wants the name reads it the same way it always did.
 #
@@ -27,7 +27,7 @@
 { config, lib, egregorLib, ... }:
 let
   inherit (lib) mkOption types;
-  inherit (egregorLib) refType refTarget refNorm;
+  inherit (egregorLib) refType refTarget refNorm edgeType;
   topConfig = config;
 in {
   options = {
@@ -77,9 +77,25 @@ in {
               A value is either an entity name, or an attrset naming the
               entity plus the attachment point on the far side
               (`{ target; port; nic; }`). Both spellings mean the same
-              edge; `attrs.refs` gives the rich shape for either.
+              edge; `edges` gives the rich shape for either.
 
               Validated: every target must exist in the registry.
+            '';
+          };
+
+          name = mkOption {
+            type = types.str;
+            description = "The entity's id — the key it is registered under.";
+          };
+
+          edges = mkOption {
+            type = types.attrsOf edgeType;
+            default = {};
+            description = ''
+              This entity's own refs in rich form, so a consumer reading
+              an edge's attachment point never has to branch on the
+              spelling. `refs.<n>` itself is left exactly as written —
+              the plain form still reads back as a bare name.
             '';
           };
 
@@ -103,17 +119,9 @@ in {
             description = ''
               Inverse index: for each ref name, the entities that refer to
               this one. Computed from every entity's `refs` and `relations`.
-              A top-level option, not an attr, so a type's own `attrs` can
-              read it without depending on the attrs it is computing.
-            '';
-          };
-
-          attrs = mkOption {
-            type = types.attrsOf types.anything;
-            default = {};
-            description = ''
-              Queryable properties — set by type modules, read by projections.
-              Open vocabulary: types declare what they answer.
+              A top-level option, not an aspect, so a type's own derived
+              keys can read it without depending on the keys it is
+              computing.
             '';
           };
 
@@ -156,18 +164,16 @@ in {
         };
 
         # Every entity knows its own name.
-        config.attrs.name = name;
+        config.name = name;
 
-        # This entity's own refs in rich form, so a consumer reading an
-        # edge's attachment point never has to branch on the spelling.
-        # `refs.<n>` itself is left exactly as written — the plain form
-        # still reads back as a bare name.
-        config.attrs.refs = lib.mapAttrs (_: refNorm) config.refs;
+        # This entity's own refs in rich form.
+        config.edges = lib.mapAttrs (_: refNorm) config.refs;
 
         # Inverse index: for each (src, refName) whose declared ref *or*
         # resolved relation targets this entity, append srcName to
-        # config.refsIn.refName. Both inputs are plain data — not attrs of
-        # this entity — so there is no cycle with the attrs setters.
+        # config.refsIn.refName. Both inputs are plain data — not derived
+        # keys of this entity — so there is no cycle with the derive
+        # hooks.
         #
         # Covering resolved relations is what makes an inherited edge
         # queryable: a network whose gateway comes from its site never

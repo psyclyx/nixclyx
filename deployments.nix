@@ -19,8 +19,8 @@ let
   # (which carry the user and keys); the graph only says where the
   # listener is.
   fromEgregore = name: let
-    e = eg.entities.${name} or { host = {}; attrs = {}; };
-    target = e.attrs.deployAddress or null;
+    e = eg.entities.${name} or { host = {}; };
+    target = e.deployAddress or null;
     sshPort = e.exposures.ssh.port or 22;
   in
     lib.optionalAttrs (target != null) {

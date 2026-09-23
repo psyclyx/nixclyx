@@ -166,15 +166,88 @@
       };
     };
 
-    attrs = name: entity: top: let
+    deriveOptions = {
+      # Shared capabilities — bare declarations (the full ones live with
+      # the owning kind: `address`/`addresses` in host.nix, `label` in
+      # site.nix). Same types as the owners'; the module system merges
+      # the declarations.
+      address = lib.mkOption { type = lib.types.nullOr lib.types.str; };
+      addresses = lib.mkOption {
+        type = lib.types.attrsOf (lib.types.submodule {
+          options = {
+            ipv4 = lib.mkOption { type = lib.types.nullOr lib.types.str; };
+            ipv6 = lib.mkOption { type = lib.types.nullOr lib.types.str; };
+            dhcp = lib.mkOption { type = lib.types.bool; };
+          };
+        });
+      };
+      label = lib.mkOption { type = lib.types.str; };
+      # Switch-shared keys — full declarations (sodola/swos declare
+      # them bare).
+      platform = lib.mkOption {
+        type = lib.types.str;
+        default = "";
+        description = "Platform identifier (\"routeros\", \"swos\", \"sodola\").";
+      };
+      model = lib.mkOption {
+        type = lib.types.str;
+        default = "";
+        description = "Hardware model (mirrors `<kind>.model`).";
+      };
+      portCount = lib.mkOption {
+        type = lib.types.int;
+        default = 0;
+        description = "Number of declared ports.";
+      };
+      activePortCount = lib.mkOption {
+        type = lib.types.int;
+        default = 0;
+        description = "Number of ports in use (access or trunk).";
+      };
+      portNames = lib.mkOption {
+        type = lib.types.nullOr (lib.types.listOf lib.types.str);
+        default = null;
+        description = ''
+          Every port the hardware has, so the far end of a link can be
+          checked against it. Null = the kind has no port vocabulary
+          (presence is what the link checks read).
+        '';
+      };
+      links = lib.mkOption {
+        type = lib.types.listOf (lib.types.submodule {
+          options = {
+            localPort = lib.mkOption { type = lib.types.str; default = ""; };
+            role = lib.mkOption { type = lib.types.str; default = ""; };
+            target = lib.mkOption { type = lib.types.str; default = ""; };
+            port = lib.mkOption { type = lib.types.nullOr lib.types.str; default = null; };
+            nic = lib.mkOption { type = lib.types.nullOr lib.types.str; default = null; };
+          };
+        });
+        default = [ ];
+        description = "Physical topology: one entry per port ref, as a normalized edge.";
+      };
+      ssh = lib.mkOption {
+        type = lib.types.nullOr (lib.types.submodule {
+          options.user = lib.mkOption {
+            type = lib.types.str;
+            description = "The device's admin account that holds the fleet's keys.";
+          };
+        });
+        default = null;
+        description = ''
+          The admin account that holds the fleet's keys (device config —
+          see `routeros.sshUser`). The listener itself is the `ssh`
+          exposure (declared in data).
+        '';
+      };
+    };
+
+    derive = name: entity: top: let
       r = entity.routeros;
       active = lib.filterAttrs (_: p: portType p != "unused") r.ports;
       mgmtAddr = r.addresses.${r.mgmtNetwork}.ipv4 or null;
     in {
       address = mgmtAddr;
-      # The admin account that holds the fleet's keys (device config —
-      # see `sshUser`). The listener itself is the `ssh` exposure
-      # (declared in data).
       ssh = { user = r.sshUser; };
       # Addresses keyed by network, the same shape a host exposes.
       # Anything asking "what address does this device have on network

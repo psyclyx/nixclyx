@@ -1,7 +1,7 @@
 # Ingress projection — scope-driven, dispatching on the DNS view.
 #
 # For every (service, scope) pair, the projection determines who runs
-# ingress (service.attrs.effectiveIngress) and emits, on that host:
+# ingress (service.effectiveIngress) and emits, on that host:
 #
 #   - one HAProxy backend per service (shared across scopes)
 #   - one HAProxy frontend per scope, bound on this host's address
@@ -34,7 +34,7 @@
   # Presentation requires a resolved domain: a service reached directly
   # (no FQDN, no ingress — e.g. tang) is not the ingress projection's
   # business. It is skipped here, not mangled into a null-domain record.
-  presented = lib.filterAttrs (_: e: e.attrs.resolvedDomain != null) services;
+  presented = lib.filterAttrs (_: e: e.resolvedDomain != null) services;
   httpServices = lib.filterAttrs (_: e: e.service.protocol == "http") presented;
   tcpServices = lib.filterAttrs (_: e: e.service.protocol == "tcp") presented;
 
@@ -54,7 +54,7 @@
       svc = e;
       scopeAddress = scopes.${scopeName}.address;
       view = eg.dnsViews.${viewName};
-    }) e.attrs.effectiveIngress
+    }) e.effectiveIngress
   ) svcs);
 
   httpTuples = mkTuples httpServices;
@@ -95,8 +95,8 @@
     sources = h.refsIn.dnsAuthority or [];
     contributed = lib.concatMap (n: let
       e = eg.entities.${n} or null;
-    in lib.optional (e != null && e.type == "service" && e.attrs.resolvedDomain != null)
-      e.attrs.resolvedDomain) sources;
+    in lib.optional (e != null && e.type == "service" && e.resolvedDomain != null)
+      e.resolvedDomain) sources;
   in lib.unique (intrinsic ++ contributed);
 
   hostHasAuthority = hostName: domain: let
@@ -120,7 +120,7 @@
 
   # Unique cert specs needed for my ingress (one per cert.name).
   myCertSpecs = let
-    perTuple = map (t: certFor t.svc.attrs.resolvedDomain) myIngressTuples;
+    perTuple = map (t: certFor t.svc.resolvedDomain) myIngressTuples;
     byName = builtins.groupBy (c: c.name) perTuple;
   in lib.mapAttrs (_: cs: builtins.head cs) byName;
 
@@ -130,7 +130,7 @@
   # --- HAProxy backend (one per service) ---
 
   mkBackend = svcName: e: let
-    a = e.attrs;
+    a = e;
     s = e.service;
     # A `local` backend is localhost on this proxy host unless the host
     # config names another host-local address (e.g. a netns veth).
@@ -165,11 +165,11 @@
   # --- HAProxy frontend (one per scope) ---
 
   mkFrontend = scopeName: tuples: let
-    bind = me.attrs.addresses.${scopes.${scopeName}.address}.ipv4;
-    certs = lib.unique (map (t: certPath (certFor t.svc.attrs.resolvedDomain).name) tuples);
+    bind = me.addresses.${scopes.${scopeName}.address}.ipv4;
+    certs = lib.unique (map (t: certPath (certFor t.svc.resolvedDomain).name) tuples);
     crtArgs = lib.concatMapStringsSep " " (p: "crt ${p}") certs;
     acls = map
-      (t: "    acl host_${t.svcName} hdr(host) -i ${t.svc.attrs.resolvedDomain}")
+      (t: "    acl host_${t.svcName} hdr(host) -i ${t.svc.resolvedDomain}")
       tuples;
     useBackends = map
       (t: "    use_backend bk_svc_${t.svcName} if host_${t.svcName}")
@@ -216,7 +216,7 @@
   # Ingress host's bind address for a scope's address key — what DNS
   # records for that (scope, service) pair point at.
   ingressBindAddr = scopeAddress: ingHost: let
-    addr = (eg.entities.${ingHost}.attrs.addresses.${scopeAddress} or null);
+    addr = (eg.entities.${ingHost}.addresses.${scopeAddress} or null);
   in if addr != null then addr.ipv4 else null;
 
   # Resolver localzone records: emitted on the resolver host for each
@@ -225,20 +225,20 @@
   # resolves to a network entity served by this host's resolver) decides
   # where the resolver emits. Pulls all (service, scope) tuples,
   # including TCP services (which use the HA VIP directly via
-  # service.attrs.resolvedAddress, not an ingress address).
+  # service.resolvedAddress, not an ingress address).
   resolverLocalZoneRecords = let
     localzoneView = t: t.view.records == "localzone";
     isResolverFor = scopeAddress: let
       net = eg.entities.${scopeAddress} or null;
-    in net != null && net.type == "network" && (net.attrs.dnsRef or null) == hostname;
+    in net != null && net.type == "network" && (net.dnsRef or null) == hostname;
 
     httpRecs = lib.concatMap (t:
       lib.optional (localzoneView t && isResolverFor t.scopeAddress)
-        "${t.svc.attrs.resolvedDomain}. IN A ${ingressBindAddr t.scopeAddress t.ingHost}"
+        "${t.svc.resolvedDomain}. IN A ${ingressBindAddr t.scopeAddress t.ingHost}"
     ) httpTuples;
 
     tcpRecs = lib.concatMap (t: let
-      a = t.svc.attrs;
+      a = t.svc;
     in
       lib.optional (localzoneView t
                     && isResolverFor t.scopeAddress
@@ -267,10 +267,10 @@
     ) null myZones;
 
     perTuple = lib.concatMap (t: let
-      domain = t.svc.attrs.resolvedDomain;
+      domain = t.svc.resolvedDomain;
       zone = zoneFor domain;
       ingEntity = eg.entities.${t.ingHost};
-      addr = ingEntity.attrs.addresses.${t.scopeAddress} or { ipv4 = null; ipv6 = null; };
+      addr = ingEntity.addresses.${t.scopeAddress} or { ipv4 = null; ipv6 = null; };
       ipv4 = addr.ipv4 or null;
       ipv6 = addr.ipv6 or null;
       sub = if zone == domain then "@" else lib.removeSuffix ".${zone}" domain;

@@ -4,7 +4,7 @@
 #   egregore list [--type=X] [--tag=X]
 #   egregore show <entity>
 #   egregore inspect
-#   egregore attrs <entity> [attr]
+#   egregore aspects <entity> [aspect]
 #   egregore graph
 #
 { writeShellApplication, symlinkJoin, installShellFiles, runCommand,
@@ -107,7 +107,7 @@ let
         done
 
         local json
-        json=$(nix_eval_json "lib.mapAttrs (_: e: { inherit (e) type tags; label = e.attrs.label or \"\"; }) fleet.entities")
+        json=$(nix_eval_json "lib.mapAttrs (_: e: { inherit (e) type tags; label = e.label or \"\"; }) fleet.entities")
 
         local filters=""
         [[ -n "$type_filter" ]] && filters+="| select(.value.type == \"$type_filter\")"
@@ -165,13 +165,13 @@ let
           "run ''${DIM}egregore list''${RESET} to see available entities."
         local name="$1"
         local json
-        json=$(nix_eval_json "let e = fleet.entities.\"$name\"; in { inherit (e) type tags refs; attrs = lib.mapAttrs (_: v: if builtins.isList v then v else if builtins.isAttrs v then v else builtins.toString v) e.attrs; }")
+        json=$(nix_eval_json "let e = fleet.entities.\"$name\"; in { inherit (e) type tags refs; aspects = lib.mapAttrs (_: v: if builtins.isList v then v else if builtins.isAttrs v then v else builtins.toString v) (builtins.removeAttrs e [\"type\" \"tags\" \"refs\" \"relations\" \"refsIn\" \"verbs\" \"assertions\"]); }")
 
         [[ -n "$json" ]] || die "entity ''${BOLD}$name''${RESET} not found" \
           "run ''${DIM}egregore list''${RESET} to see available entities."
 
         echo "$json" | jq -r --arg B "$BOLD" --arg R "$RESET" --arg C "$CYAN" --arg G "$GREEN" --arg Y "$YELLOW" --arg M "$MAGENTA" --arg BL "$BLUE" --arg D "$DIM" '
-          .type as $type | .tags as $tags | .refs as $refs | .attrs as $attrs |
+          .type as $type | .tags as $tags | .refs as $refs | .aspects as $aspects |
 
           "\($B)'"$name"'\($R)  \($C)\($type)\($R)\(if ($tags | length) > 0 then "  \($Y)\($tags | join(", "))\($R)" else "" end)",
           "",
@@ -180,22 +180,22 @@ let
             ($refs | to_entries[] | "  \($BL)\(.key)\($R) \($D)→\($R) \($B)\(.value)\($R)"),
             ""
           else empty end),
-          "\($G)attrs\($R)",
-          ($attrs | to_entries | sort_by(.key)[] | "  \($G)\(.key)\($R) = \(.value)")
+          "\($G)aspects\($R)",
+          ($aspects | to_entries | sort_by(.key)[] | "  \($G)\(.key)\($R) = \(.value)")
         '
       }
 
-      cmd_attrs() {
+      cmd_aspects() {
         [[ $# -ge 1 ]] || die "missing entity name" \
-          "usage: egregore attrs ''${CYAN}<entity>''${RESET} [attr]" \
+          "usage: egregore aspects ''${CYAN}<entity>''${RESET} [aspect]" \
           "run ''${DIM}egregore list''${RESET} to see available entities."
         local name="$1"
-        local attr="''${2:-}"
+        local aspect="''${2:-}"
 
-        if [[ -n "$attr" ]]; then
-          nix_eval_json "fleet.entities.\"$name\".attrs.\"$attr\"" | jq -C .
+        if [[ -n "$aspect" ]]; then
+          nix_eval_json "fleet.entities.\"$name\".\"$aspect\"" | jq -C .
         else
-          nix_eval_json "fleet.entities.\"$name\".attrs" | jq -C .
+          nix_eval_json "builtins.removeAttrs fleet.entities.\"$name\" [\"type\" \"tags\" \"refs\" \"relations\" \"refsIn\" \"verbs\" \"assertions\"]" | jq -C .
         fi
       }
 
@@ -206,7 +206,7 @@ let
               else if e.type == "host" then "box"
               else if e.type == "ha-group" then "octagon"
               else "ellipse";
-            label = e.attrs.label or name;
+            label = e.label or name;
           in "  \"" + name + "\" [label=\"" + label + "\" shape=" + shape + "];")
           fleet.entities;
           edges = lib.concatLists (lib.mapAttrsToList (name: e:
@@ -258,7 +258,7 @@ let
         list|ls)  cmd_list "$@" ;;
         show)     cmd_show "$@" ;;
         inspect)  cmd_inspect "$@" ;;
-        attrs)    cmd_attrs "$@" ;;
+        aspects|attrs) cmd_aspects "$@" ;;
         graph)    cmd_graph "$@" ;;
         "")
           echo "''${BOLD}egregore''${RESET} — entity registry CLI"
@@ -267,7 +267,7 @@ let
           echo "  egregore ''${CYAN}list''${RESET}    [--type=X] [--tag=X]  List entities"
           echo "  egregore ''${CYAN}show''${RESET}    <entity>              Entity overview"
           echo "  egregore ''${CYAN}inspect''${RESET}                       Full fleet overview"
-          echo "  egregore ''${CYAN}attrs''${RESET}   <entity> [attr]       Query attributes"
+          echo "  egregore ''${CYAN}aspects''${RESET} <entity> [aspect]  Query aspects"
           echo "  egregore ''${CYAN}graph''${RESET}                         Graphviz DOT"
           echo ""
           echo "''${BOLD}Flags:''${RESET}"

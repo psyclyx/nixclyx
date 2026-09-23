@@ -44,7 +44,7 @@ let
     ) eg.entities;
 
   mkVolume = lunName: lun: {
-    image = "/dev/zvol/${lun.attrs.dataset}";
+    image = "/dev/zvol/${lun.dataset}";
     mountPoint = lun.lun.mountPoint;
     fsType = lun.lun.fsType;
     autoCreate = false;

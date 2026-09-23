@@ -52,8 +52,8 @@
   producedLunUnlockUnits = lib.unique (lib.filter (u: u != null) (
     lib.mapAttrsToList (_: l:
       let
-        b = bindingForDatasetPath l.attrs.dataset;
-      in if b == null then null else b.attrs.unlockUnitName
+        b = bindingForDatasetPath l.dataset;
+      in if b == null then null else b.unlockUnitName
     ) producedLuns
   ));
 
@@ -64,7 +64,7 @@
     value = {
       iqn = mkIqn lunName producer;
       luns = [{
-        device = "/dev/zvol/${lun.attrs.dataset}";
+        device = "/dev/zvol/${lun.dataset}";
         lun = 0;
         readOnly = lun.lun.readOnly;
       }];

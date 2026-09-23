@@ -24,7 +24,7 @@ let
 
   fqdn =
     if myBinding == null then null
-    else (me.attrs.fqdns or { }).${myBinding.network} or null;
+    else (me.fqdns or { }).${myBinding.network} or null;
 
   guestEnabled = myBinding != null && roleEntity != null && fqdn != null;
 in
@@ -53,7 +53,7 @@ in
       enable = true;
       vaultAddr = cfg.vaultAddr;
       insecureSkipVerify = cfg.insecureSkipVerify;
-      signPath = roleEntity.attrs.signPath;
+      signPath = roleEntity.signPath;
       hostFqdn = fqdn;
       ttl = roleEntity.openbao-ssh-cert-role.ttl;
     };

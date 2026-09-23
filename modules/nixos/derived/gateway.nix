@@ -30,8 +30,8 @@
   myRefsIn = lib.attrByPath ["entities" hostname "refsIn"] {} eg;
   v4Gatewayed = myRefsIn.gateway or [];
   v6Gatewayed = myRefsIn.gateway6 or [];
-  isV4Gateway = e: builtins.elem e.attrs.name v4Gatewayed;
-  isV6Gateway = e: builtins.elem e.attrs.name v6Gatewayed;
+  isV4Gateway = e: builtins.elem e.name v4Gatewayed;
+  isV6Gateway = e: builtins.elem e.name v6Gatewayed;
   gatewayedNetworks = lib.filterAttrs
     (_: e:
       e.type == "network"
@@ -58,17 +58,17 @@
     let vid = toString (onLink r); in
     acc // {
       ${vid} = (acc.${vid} or []) ++ [{
-        destination = r.attrs.dst;
-        inherit (r.attrs) gateway;
+        destination = r.dst;
+        inherit (r) gateway;
       }];
     }
-  ) {} (builtins.filter (r: r.attrs.gateway != null) myRoutes);
+  ) {} (builtins.filter (r: r.gateway != null) myRoutes);
 
   mkGatewayNet = vlanId: let
     name = lib.head (lib.attrNames (lib.filterAttrs
       (_: e: e.network.vlan == vlanId) gatewayedNetworks));
     net = eg.entities.${name};
-    na = net.attrs;
+    na = net;
     siteEntity =
       if net.network.site != null
       then eg.entities.${net.network.site} or null
@@ -131,7 +131,7 @@
   # to vlan id + the host's gateway address on that network.
   projectedInitrdNetworks = map (name: let
     net = eg.entities.${name};
-    na = net.attrs;
+    na = net;
   in {
     id = net.network.vlan;
     address4 = "${na.gateway4}/${toString na.prefixLen}";

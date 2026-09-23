@@ -250,7 +250,7 @@ in
       };
       openbao-seal-oracle = {
         enable = true;
-        bindAddress = (eg.entities.${config.networking.hostName}).attrs.addresses.infra.ipv4;
+        bindAddress = (eg.entities.${config.networking.hostName}).addresses.infra.ipv4;
         tpm.enable = true;
         seal = {
           type = "pkcs11";

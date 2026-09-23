@@ -61,7 +61,28 @@
       };
     };
 
-    attrs =
+    deriveOptions = {
+      label = lib.mkOption { type = lib.types.str; };
+      producer = lib.mkOption { type = lib.types.nullOr lib.types.str; };
+      unlockUnitName = lib.mkOption {
+        type = lib.types.nullOr lib.types.str;
+        default = null;
+        description = ''
+          Name of the systemd unit the storage projection emits for this
+          binding's post-boot unlock. Other projections that consume the
+          bound dataset (iSCSI target, application services) add
+          `after`/`wants` on this without poking at unit-name strings.
+          Null when the binding protects no dataset.
+        '';
+      };
+      tangUrls = lib.mkOption {
+        type = lib.types.listOf lib.types.str;
+        default = [ ];
+        description = "URLs of the tang servers this binding trusts.";
+      };
+    };
+
+    derive =
       name: entity: top:
       let
         b = entity.clevis-binding;
@@ -82,11 +103,11 @@
         safeName = if shortPath == null then null
                    else lib.replaceStrings [ "/" ] [ "-" ] shortPath;
         tangEnts = map (n: top.entities.${n} or null) b.tangs;
-        tangUrls = lib.filter (u: u != null) (map (e: if e == null then null else e.attrs.url or null) tangEnts);
+        tangUrls = lib.filter (u: u != null) (map (e: if e == null then null else e.url or null) tangEnts);
       in
       {
         label = "${toString (builtins.length b.tangs)} tang(s) → ${target}";
-        producer = if datasetEnt == null then null else datasetEnt.attrs.producer or null;
+        producer = if datasetEnt == null then null else datasetEnt.producer or null;
         # Name of the systemd unit the storage projection emits for this
         # binding's post-boot unlock. Other projections that consume the
         # bound dataset (iSCSI target, application services) add

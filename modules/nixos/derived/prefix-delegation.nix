@@ -21,11 +21,11 @@ let
   mkDownstream = _: d: let
     over = d.refs.over;
     receiver = eg.entities.${d.refs.to};
-    addrs = (receiver.attrs.addresses or {}).${over} or {};
+    addrs = (receiver.addresses or {}).${over} or {};
   in {
     name = d.refs.to;
     value = {
-      inherit (d.attrs) subnetId prefixLength;
+      inherit (d) subnetId prefixLength;
       interface = me.interfaces.${over}.device;
       via = addrs.ipv6;
     };
@@ -44,7 +44,7 @@ in {
     psyclyx.nixos.services.dhcp.delegations = lib.mapAttrs'
       (_: d: lib.nameValuePair d.refs.to {
         network = d.refs.over;
-        inherit (d.attrs) prefixLength;
+        inherit (d) prefixLength;
       })
       delegations;
   };

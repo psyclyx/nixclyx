@@ -22,7 +22,7 @@
     serverHost = obo.serverHost or "";
     serverNet = obo.serverNetwork or "";
     addr = lib.attrByPath
-      ["entities" serverHost "attrs" "addresses" serverNet "ipv4"] "" eg;
+      ["entities" serverHost "addresses" serverNet "ipv4"] "" eg;
   in lib.mkIf (addr != "") {
     psyclyx.openbao.endpoint =
       "${obo.scheme or "https"}://${addr}:${toString (obo.port or 8200)}";

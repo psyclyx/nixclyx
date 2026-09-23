@@ -38,7 +38,7 @@
         );
         default = { };
         description = ''
-          Declared host addresses. Read host.attrs.addresses for the
+          Declared host addresses. The derived `addresses` aspect is the
           resolved view, which extends declared entries with addresses
           derived from networks where this host is the gateway.
         '';
@@ -65,7 +65,84 @@
       };
     };
 
-    attrs =
+    deriveOptions = {
+      address = lib.mkOption {
+        type = lib.types.nullOr lib.types.str;
+        default = null;
+        description = ''
+          Primary management address (the vpn address today). Null when
+          the host holds no vpn address. Shared capability — declared
+          by every kind that derives it; this is the full declaration.
+        '';
+      };
+      addresses = lib.mkOption {
+        type = lib.types.attrsOf (lib.types.submodule {
+          options = {
+            ipv4 = lib.mkOption {
+              type = lib.types.nullOr lib.types.str;
+              default = null;
+            };
+            ipv6 = lib.mkOption {
+              type = lib.types.nullOr lib.types.str;
+              default = null;
+            };
+            dhcp = lib.mkOption {
+              type = lib.types.bool;
+              default = false;
+            };
+          };
+        });
+        default = { };
+        description = ''
+          Resolved addresses this entity holds, keyed by network name.
+          Shared capability (host and the switch kinds derive it); this
+          is the full declaration of the entry shape.
+        '';
+      };
+      fqdn = lib.mkOption {
+        type = lib.types.nullOr lib.types.str;
+        default = null;
+        description = "Site FQDN (<name>.<site domain>). Null when the host has no site.";
+      };
+      fqdns = lib.mkOption {
+        type = lib.types.attrsOf (lib.types.nullOr lib.types.str);
+        default = { };
+        description = ''
+          Per-network FQDNs, keyed by address key (network name). Null
+          value for an address key with no zone.
+        '';
+      };
+      deployAddress = lib.mkOption {
+        type = lib.types.nullOr lib.types.str;
+        default = null;
+        description = ''
+          Where a deploy tool reaches this host. Derived, not declared:
+          a directly routed public address first, else a stable name
+          (the site FQDN, then the vpn FQDN). Null only if the host has
+          neither an address nor a site name.
+        '';
+      };
+      hypervisor = lib.mkOption {
+        type = lib.types.nullOr lib.types.str;
+        default = null;
+        description = "Hypervisor host entity name (refs.hypervisor), when this host is a VM.";
+      };
+      isVm = lib.mkOption {
+        type = lib.types.bool;
+        default = false;
+        description = "Whether this host is a microvm guest (has refs.hypervisor).";
+      };
+      interfaceNames = lib.mkOption {
+        type = lib.types.listOf lib.types.str;
+        default = [ ];
+        description = ''
+          Logical interface names, so a switch port that says it's cabled
+          to one of them can be checked against reality.
+        '';
+      };
+    };
+
+    derive =
       name: entity: top:
       let
         h = entity.host;
@@ -82,8 +159,8 @@
           (lib.filter (n: (top.entities.${n}).type or "" == "network")
             (entity.refsIn.gateway or []))
           (netName: let net = top.entities.${netName}; in {
-            ipv4 = net.attrs.gateway4 or null;
-            ipv6 = net.attrs.gateway6 or null;
+            ipv4 = net.gateway4 or null;
+            ipv6 = net.gateway6 or null;
             dhcp = false;
           });
 
@@ -96,7 +173,7 @@
           addrKey: _:
           let
             netEnt = top.entities.${addrKey} or null;
-            zone = if netEnt != null && netEnt.type == "network" then netEnt.attrs.zoneName or "" else "";
+            zone = if netEnt != null && netEnt.type == "network" then netEnt.zoneName or "" else "";
           in
           if zone != "" then "${name}.${zone}" else null
         ) resolvedAddresses;
@@ -109,7 +186,8 @@
         # in data — model §6): its port and scopes live there, and the
         # session account lives in the client (home-manager's
         # `sshHosts.user`). Nothing ssh-shaped is derived here.
-        site = h.site;
+        # `host.site` is the host's site ref (the derived `site` key is
+        # gone — it collided with the `site` kind at top level).
         # Where a deploy tool reaches this host. Derived, not declared:
         # a directly routed public address first, else a stable name
         # (the site FQDN, then the vpn FQDN). Null only if the host has

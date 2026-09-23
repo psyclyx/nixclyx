@@ -2,7 +2,7 @@ _egregore() {
   local cur prev words cword
   _init_completion || return
 
-  local cmds="list ls show inspect attrs graph"
+  local cmds="list ls show inspect aspects attrs graph"
 
   if [[ $cword -eq 1 ]]; then
     COMPREPLY=($(compgen -W "$cmds" -- "$cur"))
@@ -13,7 +13,7 @@ _egregore() {
 
   case "$cmd" in
     # Entity name completion for entity-first commands.
-    show|attrs)
+    show|aspects|attrs)
       if [[ $cword -eq 2 ]]; then
         local entities
         entities=$(egregore list --no-color 2>/dev/null | awk '{print $1}')

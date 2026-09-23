@@ -69,7 +69,7 @@ in
       seaweedfs.buckets = [
         "backups"
       ];
-      openbao.settings.transitAddress = "http://${eg.entities.infra.attrs.gateway4}:8200";
+      openbao.settings.transitAddress = "http://${eg.entities.infra.gateway4}:8200";
       openbao-pki.enable = true;
       openbao-kv.enable = true;
       icecream = {

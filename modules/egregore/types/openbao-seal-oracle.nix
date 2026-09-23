@@ -56,7 +56,12 @@
       };
     };
 
-    attrs =
+    deriveOptions = {
+      label = lib.mkOption { type = lib.types.str; };
+      producer = lib.mkOption { type = lib.types.nullOr lib.types.str; };
+    };
+
+    derive =
       name: entity: _top:
       let
         o = entity.openbao-seal-oracle;

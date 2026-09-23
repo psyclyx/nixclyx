@@ -34,13 +34,17 @@
       };
     };
 
-    attrs = name: entity: top: let
+    deriveOptions = {
+      domain = lib.mkOption { type = lib.types.nullOr lib.types.str; };
+      zone = lib.mkOption { type = lib.types.str; };
+      label = lib.mkOption { type = lib.types.str; };
+    };
+
+    derive = name: entity: top: let
       e = entity.environment;
       netEnt = if e.network != null then top.entities.${e.network} or null else null;
     in {
-      domain = e.domain;
-      site = e.site;
-      network = e.network;
+      inherit (e) domain;
       # Convenience: zone of the network this env owns. Null when the
       # env has no network or the network has no zone.
       zone =

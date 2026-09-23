@@ -52,7 +52,12 @@
       };
     };
 
-    attrs =
+    deriveOptions = {
+      label = lib.mkOption { type = lib.types.str; };
+      fullPath = lib.mkOption { type = lib.types.str; };
+    };
+
+    derive =
       name: entity: _top:
       let
         r = entity.openbao-pki-role;

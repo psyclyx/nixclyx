@@ -43,7 +43,7 @@ let
   bindings = lib.filterAttrs (_: e: e.type == "clevis-binding") eg.entities;
 
   myPools = lib.filterAttrs (_: p: (p.refs.host or null) == hostname) pools;
-  myDatasets = lib.filterAttrs (_: d: (d.attrs.producer or null) == hostname) datasets;
+  myDatasets = lib.filterAttrs (_: d: (d.producer or null) == hostname) datasets;
 
   # Consumers of a given dataset = hosts whose refs.nixDataset or
   # refs.persistDataset names this dataset (excluding the producer
@@ -55,7 +55,7 @@ let
       isConsumer = h:
         ((h.refs.nixDataset or null) == datasetName
           || (h.refs.persistDataset or null) == datasetName)
-        && h.attrs.name != (datasets.${datasetName}.attrs.producer or null);
+        && h.name != (datasets.${datasetName}.producer or null);
     in
     lib.filterAttrs (_: h: h.type == "host" && isConsumer h) eg.entities;
 
@@ -70,9 +70,9 @@ let
     else path;
 
   # Pick a host's IPv4 on a network, falling back to null. The address
-  # must be the resolved view (h.attrs.addresses) so gateway-derived
+  # must be the resolved view (h.addresses) so gateway-derived
   # entries are included.
-  hostAddrOn = host: net: ((host.attrs.addresses or { }).${net} or { }).ipv4 or null;
+  hostAddrOn = host: net: ((host.addresses or { }).${net} or { }).ipv4 or null;
 
   # Network used to export ZFS datasets to remote consumers. The
   # producer must have an address on this network for it to be usable;
@@ -259,7 +259,7 @@ let
   myBindings = lib.filterAttrs (
     _: b:
     b.clevis-binding.protectDataset != null
-    && (datasets.${b.clevis-binding.protectDataset}.attrs.producer or null) == hostname
+    && (datasets.${b.clevis-binding.protectDataset}.producer or null) == hostname
   ) bindings;
 
   initrdBindings = lib.filterAttrs (_: b: bindingIsInitrd b) myBindings;
@@ -277,8 +277,8 @@ let
       dsEnt = datasets.${b.clevis-binding.protectDataset};
       poolEnt = pools.${dsEnt.refs.pool};
       dsPath = dsEnt.zfs-dataset.path;
-      # Consumers find this unit name via b.attrs.unlockUnitName.
-      unitName = lib.removeSuffix ".service" b.attrs.unlockUnitName;
+      # Consumers find this unit name via b.unlockUnitName.
+      unitName = lib.removeSuffix ".service" b.unlockUnitName;
     in
     lib.nameValuePair unitName {
       description = "Unseal ${dsPath} via clevis";
@@ -315,12 +315,12 @@ let
   consumerAddrs = host:
     lib.filter (a: a != null)
       (lib.mapAttrsToList (_: a: a.ipv4 or null)
-        (host.attrs.addresses or { }));
+        (host.addresses or { }));
 
   mkExportsForDataset =
     _: d:
     let
-      cons = consumersOf d.attrs.name;
+      cons = consumersOf d.name;
     in
     lib.flatten (map (c:
       map (addr: {
@@ -331,7 +331,7 @@ let
 
   myDatasetExports = lib.flatten (lib.mapAttrsToList mkExportsForDataset
     (lib.filterAttrs (_: d: d.zfs-dataset.mountpoint != null
-      && consumersOf d.attrs.name != { }) myDatasets));
+      && consumersOf d.name != { }) myDatasets));
 
   # Group per-path so a dataset with multiple consumers becomes one
   # exports line with all client addresses. Output shape matches
@@ -353,7 +353,7 @@ let
       mountOf = role: dsRef: localMount:
         let
           d = if dsRef == null then null else datasets.${dsRef} or null;
-          producer = if d == null then null else d.attrs.producer or null;
+          producer = if d == null then null else d.producer or null;
           producerEnt = if producer == null then null else eg.entities.${producer} or null;
           producerAddr = if producerEnt == null then null else hostAddrOn producerEnt exportNetwork;
         in
@@ -400,7 +400,7 @@ let
       (_: d: d.zfs-dataset.mountpoint == "/nix")
       myDatasets;
     consumerNames = lib.unique (lib.concatMap
-      (d: lib.attrNames (consumersOf d.attrs.name))
+      (d: lib.attrNames (consumersOf d.name))
       (lib.attrValues myNixDatasets));
     nodeToplevel = name:
       let nodeCfg = nodes.${name}.config or null;

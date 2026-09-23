@@ -69,7 +69,61 @@
       };
     };
 
-    attrs =
+    deriveOptions = {
+      vip = lib.mkOption {
+        type = lib.types.str;
+        default = "";
+        description = "IPv4 virtual address of the group (the keepalived VIP).";
+      };
+      vrid = lib.mkOption {
+        type = lib.types.int;
+        default = 0;
+        description = "VRRP router ID (mirrors `ha-group.vrid`).";
+      };
+      memberCount = lib.mkOption {
+        type = lib.types.int;
+        default = 0;
+        description = "Number of member hosts.";
+      };
+      services = lib.mkOption {
+        type = lib.types.attrsOf (lib.types.submodule {
+          options = {
+            port = lib.mkOption {
+              type = lib.types.nullOr lib.types.int;
+              default = null;
+            };
+            backendPort = lib.mkOption {
+              type = lib.types.nullOr lib.types.int;
+              default = null;
+            };
+            mode = lib.mkOption {
+              type = lib.types.str;
+              default = "";
+            };
+            check = lib.mkOption {
+              type = lib.types.nullOr lib.types.str;
+              default = null;
+            };
+            checkPort = lib.mkOption {
+              type = lib.types.nullOr lib.types.int;
+              default = null;
+            };
+            checkSsl = lib.mkOption {
+              type = lib.types.bool;
+              default = false;
+            };
+          };
+        });
+        default = { };
+        description = ''
+          Resolved per-service load-balancer config (ha-group.services
+          with the defaults filled in: mode falls back to "http").
+        '';
+      };
+      label = lib.mkOption { type = lib.types.str; };
+    };
+
+    derive =
       _name: entity: _top:
       let
         ha = entity.ha-group;

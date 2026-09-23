@@ -147,7 +147,64 @@
       };
     };
 
-    attrs = name: entity: top: let
+    deriveOptions = {
+      resolvedDomain = lib.mkOption {
+        type = lib.types.nullOr lib.types.str;
+        default = null;
+        description = "Resolved FQDN — the explicit domain, or <name>.<env.domain>. Null when not presented.";
+      };
+      backendType = lib.mkOption {
+        type = lib.types.str;
+        default = "";
+        description = "Which backend shape this offering has: \"ha\", \"host\", \"local\", or \"none\".";
+      };
+      resolvedAddress = lib.mkOption {
+        type = lib.types.nullOr lib.types.str;
+        default = null;
+        description = ''
+          Address the offering is reached at: the HA VIP, the backend
+          node's address at its exposure's address key, or 127.0.0.1 for
+          a local backend. Null when unresolvable.
+        '';
+      };
+      resolvedPort = lib.mkOption {
+        type = lib.types.nullOr lib.types.port;
+        default = null;
+        description = "Resolved port of the offering (from the exposure, HA group, or local backend).";
+      };
+      effectiveIngress = lib.mkOption {
+        type = lib.types.attrsOf (lib.types.nullOr lib.types.str);
+        default = { };
+        description = ''
+          Per-scope ingress host actually fronting this service, keyed
+          by scope name. Null value = the service is direct in that
+          scope (no proxy serves it).
+        '';
+      };
+      url = lib.mkOption {
+        type = lib.types.nullOr lib.types.str;
+        default = null;
+        description = "The offering's URL (its presentation: https FQDN, or direct http address:port). Null when neither applies.";
+      };
+      label = lib.mkOption { type = lib.types.str; };
+      protocol = lib.mkOption {
+        type = lib.types.str;
+        default = "";
+        description = "Offering protocol (\"http\" or \"tcp\"; mirrors `service.protocol`).";
+      };
+      websockets = lib.mkOption {
+        type = lib.types.bool;
+        default = false;
+        description = "Websocket upgrade support (mirrors `service.websockets`).";
+      };
+      streaming = lib.mkOption {
+        type = lib.types.bool;
+        default = false;
+        description = "Long-lived HTTP responses (mirrors `service.streaming`).";
+      };
+    };
+
+    derive = name: entity: top: let
       s = entity.service;
 
       # Domain resolution
@@ -201,7 +258,7 @@
         else null;
       hostBackendAddr =
         if hostAddrKey != null
-        then (top.entities.${s.backend.host.target}.attrs.addresses.${hostAddrKey} or {}).ipv4 or null
+        then (top.entities.${s.backend.host.target}.addresses.${hostAddrKey} or {}).ipv4 or null
         else null;
 
       # Resolved address and port
@@ -212,10 +269,10 @@
         else null;
       resolvedPort =
         if backendType == "ha" && haGroup != null
-        # Read attrs.services (resolved with defaultServiceMeta merged in)
-        # rather than ha-group.services (raw entity values, where ports
-        # default to null per the per-service-overrides-only convention).
-        then haGroup.attrs.services.${haSvcName}.port
+        # Read the derived `services` aspect (resolved with defaultServiceMeta
+        # merged in) rather than ha-group.services (raw entity values, where
+        # ports default to null per the per-service-overrides-only convention).
+        then haGroup.services.${haSvcName}.port
         else if backendType == "host" then (if hostExposure != null then hostExposure.port else null)
         else if backendType == "local" then s.backend.local.port
         else null;

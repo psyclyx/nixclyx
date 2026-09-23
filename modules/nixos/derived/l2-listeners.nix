@@ -49,7 +49,7 @@
 
   mkListener = netName: addr: let
     netEnt = eg.entities.${netName};
-    na = netEnt.attrs;
+    na = netEnt;
     device = me.interfaces.${netName}.device;
     parentExpected = "${lib.removeSuffix ".${toString netEnt.network.vlan}" device}";
   in {

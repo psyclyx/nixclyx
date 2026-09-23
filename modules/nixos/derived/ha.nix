@@ -31,7 +31,7 @@ let
         iface = me.host.interfaces.${ha.network}.device;
         vrid = ha.vrid;
         priority = 100 - (idx + 1);
-        prefixLen = net.attrs.prefixLen;
+        prefixLen = net.prefixLen;
       }
     ) haGroups
   );
@@ -118,7 +118,7 @@ let
         lib.flatten (
           lib.mapAttrsToList (
             groupName: g:
-            lib.mapAttrsToList (svcName: svc: mkFrontendBackend groupName g svcName svc) g.attrs.services
+            lib.mapAttrsToList (svcName: svc: mkFrontendBackend groupName g svcName svc) g.services
           ) haGroups
         )
       );
@@ -127,7 +127,7 @@ let
 
   allServicePorts = lib.unique (
     lib.flatten (
-      lib.mapAttrsToList (_: g: lib.mapAttrsToList (_: svc: svc.port) g.attrs.services) haGroups
+      lib.mapAttrsToList (_: g: lib.mapAttrsToList (_: svc: svc.port) g.services) haGroups
     )
   );
 in

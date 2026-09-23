@@ -53,7 +53,34 @@
       };
     };
 
-    attrs = name: entity: top: let
+    deriveOptions = {
+      dst = lib.mkOption {
+        type = lib.types.str;
+        default = "";
+        description = "Destination prefix (mirrors `route.dst`).";
+      };
+      disabled = lib.mkOption {
+        type = lib.types.bool;
+        default = false;
+        description = "Installed but inactive (mirrors `route.disabled`).";
+      };
+      family = lib.mkOption {
+        type = lib.types.str;
+        default = "";
+        description = "Address family of the destination: \"ipv4\" or \"ipv6\".";
+      };
+      gateway = lib.mkOption {
+        type = lib.types.nullOr lib.types.str;
+        default = null;
+        description = ''
+          Resolved next-hop address (the `via` entity's address on the
+          `over` network). Null when it cannot be resolved.
+        '';
+      };
+      label = lib.mkOption { type = lib.types.str; };
+    };
+
+    derive = name: entity: top: let
       r = entity.route;
       refs = entity.refs or {};
       viaName = refs.via or null;
@@ -66,7 +93,7 @@
       # gateway.
       viaAddrs =
         if via == null || overName == null then {}
-        else (via.attrs.addresses or {}).${overName} or {};
+        else (via.addresses or {}).${overName} or {};
     in {
       inherit (r) dst disabled;
       family = if isV6 then "ipv6" else "ipv4";
@@ -107,10 +134,10 @@
       # A next hop we can't resolve an address for is a route that
       # silently doesn't get emitted, which is worse than one that fails.
       ++ lib.optional (over != null && refs ? via) {
-        assertion = entity.attrs.gateway != null;
+        assertion = entity.gateway != null;
         message =
           "route '${name}': next hop '${refs.via}' has no "
-          + "${entity.attrs.family} address on '${over}'";
+          + "${entity.family} address on '${over}'";
       };
   };
 }

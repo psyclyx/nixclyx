@@ -18,7 +18,7 @@
 #     };
 #   in
 #     infra.entities          # all entities, fully resolved
-#     infra.entities.foo.attrs.address
+#     infra.entities.foo.address
 #     infra.entities.foo.verbs.deploy.impl
 #
 { lib }:

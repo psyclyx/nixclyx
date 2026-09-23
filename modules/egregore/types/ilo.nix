@@ -40,11 +40,16 @@
       };
     };
 
-    attrs = name: entity: top: let
+    deriveOptions = {
+      address = lib.mkOption { type = lib.types.nullOr lib.types.str; };
+      label = lib.mkOption { type = lib.types.str; };
+    };
+
+    derive = name: entity: top: let
       ilo = entity.ilo;
       # Derive hostname from entity name + mgmt zone domain if not explicit.
       mgmtNet = top.entities.${ilo.mgmtNetwork} or null;
-      zoneName = if mgmtNet != null then mgmtNet.attrs.zoneName or null else null;
+      zoneName = if mgmtNet != null then mgmtNet.zoneName or null else null;
       derivedHostname = if zoneName != null then "${name}.${zoneName}" else name;
       resolvedHostname = if ilo.hostname != null then ilo.hostname else derivedHostname;
     in {

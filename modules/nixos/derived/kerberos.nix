@@ -6,7 +6,7 @@
 # from this projection too.
 #
 # Principal sources:
-#  - `host.kerberos.enable = true` → `host/<host.attrs.fqdns.<net>>@REALM`
+#  - `host.kerberos.enable = true` → `host/<host.fqdns.<net>>@REALM`
 #  - any host that consumes an nfs-export with `sec != "sys"` →
 #    same host principal (auto-include)
 #  - every nfs-export with `sec != "sys"` → `nfs/<producer.fqdns.<net>>@REALM`
@@ -28,7 +28,7 @@ let
   addressOf = name:
     let
       h = entities.${name} or null;
-      addr = lib.attrByPath ["attrs" "addresses" kdcNet "ipv4"] null h;
+      addr = lib.attrByPath ["addresses" kdcNet "ipv4"] null h;
     in
     addr;
 
@@ -44,7 +44,7 @@ let
     let
       h = entities.${name} or null;
       net = lib.attrByPath ["kerberos" "fqdnNetwork"] "vpn" h;
-      fqdn = lib.attrByPath ["attrs" "fqdns" net] null h;
+      fqdn = lib.attrByPath ["fqdns" net] null h;
     in
     fqdn;
 

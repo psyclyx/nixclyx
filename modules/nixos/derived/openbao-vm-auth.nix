@@ -25,7 +25,7 @@ let
   oboServerEnt = eg.entities.${obo.serverHost or ""} or null;
   oboServerAddr =
     if oboServerEnt == null then null
-    else (oboServerEnt.attrs.addresses.${obo.serverNetwork or ""} or {}).ipv4 or null;
+    else (oboServerEnt.addresses.${obo.serverNetwork or ""} or {}).ipv4 or null;
   derivedVaultAddr =
     if oboServerAddr == null then null
     else "${obo.scheme}://${oboServerAddr}:${toString obo.port}";
@@ -46,7 +46,7 @@ let
   guestCommonName =
     if myCertBinding == null then null
     else if myCertBinding.commonName != null then myCertBinding.commonName
-    else (me.attrs.fqdns or { }).${myCertBinding.network} or null;
+    else (me.fqdns or { }).${myCertBinding.network} or null;
 
   # ─── Hypervisor side ──────────────────────────────────────────
 
@@ -64,7 +64,7 @@ let
       roleName = vm.openbao.cert.role;
       roleEnt = eg.entities.${roleName} or null;
     in
-    if roleEnt == null then null else roleEnt.attrs.tokenRoleName;
+    if roleEnt == null then null else roleEnt.tokenRoleName;
 
   wrapTokenDir = vmName: "/var/lib/microvms/${vmName}/openbao-init";
   wrapTokenFile = vmName: "${wrapTokenDir vmName}/wrap-token";
@@ -198,8 +198,8 @@ in
         enable = true;
         vaultAddr = cfg.vaultAddr;
         insecureSkipVerify = cfg.insecureSkipVerify;
-        pki.mount = guestCertRole.attrs.pkiMount;
-        pki.role = guestCertRole.attrs.pkiRoleName;
+        pki.mount = guestCertRole.pkiMount;
+        pki.role = guestCertRole.pkiRoleName;
         commonName = guestCommonName;
         ttl = guestCertRole.openbao-cert-role.leafTtl;
       };

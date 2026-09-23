@@ -7,14 +7,14 @@
   hostName = config.networking.hostName;
 
   vpnNet = eg.entities.vpn;
-  hubName = vpnNet.attrs.gatewayRef;
+  hubName = vpnNet.gatewayRef;
   isHub = hostName == hubName;
 
   wgHosts = lib.filterAttrs (_: e:
     e.type == "host" && e.wireguard != null
   ) eg.entities;
 
-  vpnZoneName = vpnNet.attrs.zoneName;
+  vpnZoneName = vpnNet.zoneName;
 
   hubVpnIp = eg.entities.${hubName}.host.addresses.vpn.ipv4;
 

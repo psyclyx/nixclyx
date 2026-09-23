@@ -110,7 +110,22 @@
       };
     };
 
-    attrs =
+    deriveOptions = {
+      label = lib.mkOption { type = lib.types.str; };
+      poolName = lib.mkOption {
+        type = lib.types.nullOr lib.types.str;
+        default = null;
+        description = "ZFS pool name this dataset lives in (from refs.pool). Null when unresolved.";
+      };
+      producer = lib.mkOption { type = lib.types.nullOr lib.types.str; };
+      isEncryptionRoot = lib.mkOption {
+        type = lib.types.bool;
+        default = false;
+        description = "Whether this dataset is a ZFS native-encryption root (has `encryption` set).";
+      };
+    };
+
+    derive =
       name: entity: top:
       let
         d = entity.zfs-dataset;

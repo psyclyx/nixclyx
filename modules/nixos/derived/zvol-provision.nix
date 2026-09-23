@@ -26,7 +26,7 @@ let
     _: e:
     e.type == "lun"
     && (e.refs.producer or null) == hostname
-    && e.attrs.dataset != null
+    && e.dataset != null
   ) eg.entities;
 
   # systemd-escape for /dev/zvol/<dataset> → device unit name.
@@ -44,7 +44,7 @@ let
   mkCreateUnit =
     lunName: lun:
     let
-      ds = lun.attrs.dataset;
+      ds = lun.dataset;
       size = "${toString lun.lun.sizeGiB}G";
     in
     {
@@ -72,7 +72,7 @@ let
   mkFormatUnit =
     lunName: lun:
     let
-      ds = lun.attrs.dataset;
+      ds = lun.dataset;
       fsType = lun.lun.fsType;
       deviceUnit = zvolDeviceUnit ds;
     in

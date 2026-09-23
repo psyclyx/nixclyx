@@ -59,8 +59,8 @@
       resolve = e: let
         sameSite = mySite != null && (e.host.site or null) == mySite;
         siteDomain = siteDomainOf e;
-        siteFqdn = if siteDomain != null then "${e.attrs.name}.${siteDomain}" else null;
-        vpnFqdn = (e.attrs.fqdns or { }).vpn or null;
+        siteFqdn = if siteDomain != null then "${e.name}.${siteDomain}" else null;
+        vpnFqdn = (e.fqdns or { }).vpn or null;
       in {
         inherit siteFqdn vpnFqdn;
         hostname = if sameSite && siteFqdn != null then siteFqdn else vpnFqdn;
@@ -77,7 +77,7 @@
       mkHost = _name: e: let
         r = resolve e;
         aliases = lib.concatStringsSep " " (lib.unique (
-          [ e.attrs.name ]
+          [ e.name ]
           ++ lib.optional (r.siteFqdn != null) r.siteFqdn
           ++ lib.optional (r.vpnFqdn != null) r.vpnFqdn
         ));
@@ -95,22 +95,22 @@
       switches = lib.filterAttrs (_: e:
         e.type == "routeros"
         && e.exposures ? ssh
-        && (e.attrs.address or null) != null
+        && (e.address or null) != null
       ) eg.entities;
 
-      mkSwitch = _name: e: lib.nameValuePair e.attrs.name {
-        HostName = e.attrs.address;
-        User = e.attrs.ssh.user;
+      mkSwitch = _name: e: lib.nameValuePair e.name {
+        HostName = e.address;
+        User = e.ssh.user;
       };
 
       # Initrd unlock: a host whose BMC ref lets it netboot exposes its
       # initrd ssh on a fixed port, reachable at the deploy address.
       unlockHosts = lib.filterAttrs (_: e:
-        e.type == "host" && e.refs ? bmc && (e.attrs.deployAddress or null) != null
+        e.type == "host" && e.refs ? bmc && (e.deployAddress or null) != null
       ) eg.entities;
 
       mkUnlock = name: e: lib.nameValuePair "${name}-unlock" {
-        HostName = e.attrs.deployAddress;
+        HostName = e.deployAddress;
         Port = cfg.initrdPort;
         User = "root";
         ForwardAgent = false;

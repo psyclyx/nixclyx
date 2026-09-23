@@ -117,8 +117,10 @@ rec {
   linkAssertions = name: ports: top:
     lib.concatMap (l: let
       target = top.entities.${l.target} or null;
-      targetPorts = if target == null then null else target.attrs.portNames or null;
-      targetNics = if target == null then null else target.attrs.interfaceNames or null;
+      # Closed keys read as "this kind has no such vocabulary" at their
+      # null default — the old open-bag absence.
+      targetPorts = if target == null then null else target.portNames or null;
+      targetNics = if target == null then null else target.interfaceNames or null;
     in [
       {
         assertion = target != null;

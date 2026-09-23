@@ -88,7 +88,7 @@
     net = e.nfs-export.network;
   in
     if e.nfs-export.sec != "sys"
-    then producer.attrs.fqdns.${net} or producer.host.addresses.${net}.ipv4
+    then producer.fqdns.${net} or producer.host.addresses.${net}.ipv4
     else producer.host.addresses.${net}.ipv4;
 
   mkConsumerMount = _expName: e: {
@@ -118,7 +118,7 @@
       let
         producer = eg.entities.${e.refs.producer};
         net = e.nfs-export.network;
-        fqdn = producer.attrs.fqdns.${net} or null;
+        fqdn = producer.fqdns.${net} or null;
         ipv4 = producer.host.addresses.${net}.ipv4 or null;
       in
       lib.optional (e.nfs-export.sec != "sys" && fqdn != null && ipv4 != null)

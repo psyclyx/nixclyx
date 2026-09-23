@@ -85,10 +85,10 @@ in
 
       dns = {
         authoritative = {
-          ns = me.attrs.addresses.public.ipv4;
+          ns = me.addresses.public.ipv4;
           interfaces = [
-            me.attrs.addresses.public.ipv4
-            me.attrs.addresses.public.ipv6
+            me.addresses.public.ipv4
+            me.addresses.public.ipv6
           ];
           port = 53;
           tsigKeyName = "acme-tleilax";

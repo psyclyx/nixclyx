@@ -3,7 +3,7 @@
 # tpm), DNS authority, monitoring targets, and boot intent. These are
 # *top-level* entity options (a facet `mkAspect`), not fields of the
 # `host` bag, so a facet can attach to anything it fits — `gateway` is
-# not intrinsic to NixOS hosts. The attrs/assertions here gate on
+# not intrinsic to NixOS hosts. The derive/assertions here gate on
 # `entity.host != null` because the facts they surface (TPM, exporters,
 # PXE seats) are host facts.
 {
@@ -85,6 +85,11 @@
           };
         };
         default = { };
+      };
+      hasTpm = lib.mkOption {
+        type = lib.types.bool;
+        default = false;
+        description = "Whether this node's hardware carries a TPM (derived: `hardware.tpm`).";
       };
       boot = lib.mkOption {
         type = lib.types.submodule {
@@ -171,7 +176,7 @@
                     type = lib.types.str;
                     description = ''
                       Network whose zone supplies the CN/principal in
-                      the SSH host cert. Read as `attrs.fqdns.<network>`.
+                      the SSH host cert. Read as `fqdns.<network>`.
                     '';
                   };
                 };
@@ -204,8 +209,8 @@
                     default = null;
                     description = ''
                       Override the derived CN. Null = use the host's
-                      `attrs.fqdns.<network>` for whatever network the
-                      cert role expects.
+                      `fqdns.<network>` for whatever network the cert
+                      role expects.
                     '';
                   };
                   network = lib.mkOption {
@@ -213,7 +218,7 @@
                     description = ''
                       Network whose zone supplies the cert CN when
                       `commonName` is unset. Read as
-                      `host.attrs.fqdns.<network>`.
+                      `fqdns.<network>`.
                     '';
                   };
                 };
@@ -252,7 +257,7 @@
               default = "vpn";
               description = ''
                 Network entity whose FQDN is used in the principal
-                (`host/<host.attrs.fqdns.<network>>@REALM`). vpn is
+                (`host/<fqdns.<network>>@REALM`). vpn is
                 the default since every host has a VPN address with a
                 stable name.
               '';
@@ -326,7 +331,9 @@
 
     };
 
-    attrs =
+    # Derived keys of this facet: hasTpm (declared above, beside the
+    # facet options — mkAspect options are already top-level).
+    derive =
       name: entity: top:
       let
         h = entity.host;
@@ -381,19 +388,26 @@
             };
           });
       in
-      lib.mkIf (h != null) {
-        hasTpm = entity.hardware.tpm;
-        # Exposures (derived form, model §6): one computed exporter
-        # exposure per service/tag — named for the exporter, its scopes
-        # the networks it is scraped from. Data declares (or overrides)
-        # exporter exposures in `exposures`; the declared form wins.
-        exposures =
-          lib.mapAttrs (_: x: {
+      # Literal attrset, gated per key: the mechanism spreads `derive`'s
+      # result into config at module-assembly time, so the result's
+      # spine must not touch entity config — the gate belongs on the
+      # values.
+      {
+        hasTpm = lib.mkIf (h != null) entity.hardware.tpm;
+        # Exporter exposures (model §6), computed from service/tag
+        # membership — one per exporter, named for it, its scopes the
+        # networks it is scraped from. They merge into the one declared
+        # `exposures` aspect; per-key `mkDefault` means a declared
+        # exposure of the same name wins outright (data declares or
+        # overrides exporter exposures).
+        exposures = lib.mkIf (h != null) (
+          lib.mapAttrs (_: x: lib.mkDefault {
             role = "exporter";
             port = x.port;
             scopes = x.networks;
             identity = null;
-          }) computedExporters;
+          }) computedExporters
+        );
       };
 
     assertions =

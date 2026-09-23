@@ -99,7 +99,21 @@
       };
     };
 
-    attrs =
+    deriveOptions = {
+      label = lib.mkOption { type = lib.types.str; };
+      signPath = lib.mkOption {
+        type = lib.types.str;
+        default = "";
+        description = "OpenBao path clients request signatures from (`<mount>/sign/<role>`).";
+      };
+      caPubPath = lib.mkOption {
+        type = lib.types.str;
+        default = "";
+        description = "OpenBao path of the CA public key (`<mount>/public_key`).";
+      };
+    };
+
+    derive =
       name: entity: _top:
       let
         r = entity.openbao-ssh-cert-role;

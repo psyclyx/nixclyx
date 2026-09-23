@@ -6,7 +6,7 @@
 {config, lib, ...}: let
   eg = config.psyclyx.egregore;
   infra = eg.entities.infra or null;
-  zoneName = if infra != null then infra.attrs.zoneName or "" else "";
+  zoneName = if infra != null then infra.zoneName or "" else "";
 in lib.mkIf (zoneName != "") {
   psyclyx.nixos.system.distributed-builds.infraZone = lib.mkDefault zoneName;
 }

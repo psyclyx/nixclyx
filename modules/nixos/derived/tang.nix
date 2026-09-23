@@ -23,8 +23,11 @@
   ) eg.entities;
 
   netCidr = name: let
-    a = lib.attrByPath ["entities" name "attrs"] {} eg;
-  in lib.optionalString (a ? network4 && a ? prefixLen)
+    a = lib.attrByPath ["entities" name] {} eg;
+    # Presence read as value: a network always derives a non-empty
+    # network4; a closed key reads as its empty default otherwise (the
+    # old open-bag `a ? network4` absence).
+  in lib.optionalString ((a.network4 or "") != "")
     "${a.network4}/${toString a.prefixLen}";
 
   # First (and currently only) tang service on this host. Multiple tangs
@@ -34,7 +37,7 @@
 in {
   config = lib.mkIf (myTang != null) (let
     s = myTang.service;
-    bindAddr = myTang.attrs.resolvedAddress;
+    bindAddr = myTang.resolvedAddress;
     # The backend's own network is the address key of its exposure's
     # first scope (scopes map to address keys; a network-named scope is
     # its own key) — the exposure replaces the old `backend.host.network`.
@@ -49,7 +52,7 @@ in {
   in {
     services.tang = lib.mkIf (bindAddr != null) {
       enable = true;
-      listenStream = [ "${bindAddr}:${toString myTang.attrs.resolvedPort}" ];
+      listenStream = [ "${bindAddr}:${toString myTang.resolvedPort}" ];
       ipAddressAllow = aclCidrs;
     };
   });

@@ -59,7 +59,7 @@
     netEnt = eg.entities.${netName};
     device = me.interfaces.${netName}.device;
     addr = me.addresses.${netName};
-    net = netEnt.attrs;
+    net = netEnt;
     prefixLen = toString net.prefixLen;
     isDefault = netName == cfg.defaultNetwork;
     mtu = netEnt.network.mtu or 1500;
