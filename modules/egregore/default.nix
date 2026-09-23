@@ -1,7 +1,7 @@
 # Egregore modules — reusable entity types and extensions.
 #
 # Types define the schema, attrs, and verbs for each entity kind.
-# Extensions add cross-cutting options (globals, audiences, etc.).
+# Extensions add cross-cutting options (globals, scopes, dnsViews, etc.).
 #
 # These are egregore module specs — they go through the shared
 # spec compiler (`nixclyx/lib/spec`) with the egregore-type

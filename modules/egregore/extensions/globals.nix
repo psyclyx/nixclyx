@@ -47,7 +47,7 @@
             type = lib.types.str;
             default = "";
             description = ''
-              Parent zone for internal-audience services. Subdomains
+              Parent zone for internal-scope services. Subdomains
               resolve via per-site resolver localZones; the wildcard
               cert is issued by the host(s) authoritative for it.
             '';

@@ -1,24 +1,27 @@
-# Ingress projection — audience-driven.
+# Ingress projection — scope-driven, dispatching on the DNS view.
 #
-# For every (service, audience) pair, the projection determines who runs
+# For every (service, scope) pair, the projection determines who runs
 # ingress (service.attrs.effectiveIngress) and emits, on that host:
 #
-#   - one HAProxy backend per service (shared across audiences)
-#   - one HAProxy frontend per audience, bound on this host's address
-#     for that audience's network
+#   - one HAProxy backend per service (shared across scopes)
+#   - one HAProxy frontend per scope, bound on this host's address
+#     for that scope's address key
 #   - ACME cert config when this host can issue locally (its
 #     dnsAuthority covers the cert's zone). Hosts that need a cert they
 #     can't issue locally fetch it via the cert distribution module.
-#   - resolver localZones records on the resolver host for non-public
-#     audiences (audience.address resolves to a network entity whose
-#     refs.dns names the resolver).
-#   - authoritative zone A/AAAA records for the public audience, on
-#     hosts with dnsAuthority for the matching zone.
+#   - resolver localZones records for scopes whose view is answered from
+#     localzone records, emitted on the resolver host (the scope's
+#     address key resolves to a network entity whose refs.dns names the
+#     resolver).
+#   - authoritative zone A/AAAA records for scopes whose view is
+#     answered from authoritative records, on hosts with dnsAuthority
+#     for the matching zone.
 #
-# DNS resolution targets the *ingress host*'s address on the audience's
-# network — so road warriors hitting tleilax's resolver for
-# light.psyclyx.net get back iyr's vpn IP, not tleilax's, and there's
-# no hairpin.
+# The view decides the record set; the scope's address key gives the
+# record value. DNS resolution targets the *ingress host*'s address on
+# the scope's address key — so road warriors hitting tleilax's resolver
+# for light.psyclyx.net get back iyr's vpn IP, not tleilax's, and
+# there's no hairpin.
 { config, lib, pkgs, ... }: let
   eg = config.psyclyx.egregore;
   hostname = config.psyclyx.nixos.host;
@@ -35,7 +38,7 @@
   httpServices = lib.filterAttrs (_: e: e.service.protocol == "http") presented;
   tcpServices = lib.filterAttrs (_: e: e.service.protocol == "tcp") presented;
 
-  audiences = eg.audiences;
+  scopes = eg.scopes;
   envEntities = lib.filterAttrs
     (_: e: e.type == "environment" && e.environment.domain != null)
     eg.entities;
@@ -44,10 +47,13 @@
   # --- Tuple expansion ---
 
   mkTuples = svcs: lib.concatLists (lib.mapAttrsToList (svcName: e:
-    lib.mapAttrsToList (audName: ingHost: {
-      inherit svcName audName ingHost;
+    lib.mapAttrsToList (scopeName: ingHost: let
+      viewName = scopes.${scopeName}.view;
+    in {
+      inherit svcName scopeName ingHost viewName;
       svc = e;
-      audAddress = audiences.${audName}.address;
+      scopeAddress = scopes.${scopeName}.address;
+      view = eg.dnsViews.${viewName};
     }) e.attrs.effectiveIngress
   ) svcs);
 
@@ -55,7 +61,7 @@
   tcpTuples = mkTuples tcpServices;
 
   myIngressTuples = lib.filter (t: t.ingHost == hostname) httpTuples;
-  myTuplesByAudience = builtins.groupBy (t: t.audName) myIngressTuples;
+  myTuplesByScope = builtins.groupBy (t: t.scopeName) myIngressTuples;
 
   # --- Cert resolution ---
 
@@ -156,10 +162,10 @@
     (n: mkBackend n httpServices.${n})
     myBackendSvcs);
 
-  # --- HAProxy frontend (one per audience) ---
+  # --- HAProxy frontend (one per scope) ---
 
-  mkFrontend = audName: tuples: let
-    bind = me.attrs.addresses.${audiences.${audName}.address}.ipv4;
+  mkFrontend = scopeName: tuples: let
+    bind = me.attrs.addresses.${scopes.${scopeName}.address}.ipv4;
     certs = lib.unique (map (t: certPath (certFor t.svc.attrs.resolvedDomain).name) tuples);
     crtArgs = lib.concatMapStringsSep " " (p: "crt ${p}") certs;
     acls = map
@@ -170,7 +176,7 @@
       tuples;
   in ''
 
-    frontend ft_https_${audName}
+    frontend ft_https_${scopeName}
       bind ${bind}:443 ssl ${crtArgs} strict-sni
       mode http
       option forwardfor
@@ -179,14 +185,14 @@
      + lib.concatStringsSep "\n" useBackends + ''
 
 
-    frontend ft_http_${audName}
+    frontend ft_http_${scopeName}
       bind ${bind}:80
       mode http
       redirect scheme https code 301
   '';
 
   frontends = lib.concatStringsSep ""
-    (lib.mapAttrsToList mkFrontend myTuplesByAudience);
+    (lib.mapAttrsToList mkFrontend myTuplesByScope);
 
   haproxyConfig = ''
     global
@@ -207,41 +213,48 @@
 
   # --- DNS records ---
 
-  # Ingress host's bind address for an audience's network — what DNS
-  # records for that (audience, service) pair point at.
-  ingressBindAddr = audAddress: ingHost: let
-    addr = (eg.entities.${ingHost}.attrs.addresses.${audAddress} or null);
+  # Ingress host's bind address for a scope's address key — what DNS
+  # records for that (scope, service) pair point at.
+  ingressBindAddr = scopeAddress: ingHost: let
+    addr = (eg.entities.${ingHost}.attrs.addresses.${scopeAddress} or null);
   in if addr != null then addr.ipv4 else null;
 
   # Resolver localzone records: emitted on the resolver host for each
-  # network-backed audience (skips public). Pulls all (service, audience)
-  # tuples whose audience.address resolves to a network entity served by
-  # this host's resolver, including TCP services (which use the HA VIP
-  # directly via service.attrs.resolvedAddress, not an ingress address).
+  # scope whose view is answered from localzone records. The view picks
+  # the record set; the resolver lookup (the scope's address key
+  # resolves to a network entity served by this host's resolver) decides
+  # where the resolver emits. Pulls all (service, scope) tuples,
+  # including TCP services (which use the HA VIP directly via
+  # service.attrs.resolvedAddress, not an ingress address).
   resolverLocalZoneRecords = let
-    isResolverFor = audAddress: let
-      net = eg.entities.${audAddress} or null;
+    localzoneView = t: t.view.records == "localzone";
+    isResolverFor = scopeAddress: let
+      net = eg.entities.${scopeAddress} or null;
     in net != null && net.type == "network" && (net.attrs.dnsRef or null) == hostname;
 
     httpRecs = lib.concatMap (t:
-      lib.optional (isResolverFor t.audAddress)
-        "${t.svc.attrs.resolvedDomain}. IN A ${ingressBindAddr t.audAddress t.ingHost}"
+      lib.optional (localzoneView t && isResolverFor t.scopeAddress)
+        "${t.svc.attrs.resolvedDomain}. IN A ${ingressBindAddr t.scopeAddress t.ingHost}"
     ) httpTuples;
 
     tcpRecs = lib.concatMap (t: let
       a = t.svc.attrs;
     in
-      lib.optional (isResolverFor t.audAddress
+      lib.optional (localzoneView t
+                    && isResolverFor t.scopeAddress
                     && a.resolvedAddress != null)
         "${a.resolvedDomain}. IN A ${a.resolvedAddress}"
     ) tcpTuples;
   in lib.unique (httpRecs ++ tcpRecs);
 
-  # Authoritative public-zone records: emitted on hosts whose
-  # dnsAuthority covers the matching zone, for services in the public
-  # audience.
-  publicTuples = lib.filter (t: t.audAddress == "public") httpTuples;
+  # Authoritative zone records: tuples whose view is answered from
+  # authoritative records — the view dispatches, not the scope's
+  # address key.
+  publicTuples = lib.filter (t: t.view.records == "authoritative") httpTuples;
 
+  # Authoritative public-zone records: emitted on hosts whose
+  # dnsAuthority covers the matching zone, for services in a scope
+  # whose view is answered from authoritative records.
   authoritativeZoneRecords = let
     myZones = if me != null then effectiveDnsAuthority me else [];
 
@@ -257,8 +270,9 @@
       domain = t.svc.attrs.resolvedDomain;
       zone = zoneFor domain;
       ingEntity = eg.entities.${t.ingHost};
-      ipv4 = (ingEntity.attrs.addresses.public or { ipv4 = null; }).ipv4;
-      ipv6 = (ingEntity.attrs.addresses.public or { ipv6 = null; }).ipv6;
+      addr = ingEntity.attrs.addresses.${t.scopeAddress} or { ipv4 = null; ipv6 = null; };
+      ipv4 = addr.ipv4 or null;
+      ipv6 = addr.ipv6 or null;
       sub = if zone == domain then "@" else lib.removeSuffix ".${zone}" domain;
     in
       lib.optional (zone != null && ipv4 != null) {
@@ -307,7 +321,7 @@ in {
       };
     })
 
-    # --- Resolver side: localzone records for network-backed audiences ---
+    # --- Resolver side: localzone records for localzone-view scopes ---
     (lib.mkIf (resolverLocalZoneRecords != []) {
       psyclyx.nixos.network.dns.resolver.localZones.${eg.domains.internal} = {
         type = "transparent";
@@ -315,7 +329,7 @@ in {
       };
     })
 
-    # --- Authoritative side: zone records for public audience ---
+    # --- Authoritative side: zone records for authoritative-view scopes ---
     {
       psyclyx.nixos.network.dns.authoritative.zones = lib.mapAttrs (_: records: {
         extraRecords = lib.mkAfter records;

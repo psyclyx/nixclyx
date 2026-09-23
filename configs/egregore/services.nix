@@ -2,12 +2,12 @@
 #
 # Each service declares its domain (explicit or environment-derived), a
 # backend (HA group VIP, remote host, or localhost on the ingress host),
-# a protocol, and the audiences it's reachable in. The ingress projection
+# a protocol, and the scopes it's reachable in. The ingress projection
 # composes everything else (HAProxy frontends, certs, DNS records) from
-# this data plus the audience definitions and host capabilities.
+# this data plus the scope/view definitions and host capabilities.
 #
-# Multi-audience services (e.g. light) are reachable directly in each
-# audience — no hairpin through a single global ingress host.
+# Multi-scope services (e.g. light) are reachable directly in each
+# scope — no hairpin through a single global ingress host.
 {
   gate = "always";
   config = {
@@ -15,7 +15,7 @@
 
       # --- Reverse proxies ---
       # A proxy is a service: it offers HTTP/HTTPS and terminates TLS for
-      # the services exposed in its audiences. Its routing table is
+      # the services exposed in its scopes. Its routing table is
       # derived from those services' presentation, so all that is declared
       # here is where it runs and which scopes it fronts.
 
@@ -24,7 +24,7 @@
         tags = ["infra" "proxy"];
         service = {
           proxy.host = "tleilax";
-          audiences = ["public" "vpn"];
+          scopes = ["public" "vpn"];
           label = "Public/VPN ingress";
         };
       };
@@ -34,7 +34,7 @@
         tags = ["infra" "proxy"];
         service = {
           proxy.host = "iyr";
-          audiences = ["apt"];
+          scopes = ["apt"];
           label = "Apartment ingress";
         };
       };
@@ -47,7 +47,7 @@
         service = {
           domain = "docs.psyclyx.xyz";
           backend.local.port = 8084;
-          audiences = ["public"];
+          scopes = ["public"];
           label = "Documentation";
         };
       };
@@ -60,7 +60,7 @@
         service = {
           domain = "metrics.psyclyx.net";
           backend.local.port = 2134;
-          audiences = ["vpn"];
+          scopes = ["vpn"];
           label = "Metrics";
         };
       };
@@ -74,7 +74,7 @@
           # terminates TLS for both apt-LAN and VPN clients.
           backend.local.port = 8080;
           streaming = true;
-          audiences = ["apt" "vpn"];
+          scopes = ["apt" "vpn"];
           # apt is ingressed by iyr already; override vpn to iyr too
           # so road warriors hit iyr directly instead of hairpinning.
           ingress = { vpn = "proxy-iyr"; };
@@ -100,7 +100,7 @@
         service = {
           domain = "psyclyx.link";
           backend.local.port = 8082;
-          audiences = ["public"];
+          scopes = ["public"];
           label = "Links";
         };
       };

@@ -17,7 +17,7 @@
         # anything already sealed. `reach` admits the clients that come
         # from another segment.
         backend.host = { host = "iyr"; network = "infra"; port = 7654; };
-        audiences = [];
+        scopes = [];
         reach = [ "main" ];
         label = "Tang (NBDE)";
       };

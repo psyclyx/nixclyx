@@ -2,7 +2,7 @@
 #
 # Split into two concerns that change for different reasons:
 #
-#   intrinsic  protocol, backend, audiences
+#   intrinsic  protocol, backend, scopes
 #              what it offers, where it runs, who can reach it
 #   presentation  domain/environment, ingress, websockets, streaming, check
 #              how it is named and proxied in each reachability context
@@ -98,7 +98,7 @@
         default = null;
         description = ''
           Set when this service is a reverse proxy: it terminates TLS and
-          routes by name for the audiences in `audiences`, running on
+          routes by name for the scopes in `scopes`, running on
           `host`. Its routing table is derived — from the presentation of
           the services it fronts — so it is not declared here. A proxy is
           a service (it offers HTTP/HTTPS); this block is its placement.
@@ -136,22 +136,22 @@
         default = null;
         description = "Health check path (HTTP services only).";
       };
-      audiences = lib.mkOption {
+      scopes = lib.mkOption {
         type = lib.types.listOf lib.types.str;
         description = ''
-          Reachability contexts (named in globals.audiences) where this
-          service is reachable. Required — every service must enumerate
-          the audiences it participates in.
+          Reachability scopes (named in the top-level `scopes` set)
+          where this service is reachable. Required — every service
+          must enumerate the scopes it participates in.
         '';
       };
       ingress = lib.mkOption {
         type = lib.types.attrsOf lib.types.str;
         default = { };
         description = ''
-          Per-audience proxy override, keyed by audience name: the
-          `service.proxy` that fronts this service in that audience.
-          Audiences not listed here use the unique proxy serving the
-          audience; if none serves it, the service is direct there.
+          Per-scope proxy override, keyed by scope name: the
+          `service.proxy` that fronts this service in that scope.
+          Scopes not listed here use the unique proxy serving the
+          scope; if none serves it, the service is direct there.
         '';
       };
     };
@@ -213,23 +213,23 @@
         else if backendType == "local" then s.backend.local.port
         else null;
 
-      # The proxy fronting an audience is a *service* (`service.proxy`)
+      # The proxy fronting a scope is a *service* (`service.proxy`)
       # that serves it — not a host role. A per-service `ingress`
-      # override names a proxy directly. An audience no proxy serves, or
+      # override names a proxy directly. A scope no proxy serves, or
       # one several claim, is direct for this service: the projection
       # emits nothing.
-      proxyServing = a: let
+      proxyServing = sc: let
         claimants = builtins.filter
           (n: let e = top.entities.${n}; in
             e.type == "service" && (e.service.proxy or null) != null
-            && builtins.elem a e.service.audiences)
+            && builtins.elem sc e.service.scopes)
           (builtins.attrNames top.entities);
       in if builtins.length claimants == 1 then builtins.head claimants else null;
       proxyHostOf = p: if p == null then null else (top.entities.${p}.service.proxy.host or null);
-      effectiveIngress = builtins.listToAttrs (map (a: let
-        override = s.ingress.${a} or null;
-        proxy = if override != null then override else proxyServing a;
-      in lib.nameValuePair a (proxyHostOf proxy)) s.audiences);
+      effectiveIngress = builtins.listToAttrs (map (sc: let
+        override = s.ingress.${sc} or null;
+        proxy = if override != null then override else proxyServing sc;
+      in lib.nameValuePair sc (proxyHostOf proxy)) s.scopes);
     in {
       inherit resolvedDomain backendType resolvedAddress resolvedPort;
       inherit effectiveIngress;
@@ -260,10 +260,10 @@
         if s.backend.ha != null
         then s.backend.ha.${haGroupName}
         else null;
-      knownAudiences = builtins.attrNames (top.audiences or {});
-      unknownAudiences = builtins.filter (a: !(builtins.elem a knownAudiences)) s.audiences;
+      knownScopes = builtins.attrNames (top.scopes or {});
+      unknownScopes = builtins.filter (a: !(builtins.elem a knownScopes)) s.scopes;
       overrideKeys = builtins.attrNames s.ingress;
-      extraIngressKeys = builtins.filter (k: !(builtins.elem k s.audiences)) overrideKeys;
+      extraIngressKeys = builtins.filter (k: !(builtins.elem k s.scopes)) overrideKeys;
       invalidIngressProxies = lib.filter
         (p: !(top.entities ? ${p} && (top.entities.${p}.service.proxy or null) != null))
         (builtins.attrValues s.ingress);
@@ -304,12 +304,12 @@
     }
     ++ [
       {
-        assertion = unknownAudiences == [];
-        message = "service '${name}': unknown audiences ${builtins.toJSON unknownAudiences} (known: ${builtins.toJSON knownAudiences})";
+        assertion = unknownScopes == [];
+        message = "service '${name}': unknown scopes ${builtins.toJSON unknownScopes} (known: ${builtins.toJSON knownScopes})";
       }
       {
         assertion = extraIngressKeys == [];
-        message = "service '${name}': ingress override keys ${builtins.toJSON extraIngressKeys} not in declared audiences ${builtins.toJSON s.audiences}";
+        message = "service '${name}': ingress override keys ${builtins.toJSON extraIngressKeys} not in declared scopes ${builtins.toJSON s.scopes}";
       }
       {
         assertion = invalidIngressProxies == [];
