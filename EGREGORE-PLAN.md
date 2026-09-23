@@ -22,6 +22,7 @@ toward.
 | `e5b3cffb` | `host.sshPort` → declared `ssh` exposures on every host and switch; `initrd-ssh` (8022, scopes) replaces `gateway.initrdVlans` and the `gateway` facet; ssh-hosts/deployments/openssh read the exposures (privclyx: `9cf4c4b`) |
 | `02a0593f` | `exporters.<name>` → exporter exposures (role `exporter`, port, scopes); computed exporters derive, data declares/overrides; monitoring reads the exposure scopes |
 | `8fea7c68` | scope/DNS-view split: `audiences` → `scopes` (reachability, address key only); `dnsViews.<n>.records` (authoritative vs localzone) with the `scopes.<n>.view` ref; ingress dispatches on the view, record values from the scope's address key (privclyx: `3b33ff5`) |
+| `2fc18e09` | offerings: `service.backend.host` is the exposure ref (`{ target; exposure; }`), `backend.network`/`backend.port` gone — the exposure owns port and scopes; `resolvedPort`/`resolvedAddress` derive from the target exposure (privclyx: `c1954da`) |
 | `2182e116` | earlier progress notes |
 
 ### Code shape
@@ -255,6 +256,11 @@ cd ../privclyx && git stash pop -q; cd ../nixclyx && git stash pop -q
   freeform attribute).
 - **Private data lives in `infra/privclyx`** (`configs/egregore/*`,
   `modules/nixos/*`, `packages/psyclyx-link`). Commit there separately.
+- **`backend.local.port` intentionally stays.** A local offering is an
+  aspect of the node that fronts it (model §5) — there is no node to
+  ref, so no exposure ref is written. Open point: if the model later
+  wants local exposures (a listener reservation for localhost backends
+  too), `backend.local` folds into an exposure on the fronting node.
 
 ## 7. Pre-existing breakage (do not chase)
 
