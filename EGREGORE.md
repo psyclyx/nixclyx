@@ -4,7 +4,7 @@ The target architecture for the egregore, and the plan to get there. This
 is the companion to `PLACEMENT.md`: `PLACEMENT.md` says *which layer* a noun
 belongs to; this says *what the machinery is* and *how the graph is built*.
 
-Nothing here is frozen. Decisions we still owe are marked **⚑**.
+Decisions are recorded where they belong, marked **●**, and collected in §8.
 
 ## 0. Principles
 
@@ -150,25 +150,33 @@ Used here for two things:
    folds them in with `extendModules`. No `imports`-from-`config`, no cycle.
 2. **Views (§2.6).**
 
-### 2.6 Views (optional layer)
+### 2.6 Views
 
-A **view** is a named, lazily-extended configuration: a capability query
-materialized with `extendModules`. `view "deploy"` yields a config whose
-`entities.<id>.deploy` is filled for every deployable node; the ssh, dns, and
-routing projections become views. A view is forced only when read, and it can
-declare *new* derived options without polluting the base graph. This is where
-"richer queries / derived views" live, and where a **frame** (a
-consumer-relative perspective) belongs — the base holds frame-independent
-facts; a view applies the frame.
+A **view** is a lazily-extended configuration: a capability query or a
+**frame** materialized with `extendModules`/`moduleType`. It is forced only
+when read, and it can declare *new* derived options without polluting the
+base. The base graph holds frame-independent facts; a view applies a frame.
 
-**⚑** Whether views are a first-class egregore feature or just how projections
-happen to be written.
+**● Decision.** Expose `extendModules` (and the eval's `type`) and nothing
+more — no `view` DSL. A projection that needs to add derived options is
+written as a view module; one that only reads the base is a plain query. The
+primitive is already the right abstraction, and `images.nix` shows the shape
+at fleet scale.
 
-### 2.7 Queries
+### 2.7 Query vocabulary
+
+**● Decision (naming).** Components are the *authored* config and take a noun
+or gerund: `node`, `platform`, `routing`, `dns`, `vpn`, `trust`,
+`monitoring`, `boot`. Capabilities are the *queryable outcome* and take the
+word you ask for: `address`, `fqdn`, `ssh`, `l2`, `routes`, `resolver`,
+`power`, `console`, `monitor`. The paired names never share a bare noun
+(`routing`↔`routes`, `dns`↔`resolver`, `monitoring`↔`monitor`) — that is the
+whole point of the rule.
 
 ```nix
 withAspect = a: entities: filterAttrs (_: e: e.${a} or null != null) entities;
 hasAspect  = a: e: e.${a} or null != null;
+withCapability = withAspect;    # same mechanism; only the naming differs
 ofComponent / tagged / refsOf / referencedBy   # as today
 ```
 
@@ -227,13 +235,37 @@ tolerance), not a correctness fix.
   addresses, interfaces, mac), `platform` (`attrTag`), `routing`, `dns`,
   `vpn`, `trust`, `monitoring`, `boot`, plus the standalone nouns.
 - **Capabilities (derived, contract'd).** `address`, `fqdn`, `ssh`, `l2`,
-  `routes`, `dns`, `power`, `console`, `monitor`, `service`, `vip`, `tpm`.
-  Each is declared once and derived by whichever components can produce it.
+  `routes`, `resolver`, `power`, `console`, `monitor`, `service`, `vip`,
+  `tpm`. Each is declared once and derived by whichever components can
+  produce it.
 - A platform tag (e.g. `platform.routeros`) is where vendor schema lives.
 
-Naming is **⚑**: component vs capability can collide (`dns` authored vs `dns`
-provided). Likely rule: components are nouns you author; capabilities are
-adjectives/verbs you query.
+Naming follows §2.7: authored components are nouns (`routing`), queried
+capabilities are the question (`routes`).
+
+### 4.1 ssh — three things, not one
+
+ssh is the case that proves "one capability" wrong: the same word carries
+facts that are consumed in different ways. Keep three things distinct.
+
+1. **Offering.** A node's sshd is a `service` — an offering with a `port` and
+   an `audiences` set. Because it is intrinsic to being a node it is carried
+   as an aspect whose *schema is the service-offering schema*
+   (`entities.iyr.ssh = { port = 17891; audiences = [ "vpn" ]; }`), and it
+   appears in the service registry like any other service. The initrd sshd
+   (unlock, port 8022) is a **second offering**, not this one.
+2. **Endpoint.** Where to connect, *relative to a frame*: `{ host; port; }`,
+   with `host` read from the node's `addresses.<net>` / `fqdns.<net>` for the
+   consumer's frame. Deploy takes a canonical frame (public → site → vpn);
+   the home ssh config takes the consumer's. Reachability is derived, never a
+   stored string.
+3. **Identity.** Host keys and certs, the SSH CA role that signs them
+   (`openbao-ssh-cert-role`), principals, `known_hosts`. A **trust** concern,
+   consumed by OpenBao, known_hosts generation, and NFS/Kerberos.
+
+**`user` is offering policy, not reachability** — it belongs to (1), not (2).
+That separation is the point: deploy, the home ssh config, initrd unlock, and
+the CA each read the fact they need, and none of them overfits the others.
 
 ## 5. Noun plan
 
@@ -243,16 +275,16 @@ Every current noun, its disposition, and the principle that puts it there.
 | noun / field | layer | disposition |
 |---|---|---|
 | `site` | lib | place; `domain`, `location` |
-| `network` | lib/fleet | segment; core `vlan`/`ipv4`/`ipv6`/`prefixLen`/gateway refs/`mtu` in lib. **⚑** `zone` (firewall convention) → fleet; `ulaPrefix`/`ipv6PdSubnetId`/`underlay`/`dhcpRelay` are *addressing mechanisms* → review (fleet fact or host config) |
+| `network` | lib/fleet | segment; core `vlan`/`ipv4`/`ipv6`/`prefixLen`/gateway refs/`mtu` in lib; `zone` (firewall convention) fleet; address **plan** (`ulaPrefix`/`ipv6PdSubnetId`) fleet fact; **mechanism** (`underlay`/`dhcpRelay`) host config |
 | `node` (was `host` intrinsic) | lib | site, addresses, interfaces, mac |
 | `platform` (was `host`/`routeros`/`swos`/`sodola`/`ilo`) | fleet | `attrTag`; vendor schema per tag |
 | `service` | lib | offering + presentation; unchanged |
 | `route` | lib | path |
-| `ssh` (was `host.sshPort`/`deployUser`) | fleet | capability, contract `{host;port;user;}`; provided by platforms, read by ssh/deploy. **⚑** capability vs a real `service` entity |
+| `ssh` | fleet | *three things* (§4.1): an **offering** (service-shaped aspect: `port` + `audiences`; initrd unlock is a second offering), an **endpoint** (frame-relative `{host; port;}`, derived), and an **identity** (trust: host cert, CA role, principals) |
 | `deployAddress` | lib (derived) | a chosen frame; stays derived |
 | `initrdVlans` | **host** | boot mechanism, not a fleet fact |
 | `routing`/`gateway` | fleet | facet; attachable to any node (host *or* switch) |
-| `dns` (`dnsAuthority`, `publicNames`, `publicAcme`) | fleet | facet. **⚑** the authority is arguably the *zone's* fact — see §7 |
+| `dns` (`dnsAuthority`, `publicNames`, `publicAcme`) | fleet | facet; exposes the `resolver` capability. The authority zone list is a fleet fact (see `network`/`zone`); the mechanism is host config |
 | `vpn` (`wireguard`) | fleet | facet |
 | `trust` (`openbao`, `kerberos`, `tpm`, `clevis`) | fleet + host | declarations fleet; mechanisms host |
 | `monitoring` (`exporters`) | fleet | facet |
@@ -277,10 +309,11 @@ Everything that reads the graph reads **capabilities**, not kinds:
 Each phase is gated on the *current* eval: entity attrs, iyr + lab toplevel
 derivations, and the four platform artifacts unchanged.
 
-0. **This document.** Resolve the **⚑**s below.
-1. **Capabilities, additive.** Add `ssh` (+ `address`/`fqdn`) as derived
-   aspects; keep `type` for now. Move `sshPort`/`deployUser` into `ssh`.
-   Rewrite `ssh-hosts.nix` + `deployments.nix` onto `withAspect`. Proves the
+0. **This document.** Decisions are settled (§8); this is the reference.
+1. **Capabilities, additive.** Add the three ssh pieces (§4.1) plus
+   `address`/`fqdn` as derived aspects; keep `type` for now. Move
+   `sshPort`/`deployUser` into the ssh offering; derive the endpoint; point
+   `ssh-hosts.nix` + `deployments.nix` at `withAspect "ssh"`. Proves the
    interface layer with no schema churn.
 2. **Laziness.** `entities` → `attrsWith { lazy = true; placeholder = "id"; }`.
    Verify no recursion, outputs unchanged.
@@ -290,21 +323,24 @@ derivations, and the four platform artifacts unchanged.
    modules under `submoduleWith`; delete `type`/`config.types`/`mkType`/
    `mkTypeExtend`/`extends`/interceptor. Byte-identical.
 5. **Re-place nouns** (§5): `initrdVlans` → host config; `network` mechanism
-   fields; `zfs-*`/`tpm-key` → host config; **ssh** decision.
+   fields → host config; `zfs-*`/`tpm-key` → host config.
 6. **Sweep projections** onto capabilities.
-7. **Views** (§2.6) if adopted.
+7. **Views** (§2.6) where a projection needs to add derived options.
 
-## 8. Open decisions
+## 8. Decisions
 
-1. **⚑ Views.** First-class (`egregore.view "deploy"` returning an extended
-   config) or just "how projections are written"?
-2. **⚑ ssh.** A capability on nodes, or a real `service` entity per node?
-3. **⚑ `platform` shape.** `attrTag` on a generic `node` (my proposal), or
-   keep vendor nouns and let `node` be a shared facet they all include?
-4. **⚑ Component/capability naming** rule (authored noun vs queried
-   adjective), to avoid `dns`-collides-with-`dns`.
-5. **⚑ `network` addressing mechanisms** (ULA/PD/underlay): fleet fact or
-   host config?
-6. **⚑ Consumers contributing back.** Is there a config-side seam
-   (`deferredModule`s folded in via `extendModules`), or do consumers stay
-   read-only?
+Settled; recorded for quick reference.
+
+1. **Views.** Expose `extendModules`/`type` only; no `view` DSL (§2.6).
+2. **ssh.** Three things — offering (service-shaped aspect), endpoint
+   (frame-relative, derived), identity (trust) (§4.1).
+3. **`platform`.** `attrTag` on a generic `node`; vendor schema lives in the
+   tag's submodule (§2.3).
+4. **Naming.** Authored components are nouns, queried capabilities are the
+   question; paired names never share a bare noun (§2.7).
+5. **`network` addressing.** The address *plan* (`ulaPrefix`,
+   `ipv6PdSubnetId`) is a fleet fact — routers, reverse DNS, and the
+   `prefix-delegation` entity all read it; the *mechanism* (`underlay`,
+   `dhcpRelay`) is host config.
+6. **Consumer contribution.** Read-only for now — no config-side seam until a
+   real consumer needs one; `extendModules` is there if one does.
