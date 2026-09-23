@@ -63,16 +63,20 @@ in rec {
       config.types.${typeName} = { inherit description; };
 
       options.entities = mkOption {
-        type = types.attrsOf (types.submodule ({ config, name, ... }: {
-          imports = [ mod ];
+        type = types.attrsWith {
+          lazy = true;
+          placeholder = "id";
+          elemType = types.submodule ({ config, name, ... }: {
+            imports = [ mod ];
 
-          config = mkIf (config.type == typeName) {
-            attrs = attrs name config topConfig;
-            relations = relations name config topConfig;
-            verbs = verbs name config topConfig;
-            assertions = assertions name config topConfig;
-          };
-        }));
+            config = mkIf (config.type == typeName) {
+              attrs = attrs name config topConfig;
+              relations = relations name config topConfig;
+              verbs = verbs name config topConfig;
+              assertions = assertions name config topConfig;
+            };
+          });
+        };
       };
     };
 
@@ -98,16 +102,20 @@ in rec {
       typeName = name;
     in {
       options.entities = mkOption {
-        type = types.attrsOf (types.submodule ({ config, name, ... }: {
-          options.${typeName} = options;
+        type = types.attrsWith {
+          lazy = true;
+          placeholder = "id";
+          elemType = types.submodule ({ config, name, ... }: {
+            options.${typeName} = options;
 
-          config = mkIf (config.type == typeName) {
-            attrs = attrs name config topConfig;
-            relations = relations name config topConfig;
-            verbs = verbs name config topConfig;
-            assertions = assertions name config topConfig;
-          };
-        }));
+            config = mkIf (config.type == typeName) {
+              attrs = attrs name config topConfig;
+              relations = relations name config topConfig;
+              verbs = verbs name config topConfig;
+              assertions = assertions name config topConfig;
+            };
+          });
+        };
       };
     };
 

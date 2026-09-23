@@ -51,7 +51,10 @@ in {
 
     entities = mkOption {
       description = "Entity registry.";
-      type = types.attrsOf (types.submodule ({ name, config, ... }: {
+      type = types.attrsWith {
+        lazy = true;
+        placeholder = "id";
+        elemType = types.submodule ({ name, config, ... }: {
         options = {
           type = mkOption {
             type = types.str;
@@ -181,7 +184,8 @@ in {
             if target != null && target == name then add a refName srcName else a
           ) afterRefs (src.relations or {})
         ) {} topConfig.entities;
-      }));
+      });
+        };
       default = {};
     };
   };
