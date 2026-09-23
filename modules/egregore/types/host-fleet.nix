@@ -235,112 +235,23 @@
       gateway = lib.mkOption {
         type = lib.types.submodule {
           options = {
-            lanInterface = lib.mkOption {
-              type = lib.types.nullOr lib.types.str;
-              default = null;
-              description = ''
-                Physical LAN trunk interface. Setting this enables the
-                gateway projection on this host. Null = not a gateway.
-              '';
-            };
-            wanInterface = lib.mkOption {
-              type = lib.types.nullOr lib.types.str;
-              default = null;
-              description = "Physical WAN-side interface (trunk parent for transitVlan).";
-            };
-            lanAddress = lib.mkOption {
-              type = lib.types.nullOr lib.types.str;
-              default = null;
-              description = ''
-                Static address on the untagged LAN trunk parent. Used
-                for legacy/setup-VLAN-1 subnets that aren't modeled as
-                network entities.
-              '';
-            };
             initrdVlans = lib.mkOption {
               type = lib.types.listOf lib.types.str;
-              default = [];
+              default = [ ];
               description = ''
                 Network entity names whose gateway addresses come up
                 in initrd (for early SSH unlock, etc.).
               '';
             };
-            initrdKernelModules = lib.mkOption {
-              type = lib.types.listOf lib.types.str;
-              default = [ "8021q" ];
-              description = "Kernel modules pulled into initrd for early VLAN bringup.";
-            };
-            transitDhcpV6 = lib.mkOption {
-              type = lib.types.submodule {
-                options = {
-                  duidRawData = lib.mkOption {
-                    type = lib.types.nullOr lib.types.str;
-                    default = null;
-                    description = "DHCPv6 client DUID (raw colon-separated hex bytes).";
-                  };
-                  iaid = lib.mkOption {
-                    type = lib.types.int;
-                    default = 250;
-                  };
-                  prefixDelegationHint = lib.mkOption {
-                    type = lib.types.str;
-                    default = "::/60";
-                  };
-                };
-              };
-              default = {};
-            };
-            transitDhcpV4 = lib.mkOption {
-              type = lib.types.submodule {
-                options = {
-                  useRoutes = lib.mkOption {
-                    type = lib.types.bool;
-                    default = true;
-                    description = ''
-                      Honor DHCP classless static routes (option 121) on
-                      the WAN uplink. Set false for ISPs (e.g. Comcast,
-                      whose option-121 list omits a default) where option
-                      121 suppresses the option-3 gateway per RFC 3442 and
-                      leaves the host with no default route — with it off,
-                      networkd installs the option-3 gateway as the
-                      default instead.
-                    '';
-                  };
-                };
-              };
-              default = {};
-            };
-            cakeQos = lib.mkOption {
-              type = lib.types.nullOr (lib.types.submodule {
-                options = let
-                  mkRate = desc: lib.mkOption {
-                    type = lib.types.submodule {
-                      options = {
-                        min = lib.mkOption { type = lib.types.int; description = "${desc} min rate (Kbps)."; };
-                        base = lib.mkOption { type = lib.types.int; description = "${desc} base rate (Kbps)."; };
-                        max = lib.mkOption { type = lib.types.int; description = "${desc} max rate (Kbps)."; };
-                      };
-                    };
-                  };
-                in {
-                  download = mkRate "Download";
-                  upload = mkRate "Upload";
-                };
-              });
-              default = null;
-              description = ''
-                CAKE traffic shaping on the WAN transit interface
-                (autoderived as wanInterface.transitVlan). Null = no
-                shaping. Bandwidth rates in Kbps.
-              '';
-            };
           };
         };
-        default = {};
+        default = { };
         description = ''
-          Gateway/router declaration. Materialized by derived/gateway.nix
-          into psyclyx.nixos.network.gateway.*. Setting lanInterface
-          enables the projection; leaving it null is the default.
+          Fleet-side gateway declaration: which routed segments this
+          host brings up in initrd. The routing mechanism itself
+          (interfaces, DHCP, QoS) is host config
+          (psyclyx.nixos.network.gateway.*); the set of segments the
+          host routes is the graph (network.refs.gateway).
         '';
       };
 

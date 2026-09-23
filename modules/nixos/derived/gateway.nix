@@ -1,14 +1,16 @@
 # Egregore → gateway projection.
 #
-# Reads `host.gateway` + the network-graph data from egregore and
-# emits the full `psyclyx.nixos.network.gateway.*` config. Gateway is
-# enabled when the host's egregore entity sets host.gateway.lanInterface.
+# The gateway's mechanism (interfaces, DHCP clients, QoS) is host config
+# (psyclyx.nixos.network.gateway.*); this projection supplies what is
+# derived from the fleet: the set of routed segments, the LAN/WAN MACs
+# looked up from host.mac, the transit VLAN, and the initrd VLANs.
 {config, lib, ...}: let
   eg = config.psyclyx.egregore;
   hostname = config.psyclyx.nixos.host;
   myHost = lib.attrByPath ["entities" hostname "host"] null eg;
   gw = if myHost == null then {} else (myHost.gateway or {});
-  enabled = (gw.lanInterface or null) != null;
+  mech = config.psyclyx.nixos.network.gateway;
+  enabled = mech.enable;
 
   # Networks this host routes, by family, read from the resolved inverse
   # of the network graph: a network whose gateway (or gateway6) resolves
@@ -133,45 +135,20 @@
 
   # MACs from host.mac, looked up by interface device name.
   macFor = ifaceDev:
-    if myHost == null then null
+    if myHost == null || ifaceDev == null then null
     else myHost.mac.${ifaceDev} or null;
-  cakeQos = gw.cakeQos or null;
-  cakeRates =
-    if cakeQos == null
-    then { download = { min = 0; base = 0; max = 0; }; upload = { min = 0; base = 0; max = 0; }; }
-    else cakeQos;
   transitVlan = eg.conventions.transitVlan;
 in {
-  config = lib.mkIf enabled (lib.mkMerge [
-    {
-      psyclyx.nixos.network.gateway = {
-        enable = true;
-        lanInterface = gw.lanInterface;
-        wanInterface = gw.wanInterface;
-        lanAddress = gw.lanAddress;
-        lanMac = macFor gw.lanInterface;
-        wanMac = macFor gw.wanInterface;
-        networks = projectedNetworks;
-        transitVlan = lib.mkDefault transitVlan;
-        transitDhcpV6 = {
-          duidRawData = gw.transitDhcpV6.duidRawData or null;
-          iaid = gw.transitDhcpV6.iaid or 250;
-          prefixDelegationHint = gw.transitDhcpV6.prefixDelegationHint or "::/60";
-        };
-        transitDhcpV4.useRoutes = gw.transitDhcpV4.useRoutes or true;
-        initrd = {
-          enable = lib.mkDefault ((gw.initrdVlans or []) != []);
-          kernelModules = gw.initrdKernelModules or [ "8021q" ];
-          networks = projectedInitrdNetworks;
-        };
+  config = lib.mkIf enabled {
+    psyclyx.nixos.network.gateway = {
+      lanMac = macFor mech.lanInterface;
+      wanMac = macFor mech.wanInterface;
+      networks = projectedNetworks;
+      transitVlan = lib.mkDefault transitVlan;
+      initrd = {
+        enable = lib.mkDefault ((gw.initrdVlans or []) != [ ]);
+        networks = projectedInitrdNetworks;
       };
-    }
-    (lib.mkIf (cakeQos != null) {
-      psyclyx.nixos.network.cake-qos = {
-        enable = true;
-        interface = "${gw.wanInterface}.${toString transitVlan}";
-        inherit (cakeRates) download upload;
-      };
-    })
-  ]);
+    };
+  };
 }

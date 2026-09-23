@@ -7,6 +7,37 @@ in
 
   networking.hostName = "iyr";
 
+  # The gateway mechanism — LAN/WAN interfaces, the transit DHCP
+  # clients, CAKE shaping on the uplink. The routed segments, MACs,
+  # transit VLAN and initrd VLANs come from the projection
+  # (derived/gateway.nix); only the box's own wiring is here.
+  psyclyx.nixos.network = {
+    gateway = {
+      enable = true;
+      lanInterface = "enp1s0";
+      wanInterface = "enp3s0";
+      lanAddress = "10.0.0.11/24"; # untagged trunk (legacy setup VLAN 1)
+      initrd.kernelModules = [ "8021q" "igc" ];
+      transitDhcpV6.duidRawData = "e7:13:f8:92:37:c5:be:76";
+      # Comcast/Xfinity DHCP sends option-121 classless static routes
+      # with no 0.0.0.0/0, which (per RFC 3442) suppresses the option-3
+      # gateway and leaves enp3s0.250 with no default route. Ignore
+      # option 121 so networkd installs the gateway as the main-table
+      # default — the always-on IPv4 fallback the Google Fiber failover
+      # falls back to.
+      transitDhcpV4.useRoutes = false;
+    };
+    cake-qos = {
+      enable = true;
+      interface = "enp3s0.${toString eg.conventions.transitVlan}";
+      # Xfinity apartment uplink — symmetric 2.2 Gbps provisioned.
+      # Min kept low for graceful autorate degradation; max gives small
+      # headroom past nominal.
+      download = { min = 1400000; base = 2200000; max = 2280000; };
+      upload = { min = 1400000; base = 2200000; max = 2280000; };
+    };
+  };
+
   systemd.network.networks."31-enp3s0.${toString eg.conventions.transitVlan}".linkConfig.MTUBytes = 1500;
 
   # Google Fiber (VLAN 251) — the primary IPv4 uplink. The GF ONT lands

@@ -71,27 +71,11 @@
             enp1s0 = "c8:ff:bf:06:2c:4e";   # LAN trunk parent
             enp3s0 = "c8:ff:bf:06:2c:4d";   # WAN
           };
+          # The gateway mechanism (interfaces, DHCP clients, QoS) is
+          # host config (hosts/nixos/iyr). Egregore keeps only the fleet
+          # fact: which routed segments come up in initrd.
           gateway = {
-            lanInterface = "enp1s0";
-            wanInterface = "enp3s0";
-            lanAddress = "10.0.0.11/24";    # untagged trunk (legacy setup VLAN 1)
             initrdVlans = [ "main" "mgmt" ];
-            initrdKernelModules = [ "8021q" "igc" ];
-            transitDhcpV6.duidRawData = "e7:13:f8:92:37:c5:be:76";
-            # Comcast/Xfinity DHCP sends option-121 classless static
-            # routes with no 0.0.0.0/0, which (per RFC 3442) suppresses
-            # the option-3 gateway and leaves enp3s0.250 with no default
-            # route. Ignore option 121 so networkd installs the gateway
-            # as the main-table default — this is the always-on IPv4
-            # fallback the Google Fiber failover falls back to.
-            transitDhcpV4.useRoutes = false;
-            # Xfinity apartment uplink — symmetric 2.2 Gbps provisioned.
-            # Min kept lower for graceful autorate degradation; max
-            # gives small headroom past nominal.
-            cakeQos = {
-              download = { min = 1400000; base = 2200000; max = 2280000; };
-              upload   = { min = 1400000; base = 2200000; max = 2280000; };
-            };
           };
           firewall = {
             # enp1s0 (untagged trunk parent) shares trust with main →
