@@ -344,3 +344,31 @@ Settled; recorded for quick reference.
    `dhcpRelay`) is host config.
 6. **Consumer contribution.** Read-only for now — no config-side seam until a
    real consumer needs one; `extendModules` is there if one does.
+
+## 9. Progress
+
+Landed, each gated (entity attrs, iyr + lab-1 system derivations, the four
+platform artifacts — all byte-identical):
+
+- ✅ **§2.1 lazy entity set** — `attrsWith { lazy = true; placeholder = "id"; }`
+  in core and both type functions.
+- ✅ **aspect core (enables §1)** — a type's bag is `nullOr (submodule …)`
+  (default null), type modules gate on `config.<type> != null`, and core
+  **derives** `config.type`. All 110 authored `type = "…"` discriminators
+  removed from the data; *presence is the sole source*. This is the
+  linchpin: a non-type capability aspect is now just another such option.
+- ✅ **§4.1 ssh capability** — `attrs.ssh = { port; user; }` on hosts and
+  routeros (the *offering*); `withAspect`/`hasAspect` helpers; ssh-hosts,
+  deployments, and openssh repointed at it. `withAspect "ssh"` yields all
+  13 sshable entities uniformly (hosts and switches).
+
+Not yet done:
+
+- ⏳ **§7.3 promote facets** out of `host.*` (`routing`/`dns`/`vpn`/`trust`/
+  `monitoring`/`boot`). Needs `mkAspect` (a non-type aspect) + an interceptor
+  + splitting `host-fleet.nix` into facet modules, then ~15 consumer reads.
+- ⏳ **§7.6 consumer sweep**: ~180 `attrs.*` reads are still path-based. The
+  namespace collapse (`entity.attrs.foo` → `entity.foo`) is the big one.
+- ⏳ **§7.5 noun re-placement** (`initrdVlans`, `network` mechanisms,
+  `zfs-*`/`tpm-key`).
+- ⏳ **§7.7 views**.
