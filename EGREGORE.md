@@ -6,6 +6,9 @@ This document specifies the egregore data model. The model describes the
 fleet as a graph of entities that projections read. This document defines
 the vocabulary and the rules. It does not define projections.
 
+The migration from the current code to this model is in
+`EGREGORE-PLAN.md`.
+
 ## 2. Terminology
 
 The terms in this table have one meaning each in this document.
