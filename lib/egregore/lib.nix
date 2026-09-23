@@ -37,7 +37,6 @@ in rec {
     topConfig ? {},
     description ? "",
     options ? {},
-    entityModule ? null,
     # Resolved outbound edges, by ref name. `refs` is what the author
     # wrote; this is what it resolves to once type defaults (site
     # fallback, family defaults) are applied. Core inverts it into
@@ -50,15 +49,12 @@ in rec {
   }:
     let
       typeName = name;
-      mod =
-        if entityModule != null then entityModule
-        else if options != {} then {
-          options.${typeName} = mkOption {
-            type = types.submodule { inherit options; };
-            default = {};
-          };
-        }
-        else {};
+      mod = {
+        options.${typeName} = mkOption {
+          type = types.nullOr (types.submodule { inherit options; });
+          default = null;
+        };
+      };
     in {
       config.types.${typeName} = { inherit description; };
 
@@ -69,7 +65,8 @@ in rec {
           elemType = types.submodule ({ config, name, ... }: {
             imports = [ mod ];
 
-            config = mkIf (config.type == typeName) {
+            config = mkIf (config.${typeName} != null) {
+              type = typeName;
               attrs = attrs name config topConfig;
               relations = relations name config topConfig;
               verbs = verbs name config topConfig;
@@ -106,9 +103,11 @@ in rec {
           lazy = true;
           placeholder = "id";
           elemType = types.submodule ({ config, name, ... }: {
-            options.${typeName} = options;
+            options.${typeName} = mkOption {
+              type = types.nullOr (types.submodule { inherit options; });
+            };
 
-            config = mkIf (config.type == typeName) {
+            config = mkIf (config.${typeName} != null) {
               attrs = attrs name config topConfig;
               relations = relations name config topConfig;
               verbs = verbs name config topConfig;

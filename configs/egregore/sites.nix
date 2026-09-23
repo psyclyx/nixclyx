@@ -4,7 +4,7 @@
   config = {
     entities = {
       apt = {
-        type = "site";
+        
         tags = ["apartment"];
         refs = {
           dns = "iyr";
@@ -16,7 +16,7 @@
         };
       };
       cofractal-sea = {
-        type = "site";
+        
         tags = ["colo"];
         refs.dns = "tleilax";
         site = {
@@ -25,7 +25,7 @@
         };
       };
       hetzner-pdx = {
-        type = "site";
+        
         tags = ["vps"];
         refs.dns = "semuta";
         site = {

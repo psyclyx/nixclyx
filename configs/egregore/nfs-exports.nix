@@ -12,7 +12,7 @@
     # tleilax.vpn issues nfs/lab-4.main.apt.psyclyx.net tickets and
     # the export checks them.
     nfs-nas = {
-      type = "nfs-export";
+      
       refs.producer = "lab-4";
       nfs-export = {
         path = "/srv/nfs/nas";

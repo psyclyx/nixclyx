@@ -11,7 +11,7 @@
   gate = "always";
   config.entities = {
     mdf-agg01-pd = {
-      type = "prefix-delegation";
+      
       refs = { from = "iyr"; to = "mdf-agg01"; over = "core-transit"; };
       prefix-delegation = { subnetId = 1; prefixLength = 61; };
     };

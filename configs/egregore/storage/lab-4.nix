@@ -34,7 +34,7 @@ let
   ];
 
   mkLabPersistDataset = n: {
-    type = "zfs-dataset";
+    
     refs.pool = "tank-pool";
     zfs-dataset = {
       path = "tank/persist/lab-${toString n}";
@@ -55,7 +55,7 @@ in
   gate = "always";
   config.entities = {
     tank-pool = {
-      type = "zfs-pool";
+      
       refs.host = "lab-4";
       zfs-pool = {
         name = "tank";
@@ -82,7 +82,7 @@ in
     # Plaintext datasets — closure store (reproducible, no secrets;
     # NFS-shared to lab-1..3) and ephemeral scratch.
     tank-nix-shared = {
-      type = "zfs-dataset";
+      
       refs.pool = "tank-pool";
       zfs-dataset = {
         path = "tank/nix-shared";
@@ -94,14 +94,14 @@ in
       };
     };
     tank-scratch = {
-      type = "zfs-dataset";
+      
       refs.pool = "tank-pool";
       zfs-dataset = { path = "tank/scratch"; mountpoint = null; };
     };
 
     # Encrypted parent for per-host /persist. Children inherit the key.
     tank-persist = {
-      type = "zfs-dataset";
+      
       refs.pool = "tank-pool";
       zfs-dataset = {
         path = "tank/persist";
@@ -126,7 +126,7 @@ in
     # neededForBoot → stage-1 clevis-unseals and mounts it before
     # switch_root.
     tank-host = {
-      type = "zfs-dataset";
+      
       refs.pool = "tank-pool";
       zfs-dataset = {
         path = "tank/host";
@@ -135,7 +135,7 @@ in
       };
     };
     tank-host-lab-4 = {
-      type = "zfs-dataset";
+      
       refs.pool = "tank-pool";
       zfs-dataset = {
         path = "tank/host/lab-4";
@@ -144,7 +144,7 @@ in
       };
     };
     tank-host-lab-4-root = {
-      type = "zfs-dataset";
+      
       refs.pool = "tank-pool";
       zfs-dataset = {
         path = "tank/host/lab-4/root";
@@ -158,7 +158,7 @@ in
     # should ever mount this dataset itself; the children (declared as
     # `lun` entities) live under it.
     tank-luns = {
-      type = "zfs-dataset";
+      
       refs.pool = "tank-pool";
       zfs-dataset = {
         path = "tank/luns";
@@ -176,7 +176,7 @@ in
     # because the zfs-pool type doesn't model vdev class yet. The
     # disks are listed in vaultSpecialDisks above for documentation.
     vault-pool = {
-      type = "zfs-pool";
+      
       refs.host = "lab-4";
       zfs-pool = {
         name = "vault";
@@ -213,7 +213,7 @@ in
     # which suits large mixed media reasonably well. Mounted under
     # /srv/nfs/nas on lab-4 for the krb5i NFS export.
     vault-nas = {
-      type = "zfs-dataset";
+      
       refs.pool = "vault-pool";
       zfs-dataset = {
         path = "vault/nas";
@@ -223,7 +223,7 @@ in
 
     # Archive parent — canmount=off, just a structural container.
     vault-archive = {
-      type = "zfs-dataset";
+      
       refs.pool = "vault-pool";
       zfs-dataset = {
         path = "vault/archive";
@@ -237,7 +237,7 @@ in
     # passphrase still unlocks it. Not clevis-bound — it's a
     # cold-storage archive, not a runtime mount.
     vault-archive-lab-1-rpool = {
-      type = "zfs-dataset";
+      
       refs.pool = "vault-pool";
       zfs-dataset = {
         path = "vault/archive/lab-1-rpool";

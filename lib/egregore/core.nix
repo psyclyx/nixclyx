@@ -58,7 +58,8 @@ in {
         options = {
           type = mkOption {
             type = types.str;
-            description = "Entity type — must match a registered type.";
+            default = "";
+            description = "Entity type — derived from whichever type aspect is present.";
           };
 
           tags = mkOption {

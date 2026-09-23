@@ -4,7 +4,7 @@
   config = {
     entities = {
       tleilax = {
-        type = "host";
+        
         tags = ["server" "colo" "fixed" "vpn-hub"];
         host = {
           site = "cofractal-sea";
@@ -36,7 +36,7 @@
       };
 
       iyr = {
-        type = "host";
+        
         tags = ["server" "apartment" "router" "fixed"];
         host = {
           site = "apt";
@@ -110,7 +110,7 @@
       };
 
       sigil = {
-        type = "host";
+        
         tags = ["workstation" "desktop" "apartment" "fixed"];
         # /persist is consumed locally from sigil's own rpool. /nix
         # is still on bcachefs during the slow ZFS cutover and is
@@ -150,7 +150,7 @@
       };
 
       phone = {
-        type = "host";
+        
         tags = ["mobile"];
         host = {
           wireguard = {
@@ -162,7 +162,7 @@
       };
 
       omen = {
-        type = "host";
+        
         tags = ["workstation" "laptop"];
         host = {
           wireguard = {
@@ -174,7 +174,7 @@
       };
 
       glyph = {
-        type = "host";
+        
         tags = ["workstation" "laptop"];
         host = {
           wireguard = {
@@ -186,7 +186,7 @@
       };
 
       semuta = {
-        type = "host";
+        
         tags = ["server" "vps" "fixed"];
         host = {
           site = "hetzner-pdx";

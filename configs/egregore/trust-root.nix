@@ -7,7 +7,7 @@
   gate = "always";
   config.entities = {
     iyr-tang = {
-      type = "service";
+      
       tags = ["infra" "tang"];
       service = {
         kind = "tang";
@@ -24,13 +24,13 @@
     };
 
     iyr-tpm-openbao-key = {
-      type = "tpm-key";
+      
       refs.host = "iyr";
       tpm-key = { label = "openbao-seal"; keyType = "rsa"; bits = 2048; };
     };
 
     iyr-openbao-seal-oracle = {
-      type = "openbao-seal-oracle";
+      
       refs.host = "iyr";
       refs.tpmKey = "iyr-tpm-openbao-key";
       openbao-seal-oracle = {
@@ -46,7 +46,7 @@
     # passphrase. Modelled separately so the projection can emit
     # distinct bind/unlock units for each.
     tank-clevis-persist = {
-      type = "clevis-binding";
+      
       clevis-binding = {
         tangs = [ "iyr-tang" ];
         protectDataset = "tank-persist";
@@ -56,7 +56,7 @@
       };
     };
     tank-clevis-luns = {
-      type = "clevis-binding";
+      
       clevis-binding = {
         tangs = [ "iyr-tang" ];
         protectDataset = "tank-luns";
@@ -73,7 +73,7 @@
     # classifies this as an initrd binding and unseals it in stage-1
     # before mounting `/`.
     tank-clevis-root = {
-      type = "clevis-binding";
+      
       clevis-binding = {
         tangs = [ "iyr-tang" ];
         protectDataset = "tank-host-lab-4-root";

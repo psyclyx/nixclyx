@@ -27,7 +27,7 @@ in {
   config = {
     entities = {
       mdf-agg01 = {
-        type = "routeros";
+        
         tags = ["switch" "mdf" "10g" "l3"];
         routeros = {
           model = "CRS326-24S+2Q+RM";
@@ -124,7 +124,7 @@ in {
       };
 
       mdf-acc01 = {
-        type = "swos";
+        
         tags = ["switch" "mdf" "1g"];
         refs.uplink = "mdf-agg01";
         swos = {
@@ -169,7 +169,7 @@ in {
       };
 
       mdf-brk01 = {
-        type = "sodola";
+        
         tags = ["switch" "mdf" "2.5g"];
         refs.uplink = "mdf-agg01";
         sodola = {
@@ -197,7 +197,7 @@ in {
       };
 
       idf-dist01 = {
-        type = "routeros";
+        
         tags = ["switch" "idf"];
         routeros = {
           model = "CRS305-1G-4S+IN";
@@ -215,7 +215,7 @@ in {
       };
 
       idf-poe01 = {
-        type = "unmanaged";
+        
         tags = ["switch" "idf"];
         unmanaged = {
           model = "XMG-105HP";

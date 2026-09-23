@@ -11,7 +11,7 @@
   gate = "always";
   config.entities = {
     sigil-rpool = {
-      type = "zfs-pool";
+      
       refs.host = "sigil";
       zfs-pool = {
         name = "rpool";
@@ -37,7 +37,7 @@
     # treats "/" as boot-critical regardless, and declaring it here keeps
     # the projection from tagging the mount `nofail`.
     sigil-root = {
-      type = "zfs-dataset";
+      
       refs.pool = "sigil-rpool";
       zfs-dataset = {
         path = "rpool/ROOT/nixos";
@@ -50,7 +50,7 @@
     # would just add a boot prompt for no real gain, matching the
     # tank-nix-shared rationale).
     sigil-nix = {
-      type = "zfs-dataset";
+      
       refs.pool = "sigil-rpool";
       zfs-dataset = {
         path = "rpool/nix";
@@ -64,7 +64,7 @@
     # `subvolumes/log` layout that's currently live. neededForBoot=true
     # so journald has a real /var/log before it starts.
     sigil-log = {
-      type = "zfs-dataset";
+      
       refs.pool = "sigil-rpool";
       zfs-dataset = {
         path = "rpool/log";
@@ -76,7 +76,7 @@
     # /persist: encrypted root, passphrase at boot. Holds the impermanence-
     # persisted state (machine-id, host keys, shadow.psyc, etc.).
     sigil-persist = {
-      type = "zfs-dataset";
+      
       refs.pool = "sigil-rpool";
       zfs-dataset = {
         path = "rpool/persist";
@@ -91,7 +91,7 @@
     # passphrase (matched to the user's login password for pam_zfs_key
     # auto-unlock at session start).
     sigil-home = {
-      type = "zfs-dataset";
+      
       refs.pool = "sigil-rpool";
       zfs-dataset = {
         path = "rpool/home";
@@ -101,7 +101,7 @@
     };
 
     sigil-home-psyc = {
-      type = "zfs-dataset";
+      
       refs.pool = "sigil-rpool";
       zfs-dataset = {
         path = "rpool/home/psyc";
@@ -128,7 +128,7 @@
     # under rpool/home rather than rpool/root so home datasets live
     # together; the mount path stays at the POSIX /root convention.
     sigil-home-root = {
-      type = "zfs-dataset";
+      
       refs.pool = "sigil-rpool";
       zfs-dataset = {
         path = "rpool/home/root";
@@ -144,7 +144,7 @@
     # construction has no secrets — preservation routes those to
     # /persist on rpool).
     sigil-bulkpool = {
-      type = "zfs-pool";
+      
       refs.host = "sigil";
       zfs-pool = {
         name = "bulkpool";
@@ -171,7 +171,7 @@
 
     # Replication parent for syncoid-driven backups.
     sigil-bulkpool-backups = {
-      type = "zfs-dataset";
+      
       refs.pool = "sigil-bulkpool";
       zfs-dataset = {
         path = "bulkpool/backups";
@@ -188,7 +188,7 @@
     # `hosts/nixos/sigil/filesystems.nix` for the initrd send and
     # the post-boot retention prune.
     sigil-boot-history = {
-      type = "zfs-dataset";
+      
       refs.pool = "sigil-bulkpool";
       zfs-dataset = {
         path = "bulkpool/boot-history";
@@ -203,7 +203,7 @@
     # the same passphrase as the live home and never exists in
     # plaintext on the spinner.
     sigil-home-psyc-backup = {
-      type = "zfs-dataset";
+      
       refs.pool = "sigil-bulkpool";
       zfs-dataset = {
         path = "bulkpool/backups/home-psyc";
@@ -216,7 +216,7 @@
     # adds no real value and would just make boot-time mount ordering
     # harder).
     sigil-scratchpool = {
-      type = "zfs-pool";
+      
       refs.host = "sigil";
       zfs-pool = {
         name = "scratchpool";
@@ -237,7 +237,7 @@
     # filesystem rather than tmpfs so large build trees don't have
     # to fit in RAM.
     sigil-tmp = {
-      type = "zfs-dataset";
+      
       refs.pool = "sigil-scratchpool";
       zfs-dataset = {
         path = "scratchpool/tmp";
@@ -250,7 +250,7 @@
     # dataset from /tmp so build retention / quotas can diverge from
     # generic-temp policy if we ever want them to.
     sigil-build = {
-      type = "zfs-dataset";
+      
       refs.pool = "sigil-scratchpool";
       zfs-dataset = {
         path = "scratchpool/build";

@@ -20,7 +20,7 @@
       # here is where it runs and which scopes it fronts.
 
       proxy-tleilax = {
-        type = "service";
+        
         tags = ["infra" "proxy"];
         service = {
           proxy.host = "tleilax";
@@ -30,7 +30,7 @@
       };
 
       proxy-iyr = {
-        type = "service";
+        
         tags = ["infra" "proxy"];
         service = {
           proxy.host = "iyr";
@@ -42,7 +42,7 @@
       # --- Public HTTP (psyclyx.xyz) ---
 
       docs = {
-        type = "service";
+        
         tags = ["public" "static"];
         service = {
           domain = "docs.psyclyx.xyz";
@@ -55,7 +55,7 @@
       # --- Internal HTTP (psyclyx.net) ---
 
       metrics = {
-        type = "service";
+        
         tags = ["internal" "monitoring"];
         service = {
           domain = "metrics.psyclyx.net";
@@ -66,7 +66,7 @@
       };
 
       light = {
-        type = "service";
+        
         tags = ["internal" "homelab"];
         service = {
           domain = "light.psyclyx.net";
@@ -95,7 +95,7 @@
       # here we just declare the public-facing service.
 
       links = {
-        type = "service";
+        
         tags = ["public" "static"];
         service = {
           domain = "psyclyx.link";

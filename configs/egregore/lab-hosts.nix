@@ -23,7 +23,7 @@ let
       wgKey,
     }:
     {
-      type = "host";
+      
       tags = [
         "server"
         "lab"

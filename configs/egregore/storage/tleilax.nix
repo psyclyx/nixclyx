@@ -11,7 +11,7 @@
     # storage for the colo box — nvme image backups today; future
     # blockchain workloads etc. live as sibling datasets.
     tleilax-tank-pool = {
-      type = "zfs-pool";
+      
       refs.host = "tleilax";
       zfs-pool = {
         name = "tank";
@@ -41,7 +41,7 @@
     # — fewer indirect blocks, better streaming throughput. No
     # encryption: these are dumps of disks we already control.
     tleilax-tank-backups = {
-      type = "zfs-dataset";
+      
       refs.pool = "tleilax-tank-pool";
       zfs-dataset = {
         path = "tank/backups";

@@ -13,7 +13,7 @@
   config = {
     entities = {
       mdf-agg01-default = {
-        type = "route";
+        
         refs = { on = "mdf-agg01"; via = "iyr"; over = "core-transit"; };
         route = {
           dst = "0.0.0.0/0";
@@ -27,7 +27,7 @@
       # 2am. Reached over mgmt, which is the only network they hold an
       # address on.
       idf-dist01-default = {
-        type = "route";
+        
         refs = { on = "idf-dist01"; via = "iyr"; over = "mgmt"; };
         route = {
           dst = "0.0.0.0/0";

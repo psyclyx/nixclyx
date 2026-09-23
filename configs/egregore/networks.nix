@@ -24,7 +24,7 @@
       # switch has no v6 default route to offer, so handing it v6 would
       # black-hole off-net v6 for everything on this VLAN.
       main = {
-        type = "network";
+        
         refs = { gateway = "mdf-agg01"; gateway6 = "iyr"; };
         network = { site = "apt"; vlan = 10; ipv4 = "10.0.10.0/24"; ulaSubnetHex = "a"; ipv6PdSubnetId = 0; dhcpRelay = true; zone = "lan"; };
       };
@@ -37,7 +37,7 @@
       # v6 stays with iyr for the same reason as main: the switch has no
       # ::/0 to offer yet.
       infra = {
-        type = "network";
+        
         refs = { gateway = "mdf-agg01"; gateway6 = "iyr"; };
         network = { site = "apt"; vlan = 25; ipv4 = "10.0.25.0/24"; ulaSubnetHex = "19"; ipv6PdSubnetId = 1; zone = "infra"; };
       };
@@ -51,7 +51,7 @@
       # which point iyr needs only one address here and the L2-anchor
       # requirement in CLAUDE.md goes away.
       storage = {
-        type = "network";
+        
         refs = { gateway = "mdf-agg01"; dns = "iyr"; };
         network = { site = "apt"; vlan = 200; ipv4 = "10.0.200.0/24"; ulaSubnetHex = "c8"; ipv6PdSubnetId = 8; mtu = 9000; dhcpRelay = true; zone = "storage"; };
       };
@@ -62,13 +62,13 @@
       # work through phases 1-3; phase 4 (hypervisor BGP) flips this
       # to vlan = null.
       lab = {
-        type = "network";
+        
         refs = { gateway = "mdf-agg01"; dns = "iyr"; };
         network = { site = "apt"; vlan = 210; ipv4 = "10.0.210.0/24"; ulaSubnetHex = "d2"; ipv6PdSubnetId = 9; dhcpRelay = true; zone = "lab-transit"; };
       };
 
       mgmt = {
-        type = "network";
+        
         network = { site = "apt"; vlan = 240; ipv4 = "10.0.240.0/24"; ulaSubnetHex = "f0"; ipv6PdSubnetId = 7; zone = "mgmt"; };
       };
 
@@ -77,13 +77,13 @@
       # hardware and hands north-south to iyr (NAT) over this /30. No DHCP,
       # no clients — iyr .1, mdf-agg01 .2.
       core-transit = {
-        type = "network";
+        
         tags = ["transit"];
         network = { site = "apt"; vlan = 252; ipv4 = "10.0.252.0/30"; ulaSubnetHex = "fc"; zone = "core-transit"; };
       };
 
       vpn = {
-        type = "network";
+        
         tags = ["overlay" "wireguard"];
         refs = {
           dns = "tleilax";
