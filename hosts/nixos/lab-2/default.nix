@@ -15,6 +15,10 @@
       kernelModules = [ "tg3" ];
     };
     network.firewall.input.lan.policy = "accept";
+    # Lab hosts trust the lab fabric (eno49np0): the hypervisor↔
+    # storage-host data path. Storage VLAN stays default-drop to keep
+    # iSCSI rack-local.
+    network.firewall.input.lab-transit.policy = "accept";
     hardware.presets.hpe.dl360-gen9.enable = true;
     filesystems.nfs-root.enable = true;
   };

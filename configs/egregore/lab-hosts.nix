@@ -118,12 +118,6 @@ let
         # routes main↔lab at line rate. For lab hosts that don't gain
         # a Kerberos role this is a harmless setting.
         kerberos.fqdnNetwork = "lab";
-
-        # Lab hosts trust the lab fabric (eno49np0): hypervisor↔
-        # storage-host data path lives here. Storage VLAN stays at
-        # the projection default (drop) to keep iSCSI traffic
-        # rack-local.
-        firewall.input.lab-transit = "accept";
       };
     };
 in

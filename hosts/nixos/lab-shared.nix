@@ -46,6 +46,10 @@ in
 
       firewall = {
         input.lan.policy = "accept";
+        # Lab hosts trust the lab fabric (eno49np0): hypervisor↔
+        # storage-host data path lives here. Storage VLAN stays at the
+        # projection default (drop) to keep iSCSI traffic rack-local.
+        input.lab-transit.policy = "accept";
         forward = [
           {
             from = "lan";

@@ -40,6 +40,10 @@
       };
 
       firewall.input.lan.policy = "accept";
+      # Lab hosts trust the lab fabric (eno49np0): the hypervisor↔
+      # storage-host data path. Storage VLAN stays default-drop to keep
+      # iSCSI rack-local.
+      firewall.input.lab-transit.policy = "accept";
     };
 
     role = "server";

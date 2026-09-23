@@ -23,6 +23,10 @@
     # Accept on lan zone — same convention as lab-4. Without this the
     # default-drop policy refuses SSH from inside the apartment LAN.
     network.firewall.input.lan.policy = "accept";
+    # Lab hosts trust the lab fabric (eno49np0): the hypervisor↔
+    # storage-host data path. Storage VLAN stays default-drop to keep
+    # iSCSI rack-local.
+    network.firewall.input.lab-transit.policy = "accept";
 
     # HPE-specific knobs (firmware, drivers).
     hardware.presets.hpe.dl360-gen9.enable = true;

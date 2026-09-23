@@ -170,12 +170,74 @@ in
         };
       };
 
-      # Firewall (zones, input, forward, masquerade) is fully derived:
-      # - Zone→interface from `network.zone` + `host.interfaces` (derived/firewall-policy.nix)
-      # - Zone extras + input + masquerade from iyr's `host.firewall` (derived/firewall-host.nix)
-      # - Forward rules from `globals.policy` (derived/firewall-policy.nix)
-      # Nothing host-side beyond the enable flag.
-      firewall.enable = true;
+      # Firewall. The zone→interface map and the forward matrix are
+      # derived from the fleet (derived/firewall-policy.nix): zones from
+      # `network.zone` + `host.interfaces`, forward rules from
+      # `globals.policy`. The rest — extra interfaces for links that
+      # aren't network entities, per-zone input policy, and NAT — is
+      # this box's own wiring.
+      firewall = {
+        enable = true;
+        zones = {
+          # enp1s0 (untagged trunk parent) shares trust with main → the
+          # lan zone. enp3s0.250/.251 are the WAN VLAN sub-ifaces
+          # (transit isn't modeled as a network entity — no internal
+          # subnet). .250 is Xfinity (IPv6 + IPv4 fallback), .251 is
+          # Google Fiber (the primary IPv4 uplink); both share the WAN
+          # drop+ICMP+DHCP-client posture.
+          lan.interfaces = [ "enp1s0" ];
+          wan.interfaces = [ "enp3s0.250" "enp3s0.251" ];
+        };
+        input = {
+          # Internal zones: trusted.
+          lan.policy = "accept";
+          infra.policy = "accept";
+          storage.policy = "accept";
+          lab-transit.policy = "accept";
+          mgmt.policy = "accept";
+          wg.policy = "accept";
+          # Traffic mdf-agg01 hands us over the transit. Almost nothing
+          # terminates here: iyr holds an address on every segment it
+          # serves, so clients reach its services directly on their own
+          # VLAN. What does arrive is relayed DHCP, which the switch
+          # unicasts to iyr's transit address.
+          core-transit = {
+            policy = "drop";
+            allowICMP = true;
+            rules = [
+              { "udp dport" = 67; comment = "DHCPv4 relay"; }
+              { "udp dport" = 547; comment = "DHCPv6 relay"; }
+            ];
+          };
+          # WAN: drop + specific allows. The TCP port is the SSH service
+          # port.
+          wan = {
+            policy = "drop";
+            allowICMP = true;
+            allowedTCPPorts = [ 17891 ]; # ssh
+            rules = [
+              { "udp sport" = 67; "udp dport" = 68; comment = "DHCPv4 client"; }
+              { "udp dport" = 546; comment = "DHCPv6 client"; }
+            ];
+          };
+        };
+        masquerade = [
+          # Apt-LAN zones egressing to WAN.
+          { from = "lan"; to = "wan"; }
+          { from = "infra"; to = "wan"; }
+          # North-south for everything mdf-agg01 routes. The switch
+          # hardware-routes east-west and hands the rest to iyr over the
+          # transit link; those packets arrive with the client's source
+          # address and still need NAT, which the switch can't do.
+          { from = "core-transit"; to = "wan"; }
+          # WG-routed traffic to apt zones needs source NAT. The WG
+          # cryptokey check at the hub drops sources outside the peer's
+          # AllowedIPs; masquerading at iyr makes apt-side traffic look
+          # locally-originated so replies come back through iyr.
+          { from = "wg"; to = "lan"; }
+          { from = "wg"; to = "infra"; }
+        ];
+      };
     };
 
     role = "server";
