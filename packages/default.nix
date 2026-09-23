@@ -25,6 +25,13 @@ in
   packages
   // platform
   // {
+    # The iLO CLI (Redfish/KVM) — the replacement for the old imperative
+    # tool dropped in "chore: drop the old imperative ilo tool". Keeps
+    # pkgs.psyclyx.ilo resolving for the ipmi and workstation modules.
+    ilo = pkgs.callPackage ../lib/platform/ilo/cli {
+      inherit (packages) ilo4-console;
+      inherit (platform) ilo-config;
+    };
     janet-lsp = pkgs.callPackage ./janet-lsp.nix {
       inherit (packages) spork;
     };
