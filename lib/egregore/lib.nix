@@ -197,6 +197,28 @@ in rec {
     then { target = ref; port = null; nic = null; }
     else ref;
 
+  # ── Exposure refs ───────────────────────────────────────────────────
+  #
+  # An offering runs on an exposure (model §5); the ref names the node
+  # (target) and the exposure on it. The exposure's name gives the
+  # exposure its identity (§6) — an offering refs an exposure by name.
+  exposureRefType = types.submodule {
+    options = {
+      target = mkOption {
+        type = types.str;
+        description = "Name of the node entity that holds the exposure.";
+      };
+      exposure = mkOption {
+        type = types.str;
+        description = "Name of the exposure on the target entity.";
+      };
+    };
+  };
+
+  # The node the ref names, for readers that only care which node runs
+  # the offering.
+  exposureTarget = ref: ref.target;
+
   # ── Querying ────────────────────────────────────────────────────────
 
   ofType = typeName: entities:

@@ -15,7 +15,7 @@
 # `kind` is the one deliberate exception (see its definition): a label,
 # not a mechanism.
 {
-  egregoreType = { lib, ... }: {
+  egregoreType = { lib, egregorLib, ... }: {
     name = "service";
     description = "A named, reachable offering (HTTP or raw TCP).";
 
@@ -55,25 +55,16 @@
               description = "HA group backend. { <group> = \"<service>\"; }";
             };
             host = lib.mkOption {
-              type = lib.types.nullOr (lib.types.submodule {
-                options = {
-                  host = lib.mkOption {
-                    type = lib.types.str;
-                    description = "Backend host entity name.";
-                  };
-                  network = lib.mkOption {
-                    type = lib.types.str;
-                    description = ''
-                      Network entity whose address on `host` the backend
-                      is reached at. Derived, not a literal IP — moving
-                      the backend is an edit to this reference.
-                    '';
-                  };
-                  port = lib.mkOption { type = lib.types.port; };
-                };
-              });
+              type = lib.types.nullOr egregorLib.exposureRefType;
               default = null;
-              description = "Backend on a named host, at its address on a network.";
+              description = ''
+                Backend on an exposure of a named node — the offering
+                runs on the exposure (model §5). The ref names the node
+                (`target`) and the exposure on it (`exposure`); the
+                exposure owns the port and the scopes, so moving the
+                backend is an edit to this reference (or to the
+                exposure).
+              '';
             };
             local = lib.mkOption {
               type = lib.types.nullOr (lib.types.submodule {
@@ -189,12 +180,28 @@
         then top.entities.${haGroupName}
         else null;
 
-      # Backend on a named host: its address on the chosen network is the
-      # resolved address, so the offering moves with the graph instead of
-      # carrying a literal IP.
-      hostBackendAddr =
+      # Backend on a named exposure: the offering runs on the exposure
+      # (model §5) — the ref names the node and the exposure on it. The
+      # exposure owns the port and the scopes; the resolved address is
+      # the node's address at the address key of the exposure's first
+      # scope (scopes map to address keys, §7 — a network-named scope
+      # falls back to the scope name itself), so the offering moves with
+      # the graph instead of carrying a literal IP.
+      hostExposure =
         if backendType == "host"
-        then (top.entities.${s.backend.host.host}.attrs.addresses.${s.backend.host.network} or {}).ipv4 or null
+        then (top.entities.${s.backend.host.target}.exposures.${s.backend.host.exposure} or null)
+        else null;
+      hostScope =
+        if hostExposure != null && hostExposure.scopes != []
+        then builtins.head hostExposure.scopes
+        else null;
+      hostAddrKey =
+        if hostScope != null
+        then (top.scopes.${hostScope} or {}).address or hostScope
+        else null;
+      hostBackendAddr =
+        if hostAddrKey != null
+        then (top.entities.${s.backend.host.target}.attrs.addresses.${hostAddrKey} or {}).ipv4 or null
         else null;
 
       # Resolved address and port
@@ -209,7 +216,7 @@
         # rather than ha-group.services (raw entity values, where ports
         # default to null per the per-service-overrides-only convention).
         then haGroup.attrs.services.${haSvcName}.port
-        else if backendType == "host" then s.backend.host.port
+        else if backendType == "host" then (if hostExposure != null then hostExposure.port else null)
         else if backendType == "local" then s.backend.local.port
         else null;
 
@@ -279,12 +286,12 @@
       }
     ]
     ++ lib.optional (s.backend.host != null) {
-      assertion = top.entities ? ${s.backend.host.host} && top.entities.${s.backend.host.host}.type == "host";
-      message = "service '${name}': backend.host.host '${s.backend.host.host}' is not a host entity";
+      assertion = top.entities ? ${s.backend.host.target} && top.entities.${s.backend.host.target}.type == "host";
+      message = "service '${name}': backend.host.target '${s.backend.host.target}' is not a host entity";
     }
-    ++ lib.optional (s.backend.host != null) {
-      assertion = top.entities ? ${s.backend.host.network} && top.entities.${s.backend.host.network}.type == "network";
-      message = "service '${name}': backend.host.network '${s.backend.host.network}' is not a network entity";
+    ++ lib.optional (s.backend.host != null && top.entities ? ${s.backend.host.target}) {
+      assertion = (top.entities.${s.backend.host.target}.exposures or {}) ? ${s.backend.host.exposure};
+      message = "service '${name}': backend.host.exposure '${s.backend.host.exposure}' is not an exposure on '${s.backend.host.target}'";
     }
     ++ lib.optional (s.environment != null) {
       assertion = top.entities ? ${s.environment} && top.entities.${s.environment}.type == "environment";

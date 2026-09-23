@@ -1,8 +1,9 @@
 # Egregore → tang server projection.
 #
-# For each service of kind `tang` whose backend host is the running host,
-# enables services.tang. Bind address is the service's resolved backend
-# address; the ACL covers the backend's own network plus any extra
+# For each service of kind `tang` whose backend exposure sits on the
+# running host, enables services.tang. Bind address is the service's
+# resolved backend address; the ACL covers the backend's own network
+# (the address key of its exposure's first scope) plus any extra
 # networks in `service.reach`.
 #
 # Writes services.tang directly because there's no psyclyx-tier wrapper
@@ -18,7 +19,7 @@
     _: e:
     e.type == "service"
     && (e.service.kind or null) == "tang"
-    && (e.service.backend.host.host or null) == hostname
+    && (e.service.backend.host.target or null) == hostname
   ) eg.entities;
 
   netCidr = name: let
@@ -34,12 +35,21 @@ in {
   config = lib.mkIf (myTang != null) (let
     s = myTang.service;
     bindAddr = myTang.attrs.resolvedAddress;
+    # The backend's own network is the address key of its exposure's
+    # first scope (scopes map to address keys; a network-named scope is
+    # its own key) — the exposure replaces the old `backend.host.network`.
+    backendScope =
+      let exp = eg.entities.${s.backend.host.target}.exposures.${s.backend.host.exposure} or null;
+      in if exp == null || exp.scopes == [] then null else lib.head exp.scopes;
+    backendAddrKey =
+      if backendScope == null then null
+      else (eg.scopes.${backendScope} or {}).address or backendScope;
     aclCidrs = lib.filter (c: c != "")
-      (map netCidr ([ s.backend.host.network ] ++ (s.reach or [])));
+      (map netCidr (lib.optional (backendAddrKey != null) backendAddrKey ++ (s.reach or [])));
   in {
     services.tang = lib.mkIf (bindAddr != null) {
       enable = true;
-      listenStream = [ "${bindAddr}:${toString s.backend.host.port}" ];
+      listenStream = [ "${bindAddr}:${toString myTang.attrs.resolvedPort}" ];
       ipAddressAllow = aclCidrs;
     };
   });

@@ -16,11 +16,21 @@
         # carry embed that URL, so moving it means re-binding clevis on
         # anything already sealed. `reach` admits the clients that come
         # from another segment.
-        backend.host = { host = "iyr"; network = "infra"; port = 7654; };
+        backend.host = { target = "iyr"; exposure = "iyr-tang"; };
         scopes = [];
         reach = [ "main" ];
         label = "Tang (NBDE)";
       };
+    };
+
+    # The tang listener on iyr (model §6) — declared beside the
+    # offering that runs on it. Its `infra` scope is the network-named
+    # address key iyr's infra address lives under.
+    iyr.exposures.iyr-tang = {
+      role = "backend";
+      port = 7654;
+      scopes = [ "infra" ];
+      identity = null;
     };
 
     iyr-tpm-openbao-key = {
