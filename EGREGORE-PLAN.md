@@ -23,6 +23,7 @@ toward.
 | `02a0593f` | `exporters.<name>` → exporter exposures (role `exporter`, port, scopes); computed exporters derive, data declares/overrides; monitoring reads the exposure scopes |
 | `8fea7c68` | scope/DNS-view split: `audiences` → `scopes` (reachability, address key only); `dnsViews.<n>.records` (authoritative vs localzone) with the `scopes.<n>.view` ref; ingress dispatches on the view, record values from the scope's address key (privclyx: `3b33ff5`) |
 | `2fc18e09` | offerings: `service.backend.host` is the exposure ref (`{ target; exposure; }`), `backend.network`/`backend.port` gone — the exposure owns port and scopes; `resolvedPort`/`resolvedAddress` derive from the target exposure (privclyx: `c1954da`) |
+| `72430570` | attrs collapse: every derived key is a declared top-level option on its kind/facet (`derive` hook + `deriveOptions`; no freeformType); `attrs.refs` → `edges`, `attrs.name` → `name`; the derived `site`/`network` keys deleted (kind collisions); exposures one home, `exposuresOf` reads `e.exposures` (privclyx: `5cbbafb`) |
 | `2182e116` | earlier progress notes |
 
 ### Code shape
