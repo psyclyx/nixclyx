@@ -67,11 +67,6 @@
         type = lib.types.int;
         default = 22;
       };
-      deployUser = lib.mkOption {
-        type = lib.types.str;
-        default = "root";
-        description = "SSH user for deployment.";
-      };
     };
 
     attrs =
@@ -114,12 +109,22 @@
         address = if vpn != null then vpn.ipv4 else null;
         addresses = resolvedAddresses;
         inherit fqdn fqdns;
-        # The ssh offering: this node's management ssh, service-shaped
-        # (a port and the account), the same shape a switch exposes. The
-        # reachable *endpoint* is frame-relative and derived by whoever
-        # connects; the host key material and CA role are a separate
-        # trust concern. `user` is offering policy, not reachability.
-        ssh = { port = h.sshPort; user = h.deployUser; };
+        # The ssh capability: this node's management ssh listener, by
+        # port. Reachability only. The account a client logs in as is
+        # session policy and lives in the client (home-manager's
+        # `sshHosts.user`, beside `identityFile`), not in the graph —
+        # deployment is dumb ssh against the generated entries.
+        ssh = { port = h.sshPort; };
+        # The ssh exposure (derived form, model §6): where the
+        # management ssh listener sits when it is active. The scopes
+        # are a declared choice (§8.2), so the derived form carries
+        # none yet.
+        exposures.ssh = {
+          role = "ssh";
+          port = h.sshPort;
+          scopes = [ ];
+          identity = null;
+        };
         site = h.site;
         sshPort = h.sshPort;
         # Where a deploy tool reaches this host. Derived, not declared:

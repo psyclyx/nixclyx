@@ -420,10 +420,33 @@
               networks = [ "infra" ];
             };
           });
+
+        resolvedExporters = lib.recursiveUpdate computedExporters entity.exporters;
       in
       lib.mkIf (h != null) {
+        inherit resolvedExporters;
         hasTpm = entity.hardware.tpm;
-        resolvedExporters = lib.recursiveUpdate computedExporters entity.exporters;
+        # Exposures (derived form, model §6): one per exporter, named
+        # for the exporter — the networks it is scraped from become its
+        # scopes (§8.2 makes them a declared choice when they move) —
+        # plus the initrd ssh when the gateway facet brings VLANs up in
+        # initrd. Port 8022 is the fixed initrd unlock port (the
+        # ssh-hosts `initrdPort` default).
+        exposures =
+          lib.mapAttrs (_: x: {
+            role = "exporter";
+            port = x.port;
+            scopes = x.networks;
+            identity = null;
+          }) resolvedExporters
+          // lib.optionalAttrs (entity.gateway.initrdVlans != [ ]) {
+            initrd-ssh = {
+              role = "initrd-ssh";
+              port = 8022;
+              scopes = entity.gateway.initrdVlans;
+              identity = null;
+            };
+          };
       };
 
     assertions =

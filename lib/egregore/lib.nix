@@ -227,6 +227,25 @@ in rec {
   withVerb = verbName: entities:
     lib.filterAttrs (_: e: e.verbs ? ${verbName}) entities;
 
+  # ── Exposures ─────────────────────────────────────────────────────
+  #
+  # An exposure is a named listener reservation on a node (model §6).
+  # Its name is its identity; its role says which projection reads it
+  # (§8.5). During the migration an exposure has two homes — the
+  # derived form in `attrs.exposures` and the declared `exposures`
+  # aspect — written as data or computed, same structure either way.
+  # `exposuresOf` gives one view over both (declared wins); the
+  # migration collapses the homes as each listener moves.
+  exposuresOf = entity:
+    (entity.attrs.exposures or {}) // (entity.exposures or {});
+
+  # Everything holding an exposure of the given role.
+  withRole = role: entities:
+    lib.filterAttrs (_: e:
+      builtins.any (x: (x.role or null) == role)
+        (builtins.attrValues (exposuresOf e))
+    ) entities;
+
   # ── Spec interceptor ────────────────────────────────────────────────
   #
   # An interceptor (for the pedestal-style spec system in

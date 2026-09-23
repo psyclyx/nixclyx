@@ -77,8 +77,15 @@ Gate: unchanged (pure addition to `attrs`; nothing reads it yet).
 
 ### Phase 2 — ssh and initrd-ssh become exposures
 
-- Move `host.sshPort` / `deployUser` into an `ssh` exposure (declared), and
-  `routeros.sshUser` into a `routeros` ssh exposure.
+- Move `host.sshPort` (and the routeros ssh port) into `ssh` exposures
+  (declared). `host.deployUser` has already left egregore and does not
+  return: the login account is session policy, not fleet data — it lives
+  in home-manager's `sshHosts.user` (beside `identityFile`) and
+  populates the ssh config, and deployment acts against those ssh
+  targets with no account of its own. `routeros.sshUser` stays, but as
+  device config: the admin account the routeros projection installs keys
+  on (named as User in generated entries), not a session or deployment
+  fact.
 - Add the `initrd-ssh` exposure (port 8022, scopes — declared).
 - Point `modules/home/programs/ssh-hosts.nix` and `deployments.nix` at the
   `role == "ssh"` exposures.
@@ -229,6 +236,11 @@ cd ../privclyx && git stash pop -q; cd ../nixclyx && git stash pop -q
   `attrByPath ["host" "kerberos" "fqdnNetwork"]` — a string path that a
   `.host.` sed misses. Search for `attrByPath [ … "host" … ]` and for
   `getAttr "host"` when moving facets.
+- **Session accounts are not graph facts.** `deployUser` is gone from
+  `host`; the login account is client policy (`sshHosts.user`, beside
+  `identityFile`) and deployment is dumb ssh against the generated
+  entries. The one account the graph keeps is `routeros.sshUser` — the
+  device's admin account, which the projection installs keys on.
 - **`psyclyx-link` embeds the whole graph.** `infra/privclyx/packages/psyclyx-link`
   does `writeText (toJSON egregorData)`. Any graph-shape change gives it a new
   store path even when its output is identical. Gate on the **rendered output**,

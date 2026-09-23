@@ -1,7 +1,7 @@
 # Colmena deployment metadata per host: *where and how* each node is shipped
 # (targets + tags). Consumed only by `hive.nix`; `configurations` in
 # default.nix never see this. Targets are derived from each host's egregore
-# entity (its computed deployAddress, plus deployUser / sshPort) where
+# entity (its computed deployAddress and ssh port) where
 # present; tags and the
 # handful of hosts not yet in egregore stay declared here.
 {
@@ -14,7 +14,10 @@ let
   eg = egregorePkg.eval {modules = [spec.root];};
 
   # Derive deployment target from a host's egregore entity (its computed
-  # deployAddress), if it has one.
+  # deployAddress), if it has one. Reachability only — no accounts.
+  # Deployment is dumb ssh against the client's ssh config entries
+  # (which carry the user and keys); the graph only says where the
+  # listener is.
   fromEgregore = name: let
     e = eg.entities.${name} or { host = {}; attrs = {}; };
     h = e.host or {};
@@ -22,7 +25,6 @@ let
   in
     lib.optionalAttrs (target != null) {
       targetHost = target;
-      targetUser = e.attrs.ssh.user or "root";
     }
     // lib.optionalAttrs ((h.sshPort or 22) != 22) {
       targetPort = h.sshPort;

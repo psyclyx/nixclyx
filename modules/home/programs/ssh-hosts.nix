@@ -15,6 +15,18 @@
       default = false;
     };
 
+    user = lib.mkOption {
+      type = lib.types.str;
+      default = "root";
+      description = ''
+        Account used for the generated fleet entries — who *this* client
+        logs in as. Session policy, like `identityFile`: egregore holds
+        reachability (where a listener is), the client holds the session
+        (account, keys), and deployment is dumb ssh against these
+        entries.
+      '';
+    };
+
     initrdPort = lib.mkOption {
       type = lib.types.port;
       default = 8022;
@@ -72,6 +84,7 @@
       in lib.nameValuePair aliases {
         HostName = r.hostname;
         Port = e.attrs.ssh.port;
+        User = cfg.user;
         ForwardAgent = cfg.forwardAgent;
         HostKeyAlias = keyFqdn;
       };

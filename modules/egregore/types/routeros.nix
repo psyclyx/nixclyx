@@ -125,7 +125,13 @@
       sshUser = lib.mkOption {
         type = lib.types.str;
         default = "admin";
-        description = "SSH user for admin key injection.";
+        description = ''
+          The switch's admin account. Device config, not session or
+          deployment policy: the routeros projection installs the
+          fleet's admin keys on this account, and the generated ssh
+          entries name it as User (naming the account that actually
+          holds the keys).
+        '';
       };
       bridge = lib.mkOption {
         type = lib.types.submodule {
@@ -166,8 +172,17 @@
       mgmtAddr = r.addresses.${r.mgmtNetwork}.ipv4 or null;
     in {
       address = mgmtAddr;
-      # The ssh offering, the same shape a host exposes (port + account).
+      # The ssh capability: the port, plus the admin account that holds
+      # the fleet's keys (device config — see `sshUser`).
       ssh = { port = 22; user = r.sshUser; };
+      # The ssh exposure (derived form, model §6), the same one a host
+      # holds. Scopes are a declared choice (§8.2) — none derived.
+      exposures.ssh = {
+        role = "ssh";
+        port = 22;
+        scopes = [ ];
+        identity = null;
+      };
       # Addresses keyed by network, the same shape a host exposes.
       # Anything asking "what address does this device have on network
       # N" — a route resolving its next hop, a relay resolving its

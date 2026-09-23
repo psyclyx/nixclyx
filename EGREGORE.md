@@ -109,7 +109,8 @@ identity to the exposure; an offering refs an exposure by name.
 
 An exposure is a reservation. It states where a listener is when the
 listener is active. It does not state when the listener is active. The
-active time of a listener is host configuration.
+active time of a listener is host configuration. It does not state whom
+a client logs in as; the account is client configuration.
 
 ## 7. Network
 
