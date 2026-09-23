@@ -67,7 +67,7 @@
           + "routers may share several networks, and which one carries the "
           + "delegation decides the next hop for the slice"; }
     ] ++ lib.optional (over != null) {
-      assertion = (top.entities.${over}.type or null) == "network";
+      assertion = (top.entities.${over}.network or null) != null;
       message = "prefix-delegation '${name}' refs.over → '${over}' is not a network";
     };
   };

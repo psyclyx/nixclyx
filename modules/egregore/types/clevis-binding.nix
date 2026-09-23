@@ -138,7 +138,7 @@
         }
         {
           assertion = b.protectDataset == null
-            || (top.entities ? ${b.protectDataset} && top.entities.${b.protectDataset}.type == "zfs-dataset");
+            || (top.entities ? ${b.protectDataset} && top.entities.${b.protectDataset}.zfs-dataset != null);
           message = "clevis-binding '${name}' protectDataset '${toString b.protectDataset}' must be a zfs-dataset entity";
         }
         {
@@ -151,7 +151,7 @@
         }
       ]
       ++ map (tn: {
-        assertion = top.entities ? ${tn} && top.entities.${tn}.type == "service" && (top.entities.${tn}.service.kind or null) == "tang";
+        assertion = top.entities ? ${tn} && top.entities.${tn}.service != null && (top.entities.${tn}.service.kind or null) == "tang";
         message = "clevis-binding '${name}' tang '${tn}' is not a service of kind 'tang'";
       }) b.tangs;
   };

@@ -30,7 +30,7 @@ let
 
   # VMs whose hypervisor is this host.
   myVms = lib.filterAttrs (
-    _: e: e.type == "host" && (e.refs.hypervisor or null) == hostname
+    _: e: e.host != null && (e.refs.hypervisor or null) == hostname
   ) eg.entities;
 
   # LUNs we produce that a given VM consumes.
@@ -38,7 +38,7 @@ let
     vmName:
     lib.filterAttrs (
       _: l:
-      l.type == "lun"
+      l.lun != null
       && (l.refs.producer or null) == hostname
       && builtins.elem vmName l.lun.consumers
     ) eg.entities;
@@ -97,7 +97,7 @@ let
     vmName:
     lib.filterAttrs (
       _: e:
-      e.type == "nfs-export"
+      e.nfs-export != null
       && (e.refs.producer or null) == hostname
       && builtins.elem vmName e.nfs-export.consumers
       && (e.nfs-export.mountAt or null) != null

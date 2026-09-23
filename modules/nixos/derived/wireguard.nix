@@ -2,7 +2,7 @@
   eg = config.psyclyx.egregore;
   hostName = config.networking.hostName;
   me = eg.entities.${hostName} or null;
-  hasWg = me != null && me.type == "host" && me.wireguard != null;
+  hasWg = me != null && me.host != null && me.wireguard != null;
 
   # Overlay topology comes from the vpn network entity + its hub host.
   vpnNet = eg.entities.vpn;
@@ -14,12 +14,12 @@
 
   # Does this host's site have a local DNS server (refs.dns)?
   hasLocalSiteDns = let
-    mySiteName = if me != null && me.type == "host" then me.host.site or null else null;
+    mySiteName = if me != null && me.host != null then me.host.site or null else null;
     mySite = if mySiteName != null then eg.entities.${mySiteName} or null else null;
-  in mySite != null && mySite.type == "site" && mySite.refs ? dns;
+  in mySite != null && mySite.site != null && mySite.refs ? dns;
 
   wgPeers = lib.filterAttrs (name: e:
-    name != hostName && e.type == "host" && e.wireguard != null
+    name != hostName && e.host != null && e.wireguard != null
   ) eg.entities;
 
   allPeerExportedRoutes = lib.concatMap

@@ -13,7 +13,7 @@
   hostname = config.psyclyx.nixos.host;
   me = eg.entities.${hostname} or null;
 
-  allExports = lib.filterAttrs (_: e: e.type == "nfs-export") eg.entities;
+  allExports = lib.filterAttrs (_: e: e.nfs-export != null) eg.entities;
 
   # Producer-side: exports we host.
   myExports = lib.filterAttrs (_: e:

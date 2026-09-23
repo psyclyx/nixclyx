@@ -24,7 +24,7 @@ let
 
   myLuns = lib.filterAttrs (
     _: e:
-    e.type == "lun"
+    e.lun != null
     && (e.refs.producer or null) == hostname
     && e.dataset != null
   ) eg.entities;

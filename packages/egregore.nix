@@ -68,7 +68,7 @@ let
         fi
       fi
 
-      PREAMBLE="let lib = import <nixpkgs/lib>; spec = import $EGREGORE_FILE; egregore = import spec.lib { inherit lib; }; fleet = egregore.eval { modules = [spec.root]; }; in"
+      PREAMBLE="let lib = import <nixpkgs/lib>; spec = import $EGREGORE_FILE; egregore = import spec.lib { inherit lib; }; fleet = egregore.eval { modules = [spec.root]; }; kindOf = e: lib.findFirst (k: builtins.hasAttr k e && (builtins.getAttr k e) != null) \"\" (builtins.attrNames fleet.types); in"
 
       nix_eval_json() {
         local expr="$1"
@@ -107,7 +107,7 @@ let
         done
 
         local json
-        json=$(nix_eval_json "lib.mapAttrs (_: e: { inherit (e) type tags; label = e.label or \"\"; }) fleet.entities")
+        json=$(nix_eval_json "lib.mapAttrs (_: e: { type = kindOf e; inherit (e) tags; label = e.label or \"\"; }) fleet.entities")
 
         local filters=""
         [[ -n "$type_filter" ]] && filters+="| select(.value.type == \"$type_filter\")"
@@ -165,7 +165,7 @@ let
           "run ''${DIM}egregore list''${RESET} to see available entities."
         local name="$1"
         local json
-        json=$(nix_eval_json "let e = fleet.entities.\"$name\"; in { inherit (e) type tags refs; aspects = lib.mapAttrs (_: v: if builtins.isList v then v else if builtins.isAttrs v then v else builtins.toString v) (builtins.removeAttrs e [\"type\" \"tags\" \"refs\" \"relations\" \"refsIn\" \"verbs\" \"assertions\"]); }")
+        json=$(nix_eval_json "let e = fleet.entities.\"$name\"; in { type = kindOf e; inherit (e) tags refs; aspects = lib.mapAttrs (_: v: if builtins.isList v then v else if builtins.isAttrs v then v else builtins.toString v) (builtins.removeAttrs e [\"tags\" \"refs\" \"relations\" \"refsIn\" \"verbs\" \"assertions\"]); }")
 
         [[ -n "$json" ]] || die "entity ''${BOLD}$name''${RESET} not found" \
           "run ''${DIM}egregore list''${RESET} to see available entities."
@@ -195,16 +195,16 @@ let
         if [[ -n "$aspect" ]]; then
           nix_eval_json "fleet.entities.\"$name\".\"$aspect\"" | jq -C .
         else
-          nix_eval_json "builtins.removeAttrs fleet.entities.\"$name\" [\"type\" \"tags\" \"refs\" \"relations\" \"refsIn\" \"verbs\" \"assertions\"]" | jq -C .
+          nix_eval_json "builtins.removeAttrs fleet.entities.\"$name\" [\"tags\" \"refs\" \"relations\" \"refsIn\" \"verbs\" \"assertions\"]" | jq -C .
         fi
       }
 
       cmd_graph() {
         nix_eval_raw 'let
           nodes = lib.mapAttrsToList (name: e: let
-            shape = if e.type == "network" then "diamond"
-              else if e.type == "host" then "box"
-              else if e.type == "ha-group" then "octagon"
+            shape = if e.network != null then "diamond"
+              else if e.host != null then "box"
+              else if e.ha-group != null then "octagon"
               else "ellipse";
             label = e.label or name;
           in "  \"" + name + "\" [label=\"" + label + "\" shape=" + shape + "];")
@@ -218,7 +218,7 @@ let
 
       cmd_inspect() {
         local json
-        json=$(nix_eval_json "lib.mapAttrs (name: e: { inherit (e) type tags refs; config = lib.filterAttrs (_: v: ! builtins.isAttrs v && ! builtins.isList v && ! builtins.isFunction v) (builtins.getAttr e.type e); }) fleet.entities")
+        json=$(nix_eval_json "lib.mapAttrs (name: e: { type = kindOf e; inherit (e) tags refs; config = lib.filterAttrs (_: v: ! builtins.isAttrs v && ! builtins.isList v && ! builtins.isFunction v) (builtins.getAttr (kindOf e) e); }) fleet.entities")
 
         [[ -n "$json" ]] || die "no entities found"
 

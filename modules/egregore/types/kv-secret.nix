@@ -106,7 +106,7 @@
           message = "kv-secret '${name}' requires refs.producer (the host whose sops secret feeds the KV write)";
         }
         {
-          assertion = producer == null || (top.entities ? ${producer} && top.entities.${producer}.type == "host");
+          assertion = producer == null || (top.entities ? ${producer} && top.entities.${producer}.host != null);
           message = "kv-secret '${name}' producer '${toString producer}' must be a host entity";
         }
       ];

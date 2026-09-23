@@ -128,7 +128,7 @@
         }
       ]
       ++ lib.optional (over != null) {
-        assertion = (top.entities.${over}.type or null) == "network";
+        assertion = (top.entities.${over}.network or null) != null;
         message = "route '${name}' refs.over → '${over}' is not a network";
       }
       # A next hop we can't resolve an address for is a route that

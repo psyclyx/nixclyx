@@ -166,7 +166,7 @@
           message = "nfs-export '${name}' requires refs.producer";
         }
         {
-          assertion = producer == null || (top.entities ? ${producer} && top.entities.${producer}.type == "host");
+          assertion = producer == null || (top.entities ? ${producer} && top.entities.${producer}.host != null);
           message = "nfs-export '${name}' producer '${toString producer}' must be a host entity";
         }
         {
@@ -174,7 +174,7 @@
           message = "nfs-export '${name}' requires a non-empty network";
         }
         {
-          assertion = n.network == "" || (top.entities ? ${n.network} && top.entities.${n.network}.type == "network");
+          assertion = n.network == "" || (top.entities ? ${n.network} && top.entities.${n.network}.network != null);
           message = "nfs-export '${name}' network '${n.network}' must be a network entity";
         }
         {
@@ -183,7 +183,7 @@
         }
       ]
       ++ map (c: {
-        assertion = top.entities ? ${c} && top.entities.${c}.type == "host";
+        assertion = top.entities ? ${c} && top.entities.${c}.host != null;
         message = "nfs-export '${name}' consumer '${c}' must be a host entity";
       }) n.consumers;
   };

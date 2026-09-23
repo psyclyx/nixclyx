@@ -38,9 +38,9 @@ let
   hostname = config.psyclyx.nixos.host;
   enabled = cfg.enable && hostname != "";
 
-  pools = lib.filterAttrs (_: e: e.type == "zfs-pool") eg.entities;
-  datasets = lib.filterAttrs (_: e: e.type == "zfs-dataset") eg.entities;
-  bindings = lib.filterAttrs (_: e: e.type == "clevis-binding") eg.entities;
+  pools = lib.filterAttrs (_: e: e.zfs-pool != null) eg.entities;
+  datasets = lib.filterAttrs (_: e: e.zfs-dataset != null) eg.entities;
+  bindings = lib.filterAttrs (_: e: e.clevis-binding != null) eg.entities;
 
   myPools = lib.filterAttrs (_: p: (p.refs.host or null) == hostname) pools;
   myDatasets = lib.filterAttrs (_: d: (d.producer or null) == hostname) datasets;
@@ -57,7 +57,7 @@ let
           || (h.refs.persistDataset or null) == datasetName)
         && h.name != (datasets.${datasetName}.producer or null);
     in
-    lib.filterAttrs (_: h: h.type == "host" && isConsumer h) eg.entities;
+    lib.filterAttrs (_: h: h.host != null && isConsumer h) eg.entities;
 
   # Strip the pool prefix from a dataset path: "tank/persist/lab-4" → "persist/lab-4".
   stripPoolPrefix =

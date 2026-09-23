@@ -50,14 +50,14 @@ let
 
   # All NFS exports requiring Kerberos.
   authedExports = lib.filterAttrs
-    (_: e: e.type == "nfs-export" && (e.nfs-export.sec or "sys") != "sys")
+    (_: e: e.nfs-export != null && (e.nfs-export.sec or "sys") != "sys")
     entities;
 
   # Hosts that need a host/<fqdn> principal:
   #  - explicitly opted in via host.kerberos.enable
   #  - any consumer of an authed NFS export
   optInHosts = lib.attrNames (lib.filterAttrs
-    (_: e: e.type == "host" && (e.kerberos.enable or false))
+    (_: e: e.host != null && (e.kerberos.enable or false))
     entities);
 
   nfsConsumerHosts = lib.unique (lib.concatLists

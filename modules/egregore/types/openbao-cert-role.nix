@@ -144,7 +144,7 @@
         {
           assertion =
             r.pkiRoleRef == ""
-            || (top.entities ? ${r.pkiRoleRef} && top.entities.${r.pkiRoleRef}.type == "openbao-pki-role");
+            || (top.entities ? ${r.pkiRoleRef} && top.entities.${r.pkiRoleRef}.openbao-pki-role != null);
           message = "openbao-cert-role '${name}' pkiRoleRef '${r.pkiRoleRef}' is not an openbao-pki-role entity";
         }
         {
@@ -154,7 +154,7 @@
         {
           assertion =
             r.initPolicy == ""
-            || (top.entities ? ${r.initPolicy} && top.entities.${r.initPolicy}.type == "openbao-policy");
+            || (top.entities ? ${r.initPolicy} && top.entities.${r.initPolicy}.openbao-policy != null);
           message = "openbao-cert-role '${name}' initPolicy '${r.initPolicy}' is not an openbao-policy entity";
         }
         {
@@ -163,7 +163,7 @@
         }
       ]
       ++ map (pn: {
-        assertion = top.entities ? ${pn} && top.entities.${pn}.type == "openbao-policy";
+        assertion = top.entities ? ${pn} && top.entities.${pn}.openbao-policy != null;
         message = "openbao-cert-role '${name}' policies '${pn}' is not an openbao-policy entity";
       }) r.policies;
   };

@@ -68,7 +68,7 @@
 
       reachable = lib.filterAttrs (name: e:
         name != currentHost
-        && e.type == "host"
+        && e.host != null
         && e.exposures ? ssh
         && (e.wireguard != null || (mySite != null && (e.host.site or null) == mySite))
         && (resolve e).hostname != null
@@ -93,7 +93,7 @@
       # RouterOS switches are reachable over ssh at their management
       # address; SwOS/Sodola are HTTP-only and get no entry.
       switches = lib.filterAttrs (_: e:
-        e.type == "routeros"
+        e.routeros != null
         && e.exposures ? ssh
         && (e.address or null) != null
       ) eg.entities;
@@ -106,7 +106,7 @@
       # Initrd unlock: a host whose BMC ref lets it netboot exposes its
       # initrd ssh on a fixed port, reachable at the deploy address.
       unlockHosts = lib.filterAttrs (_: e:
-        e.type == "host" && e.refs ? bmc && (e.deployAddress or null) != null
+        e.host != null && e.refs ? bmc && (e.deployAddress or null) != null
       ) eg.entities;
 
       mkUnlock = name: e: lib.nameValuePair "${name}-unlock" {

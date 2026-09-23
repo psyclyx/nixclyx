@@ -88,7 +88,7 @@
           message = "openbao-seal-oracle '${name}' requires refs.host";
         }
         {
-          assertion = host == null || (top.entities ? ${host} && top.entities.${host}.type == "host");
+          assertion = host == null || (top.entities ? ${host} && top.entities.${host}.host != null);
           message = "openbao-seal-oracle '${name}' refs.host '${toString host}' must be a host entity";
         }
         {
@@ -96,7 +96,7 @@
           message = "openbao-seal-oracle '${name}' requires refs.tpmKey";
         }
         {
-          assertion = tpmKey == null || (top.entities ? ${tpmKey} && top.entities.${tpmKey}.type == "tpm-key");
+          assertion = tpmKey == null || (top.entities ? ${tpmKey} && top.entities.${tpmKey}.tpm-key != null);
           message = "openbao-seal-oracle '${name}' refs.tpmKey '${toString tpmKey}' must be a tpm-key entity";
         }
         {

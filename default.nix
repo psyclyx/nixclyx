@@ -122,10 +122,13 @@ let
       };
     };
 
-  systemsOfType = type: platformDir: projection:
+  # A switch system exists for every entity presenting the platform's
+  # kind (`e.<kind> != null` — the type of an entity is the name of the
+  # kind that is present, model §4).
+  systemsOfType = kind: platformDir: projection:
     hostPkgs.lib.mapAttrs
-      (name: _: mkSwitchSystem type platformDir projection name)
-      (hostPkgs.lib.filterAttrs (_: e: e.type == type) fleet.entities);
+      (name: _: mkSwitchSystem kind platformDir projection name)
+      (hostPkgs.lib.filterAttrs (_: e: (e.${kind} or null) != null) fleet.entities);
 
   # Device CLIs (generic, connection-agnostic). Home modules put these on
   # PATH; the deploy scripts compose them. Egregore-unaware on purpose.

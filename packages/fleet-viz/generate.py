@@ -17,9 +17,11 @@ def load_fleet(path):
         return json.load(f)
 
 
-def entities_of_type(data, type_name):
+def entities_of_type(data, kind_name):
+    # The type of an entity is the name of the kind that is present —
+    # kind presence is a non-null kind bag (no `type` field).
     return {k: v for k, v in data.get('entities', {}).items()
-            if v.get('type') == type_name}
+            if v.get(kind_name) is not None}
 
 
 def generate_topology_dot(data):

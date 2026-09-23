@@ -17,7 +17,7 @@
 
   myTangs = lib.filterAttrs (
     _: e:
-    e.type == "service"
+    e.service != null
     && (e.service.kind or null) == "tang"
     && (e.service.backend.host.target or null) == hostname
   ) eg.entities;

@@ -9,12 +9,12 @@
 
   # All sites with a dns ref and a domain.
   dnsSites = lib.filterAttrs (_: e:
-    e.type == "site" && e.site.domain != null && e.refs ? dns
+    e.site != null && e.site.domain != null && e.refs ? dns
   ) eg.entities;
 
   # My site (if any).
   me = eg.entities.${hostName} or null;
-  mySiteName = if me != null && me.type == "host" then me.host.site or null else null;
+  mySiteName = if me != null && me.host != null then me.host.site or null else null;
 
   # Am I a site DNS server?
   isSiteDns = builtins.any (site:

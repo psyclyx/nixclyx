@@ -16,7 +16,7 @@ let
     if fqdn != null then "${fqdn}:${toString svc.port}" else null;
 
   monitoredHosts = lib.filterAttrs (
-    _: e: e.type == "host" && exportersOf e != { }
+    _: e: e.host != null && exportersOf e != { }
   ) eg.entities;
 
   hubName = eg.entities.vpn.gatewayRef;

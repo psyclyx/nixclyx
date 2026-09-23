@@ -56,11 +56,11 @@
       e = entity.environment;
     in
       lib.optional (e.site != null) {
-        assertion = top.entities ? ${e.site} && top.entities.${e.site}.type == "site";
+        assertion = top.entities ? ${e.site} && top.entities.${e.site}.site != null;
         message = "environment '${name}' references site '${e.site}' which is not a site entity";
       }
       ++ lib.optional (e.network != null) {
-        assertion = top.entities ? ${e.network} && top.entities.${e.network}.type == "network";
+        assertion = top.entities ? ${e.network} && top.entities.${e.network}.network != null;
         message = "environment '${name}' references network '${e.network}' which is not a network entity";
       };
   };

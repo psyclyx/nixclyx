@@ -11,7 +11,7 @@ let
   hostname = config.psyclyx.nixos.host;
 
   myGroups = lib.filterAttrs (
-    _: g: g.type == "ha-group" && builtins.elem hostname g.ha-group.members
+    _: g: g.ha-group != null && builtins.elem hostname g.ha-group.members
   ) eg.entities;
 
   hasService = svc: builtins.any (g: g.ha-group.services ? ${svc}) (builtins.attrValues myGroups);

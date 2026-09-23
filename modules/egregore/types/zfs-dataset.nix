@@ -155,7 +155,7 @@
           message = "zfs-dataset '${name}' requires refs.pool";
         }
         {
-          assertion = pool == null || (top.entities ? ${pool} && top.entities.${pool}.type == "zfs-pool");
+          assertion = pool == null || (top.entities ? ${pool} && top.entities.${pool}.zfs-pool != null);
           message = "zfs-dataset '${name}' refs.pool '${toString pool}' must be a zfs-pool entity";
         }
       ];

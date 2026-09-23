@@ -53,7 +53,7 @@ let
   # Guests whose hypervisor is this host AND that have a cert binding.
   myGuestsWithCert = lib.filterAttrs (
     _: e:
-    e.type == "host"
+    e.host != null
     && (e.refs.hypervisor or null) == hostname
     && (((e.openbao or { }).cert or null) != null)
   ) eg.entities;

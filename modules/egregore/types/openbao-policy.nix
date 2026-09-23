@@ -105,9 +105,9 @@
       name: entity: top:
       let
         p = entity.openbao-policy;
-        kvSecretEntities = lib.filterAttrs (_: e: e.type == "kv-secret") top.entities;
-        pkiRoleEntities = lib.filterAttrs (_: e: e.type == "openbao-pki-role") top.entities;
-        sshRoleEntities = lib.filterAttrs (_: e: e.type == "openbao-ssh-cert-role") top.entities;
+        kvSecretEntities = lib.filterAttrs (_: e: e.kv-secret != null) top.entities;
+        pkiRoleEntities = lib.filterAttrs (_: e: e.openbao-pki-role != null) top.entities;
+        sshRoleEntities = lib.filterAttrs (_: e: e.openbao-ssh-cert-role != null) top.entities;
         kvReaderRules = lib.flatten (
           map (
             secretName:
@@ -180,15 +180,15 @@
         }
       ]
       ++ map (sn: {
-        assertion = top.entities ? ${sn} && top.entities.${sn}.type == "kv-secret";
+        assertion = top.entities ? ${sn} && top.entities.${sn}.kv-secret != null;
         message = "openbao-policy '${name}' kvReader '${sn}' is not a kv-secret entity";
       }) p.kvReader
       ++ map (rn: {
-        assertion = top.entities ? ${rn} && top.entities.${rn}.type == "openbao-pki-role";
+        assertion = top.entities ? ${rn} && top.entities.${rn}.openbao-pki-role != null;
         message = "openbao-policy '${name}' pkiIssuer '${rn}' is not an openbao-pki-role entity";
       }) p.pkiIssuer
       ++ map (rn: {
-        assertion = top.entities ? ${rn} && top.entities.${rn}.type == "openbao-ssh-cert-role";
+        assertion = top.entities ? ${rn} && top.entities.${rn}.openbao-ssh-cert-role != null;
         message = "openbao-policy '${name}' sshSigner '${rn}' is not an openbao-ssh-cert-role entity";
       }) p.sshSigner;
   };

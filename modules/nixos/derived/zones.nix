@@ -13,7 +13,7 @@
   # VLAN-keyed maps only cover networks with an actual VLAN ID, gated
   # to networks where gwName is the gateway. A host without that role
   # for a given network has no business being authoritative for it.
-  networks = lib.filterAttrs (_: e: e.type == "network") eg.entities;
+  networks = lib.filterAttrs (_: e: e.network != null) eg.entities;
   # Networks whose resolved v4 gateway is gwName, from the graph inverse.
   gwGatewayed =
     lib.attrByPath ["entities" gwName "refsIn" "gateway"] [] eg;
@@ -48,7 +48,7 @@
   managedHostsOnNetwork = network:
     lib.sort builtins.lessThan
       (builtins.attrNames (lib.filterAttrs (_: e:
-        e.type == "host"
+        e.host != null
         && e.host.mac != {}
         && e.host.interfaces ? ${network}
         && e.host.addresses ? ${network}
@@ -66,7 +66,7 @@
   # HA groups on a given network → VIP A records.
   vipRecordsForNetwork = networkName: let
     groups = lib.filterAttrs (_: e:
-      e.type == "ha-group" && e.ha-group.network == networkName
+      e.ha-group != null && e.ha-group.network == networkName
     ) eg.entities;
   in
     lib.concatStringsSep "\n" (lib.mapAttrsToList (groupName: g:
@@ -188,7 +188,7 @@
     # All hosts at this site — we'll filter to those with a resolvable
     # address (incl. gateway-derived) on one of the listed networks.
     siteHosts = lib.filterAttrs (_: e:
-      e.type == "host" && (e.host.site or null) == mySiteName
+      e.host != null && (e.host.site or null) == mySiteName
     ) eg.entities;
 
     # Pick the first network in the preference list for which this host

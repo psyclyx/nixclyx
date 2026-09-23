@@ -11,11 +11,11 @@ let
   eg = config.psyclyx.egregore;
   hostName = config.psyclyx.nixos.host;
   me = eg.entities.${hostName} or null;
-  intrinsic = if me != null && me.type == "host" then me.dnsAuthority or [] else [];
+  intrinsic = if me != null && me.host != null then me.dnsAuthority or [] else [];
   sources = if me != null then me.refsIn.dnsAuthority or [] else [];
   contributed = lib.concatMap (n: let
     e = eg.entities.${n} or null;
-  in lib.optional (e != null && e.type == "service" && e.resolvedDomain != null)
+  in lib.optional (e != null && e.service != null && e.resolvedDomain != null)
     e.resolvedDomain) sources;
   zones = lib.unique (intrinsic ++ contributed);
 in

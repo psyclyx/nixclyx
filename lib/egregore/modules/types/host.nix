@@ -156,7 +156,7 @@
         # inherited from the site as well as one written literally; filter
         # to networks, since a site also names a gateway. Declared wins.
         gatewayDerivedAddresses = lib.genAttrs
-          (lib.filter (n: (top.entities.${n}).type or "" == "network")
+          (lib.filter (n: (top.entities.${n}.network or null) != null)
             (entity.refsIn.gateway or []))
           (netName: let net = top.entities.${netName}; in {
             ipv4 = net.gateway4 or null;
@@ -173,7 +173,7 @@
           addrKey: _:
           let
             netEnt = top.entities.${addrKey} or null;
-            zone = if netEnt != null && netEnt.type == "network" then netEnt.zoneName or "" else "";
+            zone = if netEnt != null && netEnt.network != null then netEnt.zoneName or "" else "";
           in
           if zone != "" then "${name}.${zone}" else null
         ) resolvedAddresses;
@@ -215,7 +215,7 @@
         h = entity.host;
       in
       lib.optional (h.site != null) {
-        assertion = top.entities ? ${h.site} && top.entities.${h.site}.type == "site";
+        assertion = top.entities ? ${h.site} && top.entities.${h.site}.site != null;
         message = "host '${name}' references site '${h.site}' which is not a site entity";
       };
   };

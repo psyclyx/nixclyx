@@ -27,7 +27,7 @@ let
   enabled = cfg.enable && hostname != "";
 
   oracles = lib.filterAttrs (_: e:
-    e.type == "openbao-seal-oracle"
+    e.openbao-seal-oracle != null
     && (e.refs.host or null) == hostname
   ) eg.entities;
 

@@ -9,7 +9,7 @@ let
   hostname = config.psyclyx.nixos.host;
 
   haGroups = lib.filterAttrs (
-    _: e: e.type == "ha-group" && builtins.elem hostname e.ha-group.members
+    _: e: e.ha-group != null && builtins.elem hostname e.ha-group.members
   ) eg.entities;
 
   hasGroups = haGroups != { };

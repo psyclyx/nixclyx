@@ -28,14 +28,14 @@ let
   eg = config.psyclyx.egregore;
   hostname = config.psyclyx.nixos.host or null;
   me = if hostname != null then eg.entities.${hostname} or null else null;
-  amHost = me != null && me.type == "host";
+  amHost = me != null && me.host != null;
 
   isGateway = config.psyclyx.nixos.network.gateway.enable or false;
   unitPrefix = if isGateway then "31" else "20";
 
   mySite = if amHost then me.host.site or null else null;
 
-  overlays = lib.filterAttrs (_: e: e.type == "network") eg.entities;
+  overlays = lib.filterAttrs (_: e: e.network != null) eg.entities;
 
   # For an overlay that has an underlay declared at this site, emit the
   # shortcut routes if this host has an address on that underlay.
@@ -57,7 +57,7 @@ let
 
       ready =
         underlayEntity != null
-        && underlayEntity.type == "network"
+        && underlayEntity.network != null
         && myUnderlayDevice != null;
 
       # Peers in this site with addresses on both networks. Exclude self
@@ -65,7 +65,7 @@ let
       sitePeers = lib.filterAttrs (
         peerName: h:
         peerName != hostname
-        && h.type == "host"
+        && h.host != null
         && (h.host.site or null) == mySite
         && h.host.addresses ? ${overlayName}
         && (h.host.addresses.${overlayName}.ipv4 or null) != null

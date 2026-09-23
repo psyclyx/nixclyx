@@ -29,10 +29,10 @@ let
   hostEntity = eg.entities.${hostname} or null;
   hostHere = hostEntity != null;
 
-  policyEntities = lib.filterAttrs (_: e: e.type == "openbao-policy") eg.entities;
-  pkiRoleEntities = lib.filterAttrs (_: e: e.type == "openbao-pki-role") eg.entities;
-  certRoleEntities = lib.filterAttrs (_: e: e.type == "openbao-cert-role") eg.entities;
-  sshRoleEntities = lib.filterAttrs (_: e: e.type == "openbao-ssh-cert-role") eg.entities;
+  policyEntities = lib.filterAttrs (_: e: e.openbao-policy != null) eg.entities;
+  pkiRoleEntities = lib.filterAttrs (_: e: e.openbao-pki-role != null) eg.entities;
+  certRoleEntities = lib.filterAttrs (_: e: e.openbao-cert-role != null) eg.entities;
+  sshRoleEntities = lib.filterAttrs (_: e: e.openbao-ssh-cert-role != null) eg.entities;
 
   # Unique mounts referenced by ssh-cert-role entities. Each mount
   # owns one CA; we enable + generate the signing key per mount.
@@ -47,7 +47,7 @@ let
     in (lib.head rs).openbao-ssh-cert-role.keyType;
 
   kvSecretEntities = lib.filterAttrs (
-    _: e: e.type == "kv-secret" && (e.refs.producer or null) == hostname && e.kv-secret.sourceFile != null
+    _: e: e.kv-secret != null && (e.refs.producer or null) == hostname && e.kv-secret.sourceFile != null
   ) eg.entities;
 
   mkPolicyBlock =

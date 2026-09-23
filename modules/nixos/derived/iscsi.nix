@@ -18,7 +18,7 @@
   baseIqn = eg.iscsi.baseIqn or "";
 
   # All lun entities.
-  allLuns = lib.filterAttrs (_: e: e.type == "lun") eg.entities;
+  allLuns = lib.filterAttrs (_: e: e.lun != null) eg.entities;
 
   # IQN convention: <base>:<producer>:<lun-name>.
   mkIqn = lunName: producer: "${baseIqn}:${producer}:${lunName}";
@@ -35,8 +35,8 @@
   # tank/luns/ab-api-state) might be under an encryption root with a
   # clevis-binding (tank/luns is bound on lab-4). target.service needs
   # the binding's unlock unit to run first — find them.
-  allBindings = lib.filterAttrs (_: e: e.type == "clevis-binding") eg.entities;
-  allDatasets = lib.filterAttrs (_: e: e.type == "zfs-dataset") eg.entities;
+  allBindings = lib.filterAttrs (_: e: e.clevis-binding != null) eg.entities;
+  allDatasets = lib.filterAttrs (_: e: e.zfs-dataset != null) eg.entities;
   datasetByPath = lib.listToAttrs (lib.mapAttrsToList
     (_: d: lib.nameValuePair d.zfs-dataset.path d) allDatasets);
   bindingForDatasetPath = path:

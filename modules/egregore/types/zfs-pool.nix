@@ -68,7 +68,7 @@
           message = "zfs-pool '${name}' requires refs.host (the producer)";
         }
         {
-          assertion = host == null || (top.entities ? ${host} && top.entities.${host}.type == "host");
+          assertion = host == null || (top.entities ? ${host} && top.entities.${host}.host != null);
           message = "zfs-pool '${name}' refs.host '${toString host}' must be a host entity";
         }
       ];

@@ -20,7 +20,7 @@
     && builtins.elem publicDomain (me.dnsAuthority or []);
 
   hostsWithPublicNames = lib.filterAttrs
-    (_: e: e.type == "host" && (e.publicNames or []) != [])
+    (_: e: e.host != null && (e.publicNames or []) != [])
     eg.entities;
 
   mkRecords = _hostName: hostEnt: let

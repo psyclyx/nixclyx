@@ -81,7 +81,6 @@ in rec {
             imports = [ mod ];
 
             config = mkIf (config.${typeName} != null) ({
-              type = typeName;
               relations = relations name config topConfig;
               verbs = verbs name config topConfig;
               assertions = assertions name config topConfig;
@@ -136,7 +135,7 @@ in rec {
     };
 
   # A facet aspect: contributes *top-level* options on the entity (not a
-  # type bag). It registers nothing and derives no `type`; presence is
+  # kind bag). It registers nothing and writes no kind; presence is
   # whatever the caller's `derive` gates on. This is how a cross-cutting
   # concern (routing, monitoring, …) attaches to any entity without
   # being nested under a kind. Derived keys are declared in `options`
@@ -245,8 +244,14 @@ in rec {
 
   # ── Querying ────────────────────────────────────────────────────────
 
-  ofType = typeName: entities:
-    lib.filterAttrs (_: e: e.type == typeName) entities;
+  # The type of an entity is the name of the kind that is present
+  # (model §4); no field stores it. A kind is present when its option
+  # value is not null — `e.host != null` is "this is a host".
+  withKind = kindName: entities:
+    lib.filterAttrs (_: e: (e.${kindName} or null) != null) entities;
+
+  # Deprecated alias for `withKind` — dispatch on kind presence.
+  ofType = withKind;
 
   tagged = tag: entities:
     lib.filterAttrs (_: e: builtins.elem tag e.tags) entities;
@@ -346,7 +351,7 @@ in rec {
 
   # An `egregoreAspect` spec field: a facet contributing top-level entity
   # options (see `mkAspect`). Same shape as a type spec, but registers
-  # nothing and derives no `type`.
+  # nothing and writes no kind.
   #
   #   { egregoreAspect = { lib, config, ... }: {
   #       options = { vpn = lib.mkOption { ... }; };

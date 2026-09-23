@@ -1,16 +1,19 @@
 # Core module — defines the fundamental schema: entities, types, assertions.
 #
-# Entities are typed records in an extensible registry. Each entity has:
-#   type  — which registered type it is (determines schema and derived keys)
+# Entities are records in an extensible registry. Each entity has:
+#   name  — its id (the key it is registered under)
 #   tags  — freeform labels for filtering
 #   refs  — named references to other entities (validated)
 #   edges — refs in normalized shape ({ target; port; nic; })
 #   verbs — available operations (set by type modules)
 #
-# Type modules extend the entity submodule to add type-specific options,
-# derived keys, and verbs. The module system merges everything — each
-# entity instance sees all type modules' options, but only the matching
-# type's derived keys/verbs are active (via mkIf).
+# No field stores the type (model §4): the type of an entity is the name
+# of the kind that is present — a kind is an option value that is not
+# null (`e.host != null` is "this is a host"). Type modules extend the
+# entity submodule to add kind options, derived keys, and verbs. The
+# module system merges everything — each entity instance sees all type
+# modules' options, but only the present kind's derived keys/verbs are
+# active (via mkIf).
 #
 # A ref value is either a bare entity name or `{ target; port; nic; }`
 # naming the attachment point on the far side. `edges` carries the
@@ -39,7 +42,11 @@ in {
     };
 
     types = mkOption {
-      description = "Registered entity types.";
+      description = ''
+        Registered entity kinds. Documentation/registration only — the
+        kind options and this registry come as a pair from mkType, and
+        the type of an entity is the name of the kind that is present.
+      '';
       type = types.attrsOf (types.submodule {
         options.description = mkOption {
           type = types.str;
@@ -56,12 +63,6 @@ in {
         placeholder = "id";
         elemType = types.submodule ({ name, config, ... }: {
         options = {
-          type = mkOption {
-            type = types.str;
-            default = "";
-            description = "Entity type — derived from whichever type aspect is present.";
-          };
-
           tags = mkOption {
             type = types.listOf types.str;
             default = [];
@@ -198,11 +199,27 @@ in {
   };
 
   config.assertions =
-    # Every entity's type must be registered.
-    lib.mapAttrsToList (name: entity: {
-      assertion = config.types ? ${entity.type};
-      message = "entity '${name}' has unregistered type '${entity.type}'";
-    }) config.entities
+    # Every entity must present exactly one registered kind. The type of
+    # an entity is the name of the kind that is present (model §4); no
+    # field stores it. A present kind is an option value that is not
+    # null, among the registered kind names — every present kind is
+    # registered by construction (the kind options and the registry come
+    # as a pair), so what this catches is "no kind present" (the old
+    # unregistered-type case) and "several kinds present" (which cannot
+    # name one type).
+    lib.mapAttrsToList (name: entity:
+      let
+        registered = builtins.attrNames config.types;
+        present = builtins.filter
+          (k: (entity.${k} or null) != null)
+          registered;
+      in {
+        assertion = builtins.length present == 1;
+        message =
+          if present == []
+          then "entity '${name}' has unregistered type: no registered kind is present (registered kinds: ${lib.concatStringsSep ", " registered})"
+          else "entity '${name}' has several present kinds (${lib.concatStringsSep ", " present}) — the type of an entity is the name of the kind that is present";
+      }) config.entities
 
     # All refs must resolve to existing entities.
     ++ lib.concatLists (lib.mapAttrsToList (name: entity:

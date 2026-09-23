@@ -30,7 +30,7 @@
   # on those hosts, so the null never propagates.
   me = eg.entities.${hostname} or null;
 
-  services = lib.filterAttrs (_: e: e.type == "service") eg.entities;
+  services = lib.filterAttrs (_: e: e.service != null) eg.entities;
   # Presentation requires a resolved domain: a service reached directly
   # (no FQDN, no ingress — e.g. tang) is not the ingress projection's
   # business. It is skipped here, not mangled into a null-domain record.
@@ -40,7 +40,7 @@
 
   scopes = eg.scopes;
   envEntities = lib.filterAttrs
-    (_: e: e.type == "environment" && e.environment.domain != null)
+    (_: e: e.environment != null && e.environment.domain != null)
     eg.entities;
   envDomains = lib.mapAttrsToList (_: e: e.environment.domain) envEntities;
 
@@ -95,13 +95,13 @@
     sources = h.refsIn.dnsAuthority or [];
     contributed = lib.concatMap (n: let
       e = eg.entities.${n} or null;
-    in lib.optional (e != null && e.type == "service" && e.resolvedDomain != null)
+    in lib.optional (e != null && e.service != null && e.resolvedDomain != null)
       e.resolvedDomain) sources;
   in lib.unique (intrinsic ++ contributed);
 
   hostHasAuthority = hostName: domain: let
     h = eg.entities.${hostName} or null;
-    zones = if h != null && h.type == "host" then effectiveDnsAuthority h else [];
+    zones = if h != null && h.host != null then effectiveDnsAuthority h else [];
   in builtins.any (z: z == domain || lib.hasSuffix ".${z}" domain) zones;
 
   iCanIssue = domain: hostHasAuthority hostname domain;
@@ -230,7 +230,7 @@
     localzoneView = t: t.view.records == "localzone";
     isResolverFor = scopeAddress: let
       net = eg.entities.${scopeAddress} or null;
-    in net != null && net.type == "network" && (net.dnsRef or null) == hostname;
+    in net != null && net.network != null && (net.dnsRef or null) == hostname;
 
     httpRecs = lib.concatMap (t:
       lib.optional (localzoneView t && isResolverFor t.scopeAddress)

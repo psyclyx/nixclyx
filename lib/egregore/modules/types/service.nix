@@ -285,7 +285,7 @@
       proxyServing = sc: let
         claimants = builtins.filter
           (n: let e = top.entities.${n}; in
-            e.type == "service" && (e.service.proxy or null) != null
+            e.service != null && (e.service.proxy or null) != null
             && builtins.elem sc e.service.scopes)
           (builtins.attrNames top.entities);
       in if builtins.length claimants == 1 then builtins.head claimants else null;
@@ -343,7 +343,7 @@
       }
     ]
     ++ lib.optional (s.backend.host != null) {
-      assertion = top.entities ? ${s.backend.host.target} && top.entities.${s.backend.host.target}.type == "host";
+      assertion = top.entities ? ${s.backend.host.target} && top.entities.${s.backend.host.target}.host != null;
       message = "service '${name}': backend.host.target '${s.backend.host.target}' is not a host entity";
     }
     ++ lib.optional (s.backend.host != null && top.entities ? ${s.backend.host.target}) {
@@ -351,7 +351,7 @@
       message = "service '${name}': backend.host.exposure '${s.backend.host.exposure}' is not an exposure on '${s.backend.host.target}'";
     }
     ++ lib.optional (s.environment != null) {
-      assertion = top.entities ? ${s.environment} && top.entities.${s.environment}.type == "environment";
+      assertion = top.entities ? ${s.environment} && top.entities.${s.environment}.environment != null;
       message = "service '${name}': environment '${s.environment}' is not an environment entity";
     }
     ++ lib.optional (s.backend.ha != null) {
@@ -359,7 +359,7 @@
       message = "service '${name}': backend.ha must have exactly one entry";
     }
     ++ lib.optional (haGroupName != null) {
-      assertion = top.entities ? ${haGroupName} && top.entities.${haGroupName}.type == "ha-group";
+      assertion = top.entities ? ${haGroupName} && top.entities.${haGroupName}.ha-group != null;
       message = "service '${name}': backend.ha references '${haGroupName}' which is not an ha-group entity";
     }
     ++ lib.optional (haGroupName != null && top.entities ? ${haGroupName}) {
@@ -381,7 +381,7 @@
       }
     ]
     ++ lib.optional (dnsAuthRef != null) {
-      assertion = top.entities ? ${dnsAuthRef} && top.entities.${dnsAuthRef}.type == "host";
+      assertion = top.entities ? ${dnsAuthRef} && top.entities.${dnsAuthRef}.host != null;
       message = "service '${name}': refs.dnsAuthority → '${dnsAuthRef}' must be a host entity";
     };
   };

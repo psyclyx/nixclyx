@@ -6,7 +6,7 @@
   hostname = config.psyclyx.nixos.host or null;
   me = if hostname == null then null else eg.entities.${hostname}.host or null;
 
-  hosts = lib.filterAttrs (_: e: e.type == "host") eg.entities;
+  hosts = lib.filterAttrs (_: e: e.host != null) eg.entities;
 
   # Hosts with MAC addresses that have an interface on a given network.
   #
@@ -59,7 +59,7 @@
     sitePool = pool.network;
     poolNet = eg.entities.${sitePool};
 
-    switches = lib.filterAttrs (_: e: e.type == "routeros") eg.entities;
+    switches = lib.filterAttrs (_: e: e.routeros != null) eg.entities;
 
     # All routed networks across all switches in this site, paired with
     # the switch's IP on the POOL'S network (i.e. the next hop visible
@@ -68,7 +68,7 @@
       r = sw.routeros;
       nextHopOnPoolNet = r.addresses.${sitePool}.ipv4 or null;
       routedHere = lib.filter
-        (n: n != sitePool && (eg.entities.${n}.type or "") == "network")
+        (n: n != sitePool && (eg.entities.${n}.network or null) != null)
         (sw.refsIn.gateway or []);
     in
       if nextHopOnPoolNet == null then []

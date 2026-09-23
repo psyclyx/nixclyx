@@ -52,7 +52,7 @@ let
 
   myDelegation = lib.findFirst
     (d: (d.refs.to or null) == name) null
-    (builtins.filter (e: e.type == "prefix-delegation")
+    (builtins.filter (e: e.prefix-delegation != null)
       (builtins.attrValues (top.entities or {})));
   pdPool = "delegated";
   pdNetworks = lib.intersectLists addressNetworks (entity.refsIn.gateway6 or []);

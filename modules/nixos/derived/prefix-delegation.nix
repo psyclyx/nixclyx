@@ -15,7 +15,7 @@ let
   me = if hostname == null then null else eg.entities.${hostname}.host or null;
 
   delegations = lib.filterAttrs
-    (_: e: e.type == "prefix-delegation" && (e.refs.from or null) == hostname)
+    (_: e: e.prefix-delegation != null && (e.refs.from or null) == hostname)
     (eg.entities or {});
 
   mkDownstream = _: d: let

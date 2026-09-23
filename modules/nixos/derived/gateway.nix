@@ -34,7 +34,7 @@
   isV6Gateway = e: builtins.elem e.name v6Gatewayed;
   gatewayedNetworks = lib.filterAttrs
     (_: e:
-      e.type == "network"
+      e.network != null
       && e.network.vlan != null
       && (isV4Gateway e || isV6Gateway e))
     eg.entities;
