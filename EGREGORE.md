@@ -361,14 +361,24 @@ platform artifacts — all byte-identical):
   routeros (the *offering*); `withAspect`/`hasAspect` helpers; ssh-hosts,
   deployments, and openssh repointed at it. `withAspect "ssh"` yields all
   13 sshable entities uniformly (hosts and switches).
+- ✅ **§7.3 facets are peers** — `mkAspect` + the `egregoreAspect`
+  interceptor; a facet contributes top-level entity options. host-fleet →
+  `modules/egregore/aspects/host-facets.nix`; data + consumers moved; a
+  real kerberos string-path bug fixed en route.
 
 Not yet done:
 
-- ⏳ **§7.3 promote facets** out of `host.*` (`routing`/`dns`/`vpn`/`trust`/
-  `monitoring`/`boot`). Needs `mkAspect` (a non-type aspect) + an interceptor
-  + splitting `host-fleet.nix` into facet modules, then ~15 consumer reads.
-- ⏳ **§7.6 consumer sweep**: ~180 `attrs.*` reads are still path-based. The
-  namespace collapse (`entity.attrs.foo` → `entity.foo`) is the big one.
-- ⏳ **§7.5 noun re-placement** (`initrdVlans`, `network` mechanisms,
-  `zfs-*`/`tpm-key`).
-- ⏳ **§7.7 views**.
+- ⏳ **§7.6 consumer sweep** — the namespace collapse
+  (`entity.attrs.foo` → `entity.foo`). Investigated: `freeformType` *can*
+  expose derived keys at the top level (verified), but it gives up
+  typo-catching (a misspelled bag silently becomes a freeform attr) and
+  collides with type-bag names (`host`'s `site` attr vs the `site` type).
+  So this is not a mechanical sweep: it needs the derived keys declared
+  as options per type (closed, checked), ~30 keys + ~180 reads.
+- ⏳ **§7.5 noun re-placement** — re-examined: `initrdVlans`, the
+  `network` mechanisms (`underlay`/`dhcpRelay`), and `zfs-*`/`tpm-key`
+  are all *referenced by fleet entities* (network names, dataset refs), so
+  they are fleet facts that a host config cannot restate without
+  re-deriving. The plan's assumption that they move to host config needs
+  revisiting before doing it.
+- ⏳ **§7.7 views** — optional; nothing needs it yet.
