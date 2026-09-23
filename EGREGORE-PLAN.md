@@ -18,6 +18,7 @@ toward.
 | `08053f68` | `ssh` is a capability key (`attrs.ssh = { port; user; }`); `withAspect`/`hasAspect`; ssh-hosts, deployments, openssh repointed |
 | `aa98a6f9` | host facets are top-level aspects (`mkAspect` + `egregoreAspect`); `host-fleet.nix` → `modules/egregore/aspects/host-facets.nix` (privclyx: `a9f1d7a`) |
 | `86d63426` | `EGREGORE.md` = the model specification |
+| `2ce93ee3` | `exposures` aspect (the model's four fields) with the derived form in `attrs.exposures`; `exposuresOf`/`withRole`; `host.deployUser` and `attrs.ssh.user` removed — the account is client policy (`sshHosts.user`) |
 | `2182e116` | earlier progress notes |
 
 ### Code shape
