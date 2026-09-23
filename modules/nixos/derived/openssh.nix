@@ -8,5 +8,5 @@
   hostname = config.psyclyx.nixos.host;
   me = eg.entities.${hostname} or null;
 in lib.mkIf (me != null) {
-  psyclyx.nixos.services.openssh.port = lib.mkDefault me.host.sshPort;
+  psyclyx.nixos.services.openssh.port = lib.mkDefault me.attrs.ssh.port;
 }

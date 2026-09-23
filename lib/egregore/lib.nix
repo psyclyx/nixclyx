@@ -179,6 +179,11 @@ in rec {
   withAttr = attrName: entities:
     lib.filterAttrs (_: e: e.attrs ? ${attrName} && e.attrs.${attrName} != null) entities;
 
+  # A capability is just an attrs key whose schema is its contract; these
+  # are the query spelling. `withAspect "ssh"` is "everything sshable".
+  withAspect = withAttr;
+  hasAspect = attrName: e: e.attrs ? ${attrName} && e.attrs.${attrName} != null;
+
   collectAttr = attrName: entities:
     lib.mapAttrs (_: e: e.attrs.${attrName}) (withAttr attrName entities);
 

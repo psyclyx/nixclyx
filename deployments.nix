@@ -22,7 +22,7 @@ let
   in
     lib.optionalAttrs (target != null) {
       targetHost = target;
-      targetUser = h.deployUser or "root";
+      targetUser = e.attrs.ssh.user or "root";
     }
     // lib.optionalAttrs ((h.sshPort or 22) != 22) {
       targetPort = h.sshPort;

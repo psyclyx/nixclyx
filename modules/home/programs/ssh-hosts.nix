@@ -71,7 +71,7 @@
         keyFqdn = if r.vpnFqdn != null then r.vpnFqdn else r.siteFqdn;
       in lib.nameValuePair aliases {
         HostName = r.hostname;
-        Port = e.host.sshPort;
+        Port = e.attrs.ssh.port;
         ForwardAgent = cfg.forwardAgent;
         HostKeyAlias = keyFqdn;
       };
@@ -84,7 +84,7 @@
 
       mkSwitch = _name: e: lib.nameValuePair e.attrs.name {
         HostName = e.attrs.address;
-        User = e.routeros.sshUser;
+        User = e.attrs.ssh.user;
       };
 
       # Initrd unlock: a host whose BMC ref lets it netboot exposes its

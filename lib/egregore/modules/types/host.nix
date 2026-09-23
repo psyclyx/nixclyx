@@ -114,6 +114,12 @@
         address = if vpn != null then vpn.ipv4 else null;
         addresses = resolvedAddresses;
         inherit fqdn fqdns;
+        # The ssh offering: this node's management ssh, service-shaped
+        # (a port and the account), the same shape a switch exposes. The
+        # reachable *endpoint* is frame-relative and derived by whoever
+        # connects; the host key material and CA role are a separate
+        # trust concern. `user` is offering policy, not reachability.
+        ssh = { port = h.sshPort; user = h.deployUser; };
         site = h.site;
         sshPort = h.sshPort;
         # Where a deploy tool reaches this host. Derived, not declared:

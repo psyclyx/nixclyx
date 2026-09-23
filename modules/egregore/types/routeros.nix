@@ -166,6 +166,8 @@
       mgmtAddr = r.addresses.${r.mgmtNetwork}.ipv4 or null;
     in {
       address = mgmtAddr;
+      # The ssh offering, the same shape a host exposes (port + account).
+      ssh = { port = 22; user = r.sshUser; };
       # Addresses keyed by network, the same shape a host exposes.
       # Anything asking "what address does this device have on network
       # N" — a route resolving its next hop, a relay resolving its
