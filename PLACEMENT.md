@@ -138,10 +138,13 @@ and iLO (Redfish). No egregore in any of them.
 6. Physical moves: `egregore/` (core) + `egregore/modules/` +
    `lib/platform/` out of the fleet path; `modules/egregore/` becomes the
    fleet schema home.
-7. CLI → manifest interpreter; `verbs` retired.
-8. ✅ split `host` into the intrinsic noun (`lib/egregore/modules/`)
+7. CLI → manifest interpreter; `verbs` retired.8. ✅ split `host` into the intrinsic noun (`lib/egregore/modules/`)
    and the fleet `host-fleet` extension (`modules/egregore/`), via
    `extends`. Then `roles`→`tags`, derive `deployAddress`, and move the
    gateway + firewall mechanisms into host config. Byte-identical at
    each step (entity attrs, iyr gateway/cake-qos, iyr + lab firewalls,
    the four platform artifacts).
+
+## See also
+
+`EGREGORE.md` — the end-state machinery and the phased plan to reach it.
