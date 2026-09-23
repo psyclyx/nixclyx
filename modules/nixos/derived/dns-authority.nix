@@ -11,7 +11,7 @@ let
   eg = config.psyclyx.egregore;
   hostName = config.psyclyx.nixos.host;
   me = eg.entities.${hostName} or null;
-  intrinsic = if me != null && me.type == "host" then me.host.dnsAuthority or [] else [];
+  intrinsic = if me != null && me.type == "host" then me.dnsAuthority or [] else [];
   sources = if me != null then me.refsIn.dnsAuthority or [] else [];
   contributed = lib.concatMap (n: let
     e = eg.entities.${n} or null;

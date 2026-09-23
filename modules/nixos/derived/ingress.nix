@@ -85,7 +85,7 @@
   # Union of a host's intrinsic dnsAuthority and any apex zones
   # contributed by services that ref this host via refs.dnsAuthority.
   effectiveDnsAuthority = h: let
-    intrinsic = h.host.dnsAuthority or [];
+    intrinsic = h.dnsAuthority or [];
     sources = h.refsIn.dnsAuthority or [];
     contributed = lib.concatMap (n: let
       e = eg.entities.${n} or null;

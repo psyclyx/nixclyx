@@ -36,7 +36,7 @@ let
 
   myCertBinding =
     if me == null then null
-    else (me.host.openbao or { }).cert or null;
+    else (me.openbao or { }).cert or null;
 
   guestCertRoleName = if myCertBinding == null then null else myCertBinding.role;
   guestCertRole =
@@ -55,13 +55,13 @@ let
     _: e:
     e.type == "host"
     && (e.refs.hypervisor or null) == hostname
-    && (((e.host.openbao or { }).cert or null) != null)
+    && (((e.openbao or { }).cert or null) != null)
   ) eg.entities;
 
   vmTokenRole =
     vm:
     let
-      roleName = vm.host.openbao.cert.role;
+      roleName = vm.openbao.cert.role;
       roleEnt = eg.entities.${roleName} or null;
     in
     if roleEnt == null then null else roleEnt.attrs.tokenRoleName;

@@ -81,44 +81,44 @@ let
             ipv6 = "fd9a:e830:4b1e:d2::${lib.toHexString (10 + n)}";
           };
         };
-        # PXE-eligible on every interface with a DHCP pool (storage is
-        # excluded — it's switch-routed L3 with no DHCP server). The
-        # projection emits a per-MAC reservation in each named pool, so
-        # firmware boot order can pick either eno1 (main) or the 10G
-        # NIC (lab) and the chainload still works.
-        boot = {
-          mode = "pxe";
-          pxeInterfaces = [ "main" "lab" ];
-          # Chassis seating, uniform across the four DL360 Gen9s: eno1 is
-          # port 1 of the embedded 4-port NIC, and the 10G pair is the
-          # FlexLOM with lab on port 1 and storage on port 2 (confirmed on
-          # lab-4 against the BMC's BIOS mappings; the others share the
-          # build and the same MAC ordering, and `ilo plan` will show any
-          # mismatch before it changes anything).
-          #
-          # Storage is deliberately absent from pxeInterfaces, so the BMC
-          # projection disables network boot on that seat. Leaving it
-          # firmware-enabled is what wedged lab-4: it PXE'd on the storage
-          # NIC, whose reservation carries no bootfile, and looped there
-          # for a week without ever falling through to a seat that works.
-          firmwareNics = {
-            main    = { adapter = "EmbNic";   port = 1; };
-            lab     = { adapter = "FlexLom1"; port = 1; };
-            storage = { adapter = "FlexLom1"; port = 2; };
-          };
-        };
-        wireguard = {
-          publicKey = wgKey;
-          allowedNetworks = [ ];
-        };
-        # NFS principals (nfs/<fqdn>) use the lab host's lab-VLAN
-        # FQDN so off-rack clients mount via lab (eno49np0, 10G), not
-        # storage (eno50np1, 10G — reserved exclusively for iSCSI to
-        # keep that bandwidth unconteted). mdf-agg01's L3 hw offload
-        # routes main↔lab at line rate. For lab hosts that don't gain
-        # a Kerberos role this is a harmless setting.
-        kerberos.fqdnNetwork = "lab";
       };
+      # PXE-eligible on every interface with a DHCP pool (storage is
+      # excluded — it's switch-routed L3 with no DHCP server). The
+      # projection emits a per-MAC reservation in each named pool, so
+      # firmware boot order can pick either eno1 (main) or the 10G
+      # NIC (lab) and the chainload still works.
+      boot = {
+        mode = "pxe";
+        pxeInterfaces = [ "main" "lab" ];
+        # Chassis seating, uniform across the four DL360 Gen9s: eno1 is
+        # port 1 of the embedded 4-port NIC, and the 10G pair is the
+        # FlexLOM with lab on port 1 and storage on port 2 (confirmed on
+        # lab-4 against the BMC's BIOS mappings; the others share the
+        # build and the same MAC ordering, and `ilo plan` will show any
+        # mismatch before it changes anything).
+        #
+        # Storage is deliberately absent from pxeInterfaces, so the BMC
+        # projection disables network boot on that seat. Leaving it
+        # firmware-enabled is what wedged lab-4: it PXE'd on the storage
+        # NIC, whose reservation carries no bootfile, and looped there
+        # for a week without ever falling through to a seat that works.
+        firmwareNics = {
+          main    = { adapter = "EmbNic";   port = 1; };
+          lab     = { adapter = "FlexLom1"; port = 1; };
+          storage = { adapter = "FlexLom1"; port = 2; };
+        };
+      };
+      wireguard = {
+        publicKey = wgKey;
+        allowedNetworks = [ ];
+      };
+      # NFS principals (nfs/<fqdn>) use the lab host's lab-VLAN
+      # FQDN so off-rack clients mount via lab (eno49np0, 10G), not
+      # storage (eno50np1, 10G — reserved exclusively for iSCSI to
+      # keep that bandwidth unconteted). mdf-agg01's L3 hw offload
+      # routes main↔lab at line rate. For lab hosts that don't gain
+      # a Kerberos role this is a harmless setting.
+      kerberos.fqdnNetwork = "lab";
     };
 in
 {

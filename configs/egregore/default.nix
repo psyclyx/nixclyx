@@ -19,9 +19,10 @@ let
   # spec.
   interceptors =
     [ egregoreLib.interceptors.egregoreType ]
+    ++ [ egregoreLib.interceptors.egregoreAspect ]
     ++ libModules.defaultInterceptors;
 
-  allSpecs = mods.typeSpecs ++ mods.extensionSpecs ++ dataSpecs;
+  allSpecs = mods.typeSpecs ++ mods.extensionSpecs ++ mods.aspectSpecs ++ dataSpecs;
 
   modules = libModules.compileSpecs { inherit interceptors; specs = allSpecs; };
 

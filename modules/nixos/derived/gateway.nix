@@ -7,8 +7,9 @@
 {config, lib, ...}: let
   eg = config.psyclyx.egregore;
   hostname = config.psyclyx.nixos.host;
-  myHost = lib.attrByPath ["entities" hostname "host"] null eg;
-  gw = if myHost == null then {} else (myHost.gateway or {});
+  myEntity = lib.attrByPath ["entities" hostname] null eg;
+  myHost = if myEntity == null then null else myEntity.host;
+  gw = if myEntity == null then {} else (myEntity.gateway or {});
   mech = config.psyclyx.nixos.network.gateway;
   enabled = mech.enable;
 

@@ -57,7 +57,7 @@
       reachable = lib.filterAttrs (name: e:
         name != currentHost
         && e.type == "host"
-        && (e.host.wireguard != null || (mySite != null && (e.host.site or null) == mySite))
+        && (e.wireguard != null || (mySite != null && (e.host.site or null) == mySite))
         && (resolve e).hostname != null
       ) eg.entities;
 

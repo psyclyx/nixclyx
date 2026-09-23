@@ -11,7 +11,7 @@
   isHub = hostName == hubName;
 
   wgHosts = lib.filterAttrs (_: e:
-    e.type == "host" && e.host.wireguard != null
+    e.type == "host" && e.wireguard != null
   ) eg.entities;
 
   vpnZoneName = vpnNet.attrs.zoneName;

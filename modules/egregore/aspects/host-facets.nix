@@ -1,13 +1,13 @@
-# Fleet host extension — the host blocks that are fleet conventions
-# rather than intrinsic to the noun: routing roles (gateway, firewall,
-# bgp, kerberos), trust/identity (wireguard, openbao, tpm), DNS
-# authority, monitoring targets, and boot intent. The intrinsic noun
-# (placement + attachment) is lib/egregore/modules/types/host.nix;
-# these fields are added by name via `extends`.
+# Host facets — the cross-cutting concerns a node can carry: routing
+# roles (gateway, bgp, kerberos), trust/identity (wireguard, openbao,
+# tpm), DNS authority, monitoring targets, and boot intent. These are
+# *top-level* entity options (a facet `mkAspect`), not fields of the
+# `host` bag, so a facet can attach to anything it fits — `gateway` is
+# not intrinsic to NixOS hosts. The attrs/assertions here gate on
+# `entity.host != null` because the facts they surface (TPM, exporters,
+# PXE seats) are host facts.
 {
-  egregoreType = { lib, ... }: {
-    extends = "host";
-
+  egregoreAspect = { lib, ... }: {
     options = {
       wireguard = lib.mkOption {
         type = lib.types.nullOr (
@@ -421,17 +421,20 @@
             };
           });
       in
-      {
-        hasTpm = h.hardware.tpm;
-        resolvedExporters = lib.recursiveUpdate computedExporters h.exporters;
+      lib.mkIf (h != null) {
+        hasTpm = entity.hardware.tpm;
+        resolvedExporters = lib.recursiveUpdate computedExporters entity.exporters;
       };
 
     assertions =
       name: entity: top:
       let
         h = entity.host;
-        pxe = h.boot.mode == "pxe";
-        ifs = h.boot.pxeInterfaces;
+      in
+      lib.optionals (h != null) (
+      let
+        pxe = entity.boot.mode == "pxe";
+        ifs = entity.boot.pxeInterfaces;
         missing = lib.filter (n: !(h.interfaces ? ${n})) ifs;
         hv = entity.refs.hypervisor or null;
         nixDs = entity.refs.nixDataset or null;
@@ -450,7 +453,7 @@
       ++ lib.optional (hv != null) {
         # microvm guests don't go through the PXE projection; they boot
         # off an image microvm.nix builds from this NixOS config.
-        assertion = h.boot.mode == "local";
+        assertion = entity.boot.mode == "local";
         message = "host '${name}' is a microvm guest (refs.hypervisor=${hv}) and must keep boot.mode = \"local\"";
       }
       ++ lib.optional (nixDs != null) {
@@ -460,6 +463,6 @@
       ++ lib.optional (persistDs != null) {
         assertion = isDatasetRef persistDs;
         message = "host '${name}' refs.persistDataset → '${persistDs}' must be a zfs-dataset entity";
-      };
+      });
   };
 }

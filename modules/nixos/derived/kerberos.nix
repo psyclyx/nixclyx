@@ -43,7 +43,7 @@ let
   hostFqdn = name:
     let
       h = entities.${name} or null;
-      net = lib.attrByPath ["host" "kerberos" "fqdnNetwork"] "vpn" h;
+      net = lib.attrByPath ["kerberos" "fqdnNetwork"] "vpn" h;
       fqdn = lib.attrByPath ["attrs" "fqdns" net] null h;
     in
     fqdn;
@@ -57,7 +57,7 @@ let
   #  - explicitly opted in via host.kerberos.enable
   #  - any consumer of an authed NFS export
   optInHosts = lib.attrNames (lib.filterAttrs
-    (_: e: e.type == "host" && (e.host.kerberos.enable or false))
+    (_: e: e.type == "host" && (e.kerberos.enable or false))
     entities);
 
   nfsConsumerHosts = lib.unique (lib.concatLists

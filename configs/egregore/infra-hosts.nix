@@ -1,19 +1,16 @@
 # Infrastructure hosts — servers and endpoints outside the lab rack.
+#
+# Facets (wireguard, dnsAuthority, …, exporters) are top-level entity
+# options, peers of `host`, not fields of it — see
+# modules/egregore/aspects/host-facets.nix.
 {
   gate = "always";
   config = {
     entities = {
       tleilax = {
-        
         tags = ["server" "colo" "fixed" "vpn-hub"];
         host = {
           site = "cofractal-sea";
-          wireguard = {
-            publicKey = "Hsytr+mjAfsBPoC99XHKLh9+jEbyz1REF0okmlviUVc=";
-            endpoint  = "vpn.psyclyx.xyz:51820";
-            port = 51820;
-            allowedNetworks = ["main"];
-          };
           addresses = {
             vpn.ipv4 = "10.157.0.1";
             public = {
@@ -21,35 +18,30 @@
               ipv6 = "2606:7940:32:26::10";
             };
           };
-          dnsAuthority = ["psyclyx.net" "psyclyx.xyz" "psyclyx.link"];
-          publicAcme = true;
-          # `tleilax.psyclyx.xyz` + `vpn.psyclyx.xyz` — both point at
-          # the public IP. vpn is the WG-hub endpoint; tleilax is the
-          # host's own public name.
-          publicNames = [ "tleilax" "vpn" ];
           sshPort = 17891;
-          exporters = {
-            node     = { port = 9100; networks = ["vpn"]; };
-            smartctl = { port = 9633; networks = ["vpn"]; };
-          };
+        };
+        wireguard = {
+          publicKey = "Hsytr+mjAfsBPoC99XHKLh9+jEbyz1REF0okmlviUVc=";
+          endpoint  = "vpn.psyclyx.xyz:51820";
+          port = 51820;
+          allowedNetworks = ["main"];
+        };
+        dnsAuthority = ["psyclyx.net" "psyclyx.xyz" "psyclyx.link"];
+        publicAcme = true;
+        # `tleilax.psyclyx.xyz` + `vpn.psyclyx.xyz` — both point at
+        # the public IP. vpn is the WG-hub endpoint; tleilax is the
+        # host's own public name.
+        publicNames = [ "tleilax" "vpn" ];
+        exporters = {
+          node     = { port = 9100; networks = ["vpn"]; };
+          smartctl = { port = 9633; networks = ["vpn"]; };
         };
       };
 
       iyr = {
-        
         tags = ["server" "apartment" "router" "fixed"];
         host = {
           site = "apt";
-          wireguard = {
-            publicKey = "9wnevbvkDGcyNnMECEzgfaghqi4tEw4GsgC/TUcSTS4=";
-            # Apartment subnets advertised to VPN peers. storage/lab are
-            # routed by mdf-agg01, but iyr still forwards there via its
-            # static routes on vlan10, so peers reach them transparently.
-            exportedRoutes = [
-              "10.0.10.0/24"  "10.0.25.0/24"
-              "10.0.200.0/24" "10.0.210.0/24" "10.0.240.0/24"
-            ];
-          };
           # mdf-agg01 is the v4 gateway for main, infra, storage and
           # lab; iyr holds a host address on each and remains their v6
           # router, their resolver and their DHCP server. It still
@@ -70,12 +62,6 @@
           mac = {
             enp1s0 = "c8:ff:bf:06:2c:4e";   # LAN trunk parent
             enp3s0 = "c8:ff:bf:06:2c:4d";   # WAN
-          };
-          # The gateway mechanism (interfaces, DHCP clients, QoS) is
-          # host config (hosts/nixos/iyr). Egregore keeps only the fleet
-          # fact: which routed segments come up in initrd.
-          gateway = {
-            initrdVlans = [ "main" "mgmt" ];
           };
           addresses = {
             vpn.ipv4     = "10.157.0.2";
@@ -101,16 +87,31 @@
             infra.ipv4   = "10.0.25.3";
           };
           sshPort = 17891;
-          hardware.tpm = true;
-          exporters = {
-            node     = { port = 9100; networks = ["vpn"]; };
-            smartctl = { port = 9633; networks = ["vpn"]; };
-          };
+        };
+        wireguard = {
+          publicKey = "9wnevbvkDGcyNnMECEzgfaghqi4tEw4GsgC/TUcSTS4=";
+          # Apartment subnets advertised to VPN peers. storage/lab are
+          # routed by mdf-agg01, but iyr still forwards there via its
+          # static routes on vlan10, so peers reach them transparently.
+          exportedRoutes = [
+            "10.0.10.0/24"  "10.0.25.0/24"
+            "10.0.200.0/24" "10.0.210.0/24" "10.0.240.0/24"
+          ];
+        };
+        # The gateway mechanism (interfaces, DHCP clients, QoS) is host
+        # config (hosts/nixos/iyr). Egregore keeps only the fleet fact:
+        # which routed segments come up in initrd.
+        gateway = {
+          initrdVlans = [ "main" "mgmt" ];
+        };
+        hardware.tpm = true;
+        exporters = {
+          node     = { port = 9100; networks = ["vpn"]; };
+          smartctl = { port = 9633; networks = ["vpn"]; };
         };
       };
 
       sigil = {
-        
         tags = ["workstation" "desktop" "apartment" "fixed"];
         # /persist is consumed locally from sigil's own rpool. /nix
         # is still on bcachefs during the slow ZFS cutover and is
@@ -118,10 +119,6 @@
         refs.persistDataset = "sigil-persist";
         host = {
           site = "apt";
-          wireguard = {
-            publicKey = "XKqqjC62uOUhbCn3JPpI0M6WFYqRf8sLpML90JZ1CmE=";
-            allowedNetworks = [];
-          };
           interfaces.main.device = "br0";
           addresses = {
             vpn.ipv4 = "10.157.0.3";
@@ -138,62 +135,58 @@
             # declared address is ever needed here.
             main.dhcp = true;
           };
-          # NFS to lab-4 over main VLAN: principal must match the
-          # FQDN sigil resolves lab-4 to (sigil.main.apt.psyclyx.net).
-          kerberos.fqdnNetwork = "main";
-          hardware.tpm = true;
-          exporters = {
-            node     = { port = 9100; networks = ["vpn"]; };
-            smartctl = { port = 9633; networks = ["vpn"]; };
-          };
+        };
+        wireguard = {
+          publicKey = "XKqqjC62uOUhbCn3JPpI0M6WFYqRf8sLpML90JZ1CmE=";
+          allowedNetworks = [];
+        };
+        # NFS to lab-4 over main VLAN: principal must match the
+        # FQDN sigil resolves lab-4 to (sigil.main.apt.psyclyx.net).
+        kerberos.fqdnNetwork = "main";
+        hardware.tpm = true;
+        exporters = {
+          node     = { port = 9100; networks = ["vpn"]; };
+          smartctl = { port = 9633; networks = ["vpn"]; };
         };
       };
 
       phone = {
-        
         tags = ["mobile"];
         host = {
-          wireguard = {
-            publicKey = "SaYcJM6Fl1UhX1qzby9rjUJv+icRyh29jX+iIqFKdDw=";
-            allowedNetworks = ["main" "infra"];
-          };
           addresses.vpn.ipv4 = "10.157.0.4";
+        };
+        wireguard = {
+          publicKey = "SaYcJM6Fl1UhX1qzby9rjUJv+icRyh29jX+iIqFKdDw=";
+          allowedNetworks = ["main" "infra"];
         };
       };
 
       omen = {
-        
         tags = ["workstation" "laptop"];
         host = {
-          wireguard = {
-            publicKey = "yTRNWKLNu6Xb+h7DcPPiWohWe0O6QSwJBlh5AjzChmU=";
-            allowedNetworks = ["main" "infra"];
-          };
           addresses.vpn.ipv4 = "10.157.0.5";
+        };
+        wireguard = {
+          publicKey = "yTRNWKLNu6Xb+h7DcPPiWohWe0O6QSwJBlh5AjzChmU=";
+          allowedNetworks = ["main" "infra"];
         };
       };
 
       glyph = {
-        
         tags = ["workstation" "laptop"];
         host = {
-          wireguard = {
-            publicKey = "7ufcd0IzKRR85YMIh0mfoxaG14uwW09c/h4AJaAC1xY=";
-            allowedNetworks = ["main" "infra"];
-          };
           addresses.vpn.ipv4 = "10.157.0.6";
+        };
+        wireguard = {
+          publicKey = "7ufcd0IzKRR85YMIh0mfoxaG14uwW09c/h4AJaAC1xY=";
+          allowedNetworks = ["main" "infra"];
         };
       };
 
       semuta = {
-        
         tags = ["server" "vps" "fixed"];
         host = {
           site = "hetzner-pdx";
-          wireguard = {
-            publicKey = "co3+vTgO4y2IPzQOH9cNLl0fjFDrkzsukUNL9gR75TI=";
-            allowedNetworks = ["main"];
-          };
           addresses = {
             vpn.ipv4 = "10.157.0.7";
             public = {
@@ -201,10 +194,14 @@
               ipv6 = "2a01:4ff:1f0:1a53::1";
             };
           };
-          publicAcme = true;
-          exporters = {
-            node = { port = 9100; networks = ["vpn"]; };
-          };
+        };
+        wireguard = {
+          publicKey = "co3+vTgO4y2IPzQOH9cNLl0fjFDrkzsukUNL9gR75TI=";
+          allowedNetworks = ["main"];
+        };
+        publicAcme = true;
+        exporters = {
+          node = { port = 9100; networks = ["vpn"]; };
         };
       };
     };

@@ -118,6 +118,35 @@ in rec {
       };
     };
 
+  # A facet aspect: contributes *top-level* options on the entity (not a
+  # type bag). It registers nothing and derives no `type`; presence is
+  # whatever the caller's `attrs` gate on. This is how a cross-cutting
+  # concern (routing, monitoring, …) attaches to any entity without
+  # being nested under a kind.
+  mkAspect = {
+    topConfig ? {},
+    options ? {},
+    relations ? _name: _config: _topConfig: {},
+    attrs ? _name: _config: _topConfig: {},
+    assertions ? _name: _config: _topConfig: [],
+  }: {
+    options.entities = mkOption {
+      type = types.attrsWith {
+        lazy = true;
+        placeholder = "id";
+        elemType = types.submodule ({ config, name, ... }: {
+          inherit options;
+
+          config = {
+            relations = relations name config topConfig;
+            attrs = attrs name config topConfig;
+            assertions = assertions name config topConfig;
+          };
+        });
+      };
+    };
+  };
+
   # ── Refs ────────────────────────────────────────────────────────────
   #
   # A ref is an edge to another entity. Two spellings, one meaning:
@@ -243,6 +272,32 @@ in rec {
         in bundle // {
           value = (builtins.removeAttrs bundle.value ["egregoreType"]) // {
             imports = (bundle.value.imports or []) ++ [ typeModule ];
+          };
+        };
+  };
+
+  # An `egregoreAspect` spec field: a facet contributing top-level entity
+  # options (see `mkAspect`). Same shape as a type spec, but registers
+  # nothing and derives no `type`.
+  #
+  #   { egregoreAspect = { lib, config, ... }: {
+  #       options = { vpn = lib.mkOption { ... }; };
+  #       attrs = name: entity: top: { ... };
+  #   }; }
+  interceptors.egregoreAspect = {
+    enter = bundle:
+      if !(bundle.value ? egregoreAspect) then bundle
+      else
+        let
+          etype = bundle.value.egregoreAspect;
+          aspectModule = moduleArgs:
+            let
+              inherit (moduleArgs) egregorLib config;
+              resolved = if builtins.isFunction etype then etype moduleArgs else etype;
+            in egregorLib.mkAspect (resolved // { topConfig = config; });
+        in bundle // {
+          value = (builtins.removeAttrs bundle.value ["egregoreAspect"]) // {
+            imports = (bundle.value.imports or []) ++ [ aspectModule ];
           };
         };
   };

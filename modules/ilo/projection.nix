@@ -16,7 +16,7 @@ let
 
   hostEntity = let h = entity.refs.host or null; in
     if h != null then top.entities.${h} or null else null;
-  hostBoot = if hostEntity != null then hostEntity.host.boot else { };
+  hostBoot = if hostEntity != null then hostEntity.boot else { };
   seats = hostBoot.firmwareNics or { };
   pxeSeats = builtins.filter (n: seats ? ${n}) (hostBoot.pxeInterfaces or [ ]);
 

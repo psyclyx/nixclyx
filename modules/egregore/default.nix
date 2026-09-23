@@ -15,5 +15,6 @@ let
   fleetTypeSpecs = map builtins.import (fs.collectModules ./types);
 in {
   typeSpecs = genericTypeSpecs ++ fleetTypeSpecs;
+  aspectSpecs = map builtins.import (fs.collectModules ./aspects);
   extensionSpecs = map builtins.import (fs.collectModules ./extensions);
 }

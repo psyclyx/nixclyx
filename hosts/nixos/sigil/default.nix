@@ -156,7 +156,7 @@
         # WireGuard private key, generated once by wireguard-keygen and
         # persisted so it survives the @blank rollback — otherwise the
         # key regenerates every boot and diverges from the pubkey
-        # pinned in egregore (sigil.host.wireguard.publicKey), so the
+        # pinned in egregore (sigil.wireguard.publicKey), so the
         # hub never recognises the peer and wg0 stays down. Mode/group
         # match what wireguard-keygen sets (root:systemd-network 0750).
         {

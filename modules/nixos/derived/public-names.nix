@@ -17,10 +17,10 @@
   ownsPublicZone =
     publicDomain != ""
     && me != null
-    && builtins.elem publicDomain (me.host.dnsAuthority or []);
+    && builtins.elem publicDomain (me.dnsAuthority or []);
 
   hostsWithPublicNames = lib.filterAttrs
-    (_: e: e.type == "host" && (e.host.publicNames or []) != [])
+    (_: e: e.type == "host" && (e.publicNames or []) != [])
     eg.entities;
 
   mkRecords = _hostName: hostEnt: let
@@ -32,7 +32,7 @@
       + (lib.optionalString (v6 != null) "${name}    IN AAAA  ${v6}\n");
   in
     if v4 == null && v6 == null then ""
-    else lib.concatStrings (map mkOne hostEnt.host.publicNames);
+    else lib.concatStrings (map mkOne hostEnt.publicNames);
 
   fragment = lib.concatStrings
     (lib.mapAttrsToList mkRecords hostsWithPublicNames);

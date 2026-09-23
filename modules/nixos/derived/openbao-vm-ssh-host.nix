@@ -16,7 +16,7 @@ let
   enabled = cfg.enable && hostname != "";
 
   me = eg.entities.${hostname} or null;
-  myBinding = if me == null then null else (me.host.openbao or { }).ssh or null;
+  myBinding = if me == null then null else (me.openbao or { }).ssh or null;
 
   roleEntity =
     if myBinding == null then null
