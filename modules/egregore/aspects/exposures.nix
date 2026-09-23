@@ -6,13 +6,11 @@
 # its identity (an offering refs an exposure by name) and the role says
 # which projection reads it (§8.5) — the egregore core reads neither.
 #
-# This aspect is the declared home. Migration phase 1 (EGREGORE-PLAN
-# §3) also derives the same four-field shape in `attrs.exposures` from
-# the current facts — ssh from host.sshPort / routeros, exporter
-# exposures from `exporters.<name>`, and `initrd-ssh` from
-# `gateway.initrdVlans`. Both forms have the same structure and are
-# read the same way (`egregorLib.exposuresOf`); nothing consumes
-# exposures yet.
+# This aspect is the declared home; ssh and initrd-ssh are declared
+# here as of Phase 2 (EGREGORE-PLAN §3). Phase 1 derived them in
+# `attrs.exposures`; the exporter exposures still derive there from
+# `exporters.<name>` until Phase 3. Both forms have the same structure
+# and are read the same way (`egregorLib.exposuresOf`).
 {
   egregoreAspect = { lib, egregorLib, ... }: {
     options = {

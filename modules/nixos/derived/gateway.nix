@@ -9,7 +9,10 @@
   hostname = config.psyclyx.nixos.host;
   myEntity = lib.attrByPath ["entities" hostname] null eg;
   myHost = if myEntity == null then null else myEntity.host;
-  gw = if myEntity == null then {} else (myEntity.gateway or {});
+  # Initrd ssh reservation (model §6): the segments whose gateway
+  # addresses come up in initrd are the `initrd-ssh` exposure's scopes.
+  initrdExp = if myEntity == null then {} else (myEntity.exposures.initrd-ssh or {});
+  initrdScopes = initrdExp.scopes or [];
   mech = config.psyclyx.nixos.network.gateway;
   enabled = mech.enable;
 
@@ -124,15 +127,15 @@
 
   projectedNetworks = map mkGatewayNet gatewayedVlans;
 
-  # Initrd VLANs: resolve egregore network names to vlan id + the
-  # host's gateway address on that network.
+  # Initrd VLANs: resolve the exposure's scope names (network entities)
+  # to vlan id + the host's gateway address on that network.
   projectedInitrdNetworks = map (name: let
     net = eg.entities.${name};
     na = net.attrs;
   in {
     id = net.network.vlan;
     address4 = "${na.gateway4}/${toString na.prefixLen}";
-  }) gw.initrdVlans or [];
+  }) initrdScopes;
 
   # MACs from host.mac, looked up by interface device name.
   macFor = ifaceDev:
@@ -147,7 +150,7 @@ in {
       networks = projectedNetworks;
       transitVlan = lib.mkDefault transitVlan;
       initrd = {
-        enable = lib.mkDefault ((gw.initrdVlans or []) != [ ]);
+        enable = lib.mkDefault (initrdScopes != [ ]);
         networks = projectedInitrdNetworks;
       };
     };

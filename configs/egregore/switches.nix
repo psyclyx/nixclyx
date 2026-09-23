@@ -29,6 +29,11 @@ in {
       mdf-agg01 = {
         
         tags = ["switch" "mdf" "10g" "l3"];
+        exposures.ssh = {
+          role = "ssh";
+          port = 22;
+          scopes = [ "apt" "vpn" ];
+        };
         routeros = {
           model = "CRS326-24S+2Q+RM";
           identity = "mdf-agg01";
@@ -199,6 +204,11 @@ in {
       idf-dist01 = {
         
         tags = ["switch" "idf"];
+        exposures.ssh = {
+          role = "ssh";
+          port = 22;
+          scopes = [ "apt" "vpn" ];
+        };
         routeros = {
           model = "CRS305-1G-4S+IN";
           identity = "idf-dist01";

@@ -108,6 +108,11 @@ let
           storage = { adapter = "FlexLom1"; port = 2; };
         };
       };
+      exposures.ssh = {
+        role = "ssh";
+        port = 22;
+        scopes = [ "apt" "vpn" ];
+      };
       wireguard = {
         publicKey = wgKey;
         allowedNetworks = [ ];

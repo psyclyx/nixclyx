@@ -69,6 +69,7 @@
       reachable = lib.filterAttrs (name: e:
         name != currentHost
         && e.type == "host"
+        && e.exposures ? ssh
         && (e.wireguard != null || (mySite != null && (e.host.site or null) == mySite))
         && (resolve e).hostname != null
       ) eg.entities;
@@ -83,7 +84,7 @@
         keyFqdn = if r.vpnFqdn != null then r.vpnFqdn else r.siteFqdn;
       in lib.nameValuePair aliases {
         HostName = r.hostname;
-        Port = e.attrs.ssh.port;
+        Port = e.exposures.ssh.port;
         User = cfg.user;
         ForwardAgent = cfg.forwardAgent;
         HostKeyAlias = keyFqdn;
@@ -92,7 +93,9 @@
       # RouterOS switches are reachable over ssh at their management
       # address; SwOS/Sodola are HTTP-only and get no entry.
       switches = lib.filterAttrs (_: e:
-        e.type == "routeros" && (e.attrs.address or null) != null
+        e.type == "routeros"
+        && e.exposures ? ssh
+        && (e.attrs.address or null) != null
       ) eg.entities;
 
       mkSwitch = _name: e: lib.nameValuePair e.attrs.name {

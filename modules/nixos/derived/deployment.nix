@@ -2,8 +2,8 @@
   eg = config.psyclyx.egregore;
   hostName = config.networking.hostName;
   thisHost = eg.entities.${hostName} or null;
-  targetPort = if thisHost != null && thisHost.type == "host"
-    then thisHost.host.sshPort
+  targetPort = if thisHost != null
+    then thisHost.exposures.ssh.port or 22
     else 22;
 in {
   config =

@@ -18,7 +18,14 @@
               ipv6 = "2606:7940:32:26::10";
             };
           };
-          sshPort = 17891;
+        };
+        # The management ssh listener (model §6) — declared: its port
+        # and the places that reach it. The session account is the
+        # client's (sshHosts.user).
+        exposures.ssh = {
+          role = "ssh";
+          port = 17891;
+          scopes = [ "public" "vpn" ];
         };
         wireguard = {
           publicKey = "Hsytr+mjAfsBPoC99XHKLh9+jEbyz1REF0okmlviUVc=";
@@ -86,7 +93,19 @@
             # so stating it is all that's needed.
             infra.ipv4   = "10.0.25.3";
           };
-          sshPort = 17891;
+        };
+        exposures.ssh = {
+          role = "ssh";
+          port = 17891;
+          scopes = [ "apt" "vpn" ];
+        };
+        # Initrd ssh (early unlock, model §6): reserved at 8022 and
+        # reachable from the segments whose gateway addresses come up
+        # in initrd — the gateway projection reads these scopes.
+        exposures.initrd-ssh = {
+          role = "initrd-ssh";
+          port = 8022;
+          scopes = [ "main" "mgmt" ];
         };
         wireguard = {
           publicKey = "9wnevbvkDGcyNnMECEzgfaghqi4tEw4GsgC/TUcSTS4=";
@@ -97,12 +116,6 @@
             "10.0.10.0/24"  "10.0.25.0/24"
             "10.0.200.0/24" "10.0.210.0/24" "10.0.240.0/24"
           ];
-        };
-        # The gateway mechanism (interfaces, DHCP clients, QoS) is host
-        # config (hosts/nixos/iyr). Egregore keeps only the fleet fact:
-        # which routed segments come up in initrd.
-        gateway = {
-          initrdVlans = [ "main" "mgmt" ];
         };
         hardware.tpm = true;
         exporters = {
@@ -136,6 +149,11 @@
             main.dhcp = true;
           };
         };
+        exposures.ssh = {
+          role = "ssh";
+          port = 22;
+          scopes = [ "apt" "vpn" ];
+        };
         wireguard = {
           publicKey = "XKqqjC62uOUhbCn3JPpI0M6WFYqRf8sLpML90JZ1CmE=";
           allowedNetworks = [];
@@ -155,6 +173,11 @@
         host = {
           addresses.vpn.ipv4 = "10.157.0.4";
         };
+        exposures.ssh = {
+          role = "ssh";
+          port = 22;
+          scopes = [ "vpn" ];
+        };
         wireguard = {
           publicKey = "SaYcJM6Fl1UhX1qzby9rjUJv+icRyh29jX+iIqFKdDw=";
           allowedNetworks = ["main" "infra"];
@@ -166,6 +189,11 @@
         host = {
           addresses.vpn.ipv4 = "10.157.0.5";
         };
+        exposures.ssh = {
+          role = "ssh";
+          port = 22;
+          scopes = [ "vpn" ];
+        };
         wireguard = {
           publicKey = "yTRNWKLNu6Xb+h7DcPPiWohWe0O6QSwJBlh5AjzChmU=";
           allowedNetworks = ["main" "infra"];
@@ -176,6 +204,11 @@
         tags = ["workstation" "laptop"];
         host = {
           addresses.vpn.ipv4 = "10.157.0.6";
+        };
+        exposures.ssh = {
+          role = "ssh";
+          port = 22;
+          scopes = [ "vpn" ];
         };
         wireguard = {
           publicKey = "7ufcd0IzKRR85YMIh0mfoxaG14uwW09c/h4AJaAC1xY=";
@@ -194,6 +227,11 @@
               ipv6 = "2a01:4ff:1f0:1a53::1";
             };
           };
+        };
+        exposures.ssh = {
+          role = "ssh";
+          port = 22;
+          scopes = [ "public" "vpn" ];
         };
         wireguard = {
           publicKey = "co3+vTgO4y2IPzQOH9cNLl0fjFDrkzsukUNL9gR75TI=";

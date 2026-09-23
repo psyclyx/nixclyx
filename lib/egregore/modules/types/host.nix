@@ -63,10 +63,6 @@
         default = null;
         description = "Site entity name where this host lives.";
       };
-      sshPort = lib.mkOption {
-        type = lib.types.int;
-        default = 22;
-      };
     };
 
     attrs =
@@ -109,24 +105,11 @@
         address = if vpn != null then vpn.ipv4 else null;
         addresses = resolvedAddresses;
         inherit fqdn fqdns;
-        # The ssh capability: this node's management ssh listener, by
-        # port. Reachability only. The account a client logs in as is
-        # session policy and lives in the client (home-manager's
-        # `sshHosts.user`, beside `identityFile`), not in the graph —
-        # deployment is dumb ssh against the generated entries.
-        ssh = { port = h.sshPort; };
-        # The ssh exposure (derived form, model §6): where the
-        # management ssh listener sits when it is active. The scopes
-        # are a declared choice (§8.2), so the derived form carries
-        # none yet.
-        exposures.ssh = {
-          role = "ssh";
-          port = h.sshPort;
-          scopes = [ ];
-          identity = null;
-        };
+        # The management ssh listener is the `ssh` exposure (declared
+        # in data — model §6): its port and scopes live there, and the
+        # session account lives in the client (home-manager's
+        # `sshHosts.user`). Nothing ssh-shaped is derived here.
         site = h.site;
-        sshPort = h.sshPort;
         # Where a deploy tool reaches this host. Derived, not declared:
         # a directly routed public address first, else a stable name
         # (the site FQDN, then the vpn FQDN). Null only if the host has

@@ -232,29 +232,6 @@
         description = "OpenBao integration knobs for this host.";
       };
 
-      gateway = lib.mkOption {
-        type = lib.types.submodule {
-          options = {
-            initrdVlans = lib.mkOption {
-              type = lib.types.listOf lib.types.str;
-              default = [ ];
-              description = ''
-                Network entity names whose gateway addresses come up
-                in initrd (for early SSH unlock, etc.).
-              '';
-            };
-          };
-        };
-        default = { };
-        description = ''
-          Fleet-side gateway declaration: which routed segments this
-          host brings up in initrd. The routing mechanism itself
-          (interfaces, DHCP, QoS) is host config
-          (psyclyx.nixos.network.gateway.*); the set of segments the
-          host routes is the graph (network.refs.gateway).
-        '';
-      };
-
       kerberos = lib.mkOption {
         type = lib.types.submodule {
           options = {
@@ -428,25 +405,14 @@
         hasTpm = entity.hardware.tpm;
         # Exposures (derived form, model §6): one per exporter, named
         # for the exporter — the networks it is scraped from become its
-        # scopes (§8.2 makes them a declared choice when they move) —
-        # plus the initrd ssh when the gateway facet brings VLANs up in
-        # initrd. Port 8022 is the fixed initrd unlock port (the
-        # ssh-hosts `initrdPort` default).
+        # scopes (§8.2 makes them a declared choice when they move).
         exposures =
           lib.mapAttrs (_: x: {
             role = "exporter";
             port = x.port;
             scopes = x.networks;
             identity = null;
-          }) resolvedExporters
-          // lib.optionalAttrs (entity.gateway.initrdVlans != [ ]) {
-            initrd-ssh = {
-              role = "initrd-ssh";
-              port = 8022;
-              scopes = entity.gateway.initrdVlans;
-              identity = null;
-            };
-          };
+          }) resolvedExporters;
       };
 
     assertions =
