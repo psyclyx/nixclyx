@@ -110,12 +110,20 @@ and iLO (Redfish). No egregore in any of them.
   `lib/platform/<p>`; projection/mappings → `modules/<p>`.
 - `types/service.nix` — already split in intent (offering/presentation);
   a shape move (grouping the presentation fields) is a later step.
-- `types/host.nix` — ✅ split: the intrinsic noun is
-  `lib/egregore/modules/types/host.nix`; the psyclyx blocks are the
-  `host-fleet` extension (`modules/egregore/types/host-fleet.nix`),
-  merged by `extends`. Follow-ups: collapse `roles` into `tags`, derive
-  `deployAddress`, and lift the pure mechanisms (gateway NICs/QoS,
-  firewall plumbing, boot recipe) into host config.
+- `types/host.nix` — ✅ re-sliced. The intrinsic noun (site,
+  addresses, interfaces, mac, sshPort, deployUser, + derived
+  deployAddress) is `lib/egregore/modules/types/host.nix`; the fleet
+  blocks (wireguard, dnsAuthority, public{Names,Acme}, hardware, boot,
+  openbao, gateway, kerberos, bgp, exporters) are the `host-fleet`
+  extension (`modules/egregore/types/host-fleet.nix`), merged by
+  `extends`. `roles` collapsed into the entity's `tags`; `deployAddress`
+  derived; the gateway and firewall *mechanisms* (NICs, DHCP clients,
+  QoS, per-host input policy, NAT) moved into host config. `boot` was
+  already right: intent (mode / pxeInterfaces / firmwareNics) in
+  egregore, recipe (initrd-ssh-netboot, pxe-server) in host config.
+  Remaining fleet facts on the host — wireguard, dnsAuthority,
+  public{Names,Acme}, hardware, openbao, kerberos, bgp, exporters —
+  stay in egregore; they have no cleaner noun to sit on.
 
 ## Migration order
 
@@ -133,4 +141,7 @@ and iLO (Redfish). No egregore in any of them.
 7. CLI → manifest interpreter; `verbs` retired.
 8. ✅ split `host` into the intrinsic noun (`lib/egregore/modules/`)
    and the fleet `host-fleet` extension (`modules/egregore/`), via
-   `extends`. Byte-identical.
+   `extends`. Then `roles`→`tags`, derive `deployAddress`, and move the
+   gateway + firewall mechanisms into host config. Byte-identical at
+   each step (entity attrs, iyr gateway/cake-qos, iyr + lab firewalls,
+   the four platform artifacts).
