@@ -1,7 +1,7 @@
-# Egregore — typed extensible entity registry with composable operations.
+# Egregore — typed extensible entity registry.
 #
-# A framework for declaring typed entities with extensible schemas,
-# queryable attributes, and composable verbs. The topology, deployment,
+# A framework for declaring typed entities with extensible schemas
+# and queryable aspects. The topology, deployment,
 # monitoring, and diagrams of your infrastructure (or anything else)
 # emerge as projections over the same underlying data.
 #
@@ -19,7 +19,6 @@
 #   in
 #     infra.entities          # all entities, fully resolved
 #     infra.entities.foo.address
-#     infra.entities.foo.verbs.deploy.impl
 #
 { lib }:
 let

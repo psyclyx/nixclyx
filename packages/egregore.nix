@@ -165,7 +165,7 @@ let
           "run ''${DIM}egregore list''${RESET} to see available entities."
         local name="$1"
         local json
-        json=$(nix_eval_json "let e = fleet.entities.\"$name\"; in { type = kindOf e; inherit (e) tags refs; aspects = lib.mapAttrs (_: v: if builtins.isList v then v else if builtins.isAttrs v then v else builtins.toString v) (builtins.removeAttrs e [\"tags\" \"refs\" \"relations\" \"refsIn\" \"verbs\" \"assertions\"]); }")
+        json=$(nix_eval_json "let e = fleet.entities.\"$name\"; in { type = kindOf e; inherit (e) tags refs; aspects = lib.mapAttrs (_: v: if builtins.isList v then v else if builtins.isAttrs v then v else builtins.toString v) (builtins.removeAttrs e [\"tags\" \"refs\" \"relations\" \"refsIn\" \"assertions\"]); }")
 
         [[ -n "$json" ]] || die "entity ''${BOLD}$name''${RESET} not found" \
           "run ''${DIM}egregore list''${RESET} to see available entities."
@@ -195,7 +195,7 @@ let
         if [[ -n "$aspect" ]]; then
           nix_eval_json "fleet.entities.\"$name\".\"$aspect\"" | jq -C .
         else
-          nix_eval_json "builtins.removeAttrs fleet.entities.\"$name\" [\"tags\" \"refs\" \"relations\" \"refsIn\" \"verbs\" \"assertions\"]" | jq -C .
+          nix_eval_json "builtins.removeAttrs fleet.entities.\"$name\" [\"tags\" \"refs\" \"relations\" \"refsIn\" \"assertions\"]" | jq -C .
         fi
       }
 

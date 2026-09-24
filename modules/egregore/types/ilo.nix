@@ -34,8 +34,8 @@
           only resolves if the BMC took its address by DHCP and DDNS
           registered it, and a statically-configured BMC never takes a
           lease — so the reservation sits unused and the name never exists.
-          A verb that resolves an unregistered name fails before it can
-          report anything useful.
+          A lookup that resolves an unregistered name fails before it
+          can report anything useful.
         '';
       };
     };

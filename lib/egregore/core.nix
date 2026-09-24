@@ -5,14 +5,13 @@
 #   tags  — freeform labels for filtering
 #   refs  — named references to other entities (validated)
 #   edges — refs in normalized shape ({ target; port; nic; })
-#   verbs — available operations (set by type modules)
 #
 # No field stores the type (model §4): the type of an entity is the name
 # of the kind that is present — a kind is an option value that is not
 # null (`e.host != null` is "this is a host"). Type modules extend the
-# entity submodule to add kind options, derived keys, and verbs. The
+# entity submodule to add kind options and derived keys. The
 # module system merges everything — each entity instance sees all type
-# modules' options, but only the present kind's derived keys/verbs are
+# modules' options, but only the present kind's derived keys are
 # active (via mkIf).
 #
 # A ref value is either a bare entity name or `{ target; port; nic; }`
@@ -134,36 +133,6 @@ in {
               A top-level option, not an aspect, so a type's own derived
               keys can read it without depending on the keys it is
               computing.
-            '';
-          };
-
-          verbs = mkOption {
-            type = types.attrsOf (types.submodule {
-              options = {
-                description = mkOption {
-                  type = types.str;
-                  default = "";
-                };
-                pure = mkOption {
-                  type = types.bool;
-                  default = false;
-                  description = "Pure verbs produce a value. Impure verbs produce a shell script.";
-                };
-                impl = mkOption {
-                  type = types.anything;
-                  description = "The verb's implementation — a value (pure) or shell script string (impure).";
-                };
-                defaults = mkOption {
-                  type = types.listOf types.str;
-                  default = [];
-                  description = "Default arguments used when none are given on the command line.";
-                };
-              };
-            });
-            default = {};
-            description = ''
-              Available operations — set by type modules.
-              Open vocabulary: types declare what they can do.
             '';
           };
 

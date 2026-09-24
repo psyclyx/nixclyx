@@ -38,7 +38,7 @@ in rec {
   # (the module system rejects duplicates of those), the rest are bare
   # `mkOption { type = ...; }`.
   #
-  # derive/relations/verbs/assertions receive three arguments:
+  # derive/relations/assertions receive three arguments:
   #   name       — the entity's name
   #   config     — the entity's config (includes config.<typeName>)
   #   egregore   — the top-level egregore config, arriving as the
@@ -57,7 +57,6 @@ in rec {
     # even when the edge was inherited rather than written.
     relations ? _name: _config: _egregore: {},
     derive ? _name: _config: _egregore: {},
-    verbs ? _name: _config: _egregore: {},
     assertions ? _name: _config: _egregore: [],
   }:
     let
@@ -82,7 +81,6 @@ in rec {
 
             config = mkIf (config.${typeName} != null) ({
               relations = relations name config egregore;
-              verbs = verbs name config egregore;
               assertions = assertions name config egregore;
             } // derive name config egregore);
           });
@@ -106,7 +104,6 @@ in rec {
     deriveOptions ? {},
     derive ? _name: _config: _egregore: {},
     relations ? _name: _config: _egregore: {},
-    verbs ? _name: _config: _egregore: {},
     assertions ? _name: _config: _egregore: [],
   }:
     let
@@ -125,7 +122,6 @@ in rec {
 
             config = mkIf (config.${typeName} != null) ({
               relations = relations name config egregore;
-              verbs = verbs name config egregore;
               assertions = assertions name config egregore;
             } // derive name config egregore);
           });
@@ -278,9 +274,6 @@ in rec {
       builtins.any (ref: refTarget ref == targetName) (builtins.attrValues e.refs)
     ) entities;
 
-  withVerb = verbName: entities:
-    lib.filterAttrs (_: e: e.verbs ? ${verbName}) entities;
-
   # ── Exposures ─────────────────────────────────────────────────────
   #
   # An exposure is a named listener reservation on a node (model §6).
@@ -311,7 +304,7 @@ in rec {
   # attrset. The top graph is not threaded through here: the entity
   # submodule passes it to every aspect module as the `egregore` module
   # argument (model §9), and `mkType` hands it to the derive/relations/
-  # verbs/assertions hooks as their third argument:
+  # assertions hooks as their third argument:
   #
   #   {
   #     egregoreType = { lib, egregorLib, config, ... }: {
@@ -324,7 +317,7 @@ in rec {
   #   }
   #
   # A plain attrset is also accepted for types that don't need lib in
-  # their derive/verbs/assertions bodies.
+  # their derive/assertions bodies.
   interceptors.egregoreType = {
     enter = bundle:
       if !(bundle.value ? egregoreType) then bundle

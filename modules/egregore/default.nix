@@ -1,6 +1,6 @@
 # Egregore modules — reusable entity types and extensions.
 #
-# Types define the schema, attrs, and verbs for each entity kind.
+# Types define the schema and derived keys for each entity kind.
 # Extensions add cross-cutting options (globals, scopes, dnsViews, etc.).
 #
 # These are egregore module specs — they go through the shared
