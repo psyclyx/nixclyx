@@ -14,7 +14,7 @@
       model = lib.mkOption { type = lib.types.str; };
     };
 
-    derive = _name: entity: _top: {
+    derive = _name: entity: _egregore: {
       label = entity.unmanaged.model;
       model = entity.unmanaged.model;
     };

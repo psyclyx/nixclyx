@@ -103,7 +103,7 @@
     };
 
     derive =
-      name: entity: _top:
+      name: entity: _egregore:
       let
         l = entity.lun;
       in
@@ -115,7 +115,7 @@
       };
 
     assertions =
-      name: entity: top:
+      name: entity: egregore:
       let
         l = entity.lun;
         producer = entity.refs.producer or null;
@@ -126,11 +126,11 @@
           message = "lun '${name}' requires refs.producer";
         }
         {
-          assertion = producer == null || (top.entities ? ${producer} && top.entities.${producer}.host != null);
+          assertion = producer == null || (egregore.entities ? ${producer} && egregore.entities.${producer}.host != null);
           message = "lun '${name}' producer '${toString producer}' must be a host entity";
         }
         {
-          assertion = top.entities ? ${l.network} && top.entities.${l.network}.network != null;
+          assertion = egregore.entities ? ${l.network} && egregore.entities.${l.network}.network != null;
           message = "lun '${name}' network '${l.network}' must be a network entity";
         }
         {
@@ -139,7 +139,7 @@
         }
       ]
       ++ map (c: {
-        assertion = top.entities ? ${c} && top.entities.${c}.host != null;
+        assertion = egregore.entities ? ${c} && egregore.entities.${c}.host != null;
         message = "lun '${name}' consumer '${c}' must be a host entity";
       }) l.consumers;
   };

@@ -62,7 +62,7 @@
     };
 
     derive =
-      name: entity: _top:
+      name: entity: _egregore:
       let
         o = entity.openbao-seal-oracle;
       in
@@ -72,7 +72,7 @@
       };
 
     assertions =
-      name: entity: top:
+      name: entity: egregore:
       let
         o = entity.openbao-seal-oracle;
         host = entity.refs.host or null;
@@ -88,7 +88,7 @@
           message = "openbao-seal-oracle '${name}' requires refs.host";
         }
         {
-          assertion = host == null || (top.entities ? ${host} && top.entities.${host}.host != null);
+          assertion = host == null || (egregore.entities ? ${host} && egregore.entities.${host}.host != null);
           message = "openbao-seal-oracle '${name}' refs.host '${toString host}' must be a host entity";
         }
         {
@@ -96,12 +96,12 @@
           message = "openbao-seal-oracle '${name}' requires refs.tpmKey";
         }
         {
-          assertion = tpmKey == null || (top.entities ? ${tpmKey} && top.entities.${tpmKey}.tpm-key != null);
+          assertion = tpmKey == null || (egregore.entities ? ${tpmKey} && egregore.entities.${tpmKey}.tpm-key != null);
           message = "openbao-seal-oracle '${name}' refs.tpmKey '${toString tpmKey}' must be a tpm-key entity";
         }
         {
           assertion = tpmKey == null || host == null
-            || (top.entities.${tpmKey}.refs.host or null) == host;
+            || (egregore.entities.${tpmKey}.refs.host or null) == host;
           message = "openbao-seal-oracle '${name}' tpmKey '${toString tpmKey}' lives on a different host than the oracle";
         }
         {

@@ -43,7 +43,7 @@
     };
 
     derive =
-      name: entity: _top:
+      name: entity: _egregore:
       let
         p = entity.zfs-pool;
       in
@@ -53,7 +53,7 @@
       };
 
     assertions =
-      name: entity: top:
+      name: entity: egregore:
       let
         p = entity.zfs-pool;
         host = entity.refs.host or null;
@@ -68,7 +68,7 @@
           message = "zfs-pool '${name}' requires refs.host (the producer)";
         }
         {
-          assertion = host == null || (top.entities ? ${host} && top.entities.${host}.host != null);
+          assertion = host == null || (egregore.entities ? ${host} && egregore.entities.${host}.host != null);
           message = "zfs-pool '${name}' refs.host '${toString host}' must be a host entity";
         }
       ];

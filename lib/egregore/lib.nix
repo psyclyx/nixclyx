@@ -14,7 +14,6 @@ in rec {
   #   { lib, egregorLib, config, ... }:
   #   egregorLib.mkType {
   #     name = "routeros";
-  #     topConfig = config;
   #     description = "MikroTik RouterOS switch";
   #     options = {
   #       model = lib.mkOption { type = lib.types.str; default = ""; };
@@ -22,7 +21,7 @@ in rec {
   #     deriveOptions = {
   #       address = lib.mkOption { type = lib.types.nullOr lib.types.str; default = null; };
   #     };
-  #     derive = name: entityConfig: topConfig: {
+  #     derive = name: entityConfig: egregore: {
   #       address = entityConfig.routeros.model;
   #     };
   #   }
@@ -42,11 +41,12 @@ in rec {
   # derive/relations/verbs/assertions receive three arguments:
   #   name       — the entity's name
   #   config     — the entity's config (includes config.<typeName>)
-  #   topConfig  — the top-level egregore config
+  #   egregore   — the top-level egregore config, arriving as the
+  #                `egregore` module argument of the entity submodule
+  #                (model §9) and passed through to the hooks
   #
   mkType = {
     name,
-    topConfig ? {},
     description ? "",
     options ? {},
     deriveOptions ? {},
@@ -55,10 +55,10 @@ in rec {
     # fallback, family defaults) are applied. Core inverts it into
     # refsIn alongside raw refs, so the inverse index is complete
     # even when the edge was inherited rather than written.
-    relations ? _name: _config: _topConfig: {},
-    derive ? _name: _config: _topConfig: {},
-    verbs ? _name: _config: _topConfig: {},
-    assertions ? _name: _config: _topConfig: [],
+    relations ? _name: _config: _egregore: {},
+    derive ? _name: _config: _egregore: {},
+    verbs ? _name: _config: _egregore: {},
+    assertions ? _name: _config: _egregore: [],
   }:
     let
       typeName = name;
@@ -77,14 +77,14 @@ in rec {
         type = types.attrsWith {
           lazy = true;
           placeholder = "id";
-          elemType = types.submodule ({ config, name, ... }: {
+          elemType = types.submodule ({ config, name, egregore, ... }: {
             imports = [ mod ];
 
             config = mkIf (config.${typeName} != null) ({
-              relations = relations name config topConfig;
-              verbs = verbs name config topConfig;
-              assertions = assertions name config topConfig;
-            } // derive name config topConfig);
+              relations = relations name config egregore;
+              verbs = verbs name config egregore;
+              assertions = assertions name config egregore;
+            } // derive name config egregore);
           });
         };
       };
@@ -96,19 +96,18 @@ in rec {
   # submodule option, so an extension contributes `options.<type>.<field>`
   # alongside the base type's `options.<type> = mkOption { … }`. The base
   # type's module and this one must have the same submodule shape (same
-  # `functionArgs`) for the merge to take; both use `{ config, name, … }`.
-  # The type itself is registered by the base, so this does not touch
-  # `config.types`. `deriveOptions` are top-level entity options, same
-  # as in `mkType`.
+  # `functionArgs`) for the merge to take; both use
+  # `{ config, name, egregore, ... }`. The type itself is registered by
+  # the base, so this does not touch `config.types`. `deriveOptions` are
+  # top-level entity options, same as in `mkType`.
   mkTypeExtend = {
     name,
-    topConfig ? {},
     options ? {},
     deriveOptions ? {},
-    derive ? _name: _config: _topConfig: {},
-    relations ? _name: _config: _topConfig: {},
-    verbs ? _name: _config: _topConfig: {},
-    assertions ? _name: _config: _topConfig: [],
+    derive ? _name: _config: _egregore: {},
+    relations ? _name: _config: _egregore: {},
+    verbs ? _name: _config: _egregore: {},
+    assertions ? _name: _config: _egregore: [],
   }:
     let
       typeName = name;
@@ -117,7 +116,7 @@ in rec {
         type = types.attrsWith {
           lazy = true;
           placeholder = "id";
-          elemType = types.submodule ({ config, name, ... }: {
+          elemType = types.submodule ({ config, name, egregore, ... }: {
             options = {
               ${typeName} = mkOption {
                 type = types.nullOr (types.submodule { inherit options; });
@@ -125,10 +124,10 @@ in rec {
             } // deriveOptions;
 
             config = mkIf (config.${typeName} != null) ({
-              relations = relations name config topConfig;
-              verbs = verbs name config topConfig;
-              assertions = assertions name config topConfig;
-            } // derive name config topConfig);
+              relations = relations name config egregore;
+              verbs = verbs name config egregore;
+              assertions = assertions name config egregore;
+            } // derive name config egregore);
           });
         };
       };
@@ -142,23 +141,22 @@ in rec {
   # (already top-level here) and written by `derive`, whose returned
   # attrset is spread into the entity's top-level config.
   mkAspect = {
-    topConfig ? {},
     options ? {},
-    relations ? _name: _config: _topConfig: {},
-    derive ? _name: _config: _topConfig: {},
-    assertions ? _name: _config: _topConfig: [],
+    relations ? _name: _config: _egregore: {},
+    derive ? _name: _config: _egregore: {},
+    assertions ? _name: _config: _egregore: [],
   }: {
     options.entities = mkOption {
       type = types.attrsWith {
         lazy = true;
         placeholder = "id";
-        elemType = types.submodule ({ config, name, ... }: {
+        elemType = types.submodule ({ config, name, egregore, ... }: {
           inherit options;
 
           config = {
-            relations = relations name config topConfig;
-            assertions = assertions name config topConfig;
-          } // derive name config topConfig;
+            relations = relations name config egregore;
+            assertions = assertions name config egregore;
+          } // derive name config egregore;
         });
       };
     };
@@ -310,7 +308,10 @@ in rec {
   #
   # `egregoreType` is a function of moduleArgs (giving the type body
   # access to lib, egregorLib, config) returning the mkType-config
-  # attrset minus `topConfig` (which the interceptor injects):
+  # attrset. The top graph is not threaded through here: the entity
+  # submodule passes it to every aspect module as the `egregore` module
+  # argument (model §9), and `mkType` hands it to the derive/relations/
+  # verbs/assertions hooks as their third argument:
   #
   #   {
   #     egregoreType = { lib, egregorLib, config, ... }: {
@@ -318,7 +319,7 @@ in rec {
   #       description = "...";
   #       options = { domain = lib.mkOption { ... }; ... };
   #       deriveOptions = { label = lib.mkOption { ... }; ... };
-  #       derive = name: entity: top: { ... };
+  #       derive = name: entity: egregore: { ... };
   #     };
   #   }
   #
@@ -332,16 +333,15 @@ in rec {
           etype = bundle.value.egregoreType;
           typeModule = moduleArgs:
             let
-              inherit (moduleArgs) egregorLib config;
+              inherit (moduleArgs) egregorLib;
               resolved = if builtins.isFunction etype then etype moduleArgs else etype;
             in
               if resolved ? extends
               then egregorLib.mkTypeExtend
                 ((builtins.removeAttrs resolved [ "extends" ]) // {
                   name = resolved.extends;
-                  topConfig = config;
                 })
-              else egregorLib.mkType (resolved // { topConfig = config; });
+              else egregorLib.mkType resolved;
         in bundle // {
           value = (builtins.removeAttrs bundle.value ["egregoreType"]) // {
             imports = (bundle.value.imports or []) ++ [ typeModule ];
@@ -355,7 +355,7 @@ in rec {
   #
   #   { egregoreAspect = { lib, config, ... }: {
   #       options = { vpn = lib.mkOption { ... }; };
-  #       derive = name: entity: top: { ... };
+  #       derive = name: entity: egregore: { ... };
   #   }; }
   interceptors.egregoreAspect = {
     enter = bundle:
@@ -365,9 +365,9 @@ in rec {
           etype = bundle.value.egregoreAspect;
           aspectModule = moduleArgs:
             let
-              inherit (moduleArgs) egregorLib config;
+              inherit (moduleArgs) egregorLib;
               resolved = if builtins.isFunction etype then etype moduleArgs else etype;
-            in egregorLib.mkAspect (resolved // { topConfig = config; });
+            in egregorLib.mkAspect resolved;
         in bundle // {
           value = (builtins.removeAttrs bundle.value ["egregoreAspect"]) // {
             imports = (bundle.value.imports or []) ++ [ aspectModule ];

@@ -80,12 +80,12 @@
       label = lib.mkOption { type = lib.types.str; };
     };
 
-    derive = name: entity: top: let
+    derive = name: entity: egregore: let
       r = entity.route;
       refs = entity.refs or {};
       viaName = refs.via or null;
       overName = refs.over or null;
-      via = if viaName == null then null else top.entities.${viaName} or null;
+      via = if viaName == null then null else egregore.entities.${viaName} or null;
       isV6 = lib.hasInfix ":" r.dst;
       # The next hop's address on the network this route crosses. Read
       # from the resolved address view, so it works whether the next hop
@@ -101,7 +101,7 @@
       label = "${r.dst} via ${if viaName == null then "?" else viaName}";
     };
 
-    assertions = name: entity: top: let
+    assertions = name: entity: egregore: let
       refs = entity.refs or {};
       over = refs.over or null;
       on = refs.on or null;
@@ -128,7 +128,7 @@
         }
       ]
       ++ lib.optional (over != null) {
-        assertion = (top.entities.${over}.network or null) != null;
+        assertion = (egregore.entities.${over}.network or null) != null;
         message = "route '${name}' refs.over → '${over}' is not a network";
       }
       # A next hop we can't resolve an address for is a route that

@@ -81,7 +81,7 @@
       };
     };
 
-    derive = name: entity: _top: let
+    derive = name: entity: _egregore: let
       s = entity.sodola;
       active = lib.filterAttrs (_: p: portType p != "unused") s.ports;
     in {
@@ -96,8 +96,8 @@
       links = portDef.links s.ports;
     };
 
-    assertions = name: entity: top:
-      portDef.linkAssertions name entity.sodola.ports top;
+    assertions = name: entity: egregore:
+      portDef.linkAssertions name entity.sodola.ports egregore;
 
   };
 }

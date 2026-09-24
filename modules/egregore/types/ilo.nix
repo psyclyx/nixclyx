@@ -45,10 +45,10 @@
       label = lib.mkOption { type = lib.types.str; };
     };
 
-    derive = name: entity: top: let
+    derive = name: entity: egregore: let
       ilo = entity.ilo;
       # Derive hostname from entity name + mgmt zone domain if not explicit.
-      mgmtNet = top.entities.${ilo.mgmtNetwork} or null;
+      mgmtNet = egregore.entities.${ilo.mgmtNetwork} or null;
       zoneName = if mgmtNet != null then mgmtNet.zoneName or null else null;
       derivedHostname = if zoneName != null then "${name}.${zoneName}" else name;
       resolvedHostname = if ilo.hostname != null then ilo.hostname else derivedHostname;

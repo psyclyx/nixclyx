@@ -114,9 +114,9 @@ rec {
   #
   # An edge that names no attachment point is still valid; it just says
   # less. Only what's claimed gets checked.
-  linkAssertions = name: ports: top:
+  linkAssertions = name: ports: egregore:
     lib.concatMap (l: let
-      target = top.entities.${l.target} or null;
+      target = egregore.entities.${l.target} or null;
       # Closed keys read as "this kind has no such vocabulary" at their
       # null default — the old open-bag absence.
       targetPorts = if target == null then null else target.portNames or null;

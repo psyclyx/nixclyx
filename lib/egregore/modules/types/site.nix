@@ -42,7 +42,7 @@
       };
     };
 
-    derive = name: entity: _top: let
+    derive = name: entity: _egregore: let
       s = entity.site;
     in {
       domain = s.domain;

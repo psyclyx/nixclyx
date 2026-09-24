@@ -334,14 +334,14 @@
     # Derived keys of this facet: hasTpm (declared above, beside the
     # facet options — mkAspect options are already top-level).
     derive =
-      name: entity: top:
+      name: entity: egregore:
       let
         h = entity.host;
         isServer = builtins.elem "server" (entity.tags or [ ]);
 
         myGroups = lib.filterAttrs (
           _: g: g.ha-group != null && builtins.elem name g.ha-group.members
-        ) top.entities;
+        ) egregore.entities;
         hasService = svc: builtins.any (g: g.ha-group.services ? ${svc}) (builtins.attrValues myGroups);
 
         computedExporters =
@@ -411,7 +411,7 @@
       };
 
     assertions =
-      name: entity: top:
+      name: entity: egregore:
       let
         h = entity.host;
       in
@@ -424,14 +424,14 @@
         nixDs = entity.refs.nixDataset or null;
         persistDs = entity.refs.persistDataset or null;
         isDatasetRef = target:
-          top.entities ? ${target} && top.entities.${target}.zfs-dataset != null;
+          egregore.entities ? ${target} && egregore.entities.${target}.zfs-dataset != null;
       in
       lib.optional pxe {
         assertion = ifs != [] && missing == [];
         message = "host '${name}' boot.mode = \"pxe\" requires boot.pxeInterfaces to be a non-empty list of declared interface names (missing: ${lib.concatStringsSep ", " missing})";
       }
       ++ lib.optional (hv != null) {
-        assertion = top.entities ? ${hv} && top.entities.${hv}.host != null;
+        assertion = egregore.entities ? ${hv} && egregore.entities.${hv}.host != null;
         message = "host '${name}' refs.hypervisor → '${hv}' must be a host entity";
       }
       ++ lib.optional (hv != null) {

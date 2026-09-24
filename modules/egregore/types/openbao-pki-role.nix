@@ -58,7 +58,7 @@
     };
 
     derive =
-      name: entity: _top:
+      name: entity: _egregore:
       let
         r = entity.openbao-pki-role;
       in
@@ -68,7 +68,7 @@
       };
 
     assertions =
-      name: entity: _top:
+      name: entity: _egregore:
       let
         r = entity.openbao-pki-role;
       in

@@ -47,14 +47,14 @@
       label = lib.mkOption { type = lib.types.str; };
     };
 
-    derive = name: entity: _top: let
+    derive = name: entity: _egregore: let
       refs = entity.refs or {};
     in {
       inherit (entity.prefix-delegation) subnetId prefixLength;
       label = "/${toString entity.prefix-delegation.prefixLength} to ${refs.to or "?"}";
     };
 
-    assertions = name: entity: top: let
+    assertions = name: entity: egregore: let
       refs = entity.refs or {};
       over = refs.over or null;
     in [
@@ -67,7 +67,7 @@
           + "routers may share several networks, and which one carries the "
           + "delegation decides the next hop for the slice"; }
     ] ++ lib.optional (over != null) {
-      assertion = (top.entities.${over}.network or null) != null;
+      assertion = (egregore.entities.${over}.network or null) != null;
       message = "prefix-delegation '${name}' refs.over → '${over}' is not a network";
     };
   };

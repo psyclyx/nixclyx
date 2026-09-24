@@ -143,11 +143,11 @@
     };
 
     derive =
-      name: entity: top:
+      name: entity: egregore:
       let
         h = entity.host;
         vpn = h.addresses.vpn or null;
-        siteEntity = if h.site != null then top.entities.${h.site} or null else null;
+        siteEntity = if h.site != null then egregore.entities.${h.site} or null else null;
         siteDomain = if siteEntity != null then siteEntity.site.domain or null else null;
 
         # Resolved addresses view — declared addresses, plus gateway-derived
@@ -156,9 +156,9 @@
         # inherited from the site as well as one written literally; filter
         # to networks, since a site also names a gateway. Declared wins.
         gatewayDerivedAddresses = lib.genAttrs
-          (lib.filter (n: (top.entities.${n}.network or null) != null)
+          (lib.filter (n: (egregore.entities.${n}.network or null) != null)
             (entity.refsIn.gateway or []))
-          (netName: let net = top.entities.${netName}; in {
+          (netName: let net = egregore.entities.${netName}; in {
             ipv4 = net.gateway4 or null;
             ipv6 = net.gateway6 or null;
             dhcp = false;
@@ -172,7 +172,7 @@
         fqdns = lib.mapAttrs (
           addrKey: _:
           let
-            netEnt = top.entities.${addrKey} or null;
+            netEnt = egregore.entities.${addrKey} or null;
             zone = if netEnt != null && netEnt.network != null then netEnt.zoneName or "" else "";
           in
           if zone != "" then "${name}.${zone}" else null
@@ -210,12 +210,12 @@
       };
 
     assertions =
-      name: entity: top:
+      name: entity: egregore:
       let
         h = entity.host;
       in
       lib.optional (h.site != null) {
-        assertion = top.entities ? ${h.site} && top.entities.${h.site}.site != null;
+        assertion = egregore.entities ? ${h.site} && egregore.entities.${h.site}.site != null;
         message = "host '${name}' references site '${h.site}' which is not a site entity";
       };
   };

@@ -109,14 +109,14 @@
     };
 
     derive =
-      name: entity: top:
+      name: entity: egregore:
       let
         r = entity.openbao-cert-role;
-        pkiRoleEnt = top.entities.${r.pkiRoleRef} or null;
+        pkiRoleEnt = egregore.entities.${r.pkiRoleRef} or null;
         policyEnts = lib.filter (e: e != null) (
-          map (n: top.entities.${n} or null) r.policies
+          map (n: egregore.entities.${n} or null) r.policies
         );
-        initPolicyEnt = top.entities.${r.initPolicy} or null;
+        initPolicyEnt = egregore.entities.${r.initPolicy} or null;
       in
       {
         label = r.name;
@@ -128,7 +128,7 @@
       };
 
     assertions =
-      name: entity: top:
+      name: entity: egregore:
       let
         r = entity.openbao-cert-role;
       in
@@ -144,7 +144,7 @@
         {
           assertion =
             r.pkiRoleRef == ""
-            || (top.entities ? ${r.pkiRoleRef} && top.entities.${r.pkiRoleRef}.openbao-pki-role != null);
+            || (egregore.entities ? ${r.pkiRoleRef} && egregore.entities.${r.pkiRoleRef}.openbao-pki-role != null);
           message = "openbao-cert-role '${name}' pkiRoleRef '${r.pkiRoleRef}' is not an openbao-pki-role entity";
         }
         {
@@ -154,7 +154,7 @@
         {
           assertion =
             r.initPolicy == ""
-            || (top.entities ? ${r.initPolicy} && top.entities.${r.initPolicy}.openbao-policy != null);
+            || (egregore.entities ? ${r.initPolicy} && egregore.entities.${r.initPolicy}.openbao-policy != null);
           message = "openbao-cert-role '${name}' initPolicy '${r.initPolicy}' is not an openbao-policy entity";
         }
         {
@@ -163,7 +163,7 @@
         }
       ]
       ++ map (pn: {
-        assertion = top.entities ? ${pn} && top.entities.${pn}.openbao-policy != null;
+        assertion = egregore.entities ? ${pn} && egregore.entities.${pn}.openbao-policy != null;
         message = "openbao-cert-role '${name}' policies '${pn}' is not an openbao-policy entity";
       }) r.policies;
   };

@@ -124,7 +124,7 @@
     };
 
     derive =
-      _name: entity: _top:
+      _name: entity: _egregore:
       let
         ha = entity.ha-group;
         resolvedServices = lib.mapAttrs (
@@ -148,17 +148,17 @@
       };
 
     assertions =
-      name: entity: top:
+      name: entity: egregore:
       let
         ha = entity.ha-group;
       in
       map (member: {
-        assertion = top.entities ? ${member};
+        assertion = egregore.entities ? ${member};
         message = "ha-group '${name}' member '${member}' does not exist";
       }) ha.members
       ++ [
         {
-          assertion = top.entities ? ${ha.network};
+          assertion = egregore.entities ? ${ha.network};
           message = "ha-group '${name}' network '${ha.network}' does not exist";
         }
       ];

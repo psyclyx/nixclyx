@@ -242,7 +242,7 @@
       };
     };
 
-    derive = name: entity: top: let
+    derive = name: entity: egregore: let
       r = entity.routeros;
       active = lib.filterAttrs (_: p: portType p != "unused") r.ports;
       mgmtAddr = r.addresses.${r.mgmtNetwork}.ipv4 or null;
@@ -267,8 +267,8 @@
       links = portDef.links r.ports;
     };
 
-    assertions = name: entity: top:
-      portDef.linkAssertions name entity.routeros.ports top;
+    assertions = name: entity: egregore:
+      portDef.linkAssertions name entity.routeros.ports egregore;
 
   };
 }

@@ -43,7 +43,7 @@
     };
 
     derive =
-      name: entity: _top:
+      name: entity: _egregore:
       let
         k = entity.tpm-key;
       in
@@ -53,7 +53,7 @@
       };
 
     assertions =
-      name: entity: top:
+      name: entity: egregore:
       let
         k = entity.tpm-key;
         host = entity.refs.host or null;
@@ -68,7 +68,7 @@
           message = "tpm-key '${name}' requires refs.host";
         }
         {
-          assertion = host == null || (top.entities ? ${host} && top.entities.${host}.host != null);
+          assertion = host == null || (egregore.entities ? ${host} && egregore.entities.${host}.host != null);
           message = "tpm-key '${name}' refs.host '${toString host}' must be a host entity";
         }
       ];

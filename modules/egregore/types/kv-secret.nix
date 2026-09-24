@@ -77,7 +77,7 @@
     };
 
     derive =
-      name: entity: _top:
+      name: entity: _egregore:
       let
         s = entity.kv-secret;
       in
@@ -91,7 +91,7 @@
       };
 
     assertions =
-      name: entity: top:
+      name: entity: egregore:
       let
         s = entity.kv-secret;
         producer = entity.refs.producer or null;
@@ -106,7 +106,7 @@
           message = "kv-secret '${name}' requires refs.producer (the host whose sops secret feeds the KV write)";
         }
         {
-          assertion = producer == null || (top.entities ? ${producer} && top.entities.${producer}.host != null);
+          assertion = producer == null || (egregore.entities ? ${producer} && egregore.entities.${producer}.host != null);
           message = "kv-secret '${name}' producer '${toString producer}' must be a host entity";
         }
       ];

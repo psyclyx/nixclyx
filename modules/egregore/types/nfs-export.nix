@@ -143,7 +143,7 @@
     };
 
     derive =
-      name: entity: _top:
+      name: entity: _egregore:
       let
         n = entity.nfs-export;
       in
@@ -155,7 +155,7 @@
       };
 
     assertions =
-      name: entity: top:
+      name: entity: egregore:
       let
         n = entity.nfs-export;
         producer = entity.refs.producer or null;
@@ -166,7 +166,7 @@
           message = "nfs-export '${name}' requires refs.producer";
         }
         {
-          assertion = producer == null || (top.entities ? ${producer} && top.entities.${producer}.host != null);
+          assertion = producer == null || (egregore.entities ? ${producer} && egregore.entities.${producer}.host != null);
           message = "nfs-export '${name}' producer '${toString producer}' must be a host entity";
         }
         {
@@ -174,7 +174,7 @@
           message = "nfs-export '${name}' requires a non-empty network";
         }
         {
-          assertion = n.network == "" || (top.entities ? ${n.network} && top.entities.${n.network}.network != null);
+          assertion = n.network == "" || (egregore.entities ? ${n.network} && egregore.entities.${n.network}.network != null);
           message = "nfs-export '${name}' network '${n.network}' must be a network entity";
         }
         {
@@ -183,7 +183,7 @@
         }
       ]
       ++ map (c: {
-        assertion = top.entities ? ${c} && top.entities.${c}.host != null;
+        assertion = egregore.entities ? ${c} && egregore.entities.${c}.host != null;
         message = "nfs-export '${name}' consumer '${c}' must be a host entity";
       }) n.consumers;
   };

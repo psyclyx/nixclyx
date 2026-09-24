@@ -204,12 +204,12 @@
       };
     };
 
-    derive = name: entity: top: let
+    derive = name: entity: egregore: let
       s = entity.service;
 
       # Domain resolution
       env = if s.environment != null
-        then top.entities.${s.environment} or null
+        then egregore.entities.${s.environment} or null
         else null;
       resolvedDomain =
         if s.domain != null then s.domain
@@ -233,8 +233,8 @@
         then s.backend.ha.${haGroupName}
         else null;
       haGroup =
-        if haGroupName != null && top.entities ? ${haGroupName}
-        then top.entities.${haGroupName}
+        if haGroupName != null && egregore.entities ? ${haGroupName}
+        then egregore.entities.${haGroupName}
         else null;
 
       # Backend on a named exposure: the offering runs on the exposure
@@ -246,7 +246,7 @@
       # the graph instead of carrying a literal IP.
       hostExposure =
         if backendType == "host"
-        then (top.entities.${s.backend.host.target}.exposures.${s.backend.host.exposure} or null)
+        then (egregore.entities.${s.backend.host.target}.exposures.${s.backend.host.exposure} or null)
         else null;
       hostScope =
         if hostExposure != null && hostExposure.scopes != []
@@ -254,11 +254,11 @@
         else null;
       hostAddrKey =
         if hostScope != null
-        then (top.scopes.${hostScope} or {}).address or hostScope
+        then (egregore.scopes.${hostScope} or {}).address or hostScope
         else null;
       hostBackendAddr =
         if hostAddrKey != null
-        then (top.entities.${s.backend.host.target}.addresses.${hostAddrKey} or {}).ipv4 or null
+        then (egregore.entities.${s.backend.host.target}.addresses.${hostAddrKey} or {}).ipv4 or null
         else null;
 
       # Resolved address and port
@@ -284,12 +284,12 @@
       # emits nothing.
       proxyServing = sc: let
         claimants = builtins.filter
-          (n: let e = top.entities.${n}; in
+          (n: let e = egregore.entities.${n}; in
             e.service != null && (e.service.proxy or null) != null
             && builtins.elem sc e.service.scopes)
-          (builtins.attrNames top.entities);
+          (builtins.attrNames egregore.entities);
       in if builtins.length claimants == 1 then builtins.head claimants else null;
-      proxyHostOf = p: if p == null then null else (top.entities.${p}.service.proxy.host or null);
+      proxyHostOf = p: if p == null then null else (egregore.entities.${p}.service.proxy.host or null);
       effectiveIngress = builtins.listToAttrs (map (sc: let
         override = s.ingress.${sc} or null;
         proxy = if override != null then override else proxyServing sc;
@@ -310,7 +310,7 @@
       streaming = s.streaming;
     };
 
-    assertions = name: entity: top: let
+    assertions = name: entity: egregore: let
       s = entity.service;
       backendCount =
         (if s.backend.ha != null then 1 else 0)
@@ -324,12 +324,12 @@
         if s.backend.ha != null
         then s.backend.ha.${haGroupName}
         else null;
-      knownScopes = builtins.attrNames (top.scopes or {});
+      knownScopes = builtins.attrNames (egregore.scopes or {});
       unknownScopes = builtins.filter (a: !(builtins.elem a knownScopes)) s.scopes;
       overrideKeys = builtins.attrNames s.ingress;
       extraIngressKeys = builtins.filter (k: !(builtins.elem k s.scopes)) overrideKeys;
       invalidIngressProxies = lib.filter
-        (p: !(top.entities ? ${p} && (top.entities.${p}.service.proxy or null) != null))
+        (p: !(egregore.entities ? ${p} && (egregore.entities.${p}.service.proxy or null) != null))
         (builtins.attrValues s.ingress);
       dnsAuthRef = entity.refs.dnsAuthority or null;
     in [
@@ -343,15 +343,15 @@
       }
     ]
     ++ lib.optional (s.backend.host != null) {
-      assertion = top.entities ? ${s.backend.host.target} && top.entities.${s.backend.host.target}.host != null;
+      assertion = egregore.entities ? ${s.backend.host.target} && egregore.entities.${s.backend.host.target}.host != null;
       message = "service '${name}': backend.host.target '${s.backend.host.target}' is not a host entity";
     }
-    ++ lib.optional (s.backend.host != null && top.entities ? ${s.backend.host.target}) {
-      assertion = (top.entities.${s.backend.host.target}.exposures or {}) ? ${s.backend.host.exposure};
+    ++ lib.optional (s.backend.host != null && egregore.entities ? ${s.backend.host.target}) {
+      assertion = (egregore.entities.${s.backend.host.target}.exposures or {}) ? ${s.backend.host.exposure};
       message = "service '${name}': backend.host.exposure '${s.backend.host.exposure}' is not an exposure on '${s.backend.host.target}'";
     }
     ++ lib.optional (s.environment != null) {
-      assertion = top.entities ? ${s.environment} && top.entities.${s.environment}.environment != null;
+      assertion = egregore.entities ? ${s.environment} && egregore.entities.${s.environment}.environment != null;
       message = "service '${name}': environment '${s.environment}' is not an environment entity";
     }
     ++ lib.optional (s.backend.ha != null) {
@@ -359,11 +359,11 @@
       message = "service '${name}': backend.ha must have exactly one entry";
     }
     ++ lib.optional (haGroupName != null) {
-      assertion = top.entities ? ${haGroupName} && top.entities.${haGroupName}.ha-group != null;
+      assertion = egregore.entities ? ${haGroupName} && egregore.entities.${haGroupName}.ha-group != null;
       message = "service '${name}': backend.ha references '${haGroupName}' which is not an ha-group entity";
     }
-    ++ lib.optional (haGroupName != null && top.entities ? ${haGroupName}) {
-      assertion = top.entities.${haGroupName}.ha-group.services ? ${haSvcName};
+    ++ lib.optional (haGroupName != null && egregore.entities ? ${haGroupName}) {
+      assertion = egregore.entities.${haGroupName}.ha-group.services ? ${haSvcName};
       message = "service '${name}': ha-group '${haGroupName}' has no service '${haSvcName}'";
     }
     ++ [
@@ -381,7 +381,7 @@
       }
     ]
     ++ lib.optional (dnsAuthRef != null) {
-      assertion = top.entities ? ${dnsAuthRef} && top.entities.${dnsAuthRef}.host != null;
+      assertion = egregore.entities ? ${dnsAuthRef} && egregore.entities.${dnsAuthRef}.host != null;
       message = "service '${name}': refs.dnsAuthority → '${dnsAuthRef}' must be a host entity";
     };
   };

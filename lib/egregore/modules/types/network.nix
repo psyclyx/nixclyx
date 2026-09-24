@@ -20,9 +20,9 @@
 
     # Resolve this network's refs against site-level fallback, in one
     # place, so `attrs` and `relations` can't disagree about the edge.
-    resolve = entity: top: let
+    resolve = entity: egregore: let
       net = entity.network;
-      siteEntity = if net.site != null then top.entities.${net.site} or null else null;
+      siteEntity = if net.site != null then egregore.entities.${net.site} or null else null;
       netRefs = entity.refs or {};
       siteRefs = if siteEntity != null then siteEntity.refs or {} else {};
     in {
@@ -126,7 +126,7 @@
     # inverts them into refsIn, so a router can ask "which networks
     # do I gateway?" — including ones that inherited it — instead of
     # every consumer re-deriving the fallback.
-    relations = _name: entity: top: let r = resolve entity top; in {
+    relations = _name: entity: egregore: let r = resolve entity egregore; in {
       gateway = r.gatewayRef;
       gateway6 = r.gateway6Ref;
       dns = r.dnsRef;
@@ -205,13 +205,13 @@
       };
     };
 
-    derive = name: entity: top: let
+    derive = name: entity: egregore: let
       net = entity.network;
       prefix = prefixOf net.ipv4;
-      gw = top.conventions.gatewayOffset or 1;
-      ulaPrefix = top.ipv6UlaPrefix or "";
+      gw = egregore.conventions.gatewayOffset or 1;
+      ulaPrefix = egregore.ipv6UlaPrefix or "";
       hasV6 = ulaPrefix != "" && net.ulaSubnetHex != "";
-      r = resolve entity top;
+      r = resolve entity egregore;
       inherit (r) siteEntity siteDomain dnsRef gatewayRef gateway6Ref;
 
       # Zone name: site domain for site networks; for site-less overlays
@@ -219,7 +219,7 @@
       # neither is a config error and yields an empty zoneName.
       baseDomain =
         if siteDomain != null then siteDomain
-        else top.domains.internal or "";
+        else egregore.domains.internal or "";
     in {
       vlan = net.vlan;
       prefix = prefix;

@@ -126,11 +126,11 @@
     };
 
     derive =
-      name: entity: top:
+      name: entity: egregore:
       let
         d = entity.zfs-dataset;
         pool = entity.refs.pool or null;
-        poolEnt = if pool == null then null else top.entities.${pool} or null;
+        poolEnt = if pool == null then null else egregore.entities.${pool} or null;
       in
       {
         label = d.path;
@@ -140,7 +140,7 @@
       };
 
     assertions =
-      name: entity: top:
+      name: entity: egregore:
       let
         d = entity.zfs-dataset;
         pool = entity.refs.pool or null;
@@ -155,7 +155,7 @@
           message = "zfs-dataset '${name}' requires refs.pool";
         }
         {
-          assertion = pool == null || (top.entities ? ${pool} && top.entities.${pool}.zfs-pool != null);
+          assertion = pool == null || (egregore.entities ? ${pool} && egregore.entities.${pool}.zfs-pool != null);
           message = "zfs-dataset '${name}' refs.pool '${toString pool}' must be a zfs-pool entity";
         }
       ];

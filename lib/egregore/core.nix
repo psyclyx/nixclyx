@@ -31,7 +31,6 @@
 let
   inherit (lib) mkOption types;
   inherit (egregorLib) refType refTarget refNorm edgeType;
-  topConfig = config;
 in {
   options = {
     assertions = mkOption {
@@ -61,7 +60,19 @@ in {
       type = types.attrsWith {
         lazy = true;
         placeholder = "id";
-        elemType = types.submodule ({ name, config, ... }: {
+        # The entity is a `submoduleWith` whose aspect modules all see
+        # the top graph as the `egregore` module argument (model §9).
+        # The combined `options.entities` declaration across core,
+        # mkType, mkTypeExtend and mkAspect merges into exactly
+        # `submoduleWith { modules = aspects; specialArgs = { egregore =
+        # topConfig; }; }` — this declaration owns the specialArgs (the
+        # module system rejects two declarations carrying the same
+        # specialArgs name; the others contribute `types.submodule`
+        # modules with empty specialArgs).
+        elemType = types.submoduleWith {
+          shorthandOnlyDefinesConfig = true;
+          specialArgs = { egregore = config; };
+          modules = [ ({ name, config, egregore, ... }: {
         options = {
           tags = mkOption {
             type = types.listOf types.str;
@@ -191,9 +202,10 @@ in {
           in lib.foldlAttrs (a: refName: target:
             if target != null && target == name then add a refName srcName else a
           ) afterRefs (src.relations or {})
-        ) {} topConfig.entities;
-      });
+        ) {} egregore.entities;
+          }) ];
         };
+      };
       default = {};
     };
   };

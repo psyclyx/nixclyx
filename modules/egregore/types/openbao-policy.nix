@@ -102,12 +102,12 @@
     };
 
     derive =
-      name: entity: top:
+      name: entity: egregore:
       let
         p = entity.openbao-policy;
-        kvSecretEntities = lib.filterAttrs (_: e: e.kv-secret != null) top.entities;
-        pkiRoleEntities = lib.filterAttrs (_: e: e.openbao-pki-role != null) top.entities;
-        sshRoleEntities = lib.filterAttrs (_: e: e.openbao-ssh-cert-role != null) top.entities;
+        kvSecretEntities = lib.filterAttrs (_: e: e.kv-secret != null) egregore.entities;
+        pkiRoleEntities = lib.filterAttrs (_: e: e.openbao-pki-role != null) egregore.entities;
+        sshRoleEntities = lib.filterAttrs (_: e: e.openbao-ssh-cert-role != null) egregore.entities;
         kvReaderRules = lib.flatten (
           map (
             secretName:
@@ -169,7 +169,7 @@
       };
 
     assertions =
-      name: entity: top:
+      name: entity: egregore:
       let
         p = entity.openbao-policy;
       in
@@ -180,15 +180,15 @@
         }
       ]
       ++ map (sn: {
-        assertion = top.entities ? ${sn} && top.entities.${sn}.kv-secret != null;
+        assertion = egregore.entities ? ${sn} && egregore.entities.${sn}.kv-secret != null;
         message = "openbao-policy '${name}' kvReader '${sn}' is not a kv-secret entity";
       }) p.kvReader
       ++ map (rn: {
-        assertion = top.entities ? ${rn} && top.entities.${rn}.openbao-pki-role != null;
+        assertion = egregore.entities ? ${rn} && egregore.entities.${rn}.openbao-pki-role != null;
         message = "openbao-policy '${name}' pkiIssuer '${rn}' is not an openbao-pki-role entity";
       }) p.pkiIssuer
       ++ map (rn: {
-        assertion = top.entities ? ${rn} && top.entities.${rn}.openbao-ssh-cert-role != null;
+        assertion = egregore.entities ? ${rn} && egregore.entities.${rn}.openbao-ssh-cert-role != null;
         message = "openbao-policy '${name}' sshSigner '${rn}' is not an openbao-ssh-cert-role entity";
       }) p.sshSigner;
   };

@@ -83,7 +83,7 @@
     };
 
     derive =
-      name: entity: top:
+      name: entity: egregore:
       let
         b = entity.clevis-binding;
         target =
@@ -92,17 +92,17 @@
           else "<unbound>";
         datasetEnt =
           if b.protectDataset == null then null
-          else top.entities.${b.protectDataset} or null;
+          else egregore.entities.${b.protectDataset} or null;
         poolName =
           if datasetEnt == null then null
-          else (top.entities.${datasetEnt.refs.pool} or {}).zfs-pool.name or null;
+          else (egregore.entities.${datasetEnt.refs.pool} or {}).zfs-pool.name or null;
         # Match storage projection's mkPostBootKeyService naming.
         shortPath =
           if datasetEnt == null || poolName == null then null
           else lib.removePrefix "${poolName}/" datasetEnt.zfs-dataset.path;
         safeName = if shortPath == null then null
                    else lib.replaceStrings [ "/" ] [ "-" ] shortPath;
-        tangEnts = map (n: top.entities.${n} or null) b.tangs;
+        tangEnts = map (n: egregore.entities.${n} or null) b.tangs;
         tangUrls = lib.filter (u: u != null) (map (e: if e == null then null else e.url or null) tangEnts);
       in
       {
@@ -119,12 +119,12 @@
       };
 
     assertions =
-      name: entity: top:
+      name: entity: egregore:
       let
         b = entity.clevis-binding;
         datasetEnt =
           if b.protectDataset == null then null
-          else top.entities.${b.protectDataset} or null;
+          else egregore.entities.${b.protectDataset} or null;
       in
       [
         {
@@ -138,7 +138,7 @@
         }
         {
           assertion = b.protectDataset == null
-            || (top.entities ? ${b.protectDataset} && top.entities.${b.protectDataset}.zfs-dataset != null);
+            || (egregore.entities ? ${b.protectDataset} && egregore.entities.${b.protectDataset}.zfs-dataset != null);
           message = "clevis-binding '${name}' protectDataset '${toString b.protectDataset}' must be a zfs-dataset entity";
         }
         {
@@ -151,7 +151,7 @@
         }
       ]
       ++ map (tn: {
-        assertion = top.entities ? ${tn} && top.entities.${tn}.service != null && (top.entities.${tn}.service.kind or null) == "tang";
+        assertion = egregore.entities ? ${tn} && egregore.entities.${tn}.service != null && (egregore.entities.${tn}.service.kind or null) == "tang";
         message = "clevis-binding '${name}' tang '${tn}' is not a service of kind 'tang'";
       }) b.tangs;
   };

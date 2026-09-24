@@ -114,7 +114,7 @@
     };
 
     derive =
-      name: entity: _top:
+      name: entity: _egregore:
       let
         r = entity.openbao-ssh-cert-role;
       in
@@ -125,7 +125,7 @@
       };
 
     assertions =
-      name: entity: _top:
+      name: entity: _egregore:
       let
         r = entity.openbao-ssh-cert-role;
       in

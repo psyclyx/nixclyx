@@ -40,9 +40,9 @@
       label = lib.mkOption { type = lib.types.str; };
     };
 
-    derive = name: entity: top: let
+    derive = name: entity: egregore: let
       e = entity.environment;
-      netEnt = if e.network != null then top.entities.${e.network} or null else null;
+      netEnt = if e.network != null then egregore.entities.${e.network} or null else null;
     in {
       inherit (e) domain;
       # Convenience: zone of the network this env owns. Null when the
@@ -52,15 +52,15 @@
       label = name;
     };
 
-    assertions = name: entity: top: let
+    assertions = name: entity: egregore: let
       e = entity.environment;
     in
       lib.optional (e.site != null) {
-        assertion = top.entities ? ${e.site} && top.entities.${e.site}.site != null;
+        assertion = egregore.entities ? ${e.site} && egregore.entities.${e.site}.site != null;
         message = "environment '${name}' references site '${e.site}' which is not a site entity";
       }
       ++ lib.optional (e.network != null) {
-        assertion = top.entities ? ${e.network} && top.entities.${e.network}.network != null;
+        assertion = egregore.entities ? ${e.network} && egregore.entities.${e.network}.network != null;
         message = "environment '${name}' references network '${e.network}' which is not a network entity";
       };
   };
