@@ -35,7 +35,7 @@
     # the projection in derived/kerberos.nix only enables the KDC
     # service on a host once `primary` names it AND the host's
     # NixOS config supplies the stash-file sops secret. See
-    # docs/lab-v3.md for the one-time provisioning ritual.
+    # (see the one-time provisioning ritual in ops notes).
     kerberos = {
       realm = "PSYCLYX.NET";
       primary = "tleilax";
@@ -71,7 +71,7 @@
 
     # Forward-policy matrix. Read as `policy.<src-zone>.<dst-zone>` →
     # action. Default for any unspecified pair is implicit drop.
-    # See docs/lab-v3.md for the rationale; new zones go in zones.nix
+    # See zones.nix for the zone map; new zones go there
     # and pick up their policy here.
     policy = {
       # Everything mdf-agg01 routes, arriving at iyr over the transit
