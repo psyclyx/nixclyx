@@ -1,6 +1,12 @@
+{
+  # The (possibly injected) source set — see default.nix's internalSources
+  # seam. Standalone it's nixclyx's own npins.
+  sources ? import ./npins,
+  flake-compat ? sources.flake-compat,
+  ...
+}:
 let
-  sources = import ./npins;
-  loadFlake = import ./loadFlake.nix;
+  loadFlake = import ./loadFlake.nix { inherit flake-compat; };
 
   colmena = loadFlake sources.colmena;
   astal = loadFlake sources.astal;

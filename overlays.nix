@@ -9,6 +9,8 @@
 # so the producers built here track the monorepo versions.
 {
   sources ? import ./npins,
+  flake-compat ? sources.flake-compat,
+  ...
 }:
 let
   # emacs-unstable-pgtk for the emacs home-manager module, which no longer
@@ -25,7 +27,7 @@ let
     (import sources.fix { }).overlay
   ];
 
-  own = import ./overlay.nix;
+  own = import ./overlay.nix { inherit sources flake-compat; };
 
   inherit ((import (sources.nixpkgs + "/lib"))) composeManyExtensions;
 in

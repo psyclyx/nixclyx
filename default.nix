@@ -1,24 +1,84 @@
+let
+  npins = import ./npins;
+in
 {
+  # The batch seam: every dep below defaults to this project's own pins.
+  sources ? npins,
   # nixpkgs used to build hosts. Standalone: nixclyx's own pin. The monorepo
   # superproject passes the shared lib/nixpkgs.
-  nixpkgs ? (import ./npins).nixpkgs,
+  nixpkgs ? sources.nixpkgs,
+  # External deps — one arg each, defaulting to this project's own pins.
+  astal ? sources.astal,
+  clj-nix ? sources.clj-nix,
+  colmena ? sources.colmena,
+  disko ? sources.disko,
+  flake-compat ? sources.flake-compat,
+  home-manager ? sources.home-manager,
+  # The pin names carry a `.nix` suffix; the args drop it.
+  llm-agents ? sources."llm-agents.nix",
+  microvm ? sources."microvm.nix",
+  nix-darwin ? sources.nix-darwin,
+  nix-homebrew ? sources.nix-homebrew,
+  nixos-anywhere ? sources.nixos-anywhere,
+  nixos-apple-silicon ? sources.nixos-apple-silicon,
+  nvf ? sources.nvf,
+  preservation ? sources.preservation,
+  robotnix ? sources.robotnix,
+  rustfs-flake ? sources.rustfs-flake,
+  sops-nix ? sources.sops-nix,
+  stylix ? sources.stylix,
+  # Standalone-only sibling pin (never a monorepo root pin): psyclight keeps
+  # nixclyx's own pin even when internalSources injects the other producers.
+  psyclight ? npins.psyclight,
   # Sibling sources for the internal producers (river/shoal/tidepool/
   # base24-gen/emacs). Default {} => use nixclyx's own npins pins
   # (standalone). The monorepo superproject overrides these with the sibling
   # checkouts, so BOTH the producer overlays and the home-manager module
   # imports track the monorepo versions.
   internalSources ? { },
+  ...
 }:
 let
   # Phase 1: Core — standalone values with no module dependencies.
-  sources = (import ./npins) // internalSources;
-  loadFlake = import ./loadFlake.nix;
+  # The pins map every consumer below reads: own pins as the base (the
+  # standalone-only pins like nixpkgs/psyclight live there), then the batch
+  # seam, then the named dep args (so single-dep overrides win), then the
+  # internalSources seam (unchanged).
+  allSources =
+    npins
+    // sources
+    // {
+      inherit
+        astal
+        clj-nix
+        colmena
+        disko
+        flake-compat
+        home-manager
+        nix-darwin
+        nix-homebrew
+        nixos-anywhere
+        nixos-apple-silicon
+        nvf
+        preservation
+        psyclight
+        robotnix
+        rustfs-flake
+        sops-nix
+        stylix
+        ;
+      "llm-agents.nix" = llm-agents;
+      "microvm.nix" = microvm;
+    }
+    // internalSources;
+  loadFlake = import ./loadFlake.nix { inherit flake-compat; };
   lib = import ./lib;
-  overlay = import ./overlays.nix { inherit sources; };
+  overlay = import ./overlays.nix { sources = allSources; inherit flake-compat; };
   packages = import ./packages;
 
   core = {
-    inherit sources loadFlake lib overlay packages;
+    sources = allSources;
+    inherit loadFlake lib overlay packages;
     assets = ./assets;
     keys = import ./data/keys.nix;
     packageGroups = import ./data/packageGroups.nix;
@@ -71,7 +131,7 @@ let
     })
   nodes;
 
-  darwinSystem = (loadFlake sources.nix-darwin).lib.darwinSystem;
+  darwinSystem = (loadFlake allSources.nix-darwin).lib.darwinSystem;
 
   mkDarwinHost = name:
     darwinSystem {
@@ -85,12 +145,12 @@ let
     halo = {};
   };
 
-  nixOnDroidLib = (loadFlake sources.nix-on-droid).lib;
+  nixOnDroidLib = (loadFlake allSources.nix-on-droid).lib;
 
   mkDroidHost = name:
     nixOnDroidLib.nixOnDroidConfiguration {
       pkgs = import nixpkgs {system = "aarch64-linux";};
-      home-manager-path = sources.home-manager.outPath;
+      home-manager-path = allSources.home-manager.outPath;
       modules = [
         modules.nix-on-droid
         {config.psyclyx.droid.host = name;}
@@ -164,7 +224,7 @@ let
           inherit pkgs egregorData;
         };
       nvf = pkgs:
-        ((import sources.nvf).lib.neovimConfiguration {
+        ((import allSources.nvf).lib.neovimConfiguration {
           inherit pkgs;
           modules = [
             modules.nvf
