@@ -25,6 +25,8 @@ toward.
 | `2fc18e09` | offerings: `service.backend.host` is the exposure ref (`{ target; exposure; }`), `backend.network`/`backend.port` gone — the exposure owns port and scopes; `resolvedPort`/`resolvedAddress` derive from the target exposure (privclyx: `c1954da`) |
 | `72430570` | attrs collapse: every derived key is a declared top-level option on its kind/facet (`derive` hook + `deriveOptions`; no freeformType); `attrs.refs` → `edges`, `attrs.name` → `name`; the derived `site`/`network` keys deleted (kind collisions); exposures one home, `exposuresOf` reads `e.exposures` (privclyx: `5cbbafb`) |
 | `a0d89166` | drop `type`: the type of an entity is the name of the kind that is present — no field stores it; `ofType` → `withKind` (`e.${kind} != null`), `mkType`/`mkTypeExtend` write no `type`, the `types` registry stays as registration; the core assertion checks kind presence (exactly one registered kind present); consumers and the CLI dispatch on the present kind (privclyx: `61f44e5`) |
+| `2ebb00ce` | realization (Phase 8): the entity is `submoduleWith { modules = aspects; specialArgs = { egregore = topConfig; }; }` — the top graph reaches every aspect module as the `egregore` module argument; `mkType`/`mkTypeExtend`/`mkAspect` lose the `topConfig` parameter, hooks are `name: entity: egregore: …`, the interceptors inject no closure |
+| `d74df978` | `verbs` gone (cleanup): the core `verbs` option, the `verbs` hook parameter of `mkType`/`mkTypeExtend`, `withVerb`, and the CLI's strip lists — nothing read them |
 | `2182e116` | earlier progress notes |
 
 ### Code shape
@@ -276,8 +278,12 @@ semuta, sigil, tleilax, glyph, omen.
 
 ## 8. Definition of done
 
-- `EGREGORE.md` holds the model; the code matches it.
-- No `attrs` bag; derived facts are aspects. No `type` field. Exposures exist;
+- [x] `EGREGORE.md` holds the model; the code matches it. (Realization
+  landed with Phase 8 — `submoduleWith` + the `egregore` argument.)
+- [x] No `attrs` bag; derived facts are aspects. No `type` field. Exposures exist;
   offerings ref them. Scope and DNS view are distinct. `verbs` gone.
-- Every consumer reads aspects and exposures, not `attrs` and `type`.
-- The gate is green at each commit.
+- [x] Every consumer reads aspects and exposures, not `attrs` and `type`.
+- [x] The gate is green at each commit. (Every row above was gated
+  old-vs-new; Phase 8 gate is "everything unchanged", the cleanup's
+  delta is confined to the CLI sweep and the serialized graph's empty
+  `verbs` keys.)
