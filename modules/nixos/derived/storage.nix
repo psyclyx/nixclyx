@@ -28,7 +28,6 @@
 {
   config,
   lib,
-  nodes ? { },
   pkgs,
   ...
 }:
@@ -37,6 +36,15 @@ let
   eg = config.psyclyx.egregore;
   hostname = config.psyclyx.nixos.host;
   enabled = cfg.enable && hostname != "";
+
+  # Colmena's cross-host `nodes`, when running under a hive — the only
+  # source of *other* hosts' build products. Deliberately not a module
+  # argument: the module system resolves declared arguments strictly
+  # from specialArgs/_module.args, so a `nodes ? {}` default never
+  # applies and standalone eval (nixos-rebuild, plain
+  # nixosConfigurations) dies on "attribute 'nodes' missing". Outside
+  # a hive there are simply no toplevels to piggy-back.
+  nodes = config._module.args.nodes or (config._module.specialArgs.nodes or { });
 
   pools = lib.filterAttrs (_: e: e.zfs-pool != null) eg.entities;
   datasets = lib.filterAttrs (_: e: e.zfs-dataset != null) eg.entities;
