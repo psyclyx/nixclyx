@@ -9,13 +9,6 @@
   hosts = lib.filterAttrs (_: e: e.host != null) eg.entities;
 
   # Hosts with MAC addresses that have an interface on a given network.
-  #
-  # This used to skip PXE-mode hosts on their boot.pxeInterfaces, because
-  # the PXE projection emitted those reservations itself (carrying
-  # next-server and boot-file-name) and two reservations for one MAC is
-  # something Kea rejects. That projection is gone, so the exception goes
-  # with it: a PXE-mode host is just a host, and gets the ordinary
-  # reservation that keeps it addressable.
   managedHostsOnNetwork = network:
     lib.sort builtins.lessThan
       (builtins.attrNames (lib.filterAttrs (_: e:
@@ -23,6 +16,20 @@
         && e.host.interfaces ? ${network}
         && e.host.addresses ? ${network}
       ) hosts));
+
+  # PXE-mode hosts on their boot.pxeInterfaces are excluded from the
+  # ordinary *v4* reservations: the PXE projection emits those itself,
+  # carrying next-server and boot-file-name, and two reservations for
+  # one MAC is something Kea rejects. The projection is v4-only (PXE
+  # next-server is an IPv4 address), so the v6 path reserves for these
+  # hosts normally.
+  pxeOwnsReservation = network: e:
+    (e.boot.mode or "local") == "pxe"
+    && builtins.elem network (e.boot.pxeInterfaces or []);
+
+  v4HostsOnNetwork = network:
+    lib.filter (name: !pxeOwnsReservation network eg.entities.${name})
+      (managedHostsOnNetwork network);
 
   # MAC address for a host's interface on a network. VLAN sub-ifaces
   # (e.g. enp1s0.10 or bond0.25) inherit the parent's MAC, so we strip
@@ -150,7 +157,7 @@
     # collision that previously broke A/AAAA at the apex.
     ddns-qualifying-suffix = "${na.zoneName}.";
     reservations = let
-      servers = managedHostsOnNetwork pool.network;
+      servers = v4HostsOnNetwork pool.network;
       labReservations = map (name: {
         "hw-address" = hostMacForNetwork name pool.network;
         "ip-address" = eg.entities.${name}.host.addresses.${pool.network}.ipv4;

@@ -24,6 +24,7 @@
     ./bootstrap.nix
     ./gateway.nix
     ./prefix-delegation.nix
+    ./pxe.nix
     ./vms.nix
     ./dhcp-ddns.nix
     ./distributed-builds.nix

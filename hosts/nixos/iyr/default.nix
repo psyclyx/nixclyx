@@ -122,6 +122,15 @@ in
       gpu.intel.enable = true;
     };
 
+    # PXE-boot infrastructure for the lab. iyr serves the iPXE chainload
+    # binary over TFTP + the shared rescue bundle over HTTP. The bind
+    # addresses fall out of egregore: one per network where a PXE-mode
+    # host advertises an interface and where iyr has an address (either
+    # as that network's gateway or as an L2-only listener). The served
+    # artifacts are a generic rescue image built from iyr's own nixpkgs —
+    # never another host's evaluated config.
+    derived.pxe.serve = true;
+
     network = {
       # Gateway config (lanInterface/wanInterface/MACs/initrdVlans/
       # DHCPv6 DUID/CAKE QoS rates) comes from iyr's host.gateway in

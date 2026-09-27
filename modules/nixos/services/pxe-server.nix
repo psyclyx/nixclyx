@@ -8,12 +8,11 @@
 #   http://$host/boot/$client/kernel  — per-host kernel image
 #   http://$host/boot/$client/initrd  — per-host initramfs
 #
-# Clients are declared as data (no upstream config). Nothing populates
-# `clients` at the moment: the projection that did was removed along
-# with lab PXE booting, because it read netboot artifacts out of
-# colmena's cross-host `nodes`, which made every host that served PXE
-# unevaluatable outside a hive. Whatever brings PXE back has to source
-# those artifacts without reaching into another host's evaluated config.
+# Clients are declared as data (no upstream config). The derived/pxe
+# projection populates `clients` from a generic rescue image it builds
+# itself — netboot artifacts must never come from another host's
+# evaluated config (that coupling is what made every PXE server
+# unevaluatable outside a hive, and got lab netboot dropped in e86f3cb7).
 {
   path = ["psyclyx" "nixos" "services" "pxe-server"];
   description = "TFTP + HTTP for iPXE chainload and per-host netboot bundles";
