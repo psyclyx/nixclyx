@@ -37,8 +37,13 @@ in
 
     vaultAddr = lib.mkOption {
       type = lib.types.str;
-      default = "https://10.0.25.1:8200";
-      description = "OpenBao endpoint used by the guest's sign request.";
+      default = config.psyclyx.openbao.endpoint;
+      defaultText = lib.literalExpression "config.psyclyx.openbao.endpoint";
+      description = ''
+        OpenBao endpoint used by the guest's sign request. Defaults to
+        the derived fleet endpoint rather than a literal address, which
+        went stale when iyr's infra address moved.
+      '';
     };
 
     insecureSkipVerify = lib.mkOption {
