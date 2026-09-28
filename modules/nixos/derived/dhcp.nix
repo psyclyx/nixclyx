@@ -206,12 +206,14 @@
   # one here would be the hardcoding this whole mechanism exists to
   # avoid. `::/64` is unroutable and obviously not an answer, which is
   # the point — if the binder never runs, nothing is delegated.
+  delegationInterface = d: me.interfaces.${d.network}.device;
+
   delegationSubnets = lib.mapAttrsToList (name: d: let
     net = eg.entities.${d.network};
   in {
     id = 900 + net.network.vlan;
     subnet = net.subnet6;
-    interface = me.interfaces.${d.network}.device;
+    interface = delegationInterface d;
     pd-pools = [{
       prefix = "::";
       prefix-len = d.prefixLength;
@@ -235,8 +237,14 @@
     then me.interfaces.${pool.network}.device
     else cfg.relayInterface;
 
+  # A delegation is not a pool, so its link is not covered above — and
+  # Kea only opens sockets on interfaces it is told about. Without this
+  # the delegation subnet exists in config but nothing is listening on
+  # the transit link, and the downstream router's PD Solicit is never
+  # answered. Subnet and pool can be perfect and the chain still dead.
   interfaces = lib.sort builtins.lessThan (lib.unique
-    (lib.mapAttrsToList (_: poolInterface) cfg.pools));
+    (lib.mapAttrsToList (_: poolInterface) cfg.pools
+      ++ lib.mapAttrsToList (_: delegationInterface) cfg.delegations));
 in {
   options.psyclyx.nixos.services.dhcp = {
     enable = lib.mkEnableOption "DHCP server derived from egregore entities";
