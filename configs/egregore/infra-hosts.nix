@@ -89,17 +89,22 @@
             lab.ipv6     = "fd9a:e830:4b1e:d2::2";
             storage.ipv4 = "10.0.200.2";
             storage.ipv6 = "fd9a:e830:4b1e:c8::2";
-            # iyr held 10.0.10.1 only by being main's v4 gateway, and
-            # that moved to mdf-agg01 — so the address has to be stated
-            # or iyr silently leaves the VLAN it resolves, serves DHCP
-            # and is managed on. The v6 address stays derived: iyr is
-            # still main's v6 router and holds ::1.
-            main.ipv4    = "10.0.10.3";
-            # Same story on infra: iyr held .1 by being its gateway, and
-            # that moved to the switch. Everything that reaches OpenBao
-            # and the resolver here derives the address from this entry,
-            # so stating it is all that's needed.
-            infra.ipv4   = "10.0.25.3";
+            # main and infra are deliberately absent. iyr gateways both
+            # (the migration to mdf-agg01 is prepared but not cut over —
+            # see networks.nix), so the gateway convention derives .1 and
+            # ::1 for each, the same way mgmt gets 10.0.240.1 + f0::1.
+            #
+            # Do not state the v4 half here "for clarity": authoring an
+            # address entry suppresses the derived v6 half of the same
+            # entry rather than merging with it. 416881f1 stated
+            # main.ipv4/infra.ipv4 and silently took iyr's a::1 and 19::1
+            # with them — which unbound binds and which its own RA
+            # advertises as the resolver, so v6 clients on both segments
+            # were handed a nameserver address nothing listened on.
+            #
+            # Cutting over means giving iyr .3 here *and* restating the
+            # ULA ::1 halves explicitly, because stating either half
+            # opts the entry out of derivation entirely.
           };
         };
         exposures.ssh = {

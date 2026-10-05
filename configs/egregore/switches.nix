@@ -61,17 +61,20 @@ in {
           addresses = {
             mgmt.ipv4    = "10.0.240.2";
             mgmt.ipv6    = "fd9a:e830:4b1e:f0::2";
-            # .1 — the v4 gateway for main, which is why clients need no
-            # reconfiguration. The ULA stays ::2: iyr remains main's v6
-            # router and holds ::1.
-            main.ipv4    = "10.0.10.1";
+            # .2, not .1: the switch is L3-ready on main but iyr still
+            # holds the gateway address. An SVI here is what lets the
+            # Prestera route this VLAN in hardware once clients are
+            # pointed at it; until then it only routes traffic addressed
+            # to it. Cutover moves this to .1 as iyr moves to .3.
+            main.ipv4    = "10.0.10.2";
             main.ipv6    = "fd9a:e830:4b1e:a::2";
             # LAN core transit (/30) — iyr .1, agg .2. The switch's default
             # route still exits via main to iyr until the gateway migration
             # flips it here.
-            # .1 — infra's v4 gateway. The ULA stays ::2: iyr remains
-            # infra's v6 router and holds ::1, same split as main.
-            infra.ipv4   = "10.0.25.1";
+            # .2 for the same reason as main. The switch has no infra SVI
+            # at all live, so this is new L3 presence — it is the half of
+            # "ready" that is actually missing today.
+            infra.ipv4   = "10.0.25.2";
             infra.ipv6   = "fd9a:e830:4b1e:19::2";
             core-transit.ipv4 = "10.0.252.2";
             core-transit.ipv6 = "fd9a:e830:4b1e:fc::2";

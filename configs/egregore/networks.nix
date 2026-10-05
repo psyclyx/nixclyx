@@ -23,9 +23,19 @@
       # iyr is the resolver and the source of the delegated prefix. The
       # switch has no v6 default route to offer, so handing it v6 would
       # black-hole off-net v6 for everything on this VLAN.
+      # Gateway stays iyr for now. mdf-agg01 is *prepared* to take it —
+      # L3 hw offload on, an SVI on every internal VLAN, v6 forwarding,
+      # a DHCPv6-PD client and a default route to iyr over core-transit —
+      # but nothing is cut over, because the cutover is a coordinated
+      # change: iyr can only release .1 in the same window mdf-agg01
+      # claims it, or every DHCP client on the segment is left pointing
+      # at an address nobody answers for.
+      #
+      # Cutting over is: this ref → "mdf-agg01", iyr's address here →
+      # .3 (infra-hosts.nix), and the switch's → .1 (switches.nix).
       main = {
-        
-        refs = { gateway = "mdf-agg01"; gateway6 = "iyr"; };
+
+        refs = { gateway = "iyr"; gateway6 = "iyr"; };
         network = { site = "apt"; vlan = 10; ipv4 = "10.0.10.0/24"; ulaSubnetHex = "a"; ipv6PdSubnetId = 0; dhcpRelay = true; zone = "lan"; };
       };
       # Routed by mdf-agg01 like every other internal segment. iyr was
@@ -36,9 +46,10 @@
       #
       # v6 stays with iyr for the same reason as main: the switch has no
       # ::/0 to offer yet.
+      # Same holding pattern as main — see the note there.
       infra = {
-        
-        refs = { gateway = "mdf-agg01"; gateway6 = "iyr"; };
+
+        refs = { gateway = "iyr"; gateway6 = "iyr"; };
         network = { site = "apt"; vlan = 25; ipv4 = "10.0.25.0/24"; ulaSubnetHex = "19"; ipv6PdSubnetId = 1; zone = "infra"; };
       };
       # iyr isn't the gateway for storage/lab (mdf-agg01 is) but it *is*
