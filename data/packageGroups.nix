@@ -43,7 +43,7 @@
     pkgs.git
   ];
 
-  # Interactive shell experience — servers and workstations.
+  # Interactive shell experience — workstations and desktops.
   shell = pkgs: [
     # Shell enhancements
     pkgs.fzf

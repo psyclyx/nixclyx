@@ -6,7 +6,6 @@
     environment.systemPackages = [
       pkgs.redfishtool
       pkgs.psyclyx.ilo
-      pkgs.psyclyx.ilo4-console
     ];
   };
 }

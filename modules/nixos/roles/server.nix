@@ -6,6 +6,5 @@
       roles.base.enable = true;
       users.psyc.enable = true;
     };
-    home-manager.users.psyc.psyclyx.home.profiles.psyc.base.enable = true;
   };
 }

@@ -7,9 +7,7 @@
     nixclyx,
     ...
   }: {
-    environment.systemPackages =
-      nixclyx.packageGroups.core pkgs
-      ++ nixclyx.packageGroups.shell pkgs;
+    environment.systemPackages = nixclyx.packageGroups.core pkgs;
 
     psyclyx = {
       common = {
@@ -50,12 +48,10 @@
         system = {
           containers.enable = lib.mkDefault true;
           documentation.enable = lib.mkDefault true;
-          home-manager.enable = lib.mkDefault true;
           locale.enable = lib.mkDefault true;
           nix.enable = lib.mkDefault true;
           nixpkgs.enable = lib.mkDefault true;
           storage.enable = lib.mkDefault true;
-          stylix.enable = lib.mkDefault true;
           sudo.enable = lib.mkDefault true;
           swap.enable = lib.mkDefault true;
           timezone.enable = lib.mkDefault true;

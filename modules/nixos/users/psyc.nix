@@ -20,7 +20,5 @@
 
       root.openssh.authorizedKeys.keys = nixclyx.keys.psyc.openssh;
     };
-
-    home-manager.users.psyc.psyclyx.home.profiles.psyc.base.enable = true;
   };
 }

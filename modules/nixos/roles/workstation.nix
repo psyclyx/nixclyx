@@ -34,13 +34,15 @@
     };
 
     environment.systemPackages =
-      nixclyx.packageGroups.dev pkgs
+      nixclyx.packageGroups.shell pkgs
+      ++ nixclyx.packageGroups.dev pkgs
       ++ nixclyx.packageGroups.media pkgs
       ++ [
         pkgs.fix
         pkgs.mpv
         pkgs.vlc
         pkgs.psyclyx.ilo
+        pkgs.psyclyx.ilo4-console
 
         # Editors (no HM/NixOS module upstream, so ship the package)
         pkgs.zed-editor
@@ -84,6 +86,7 @@
 
       system = {
         fonts.enable = lib.mkDefault true;
+        home-manager.enable = lib.mkDefault true;
         stylix.enable = lib.mkDefault true;
       };
     };

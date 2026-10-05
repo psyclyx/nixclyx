@@ -12,6 +12,22 @@
     ...
   }: let
     c = config.lib.stylix.colors;
+    # Without stylix (servers), fall back to the terminal's own palette
+    # via the standard base16 → ANSI slot mapping.
+    ansi = {
+      base03 = 8;
+      base04 = 7;
+      base08 = 1;
+      base09 = 3;
+      base0B = 2;
+      base0C = 6;
+      base0D = 4;
+      base0E = 5;
+    };
+    color = slot:
+      if config.stylix.enable
+      then "#${c.${slot}}"
+      else toString ansi.${slot};
   in {
     environment.pathsToLink = ["/share/zsh"];
     programs.zsh = {
@@ -53,10 +69,10 @@
         # ── vcs_info ───────────────────────────────────────────────
         zstyle ':vcs_info:*' enable git
         zstyle ':vcs_info:*' check-for-changes true
-        zstyle ':vcs_info:*' stagedstr    "%F{#${c.base0B}}+%f"
-        zstyle ':vcs_info:*' unstagedstr  "%F{#${c.base08}}*%f"
-        zstyle ':vcs_info:git:*' formats       " %F{#${c.base0D}}%b%f%c%u"
-        zstyle ':vcs_info:git:*' actionformats " %F{#${c.base0D}}%b%f|%F{#${c.base09}}%a%f%c%u"
+        zstyle ':vcs_info:*' stagedstr    "%F{${color "base0B"}}+%f"
+        zstyle ':vcs_info:*' unstagedstr  "%F{${color "base08"}}*%f"
+        zstyle ':vcs_info:git:*' formats       " %F{${color "base0D"}}%b%f%c%u"
+        zstyle ':vcs_info:git:*' actionformats " %F{${color "base0D"}}%b%f|%F{${color "base09"}}%a%f%c%u"
 
         # ── hooks ──────────────────────────────────────────────────
         # psvar: [1]=path [2]=exit code [3]=elapsed [4]=direnv [5]=vi mode
@@ -89,8 +105,8 @@
         add-zsh-hook preexec _prompt_preexec
 
         # ── prompt ─────────────────────────────────────────────────
-        PROMPT='%F{#${c.base0E}}%m%f %F{#${c.base0C}}%1v%f''${vcs_info_msg_0_}%(4V. %F{#${c.base03}}%4v%f.) %F{#${c.base04}}%#%f '
-        RPROMPT='%(5V.%F{#${c.base0E}}%5v%f .)%(3V.%F{#${c.base03}}%3v%f .)%(2V.%F{#${c.base08}}✗%2v%f.)'
+        PROMPT='%F{${color "base0E"}}%m%f %F{${color "base0C"}}%1v%f''${vcs_info_msg_0_}%(4V. %F{${color "base03"}}%4v%f.) %F{${color "base04"}}%#%f '
+        RPROMPT='%(5V.%F{${color "base0E"}}%5v%f .)%(3V.%F{${color "base03"}}%3v%f .)%(2V.%F{${color "base08"}}✗%2v%f.)'
 
         # ── keybindings ────────────────────────────────────────────
         stty -ixon
@@ -106,7 +122,7 @@
         zstyle ':completion:*' completer _extensions _complete _approximate _files
         zstyle ':completion:*' matcher-list 'm:{a-zA-Z}={A-Za-z}' 'r:|[._-]=* r:|=*' 'l:|=* r:|=*'
         zstyle ':completion:*' group-name '''
-        zstyle ':completion:*:descriptions' format '%F{#${c.base0B}}-- %d --%f'
+        zstyle ':completion:*:descriptions' format '%F{${color "base0B"}}-- %d --%f'
         zstyle ':completion:*' menu select
       '';
     };
