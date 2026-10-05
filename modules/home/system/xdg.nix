@@ -1,10 +1,17 @@
 {
   path = ["psyclyx" "home" "xdg"];
   description = "XDG directories and MIME associations";
-  config = _: {
+  config = {
+    lib,
+    pkgs,
+    ...
+  }: let
+    # userDirs and mimeApps are XDG-desktop (Linux) only.
+    inherit (pkgs.stdenv.hostPlatform) isLinux;
+  in {
     xdg = {
       userDirs = {
-        enable = true;
+        enable = isLinux;
         createDirectories = true;
         desktop = "\$HOME/desktop";
         documents = "\$HOME/documents";
@@ -16,7 +23,7 @@
         publicShare = "\$HOME/public";
       };
 
-      configFile = {
+      configFile = lib.mkIf isLinux {
         "mimeapps.list" = {
           force = true;
         };
@@ -25,7 +32,7 @@
       mimeApps = let
         firefox = "firefox.desktop";
       in {
-        enable = true;
+        enable = isLinux;
         associations = {
           added = {
             "application/pdf" = [firefox];

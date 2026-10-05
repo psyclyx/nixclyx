@@ -79,7 +79,15 @@ in
       inherit loadFlake lib overlay packages;
       assets = ./assets;
       keys = import ./data/keys.nix;
-      packageGroups = import ./data/packageGroups.nix;
+      # Each group keeps only what builds on the host's platform (the lists
+      # are written for Linux; darwin and mobile hosts share them).
+      packageGroups = builtins.mapAttrs (_: group: pkgs:
+        builtins.filter (p:
+          pkgs.lib.meta.availableOn pkgs.stdenv.hostPlatform p
+          && !(p.meta.broken or false))
+        (group pkgs))
+      (import ./data/packageGroups.nix);
+      nixCaches = import ./data/nixCaches.nix;
     };
 
     # Phase 2: Modules — import-time uses core + sibling modules;
@@ -131,17 +139,24 @@ in
 
     darwinSystem = (loadFlake allSources.nix-darwin).lib.darwinSystem;
 
-    mkDarwinHost = name:
-      darwinSystem {
-        modules = [
-          modules.darwin
-          {config.psyclyx.darwin.host = name;}
-        ];
-      };
-
-    darwinConfigurations = builtins.mapAttrs (name: _: mkDarwinHost name) {
-      halo = {};
-    };
+    # One nix-darwin system per ./hosts/darwin/<name>, built against the
+    # injected nixpkgs rather than nix-darwin's own lock.
+    darwinHostEntries = builtins.readDir ./hosts/darwin;
+    darwinConfigurations = builtins.listToAttrs (map (name: {
+        inherit name;
+        value = darwinSystem {
+          # nix-darwin defaults lib to its own lock; match the injected pkgs.
+          lib = import (nixpkgs + "/lib");
+          modules = [
+            modules.darwin
+            {nixpkgs.source = nixpkgs;}
+            ./hosts/darwin/${name}
+          ];
+        };
+      })
+      (builtins.filter
+        (n: darwinHostEntries.${n} == "directory")
+        (builtins.attrNames darwinHostEntries)));
 
     nixOnDroidLib = (loadFlake allSources.nix-on-droid).lib;
 

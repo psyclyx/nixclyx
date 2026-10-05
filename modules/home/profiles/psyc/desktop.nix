@@ -31,7 +31,7 @@
           enable = true;
           defaultTerminal = true;
         };
-        sway.enable = true;
+        sway.enable = pkgs.stdenv.hostPlatform.isLinux;
       };
     };
   };

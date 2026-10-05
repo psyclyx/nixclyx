@@ -20,6 +20,11 @@
     psyclyx.common.system.nix.enable = true;
     nix.settings.trusted-users = ["@wheel"];
 
+    # Early Monday, staggered so gc finishes before optimise starts.
+    # microvms force both off (see derived/vms.nix).
+    nix.gc.dates = ["Mon *-*-* 05:00:00"];
+    nix.optimise.dates = ["Mon *-*-* 06:00:00"];
+
     # !include reads the file at nix daemon startup, not build time
     # If the file doesn't exist, nix continues without error
     nix.extraOptions = lib.mkIf (cfg.githubAccessTokensFile != null) ''

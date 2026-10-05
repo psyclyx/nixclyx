@@ -1,7 +1,7 @@
 {
   path = ["psyclyx" "darwin" "system" "settings"];
   description = "macOS system settings";
-  config = _: {
+  config = {config, ...}: {
     system = {
       defaults = {
         NSGlobalDomain = {
@@ -22,7 +22,8 @@
           NSWindowShouldDragOnGesture = true;
           "com.apple.trackpad.enableSecondaryClick" = true;
           "com.apple.swipescrolldirection" = false;
-          _HIHideMenuBar = true;
+          # Only when sketchybar replaces it.
+          _HIHideMenuBar = config.psyclyx.darwin.services.sketchybar.enable;
         };
         dock = {
           autohide = true;
