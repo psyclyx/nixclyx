@@ -188,10 +188,13 @@
         ++ lib.flatten (
           lib.mapAttrsToList (
             secretName: secret:
+            # Ordering only. The fetcher is WantedBy multi-user and
+            # restarts these units itself after every fetch; if they also
+            # Wanted the fetcher, each restart would pull in a new fetch,
+            # which restarts them again, forever.
             map (unit: {
               "${lib.removeSuffix ".service" unit}" = {
                 after = [ "openbao-kv-${secretName}.service" ];
-                wants = [ "openbao-kv-${secretName}.service" ];
               };
             }) secret.reloadUnits
           ) cfg.secrets

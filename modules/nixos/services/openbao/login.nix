@@ -73,10 +73,15 @@
         wantedBy = [ "multi-user.target" ];
 
         serviceConfig = {
+          # No RemainAfterExit: an active (exited) oneshot makes every
+          # timer activation a no-op, so a failed boot-time login was
+          # never retried (iyr went May→Oct without a token).
           Type = "oneshot";
-          RemainAfterExit = true;
           RuntimeDirectory = "openbao-auth";
           RuntimeDirectoryMode = "0700";
+          # The token outlives each run; without this systemd deletes
+          # the directory every time the oneshot finishes.
+          RuntimeDirectoryPreserve = "yes";
           # Backstop: if the script gets wedged (e.g. unreachable
           # endpoint with slow TCP timeouts), systemd kills it. The
           # in-script loop is bounded to ~20s, so 60s is plenty.
