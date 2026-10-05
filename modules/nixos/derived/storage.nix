@@ -187,6 +187,23 @@ let
   # Datasets mounted by pam_zfs_key at login rather than by systemd at boot.
   myPamDatasets = lib.filterAttrs (_: d: d.zfs-dataset.mountedBy == "pam") myDatasets;
 
+  # pam_zfs_key finds a user's dataset as `<homes>/<user>`, so each "pam"
+  # dataset's parent is a homes prefix to unlock at login.
+  #
+  # Ordered by mountpoint because the PAM instances mount in list order: a
+  # dataset mounted inside another user dataset (/home/psyc/projects in
+  # /home/psyc) has to come after it, or the outer mount lands on top and
+  # hides it. A path sorts before everything beneath it, so lexical order
+  # puts parents first. Unmounted ones (key-only) go last.
+  myPamHomes = let
+    mp = d: d.zfs-dataset.mountpoint;
+    before = a: b:
+      if mp a == null then false
+      else if mp b == null then true
+      else mp a < mp b;
+  in lib.unique (map (d: dirOf d.zfs-dataset.path)
+    (lib.sort before (lib.attrValues myPamDatasets)));
+
   # ── pool import classification ───────────────────────────────────
 
   # A pool I produce is imported in initrd iff one of its datasets is needed
@@ -467,11 +484,10 @@ in
         dataPools = myDataPools;
         encryptionRoots = myEncryptionRoots;
         explicitMounts = cfg.mounts.enable;
+        # Non-empty also wires pam_zfs_key into the PAM stack.
+        pam.homes = myPamHomes;
       };
 
-      # A dataset declared mountedBy = "pam" is only mountable if pam_zfs_key
-      # is actually wired into the PAM stack.
-      security.pam.zfs.enable = lib.mkIf (myPamDatasets != { }) true;
       # dataPools are by construction the post-boot pools, which is exactly
       # what extraPools means for a pool with no mounted dataset of its own.
       boot.zfs.extraPools = lib.attrNames myDataPools;

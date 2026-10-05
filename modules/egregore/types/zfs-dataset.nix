@@ -60,7 +60,8 @@
         default = "fileSystems";
         description = ''
           Who performs the mount. Only meaningful when mountpoint != null;
-          `mountpoint = null` already means "never mounted".
+          `mountpoint = null` already means "never mounted" — except for
+          "pam", where it still means "unlocked at login", just not mounted.
 
           - "fileSystems" (default): the storage projection emits a
             fileSystems entry and NixOS mounts it at boot.
@@ -69,7 +70,9 @@
             in fileSystems — systemd would try to mount it at boot, before
             any key is loaded. The mountpoint is still declared because it
             is still where the dataset lands; only the mounting agent
-            differs. Implies the host needs `security.pam.zfs.enable`.
+            differs. pam_zfs_key looks the dataset up as `<homes>/<user>`,
+            so the path must end in the user name; each distinct parent
+            becomes one of the host's filesystems.zfs.pam.homes.
           - "manual": mounted ad-hoc by an operator. Nothing is emitted.
         '';
       };

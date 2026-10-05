@@ -1,6 +1,109 @@
 {
   path = ["psyclyx" "nixos" "filesystems" "zfs"];
   description = "ZFS filesystem support";
+
+  # pam.homes: every pam_zfs_key instance on the host, one per homes
+  # prefix, all generated the same way. nixpkgs' own zfs_key rules handle
+  # a single `homes=`; they're switched off here rather than kept for the
+  # first prefix, so there is one path for "unlock <prefix>/<user> at
+  # login", not a stock path plus an extras path. security.pam.zfs.enable
+  # stays on: it's the per-service `zfs` default (the gate used below),
+  # and polkit keys /dev/zfs access off it.
+  #
+  # Lives in an import because it extends nixpkgs' security.pam.services
+  # submodule type — the only way to touch "every zfs service" without
+  # reading security.pam.services to define it.
+  #
+  # Each instance sits where the stock rule would (so it sees the same
+  # PAM_AUTHTOK) with its own `homes=` and its own `runstatedir=`:
+  # pam_zfs_key keeps a per-uid session counter there, and instances
+  # sharing one would count each other's opens and never unload on
+  # logout. Each session instance gets its own systemd-user skip, because
+  # a skip only jumps over the one rule after it.
+  imports = [
+    ({config, lib, ...}: let
+      zcfg = config.psyclyx.nixos.filesystems.zfs;
+      pcfg = config.security.pam.zfs;
+      enabled = zcfg.enable && zcfg.pam.homes != [];
+      zfsKey = "${config.boot.zfs.package}/lib/security/pam_zfs_key.so";
+      succeedIf = "${config.security.pam.package}/lib/security/pam_succeed_if.so";
+      slug = prefix: lib.replaceStrings ["/"] ["-"] prefix;
+      settingsFor = prefix: {
+        homes = prefix;
+        runstatedir = "/run/pam_zfs_key-${slug prefix}";
+        mount_recursively = pcfg.mountRecursively;
+      };
+      indexed = lib.imap0 (i: prefix: {inherit i prefix;}) zcfg.pam.homes;
+    in {
+      options.security.pam.services = lib.mkOption {
+        type = lib.types.attrsOf (lib.types.submodule ({config, ...}: let
+          # Services with useDefaultRules = false (gdm-autologin, …) bring
+          # their own stack and never had the stock rules. Within default
+          # stacks the stock rule still isn't in every stage (auth only
+          # carries it with unixAuth or homed), so disabling it has to
+          # tolerate its absence: `stub` defines it at the lowest priority,
+          # which only takes effect where nixpkgs didn't define it, and
+          # leaves a disabled rule with order 0. Real stock rules are
+          # auto-ordered from 10100 up, so `order > 0` is "the stock rule
+          # is here". Probing values rather than shaping the attrset on
+          # them is what keeps this from recursing on `rules`.
+          stub = module: {
+            enable = lib.mkForce false;
+            order = lib.mkOverride 1500 0;
+            control = lib.mkOverride 1500 "optional";
+            modulePath = lib.mkOverride 1500 module;
+          };
+          at = stage: config.rules.${stage}.zfs_key.order;
+          has = stage: at stage > 0;
+          perPrefix = f: lib.listToAttrs (lib.concatMap f indexed);
+        in {
+          config.rules = lib.mkIf (enabled && config.zfs && config.useDefaultRules) {
+            auth = {zfs_key = stub zfsKey;} // perPrefix ({i, prefix}: [
+              (lib.nameValuePair "zfs_key-${slug prefix}" {
+                enable = has "auth";
+                order = at "auth" + 10 * i;
+                control = "optional";
+                modulePath = zfsKey;
+                settings = settingsFor prefix;
+              })
+            ]);
+            password = {zfs_key = stub zfsKey;} // perPrefix ({i, prefix}: [
+              (lib.nameValuePair "zfs_key-${slug prefix}" {
+                enable = has "password";
+                order = at "password" + 10 * i;
+                control = "optional";
+                modulePath = zfsKey;
+                settings = settingsFor prefix;
+              })
+            ]);
+            session = {
+              zfs_key = stub zfsKey;
+              zfs_key-skip-systemd = stub succeedIf;
+            } // perPrefix ({i, prefix}: [
+              (lib.nameValuePair "zfs_key-${slug prefix}-skip-systemd" {
+                enable = has "session";
+                order = at "session" + 20 * i;
+                control = "[success=1 default=ignore]";
+                modulePath = succeedIf;
+                args = ["service" "=" "systemd-user"];
+              })
+              (lib.nameValuePair "zfs_key-${slug prefix}" {
+                enable = has "session";
+                order = at "session" + 20 * i + 10;
+                control = "optional";
+                modulePath = zfsKey;
+                settings = settingsFor prefix // {nounmount = pcfg.noUnmount;};
+              })
+            ]);
+          };
+        }));
+      };
+
+      config = lib.mkIf enabled {
+        security.pam.zfs.enable = true;
+      };
+    })
+  ];
   options = {lib, ...}: {
     hostId = lib.mkOption {
       type = lib.types.str;
@@ -68,6 +171,20 @@
 
         The rewritten import script takes effect at the next boot, alongside
         the kmod it was built against.
+      '';
+    };
+
+    pam.homes = lib.mkOption {
+      type = lib.types.listOf lib.types.str;
+      default = [];
+      example = ["rpool/home" "altpool/home"];
+      description = ''
+        Homes prefixes whose `<prefix>/<user>` dataset pam_zfs_key unlocks
+        with the login password at login (and mounts, if it has a
+        mountpoint). Each dataset's passphrase must equal the login password.
+        Non-empty turns on security.pam.zfs and replaces its stock rules, so
+        `security.pam.zfs.homes` is ignored; `noUnmount` and
+        `mountRecursively` there still apply to every prefix.
       '';
     };
 
