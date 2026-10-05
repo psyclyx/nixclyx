@@ -4,26 +4,23 @@
   sources ? import ./npins,
   flake-compat ? sources.flake-compat,
   ...
-}:
-let
-  loadFlake = import ./loadFlake.nix { inherit flake-compat; };
+}: let
+  loadFlake = import ./loadFlake.nix {inherit flake-compat;};
 
   colmena = loadFlake sources.colmena;
   astal = loadFlake sources.astal;
   clj-nix = loadFlake sources.clj-nix;
   llm-agents = loadFlake sources."llm-agents.nix";
 in
-  final: prev:
-  let
+  final: prev: let
     # Minimal asciidoc: still wires xsltproc + docbook so `a2x` emits man
     # pages, but drops the full PDF toolchain (dblatex → inkscape). Used
     # to slim the Clevis/Tang/LUKS NBDE stack below — those packages only
     # ship man pages, yet nixpkgs feeds them `asciidoc-full` (and aliases
     # `asciidoc` to it), forcing a source build of inkscape on every
     # headless host that unlocks via Tang (iyr, the lab NBDE clients).
-    asciidocManpage = prev.asciidoc.override { enableStandardFeatures = false; };
-  in
-    ((llm-agents.overlays.shared-nixpkgs final prev)
+    asciidocManpage = prev.asciidoc.override {enableStandardFeatures = false;};
+  in ((llm-agents.overlays.shared-nixpkgs final prev)
     // {
       psyclyx =
         (import ./packages {pkgs = prev;})
@@ -31,7 +28,7 @@ in
           # Internal producers now come from their own overlays (composed
           # ahead of this one in ./overlays.nix), aliased under psyclyx so the
           # existing pkgs.psyclyx.* module references keep working.
-          inherit (prev) river shoal tidepool set-output-icc;
+          inherit (prev) river shoal tidepool whirlpool set-output-icc;
           "base24-gen" = prev."base24-gen";
         };
       colmena = colmena.packages.${prev.stdenv.hostPlatform.system};
@@ -65,19 +62,21 @@ in
       # won't add libgcc_s to the rpath.  Patch the .so after build instead.
       pam_ssh_agent_auth = prev.pam_ssh_agent_auth.overrideAttrs (old:
         prev.lib.optionalAttrs prev.stdenv.hostPlatform.isAarch64 {
-          postFixup = (old.postFixup or "") + ''
-            patchelf --add-needed libgcc_s.so.1 \
-                     --add-rpath ${prev.stdenv.cc.cc.lib}/lib \
-                     $out/libexec/pam_ssh_agent_auth.so
-          '';
+          postFixup =
+            (old.postFixup or "")
+            + ''
+              patchelf --add-needed libgcc_s.so.1 \
+                       --add-rpath ${prev.stdenv.cc.cc.lib}/lib \
+                       $out/libexec/pam_ssh_agent_auth.so
+            '';
         });
       # Slim the NBDE stack off the inkscape-pulling PDF toolchain (see
       # asciidocManpage above). tang + clevis take `asciidoc-full`;
       # luksmeta takes `asciidoc` (which nixpkgs aliases to the -full
       # build). All three only generate man pages.
-      tang = prev.tang.override { asciidoc-full = asciidocManpage; };
-      clevis = prev.clevis.override { asciidoc-full = asciidocManpage; };
-      luksmeta = prev.luksmeta.override { asciidoc = asciidocManpage; };
+      tang = prev.tang.override {asciidoc-full = asciidocManpage;};
+      clevis = prev.clevis.override {asciidoc-full = asciidocManpage;};
+      luksmeta = prev.luksmeta.override {asciidoc = asciidocManpage;};
       rofi-rbw = prev.rofi-rbw.overrideAttrs {
         src = prev.fetchFromGitHub {
           owner = "psyclyx";

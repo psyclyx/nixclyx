@@ -11,8 +11,7 @@
   sources ? import ./npins,
   flake-compat ? sources.flake-compat,
   ...
-}:
-let
+}: let
   # emacs-unstable-pgtk for the emacs home-manager module, which no longer
   # applies emacs-overlay itself. Sourced from emacs's own pin (single
   # version of record) rather than a separate nixclyx pin.
@@ -20,15 +19,16 @@ let
 
   producerOverlays = [
     emacsOverlay
-    (import sources.river { }).overlay # patched wlroots_0_20 + river + set-output-icc
-    (import sources.shoal { }).overlay
-    (import sources.tidepool { }).overlay
-    (import sources.base24-gen { }).overlay
-    (import sources.fix { }).overlay
+    (import sources.river {}).overlay # patched wlroots_0_20 + river + set-output-icc
+    (import sources.shoal {}).overlay
+    (import sources.tidepool {}).overlay
+    (import sources.whirlpool {river = sources.river;}).overlay
+    (import sources.base24-gen {}).overlay
+    (import sources.fix {}).overlay
   ];
 
-  own = import ./overlay.nix { inherit sources flake-compat; };
+  own = import ./overlay.nix {inherit sources flake-compat;};
 
   inherit ((import (sources.nixpkgs + "/lib"))) composeManyExtensions;
 in
-composeManyExtensions (producerOverlays ++ [ own ])
+  composeManyExtensions (producerOverlays ++ [own])

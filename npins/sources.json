@@ -82,20 +82,17 @@
       "hash": "sha256-+tsKuqiq4LC+0bWGi2pJyfxJDlhhMVWSXgxA+NiJrgY="
     },
     "fix": {
-      "type": "GitRelease",
+      "type": "Git",
       "repository": {
         "type": "GitHub",
         "owner": "psyclyx",
         "repo": "fix"
       },
-      "pre_releases": false,
-      "version_upper_bound": null,
-      "release_prefix": null,
+      "branch": "main",
       "submodules": false,
-      "version": "v0.3.0",
-      "revision": "2141010575ef8295ce4f265adfbbb621e3bedb4a",
-      "url": "https://api.github.com/repos/psyclyx/fix/tarball/refs/tags/v0.3.0",
-      "hash": "sha256-qLTYqSdaxPNMsI59PVgOCMVZjBn655xujFeraqxyK/M="
+      "revision": "3b2ffbb298fa70575d17135c1d2d2b3f2b221b48",
+      "url": "https://github.com/psyclyx/fix/archive/3b2ffbb298fa70575d17135c1d2d2b3f2b221b48.tar.gz",
+      "hash": "sha256-lymqXzkvye+vB+/ZkwxYXAJpEaIZpV1N2Vc3HFWjmFc="
     },
     "flake-compat": {
       "type": "Git",
@@ -343,6 +340,19 @@
       "revision": "c1e1789ecf69965fcedd914e9c4242e042f1db25",
       "url": "https://github.com/psyclyx/tidepool/archive/c1e1789ecf69965fcedd914e9c4242e042f1db25.tar.gz",
       "hash": "sha256-ogY2b7yeDB06umXvFy17jVeoQqAdn3lk4SnQXDgo+T0="
+    },
+    "whirlpool": {
+      "type": "Git",
+      "repository": {
+        "type": "GitHub",
+        "owner": "psyclyx",
+        "repo": "whirlpool"
+      },
+      "branch": "main",
+      "submodules": false,
+      "revision": "d14210168e43bb21819cac0ca2ba46714c96c776",
+      "url": "https://github.com/psyclyx/whirlpool/archive/d14210168e43bb21819cac0ca2ba46714c96c776.tar.gz",
+      "hash": "sha256-XhDqqnOfOeCB9pbUfzonvmtGmUYF68uUDcLjavnxsGY="
     }
   },
   "version": 8

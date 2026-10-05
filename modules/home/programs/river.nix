@@ -67,7 +67,7 @@
     psyclyx.home = {
       programs = {
         alacritty.enable = lib.mkDefault true;
-        tidepool.enable = lib.mkDefault true;
+        whirlpool.enable = lib.mkDefault true;
         # kanshi applies the declared monitor layout and reapplies it on
         # hotplug. Only meaningful when monitors are declared.
         kanshi.enable = lib.mkDefault (monitors != {});
