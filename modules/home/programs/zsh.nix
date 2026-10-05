@@ -114,11 +114,40 @@
           zstyle ':vcs_info:git:*' formats       " %F{#${c.base0D}}%b%f%c%u"
           zstyle ':vcs_info:git:*' actionformats " %F{#${c.base0D}}%b%f|%F{#${c.base09}}%a%f%c%u"
 
+          # ── async vcs_info ─────────────────────────────────────────
+          # check-for-changes stats the whole worktree, which blocks the
+          # prompt for seconds in big repos. Run it in a subshell, hand
+          # the result back over an fd watched by zle, and redraw.
+          typeset -g _prompt_vcs_fd= _prompt_vcs_pwd=
+          _prompt_vcs_start() {
+            if [[ -n $_prompt_vcs_fd ]]; then
+              zle -F $_prompt_vcs_fd 2>/dev/null
+              exec {_prompt_vcs_fd}<&-
+              _prompt_vcs_fd=
+            fi
+            # A previous directory's branch is wrong, not just stale.
+            [[ $PWD != $_prompt_vcs_pwd ]] && vcs_info_msg_0_=
+            _prompt_vcs_pwd=$PWD
+            exec {_prompt_vcs_fd}< <(vcs_info >/dev/null 2>&1; print -r -- "$vcs_info_msg_0_")
+            zle -F $_prompt_vcs_fd _prompt_vcs_done
+          }
+          _prompt_vcs_done() {
+            local fd=$1 msg
+            IFS= read -r msg <&$fd
+            zle -F $fd
+            exec {fd}<&-
+            _prompt_vcs_fd=
+            if [[ $msg != $vcs_info_msg_0_ ]]; then
+              vcs_info_msg_0_=$msg
+              zle reset-prompt
+            fi
+          }
+
           # ── hooks ──────────────────────────────────────────────────
           # psvar: [1]=path [2]=exit code [3]=elapsed [4]=direnv [5]=vi mode
           _prompt_precmd() {
             local ec=$?
-            vcs_info
+            _prompt_vcs_start
             psvar[1]="$(_short_path)"
             psvar[2]=""
             (( ec != 0 )) && psvar[2]="$ec"
