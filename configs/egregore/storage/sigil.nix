@@ -1,5 +1,6 @@
 # sigil's ZFS layout: rpool (OS + home, on NVMe) + bulkpool (backups
-# on spinner) + scratchpool (ephemeral builds, on SSD).
+# on spinner) + scratchpool (ephemeral builds, on SSD) + altpool
+# (second NVMe; PAM-unlocked user space).
 #
 # Bootstrapped imperatively (the disko translation in derived/
 # storage.nix assumes whole-disk GPT pools, which doesn't fit sigil's
@@ -110,7 +111,7 @@
         # login password on auth and mounts on session_open. mountedBy
         # keeps this dataset out of fileSystems entirely — a fileSystems
         # entry would have systemd try to mount it at boot, before any key
-        # is loaded. It also drives security.pam.zfs.enable on the host,
+        # is loaded. It also puts rpool/home in the host's pam.homes,
         # and keeps the dataset out of requestEncryptionCredentials so
         # initrd doesn't prompt for it.
         mountedBy = "pam";
@@ -137,12 +138,9 @@
     };
 
     # Sigil's bulkpool: single 4 TB SAS spinner. Backup tier: holds
-    # the pre-rollback boot history and replicated home snapshots.
-    # Unencrypted (raw sends from the encrypted source datasets land
-    # encrypted on this side anyway, so plaintext-ness here doesn't
-    # leak user data; boot-history captures rolled-back /, which by
-    # construction has no secrets — preservation routes those to
-    # /persist on rpool).
+    # replicated home snapshots. Unencrypted (raw sends from the
+    # encrypted source datasets land encrypted on this side anyway, so
+    # plaintext-ness here doesn't leak user data).
     sigil-bulkpool = {
       
       refs.host = "sigil";
@@ -182,16 +180,15 @@
 
     # Pre-rollback boot history. rpool/ROOT/nixos is rolled back to
     # @blank in stage-1; before that, the @blank → live delta is
-    # sent here as @boot-<timestamp>. Lives on bulkpool so the
-    # rollback wipes nothing useful and so root-pool failure still
-    # leaves the history recoverable. See
-    # `hosts/nixos/sigil/filesystems.nix` for the initrd send and
-    # the post-boot retention prune.
+    # received under here as boot-<timestamp>, a clone of
+    # history@blank. On rpool because that's the only pool imported
+    # in initrd. See `hosts/nixos/sigil/filesystems.nix` for the
+    # initrd send and the post-boot retention prune.
     sigil-boot-history = {
-      
-      refs.pool = "sigil-bulkpool";
+
+      refs.pool = "sigil-rpool";
       zfs-dataset = {
-        path = "bulkpool/boot-history";
+        path = "rpool/ROOT/history";
         # Created by `zfs receive` in stage-1; never mounted.
         mountpoint = null;
       };
@@ -207,6 +204,16 @@
       refs.pool = "sigil-bulkpool";
       zfs-dataset = {
         path = "bulkpool/backups/home-psyc";
+        mountpoint = null;
+      };
+    };
+
+    # Same for altpool/home/psyc: raw syncoid sends, so it stays locked
+    # with that dataset's passphrase.
+    sigil-altpool-home-psyc-backup = {
+      refs.pool = "sigil-bulkpool";
+      zfs-dataset = {
+        path = "bulkpool/backups/altpool-home-psyc";
         mountpoint = null;
       };
     };
@@ -255,6 +262,45 @@
       zfs-dataset = {
         path = "scratchpool/build";
         mountpoint = "/build";
+      };
+    };
+
+    # Sigil's altpool: the second NVMe (SK hynix P41, 2 TB). Imported
+    # post-boot — nothing on it is neededForBoot, so the projection
+    # puts it in dataPools / boot.zfs.extraPools. Topology deliberately
+    # absent: disko is off on sigil, and the pool's create-time options
+    # weren't recorded when this entity was added.
+    sigil-altpool = {
+      refs.host = "sigil";
+      zfs-pool.name = "altpool";
+    };
+
+    # Homes container, same shape as rpool/home: unencrypted, never
+    # mounted, so each user dataset under it is its own encryption root.
+    sigil-altpool-home = {
+      refs.pool = "sigil-altpool";
+      zfs-dataset = {
+        path = "altpool/home";
+        mountpoint = null;
+        properties.canmount = "off";
+      };
+    };
+
+    # psyc's altpool space, unlocked at login by pam_zfs_key
+    # (homes=altpool/home, alongside rpool/home) with the login
+    # password — so, like rpool/home/psyc, its passphrase MUST match it.
+    # Not mounted yet: mountpoint = null keeps it out of fileSystems
+    # and pam_zfs_key loads the key, then skips the mount
+    # ("mountpoint is none"). When it gets a mountpoint, it needs to be
+    # mounted by pam (canmount=on) or by children under it with
+    # mount_recursively — not fileSystems, which runs before login.
+    sigil-altpool-home-psyc = {
+      refs.pool = "sigil-altpool";
+      zfs-dataset = {
+        path = "altpool/home/psyc";
+        mountpoint = null;
+        mountedBy = "pam";
+        encryption = { keyformat = "passphrase"; keylocation = "prompt"; };
       };
     };
   };

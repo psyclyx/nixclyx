@@ -27,6 +27,24 @@ in
     options = [ "fmask=0077" "dmask=0077" ];
   };
 
+  # 160G swap partition on the 990 PRO, beside rpool. Addressed by GPT
+  # partition UUID: the two NVMe drives swap /dev/nvme{0,1} between
+  # boots, and randomEncryption rewrites the partition contents every
+  # boot, so a filesystem UUID/label wouldn't survive either.
+  #
+  # Random per-boot key: /persist and the homes are encrypted, so plain
+  # swap would leak their pages to disk. Costs hibernation, which ZFS
+  # doesn't support safely anyway.
+  swapDevices = [
+    {
+      device = "/dev/disk/by-partuuid/a90cee37-7ee5-494a-bdcd-ca3488475a79";
+      randomEncryption = {
+        enable = true;
+        allowDiscards = true;
+      };
+    }
+  ];
+
   # PAM unlocks rpool/home/<user> at session start using the login
   # password (`pam_zfs_key.so`). Both halves of that are now derived from
   # the dataset's `mountedBy = "pam"`: it turns on security.pam.zfs, and it
@@ -68,19 +86,26 @@ in
   # datasets that survive the rollback unchanged.
   #
   # Before the rollback, we snapshot the live state and ship the
-  # @blank → @boot-<ts> delta into `bulkpool/boot-history` (on the
-  # 4 TB spinner). That dataset is NOT touched by the rollback, so
-  # the @boot-<ts> snapshots there persist; `zfs rollback -r` then
-  # wipes the @boot-<ts> on rpool/ROOT/nixos itself, and only the
-  # copy on bulkpool survives.
+  # @blank → @boot-<ts> delta into rpool/ROOT/history/boot-<ts>.
+  # history is outside rpool/ROOT/nixos, so `zfs rollback -r` (which
+  # wipes the @boot-<ts> on nixos itself) leaves it alone. It lives on
+  # rpool because rpool is the only pool imported in initrd —
+  # bulkpool/scratchpool are post-boot data pools.
   #
-  # Recovery: `zfs clone bulkpool/boot-history@boot-<ts> bulkpool/peek/<name>`
-  # then mount it, or just `zfs diff bulkpool/boot-history@blank
-  # bulkpool/boot-history@boot-<ts>` to see what changed.
+  # rpool/ROOT/history holds a copy of @blank; each boot's delta is
+  # received as its own clone of history@blank (`-o origin=`). A plain
+  # incremental receive into one dataset would only work once: ZFS
+  # requires the destination's newest snapshot to be the stream's base,
+  # and after the first boot that's @boot-<first>, not @blank.
+  #
+  # Recovery: the boot datasets have mountpoint=none, so give one a
+  # mountpoint first — `zfs set mountpoint=/mnt/peek
+  # rpool/ROOT/history/boot-<ts>` — then browse it, or `zfs diff
+  # rpool/ROOT/history@blank rpool/ROOT/history/boot-<ts>@boot-<ts>`.
   boot.initrd.systemd.services.zfs-snapshot-pre-rollback = {
-    description = "Snapshot / pre-rollback into bulkpool/boot-history";
+    description = "Snapshot / pre-rollback into rpool/ROOT/history";
     wantedBy = [ "initrd.target" ];
-    after = [ "zfs-import-rpool.service" "zfs-import-bulkpool.service" ];
+    after = [ "zfs-import-rpool.service" ];
     before = [ "zfs-rollback-root.service" "sysroot.mount" ];
     unitConfig.DefaultDependencies = "no";
     serviceConfig = {
@@ -95,16 +120,18 @@ in
     script = ''
       ts=$(date +%Y%m%d-%H%M%S)
       # First boot after this change lands: bootstrap the history
-      # dataset from @blank so subsequent incrementals have a base.
-      if ! zfs list -H bulkpool/boot-history >/dev/null 2>&1; then
-        zfs send rpool/ROOT/nixos@blank | zfs receive bulkpool/boot-history
+      # dataset from @blank so the incrementals have a base.
+      if ! zfs list -H rpool/ROOT/history >/dev/null 2>&1; then
+        zfs send rpool/ROOT/nixos@blank \
+          | zfs receive -u -o canmount=off -o mountpoint=none rpool/ROOT/history
       fi
       zfs snapshot rpool/ROOT/nixos@boot-$ts
-      # Incremental @blank → @boot-$ts; receive lands as
-      # bulkpool/boot-history@boot-$ts (independent of any prior
-      # @boot-* on the destination, so prune is just `zfs destroy`).
+      # Incremental @blank → @boot-$ts, received as a clone of
+      # history@blank. Each boot is its own dataset, independent of
+      # the others, so pruning is just `zfs destroy`.
       zfs send -i @blank rpool/ROOT/nixos@boot-$ts \
-        | zfs receive bulkpool/boot-history
+        | zfs receive -u -o origin=rpool/ROOT/history@blank \
+            rpool/ROOT/history/boot-$ts
     '';
   };
 
@@ -123,14 +150,13 @@ in
     '';
   };
 
-  # Prune boot-history snapshots older than the retention window.
-  # The destination receives are independent (each boot's @boot-<ts>
-  # is a standalone snapshot on history; only @blank is the shared
-  # base for incremental sends), so destroying old ones never breaks
-  # future send/receive lineage. Runs once per boot; the only thing
-  # that adds snapshots is boots, so a timer would be overkill.
+  # Prune boot-history datasets older than the retention window.
+  # Each boot-<ts> is an independent clone of history@blank (the only
+  # shared base), so destroying old ones never breaks future receives.
+  # Runs once per boot; the only thing that adds history is boots, so
+  # a timer would be overkill.
   systemd.services.zfs-prune-boot-history = {
-    description = "Prune bulkpool/boot-history snapshots older than ${toString bootHistoryRetentionDays}d";
+    description = "Prune rpool/ROOT/history boots older than ${toString bootHistoryRetentionDays}d";
     wantedBy = [ "multi-user.target" ];
     after = [ "zfs-mount.service" ];
     serviceConfig = {
@@ -140,16 +166,16 @@ in
     script = ''
       # No-op until the first boot after the history wiring lands;
       # `zfs receive` in stage-1 is what creates the dataset.
-      if ! zfs list -H bulkpool/boot-history >/dev/null 2>&1; then
+      if ! zfs list -H rpool/ROOT/history >/dev/null 2>&1; then
         exit 0
       fi
       threshold=$(date -d '${toString bootHistoryRetentionDays} days ago' +%Y%m%d-%H%M%S)
-      snaps=$(zfs list -H -o name -t snapshot bulkpool/boot-history | grep '@boot-' || true)
-      [ -z "$snaps" ] && exit 0
-      echo "$snaps" | while read snap; do
-        ts=''${snap#*@boot-}
+      boots=$(zfs list -H -o name -t filesystem -d 1 rpool/ROOT/history | grep '/boot-' || true)
+      [ -z "$boots" ] && exit 0
+      echo "$boots" | while read boot; do
+        ts=''${boot#*/boot-}
         if [ "$ts" \< "$threshold" ]; then
-          zfs destroy "$snap"
+          zfs destroy -r "$boot"
         fi
       done
     '';

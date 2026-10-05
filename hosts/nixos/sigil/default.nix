@@ -1,4 +1,9 @@
-{ lib, pkgs, nixclyx, ... }: {
+{
+  lib,
+  pkgs,
+  nixclyx,
+  ...
+}: {
   imports = [./hardware.nix ./network.nix ./filesystems.nix];
 
   networking.hostName = "sigil";
@@ -88,44 +93,62 @@
   # the shell as well.
   nix.settings.build-dir = "/build";
 
-  # rpool/home/psyc snapshots: tight, recent-history scratch on the
-  # SSD; longer tiered history on the spinner. Source keeps a 1 h
-  # rolling window of 5-min snapshots (12) plus one of each higher
-  # tier — the tier-marker snapshots only exist so sanoid on the
-  # destination has snapshots tagged hourly/daily/weekly/monthly to
-  # retain. Without those tags, the destination could only retain
-  # frequents.
-  services.sanoid = {
-    enable = true;
-    # frequent snapshots fire on this cadence — sanoid takes at
-    # most one per run, so hourly (the default) would only land one
-    # 5-min snapshot per hour. Need to run every 5 min for the
-    # `frequently = 72` retention to actually fill.
-    interval = "*:0/5";
-
-    datasets."rpool/home/psyc" = {
+  # psyc's home datasets (rpool/home/psyc, altpool/home/psyc): short
+  # history on the NVMe, the rest on the spinner. Source keeps 5-min
+  # snapshots for 1 h and hourlies for 1 d, nothing longer.
+  #
+  # sanoid can only retain a tier on the destination if the source
+  # tagged snapshots with it, so the source also takes `daily = 1` for
+  # bulkpool's dailies. That's free: the 24 hourlies already pin the
+  # same day of churn. Weekly/monthly are deliberately absent — a
+  # single source-side weekly or monthly marker pins up to 7 / 31 days
+  # of deleted data on rpool (one weekly once held 284G there).
+  #
+  # sanoid counts are age-based ("hourly = 24" = drop hourlies older
+  # than 24 h), and 0 prunes the tier outright. Every tier is set
+  # explicitly; unset ones fall back to sanoid's defaults (hourly 48,
+  # daily 90, …), and frequent_period defaults to 15, not 5.
+  services.sanoid = let
+    source = {
       autosnap = true;
       autoprune = true;
-      frequently = 12;       # 1 h × (60 min / 5 min)
+      frequently = 12; # 1 h × (60 min / 5 min)
       frequent_period = 5;
-      hourly = 1;
+      hourly = 24;
       daily = 1;
-      weekly = 1;
-      monthly = 1;
+      weekly = 0;
+      monthly = 0;
     };
 
     # syncoid brings snapshots across; sanoid on the destination
     # just prunes per these counts. autosnap=false so the spinner
     # never takes its own snapshots (avoids snapshot divergence
     # between source and dest that breaks incremental sends).
-    datasets."bulkpool/backups/home-psyc" = {
+    # Frequents ride along on every send and are dropped here — the
+    # last hour is the source's job. syncoid's own syncoid_* sync
+    # snapshot isn't a sanoid tier, so pruning never eats the
+    # incremental base.
+    backup = {
       autosnap = false;
       autoprune = true;
-      frequently = 288;      # 1 day of 5-min snapshots as overlap
-      hourly = 168;          # 1 week
-      daily = 30;            # 1 month
-      weekly = 8;            # 2 months
-      monthly = 12;          # 1 year
+      frequently = 0;
+      hourly = 48;
+      daily = 14;
+      weekly = 0;
+      monthly = 0;
+    };
+  in {
+    enable = true;
+    # frequent snapshots fire on this cadence — sanoid takes at
+    # most one per run, so hourly (the default) would only land one
+    # 5-min snapshot per hour.
+    interval = "*:0/5";
+
+    datasets = {
+      "rpool/home/psyc" = source;
+      "altpool/home/psyc" = source;
+      "bulkpool/backups/home-psyc" = backup;
+      "bulkpool/backups/altpool-home-psyc" = backup;
     };
   };
 
@@ -143,7 +166,19 @@
       target = "bulkpool/backups/home-psyc";
       sendOptions = "w";
     };
+    commands."altpool-home-psyc" = {
+      source = "altpool/home/psyc";
+      target = "bulkpool/backups/altpool-home-psyc";
+      sendOptions = "w";
+    };
   };
+
+  # altpool/home/psyc is mounted inside /home/psyc, and pam_zfs_key's
+  # instances unmount in the same order they mount: at last logout the
+  # rpool instance would try /home/psyc first, hit EBUSY on the nested
+  # mount, and leave it mounted anyway. Keep both mounted (and their
+  # keys loaded) until shutdown instead.
+  security.pam.zfs.noUnmount = true;
 
   users.users.psyc.hashedPasswordFile = "/persist/etc/shadow.psyc";
 
@@ -153,6 +188,20 @@
       directories = [
         "/var/lib/nixos"
         "/var/lib/systemd"
+        # Clock drift calibration; without it chronyd re-learns the
+        # oscillator's frequency error from scratch every boot.
+        {
+          directory = "/var/lib/chrony";
+          user = "chrony";
+          group = "chrony";
+          mode = "0750";
+        }
+        # Per-user GDM state: last selected session (users/<name>) and
+        # avatar (icons/).
+        {
+          directory = "/var/lib/AccountsService";
+          mode = "0775";
+        }
         # WireGuard private key, generated once by wireguard-keygen and
         # persisted so it survives the @blank rollback — otherwise the
         # key regenerates every boot and diverges from the pubkey
@@ -166,11 +215,17 @@
         }
       ];
       files = [
-        {file = "/etc/machine-id"; inInitrd = true;}
+        {
+          file = "/etc/machine-id";
+          inInitrd = true;
+        }
         # Private host key must be 0600; preservation otherwise
         # chmods the source back to the default (0644) on every
         # boot, and sshd then refuses to load it.
-        {file = "/etc/ssh/ssh_host_ed25519_key"; mode = "0600";}
+        {
+          file = "/etc/ssh/ssh_host_ed25519_key";
+          mode = "0600";
+        }
         "/etc/ssh/ssh_host_ed25519_key.pub"
         # krb5 host keytab for the lab-4 NAS krb5i mount. The tleilax
         # KDC mints host/sigil.main.apt.psyclyx.net (it auto-provisions
@@ -181,14 +236,20 @@
         # the mount fails. The key is stable (KDC re-exports with
         # `ktadd -norandkey`); if the KDC DB is ever rebuilt, re-pull
         # and overwrite /persist/etc/krb5.keytab.
-        {file = "/etc/krb5.keytab"; mode = "0600";}
+        {
+          file = "/etc/krb5.keytab";
+          mode = "0600";
+        }
         # psyc@PSYCLYX.NET user keytab for the krb5i NAS mount under
         # our own uid — the KDC mints psyc (globals.kerberos
         # .userPrincipals) and pushes its keytab to OpenBao; pulled
         # out-of-band here like the host keytab and consumed by the
         # kerberos-user-ticket auto-kinit service. Persist so it
         # survives the @blank rollback. Re-pull if the KDC DB is rebuilt.
-        {file = "/etc/krb5-psyc.keytab"; mode = "0600";}
+        {
+          file = "/etc/krb5-psyc.keytab";
+          mode = "0600";
+        }
       ];
     };
   };
