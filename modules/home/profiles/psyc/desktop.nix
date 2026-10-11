@@ -14,11 +14,11 @@
       pkgs.psyclyx.spork
       pkgs.signal-desktop
 
-      # LLM coding agents. claude comes from programs.claude-code below.
+      # LLM coding agents. claude comes from programs.claude-code below;
+      # pi comes from the pi module (subagent extension + agent files).
       pkgs.llm-agents.codex
       pkgs.llm-agents.kimi-code
       pkgs.llm-agents.omp
-      pkgs.psyclyx.pi
     ];
 
     psyclyx.home = {
@@ -31,6 +31,7 @@
           enable = true;
           defaultTerminal = true;
         };
+        pi.enable = true;
         sway.enable = pkgs.stdenv.hostPlatform.isLinux;
       };
     };
