@@ -7,11 +7,12 @@
   nixclyx ? import ./. { },
   nodes ? nixclyx.nodes,
   deployments ? nixclyx.deployments,
-  # The pkgs every host is built against — becomes Colmena's meta.nixpkgs.
-  hostPkgs ? nixclyx.hostPkgs,
+  # Colmena's meta.nixpkgs: the bare package set (see default.nix) — the
+  # nodes bring their own overlays.
+  hivePkgs ? nixclyx.hivePkgs,
 }:
 {
-  meta.nixpkgs = hostPkgs;
+  meta.nixpkgs = hivePkgs;
 }
 // builtins.mapAttrs (name: deployment: {...}: {
   imports = [nodes.${name}];

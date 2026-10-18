@@ -108,12 +108,21 @@ in
       (n: hostEntries.${n} == "directory")
       (builtins.attrNames hostEntries);
 
-    # The pkgs every host is built against: injected nixpkgs + the
-    # injection-aware overlay. Shared by `configurations` (below) and the
-    # hive's meta.nixpkgs, so both build against exactly the same set.
+    # The full package set: injected nixpkgs + the injection-aware overlay,
+    # for everything evaluated outside a host. Hosts get the same overlay
+    # through modules/common/system/nixpkgs.nix instead.
     hostPkgs = import ./nixpkgs.nix {
       inherit nixpkgs;
       overlays = [overlay];
+    };
+
+    # Colmena prepends meta.nixpkgs' overlays to every node's own
+    # nixpkgs.overlays, so handing it hostPkgs would apply the overlay twice
+    # and build a different system than `configurations`. The hive gets the
+    # bare set: same nixpkgs and config, overlays from the nodes alone.
+    hivePkgs = import ./nixpkgs.nix {
+      inherit nixpkgs;
+      overlays = [];
     };
 
     # The deployment-free definition of each host, and the Colmena metadata
@@ -129,10 +138,14 @@ in
     # `nixos-rebuild -A configurations.<host>` at these; eval-config leaves
     # each under `.config.system.build.toplevel`.
     evalConfig = import (nixpkgs + "/nixos/lib/eval-config.nix");
+    # `nodes` mirrors what Colmena hands each hive member — every other
+    # host's evaluated system — so cross-host projections
+    # (derived/storage.nix) see the same thing here, and both entrypoints
+    # build the same system.
     configurations = builtins.mapAttrs (name: node:
       evalConfig {
         system = hostPkgs.stdenv.hostPlatform.system;
-        specialArgs = {inherit name;};
+        specialArgs = {inherit name; nodes = configurations;};
         modules = [node];
       })
     nodes;
@@ -174,7 +187,7 @@ in
       phone = {};
     };
 
-    hive = import ./hive.nix {inherit nodes deployments hostPkgs;};
+    hive = import ./hive.nix {inherit nodes deployments hivePkgs;};
 
     # The fleet graph, evaluated once, and the platform systems derived from
     # it. Each switch gets a `lib/platform/<p>` eval whose projection module
@@ -232,7 +245,7 @@ in
     nixclyx =
       core
       // {
-        inherit nixpkgs hostPkgs nodes deployments modules hive configurations darwinConfigurations nixOnDroidConfigurations;
+        inherit nixpkgs hostPkgs hivePkgs nodes deployments modules hive configurations darwinConfigurations nixOnDroidConfigurations;
         inherit fleet platformTools;
         routerosSystems = systemsOfType "routeros" ./lib/platform/routeros ./modules/routeros/projection.nix;
         swosSystems = systemsOfType "swos" ./lib/platform/swos ./modules/swos/projection.nix;
