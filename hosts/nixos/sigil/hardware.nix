@@ -10,6 +10,10 @@
       };
 
       gpu.nvidia.enable = true;
+      gpu.unlock = {
+        enable = true;
+        targets = ["0000:0d:00.0"]; # the 3090
+      };
 
       monitors = {
         gawfolk = {

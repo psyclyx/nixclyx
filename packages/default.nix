@@ -12,6 +12,7 @@ let
     upscale-image = ./upscale-image;
     commit-confirm = ./commit-confirm;
     pi = ./pi-agent;
+    gpu-unlock-firmware = ./gpu-unlock/firmware.nix;
     openbao-2_6 = ./openbao-2_6;
   };
 
