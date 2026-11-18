@@ -96,7 +96,12 @@
     value = {
       device = "${producerEndpoint e}:${e.nfs-export.path}";
       fsType = "nfs";
-      options = [ "_netdev" "nofail" "x-systemd.device-timeout=30s" ]
+      # Automount: switch-to-configuration fails on any failed unit, so
+      # an eager mount of an unreachable producer would break every
+      # deploy. The .automount always starts; the mount happens on
+      # first access.
+      options = [ "_netdev" "nofail" "x-systemd.device-timeout=30s"
+                  "x-systemd.automount" "x-systemd.mount-timeout=30s" ]
         ++ lib.optional (e.nfs-export.sec != "sys") "sec=${e.nfs-export.sec}"
         ++ e.nfs-export.options;
     };

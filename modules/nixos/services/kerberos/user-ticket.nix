@@ -61,9 +61,20 @@
                   type = lib.types.str;
                   default = "8h";
                   description = ''
-                    systemd OnUnitActiveSec between re-kinits. Must be
-                    comfortably shorter than the ticket lifetime (24h
-                    default) so the cache never lapses.
+                    Age (systemd timespan) after which a still-valid
+                    ccache is re-kinited. Must be comfortably shorter
+                    than the ticket lifetime (24h default) so the cache
+                    never lapses.
+                  '';
+                };
+                retryInterval = lib.mkOption {
+                  type = lib.types.str;
+                  default = "5min";
+                  description = ''
+                    Timer tick. Each tick is a cheap no-op while the
+                    ccache is valid and younger than renewInterval, so
+                    this is effectively the retry cadence after a failed
+                    kinit (KDC unreachable etc.).
                   '';
                 };
               };
@@ -94,7 +105,15 @@
             # the first NFS upcall on boot.
             after = [ "network-online.target" "rpc-gssd.service" ];
             wants = [ "network-online.target" ];
-            wantedBy = [ "multi-user.target" ];
+            # Deliberately not wantedBy anything, and not restarted on
+            # switch: the timer is the only thing that starts it.
+            #
+            # switch-to-configuration reports *every* unit that is failed
+            # or in auto-restart after activation — not just jobs it ran
+            # — and exits non-zero. So a failed kinit must never leave
+            # the unit failed: the script warns and exits 0, and the
+            # timer's next tick is the retry. No Restart=.
+            restartIfChanged = false;
             unitConfig.ConditionPathExists = u.keytab;
             serviceConfig = {
               Type = "oneshot";
@@ -103,7 +122,7 @@
               # upcall uid) will use it.
               User = "root";
             };
-            path = [ krb5 pkgs.coreutils ];
+            path = [ krb5 pkgs.coreutils pkgs.gnused pkgs.systemd ];
             # Resolve uid/gid at runtime: a normal account with an
             # auto-allocated uid has `users.users.<u>.uid = null` at
             # eval time, so the ccache path must come from `id`, not the
@@ -114,8 +133,19 @@
               uid=$(id -u ${lib.escapeShellArg user})
               gid=$(id -g ${lib.escapeShellArg user})
               ccache="/tmp/krb5cc_''${uid}"
-              kinit -k -t ${lib.escapeShellArg u.keytab} \
-                -c "$ccache" ${lib.escapeShellArg u.principal}
+              renew_us=$(systemd-analyze timespan ${lib.escapeShellArg u.renewInterval} \
+                | sed -n 's/^ *μs: //p')
+              if klist -s -c "$ccache" 2>/dev/null; then
+                age_us=$(( ($(date +%s) - $(stat -c %Y "$ccache")) * 1000000 ))
+                if (( age_us < renew_us )); then
+                  exit 0
+                fi
+              fi
+              if ! kinit -k -t ${lib.escapeShellArg u.keytab} \
+                  -c "$ccache" ${lib.escapeShellArg u.principal}; then
+                echo "kinit failed; retrying in ${u.retryInterval}" >&2
+                exit 0
+              fi
               chown "''${uid}:''${gid}" "$ccache"
               chmod 600 "$ccache"
             '';
@@ -128,9 +158,11 @@
             description = "Periodic kinit for ${user}";
             wantedBy = [ "timers.target" ];
             timerConfig = {
-              OnBootSec = "1min";
-              OnUnitActiveSec = u.renewInterval;
-              Persistent = true;
+              # Fires shortly after the timer activates (boot, switch),
+              # then every retryInterval; the script decides whether a
+              # kinit is actually due.
+              OnActiveSec = "5s";
+              OnUnitActiveSec = u.retryInterval;
             };
           };
         };
