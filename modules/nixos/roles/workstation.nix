@@ -49,7 +49,6 @@
 
         # Graphics / creative
         pkgs.blender
-        pkgs.inkscape
         pkgs.gimp
         pkgs.krita
         pkgs.pinta
