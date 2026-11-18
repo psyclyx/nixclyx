@@ -37,6 +37,10 @@
           value = 1;
         }
       ];
+      # Whirlpool's lock screen (`whirlpool lock`) checks passwords with this
+      # PAM service; without it PAM falls back to `other`, which refuses
+      # every password. (swaylock, kept as a fallback, has its own.)
+      pam.services.whirlpool-lock = {};
     };
 
     xdg.portal = {

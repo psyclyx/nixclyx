@@ -81,6 +81,7 @@
         gdm.enable = lib.mkDefault true;
         gnome-keyring.enable = lib.mkDefault true;
         gnupg-agent.enable = lib.mkDefault true;
+        networkd-user-control.enable = lib.mkDefault true;
         printing.enable = lib.mkDefault true;
       };
 
