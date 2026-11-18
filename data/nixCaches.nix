@@ -3,6 +3,8 @@
 {
   substituters = [
     "https://nix-community.cachix.org?priority=1"
+    # numtide/llm-agents.nix CI output (pkgs.llm-agents.*).
+    "https://cache.numtide.com"
   ];
 
   trusted-substituters = [
@@ -12,5 +14,6 @@
   trusted-public-keys = [
     "psyclyx.cachix.org-1:UFwKXEDn3gLxIW9CeXGdFFUzCIjj8m6IdAQ7GA4XfCk="
     "nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs="
+    "niks3.numtide.com-1:DTx8wZduET09hRmMtKdQDxNNthLQETkc/yaX7M4qK0g="
   ];
 }

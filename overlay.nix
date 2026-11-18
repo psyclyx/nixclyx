@@ -20,8 +20,14 @@ in
     # `asciidoc` to it), forcing a source build of inkscape on every
     # headless host that unlocks via Tang (iyr, the lab NBDE clients).
     asciidocManpage = prev.asciidoc.override {enableStandardFeatures = false;};
-  in ((llm-agents.overlays.shared-nixpkgs final prev)
-    // {
+  in {
+      # llm-agents' own flake packages (built against *their* pinned nixpkgs),
+      # not `overlays.shared-nixpkgs`: the shared overlay rebuilds everything
+      # against our nixpkgs, which never matches their rev and so never hits
+      # cache.numtide.com — and breaks whenever our nixpkgs moves ahead of
+      # theirs (e.g. cargoSetupHook forcing AWS_LC_SYS_USE_SYSTEM=1 broke
+      # codex's aws-lc-sys build).
+      llm-agents = llm-agents.packages.${prev.stdenv.hostPlatform.system};
       psyclyx =
         (import ./packages {pkgs = prev;})
         // {
@@ -89,4 +95,4 @@ in
           sha256 = "sha256-Q4YYdMUd/T8tGGcakhoLdHvWsHwOq7LgIb77sr2OWuQ=";
         };
       });
-    })
+    }
