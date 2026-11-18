@@ -19,7 +19,7 @@
 
   producerOverlays = [
     emacsOverlay
-    (import sources.river {}).overlay # patched wlroots_0_20 + river + set-output-icc
+    (import sources.river {}).overlay
     (import sources.shoal {}).overlay
     (import sources.tidepool {}).overlay
     (import sources.whirlpool {river = sources.river;}).overlay

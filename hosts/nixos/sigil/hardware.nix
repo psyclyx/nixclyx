@@ -18,20 +18,16 @@
             width = 3840;
             height = 2560;
           };
-          # ArgyllCMS shaper+matrix profile (dispread + colprof, native panel),
-          # loaded on session start via set-output-icc. Re-measure with the i1
-          # after any panel OSD change (mode/brightness invalidate it).
-          colorProfile = ./gawfolk.icc;
         };
 
         benq = {
           identifier = "BNQ BenQ RD280U V5R0042101Q";
+          primary = true;
           mode = {
             width = 3840;
             height = 2560;
           };
           position.x = 3840;
-          colorProfile = ./benq.icc;
         };
 
         dell = {
@@ -41,7 +37,6 @@
             height = 2160;
           };
           position.x = 7680;
-          colorProfile = ./dell.icc;
         };
       };
     };

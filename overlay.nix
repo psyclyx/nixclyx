@@ -28,7 +28,7 @@ in
           # Internal producers now come from their own overlays (composed
           # ahead of this one in ./overlays.nix), aliased under psyclyx so the
           # existing pkgs.psyclyx.* module references keep working.
-          inherit (prev) river shoal tidepool whirlpool set-output-icc;
+          inherit (prev) river shoal tidepool whirlpool;
           "base24-gen" = prev."base24-gen";
         };
       colmena = colmena.packages.${prev.stdenv.hostPlatform.system};
@@ -54,9 +54,6 @@ in
       glasgow = prev.glasgow.overridePythonAttrs (old: {
         pythonRelaxDeps = (old.pythonRelaxDeps or []) ++ ["importlib_resources"];
       });
-      # (river's wlroots_0_20 ICC black-point-compensation patch now travels
-      # with river itself — see app/river/overlay.nix — so it is applied via
-      # the river producer overlay composed ahead of this one.)
       # __multf3 (128-bit float multiply) missing on aarch64 — the Makefile
       # calls ld directly (bypassing the CC wrapper), so buildInputs alone
       # won't add libgcc_s to the rpath.  Patch the .so after build instead.
