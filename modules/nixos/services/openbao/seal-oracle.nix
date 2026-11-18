@@ -17,6 +17,15 @@
         type = lib.types.port;
         default = 8200;
       };
+      package = lib.mkOption {
+        type = lib.types.package;
+        defaultText = lib.literalExpression "pkgs.psyclyx.openbao-2_6";
+        description = ''
+          OpenBao build for the seal oracle. Pinned to 2.6: 2.7 dropped the
+          `file` storage backend and the built-in `pkcs11` seal, both of
+          which this module uses. Unpin after migrating storage.
+        '';
+      };
       seal = lib.mkOption {
         type = lib.types.submodule {
           freeformType = lib.types.attrsOf lib.types.str;
@@ -321,6 +330,8 @@
       '';
     in
     {
+      psyclyx.nixos.services.openbao-seal-oracle.package = lib.mkDefault pkgs.psyclyx.openbao-2_6;
+
       assertions = [
         {
           assertion = !hasSecret || cfg.secretFile != null;
@@ -334,7 +345,7 @@
         tctiEnvironment.enable = true;
       };
       environment.systemPackages = [
-        pkgs.openbao
+        cfg.package
       ]
       ++ lib.optionals cfg.tpm.enable [
         pkgs.tpm2-tools
@@ -362,7 +373,7 @@
         serviceConfig = {
           User = "openbao-seal";
           Group = "openbao-seal";
-          ExecStart = "${pkgs.openbao}/bin/bao server -config=${runtimeConfig}";
+          ExecStart = "${cfg.package}/bin/bao server -config=${runtimeConfig}";
           ExecReload = "${pkgs.coreutils}/bin/kill -HUP $MAINPID";
           Restart = "on-failure";
           RestartSec = "5s";
@@ -423,7 +434,7 @@
         };
         environment.BAO_ADDR = "http://127.0.0.1:${toString port}";
         path = [
-          pkgs.openbao
+          cfg.package
           pkgs.jq
         ];
         script = ''

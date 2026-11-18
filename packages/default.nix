@@ -12,6 +12,7 @@ let
     upscale-image = ./upscale-image;
     commit-confirm = ./commit-confirm;
     pi = ./pi-agent;
+    openbao-2_6 = ./openbao-2_6;
   };
 
   # Platform renderers live with their platform library (`lib/platform`).
