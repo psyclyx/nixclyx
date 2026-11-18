@@ -258,5 +258,6 @@
     image = "${nixclyx.assets}/wallpapers/4x-ppmm-city-night.jpg";
     base16Scheme = "${nixclyx.assets}/palettes/4x-ppmm-city-night.yaml";
     polarity = "dark";
+    fonts.sizes.applications = 17;
   };
 }

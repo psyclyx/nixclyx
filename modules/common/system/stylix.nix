@@ -34,10 +34,10 @@
       base16Scheme = lib.mkDefault "${nixclyx.assets}/palettes/nixos-wallpaper-catppuccin-macchiato.yaml";
 
       opacity = {
-        applications = lib.mkDefault 0.92;
-        desktop = lib.mkDefault 0.88;
-        terminal = lib.mkDefault 0.9;
-        popups = lib.mkDefault 0.95;
+        applications = lib.mkDefault 0.96;
+        desktop = lib.mkDefault 0.93;
+        terminal = lib.mkDefault 0.95;
+        popups = lib.mkDefault 0.98;
       };
 
       fonts = {
