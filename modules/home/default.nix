@@ -9,6 +9,7 @@ in
         (sources.shoal + "/nix/hm-module.nix")
         (sources.tidepool + "/nix/hm-module.nix")
         (sources.whirlpool + "/nix/hm-module.nix")
+        (sources.weft + "/nix/hm-module.nix")
         (import (sources.emacs + "/hm-module.nix"))
       ]
       ++ nixclyx.lib.fs.collectSpecs nixclyx.lib.spec.mkModule ./.;

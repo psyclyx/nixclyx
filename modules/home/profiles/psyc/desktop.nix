@@ -25,6 +25,7 @@
           defaultTerminal = true;
         };
         pi.enable = true;
+        weft.enable = true;
       };
     };
   };

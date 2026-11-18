@@ -28,7 +28,7 @@ in
     sops-nix ? sources.sops-nix,
     stylix ? sources.stylix,
     # Source paths for the internal producers (river, shoal, tidepool,
-    # whirlpool, base24-gen, emacs, pi-nix, fix, psyclight). Default {} => this repo's
+    # whirlpool, weft, base24-gen, emacs, pi-nix, fix, psyclight). Default {} => this repo's
     # own npins pins (standalone). Callers override entries so BOTH the
     # producer overlays and the home-manager module imports track the
     # injected sources.

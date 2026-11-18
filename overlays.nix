@@ -23,6 +23,7 @@
     (import sources.shoal {}).overlay
     (import sources.tidepool {}).overlay
     (import sources.whirlpool {river = sources.river;}).overlay
+    (import sources.weft {}).overlay
     (import sources.base24-gen {}).overlay
     (import sources.fix {}).overlay
   ];

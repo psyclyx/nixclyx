@@ -341,6 +341,19 @@
       "url": "https://github.com/psyclyx/tidepool/archive/c1e1789ecf69965fcedd914e9c4242e042f1db25.tar.gz",
       "hash": "sha256-ogY2b7yeDB06umXvFy17jVeoQqAdn3lk4SnQXDgo+T0="
     },
+    "weft": {
+      "type": "Git",
+      "repository": {
+        "type": "GitHub",
+        "owner": "psyclyx",
+        "repo": "weft"
+      },
+      "branch": "main",
+      "submodules": false,
+      "revision": "3ef816fe9020e05ccecbaa84822479d06df98c1b",
+      "url": "https://github.com/psyclyx/weft/archive/3ef816fe9020e05ccecbaa84822479d06df98c1b.tar.gz",
+      "hash": "sha256-pfKk7qV3riQkUrWb2vDZ2ZlSsjeXrLo1S6FuI1XCQN8="
+    },
     "whirlpool": {
       "type": "Git",
       "repository": {
