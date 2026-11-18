@@ -1,9 +1,11 @@
-{ lib, config, ... }:
-let
-  eg = config.psyclyx.egregore;
-in
 {
-  imports = [ ./dhcp.nix ];
+  lib,
+  config,
+  ...
+}: let
+  eg = config.psyclyx.egregore;
+in {
+  imports = [./dhcp.nix];
 
   networking.hostName = "iyr";
 
@@ -17,8 +19,8 @@ in
       lanInterface = "enp1s0";
       wanInterface = "enp3s0";
       lanAddress = "10.0.0.11/24"; # untagged trunk (legacy setup VLAN 1)
-      initrd.kernelModules = [ "8021q" "igc" ];
-      transitDhcpV6.duidRawData = "e7:13:f8:92:37:c5:be:76";
+      initrd.kernelModules = ["8021q" "igc"];
+      transitDhcpV6.duidRawData = "e7:13:f8:92:37:c5:be:77";
       # Comcast/Xfinity DHCP sends option-121 classless static routes
       # with no 0.0.0.0/0, which (per RFC 3442) suppresses the option-3
       # gateway and leaves enp3s0.250 with no default route. Ignore
@@ -33,8 +35,16 @@ in
       # Xfinity apartment uplink — symmetric 2.2 Gbps provisioned.
       # Min kept low for graceful autorate degradation; max gives small
       # headroom past nominal.
-      download = { min = 1400000; base = 2200000; max = 2280000; };
-      upload = { min = 1400000; base = 2200000; max = 2280000; };
+      download = {
+        min = 1400000;
+        base = 2200000;
+        max = 2280000;
+      };
+      upload = {
+        min = 1400000;
+        base = 2200000;
+        max = 2280000;
+      };
     };
   };
 
@@ -66,7 +76,10 @@ in
   # module; only the L3/DHCP unit is hand-written (the generic gateway
   # module's dhcp path installs into the main table, which we don't want
   # for the primary since the watchdog owns the main-table selection).
-  psyclyx.nixos.network.interfaces.vlans."enp3s0.251" = { id = 251; parent = "enp3s0"; };
+  psyclyx.nixos.network.interfaces.vlans."enp3s0.251" = {
+    id = 251;
+    parent = "enp3s0";
+  };
   systemd.network.networks."31-enp3s0.251" = {
     matchConfig.Name = "enp3s0.251";
     networkConfig = {
@@ -80,12 +93,14 @@ in
       UseHostname = false;
       ClientIdentifier = "mac";
     };
-    routingPolicyRules = [{
-      OutgoingInterface = "enp3s0.251";
-      Family = "ipv4";
-      Table = 251;
-      Priority = 251;
-    }];
+    routingPolicyRules = [
+      {
+        OutgoingInterface = "enp3s0.251";
+        Family = "ipv4";
+        Table = 251;
+        Priority = 251;
+      }
+    ];
     linkConfig = {
       MTUBytes = 1500;
       RequiredForOnline = "no";
@@ -159,7 +174,7 @@ in
             # at <host>.apt.psyclyx.net via their lab-VLAN IP. Storage
             # stays out of the site apex (it's iSCSI-only, no off-rack
             # clients should resolve a host to its storage IP).
-            networks = [ "main" "lab" ];
+            networks = ["main" "lab"];
           };
         };
         resolver = {
@@ -167,7 +182,7 @@ in
           # Listen list (gateway addresses + L2 listener addresses +
           # vpn + ::) comes from derived/dns-resolver.nix. Adding the
           # untagged trunk IP here because it's not modeled in egregore.
-          interfaces = [ "10.0.0.11" ];
+          interfaces = ["10.0.0.11"];
           accessControl = [
             "10.0.0.0/8 allow"
             "${eg.ipv6UlaPrefix}::/48 allow"
@@ -194,8 +209,8 @@ in
           # subnet). .250 is Xfinity (IPv6 + IPv4 fallback), .251 is
           # Google Fiber (the primary IPv4 uplink); both share the WAN
           # drop+ICMP+DHCP-client posture.
-          lan.interfaces = [ "enp1s0" ];
-          wan.interfaces = [ "enp3s0.250" "enp3s0.251" ];
+          lan.interfaces = ["enp1s0"];
+          wan.interfaces = ["enp3s0.250" "enp3s0.251"];
         };
         input = {
           # Internal zones: trusted.
@@ -214,8 +229,14 @@ in
             policy = "drop";
             allowICMP = true;
             rules = [
-              { "udp dport" = 67; comment = "DHCPv4 relay"; }
-              { "udp dport" = 547; comment = "DHCPv6 relay"; }
+              {
+                "udp dport" = 67;
+                comment = "DHCPv4 relay";
+              }
+              {
+                "udp dport" = 547;
+                comment = "DHCPv6 relay";
+              }
             ];
           };
           # WAN: drop + specific allows. The TCP port is the SSH service
@@ -223,28 +244,50 @@ in
           wan = {
             policy = "drop";
             allowICMP = true;
-            allowedTCPPorts = [ 17891 ]; # ssh
+            allowedTCPPorts = [17891]; # ssh
             rules = [
-              { "udp sport" = 67; "udp dport" = 68; comment = "DHCPv4 client"; }
-              { "udp dport" = 546; comment = "DHCPv6 client"; }
+              {
+                "udp sport" = 67;
+                "udp dport" = 68;
+                comment = "DHCPv4 client";
+              }
+              {
+                "udp dport" = 546;
+                comment = "DHCPv6 client";
+              }
             ];
           };
         };
         masquerade = [
           # Apt-LAN zones egressing to WAN.
-          { from = "lan"; to = "wan"; }
-          { from = "infra"; to = "wan"; }
+          {
+            from = "lan";
+            to = "wan";
+          }
+          {
+            from = "infra";
+            to = "wan";
+          }
           # North-south for everything mdf-agg01 routes. The switch
           # hardware-routes east-west and hands the rest to iyr over the
           # transit link; those packets arrive with the client's source
           # address and still need NAT, which the switch can't do.
-          { from = "core-transit"; to = "wan"; }
+          {
+            from = "core-transit";
+            to = "wan";
+          }
           # WG-routed traffic to apt zones needs source NAT. The WG
           # cryptokey check at the hub drops sources outside the peer's
           # AllowedIPs; masquerading at iyr makes apt-side traffic look
           # locally-originated so replies come back through iyr.
-          { from = "wg"; to = "lan"; }
-          { from = "wg"; to = "infra"; }
+          {
+            from = "wg";
+            to = "lan";
+          }
+          {
+            from = "wg";
+            to = "infra";
+          }
         ];
       };
     };
@@ -287,5 +330,4 @@ in
       };
     };
   };
-
 }
